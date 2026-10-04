@@ -1,0 +1,1261 @@
+[
+  {
+    "id": "ja-u",
+    "glyphs": [
+      "ja-う",
+      "ja-ウ"
+    ],
+    "text": "う",
+    "recording": "tofugu/ja-u.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-o",
+    "glyphs": [
+      "ja-お",
+      "ja-オ"
+    ],
+    "text": "お",
+    "recording": "tofugu/ja-o.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-shi",
+    "glyphs": [
+      "ja-し",
+      "ja-シ"
+    ],
+    "text": "し",
+    "recording": "tofugu/ja-shi.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-tsu",
+    "glyphs": [
+      "ja-つ",
+      "ja-ツ"
+    ],
+    "text": "つ",
+    "recording": "tofugu/ja-tsu.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-hi",
+    "glyphs": [
+      "ja-ひ",
+      "ja-ヒ"
+    ],
+    "text": "ひ",
+    "recording": "tofugu/ja-hi.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ra",
+    "glyphs": [
+      "ja-ら",
+      "ja-ラ"
+    ],
+    "text": "ら",
+    "recording": "tofugu/ja-ra.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ri",
+    "glyphs": [
+      "ja-り",
+      "ja-リ"
+    ],
+    "text": "り",
+    "recording": "tofugu/ja-ri.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ru",
+    "glyphs": [
+      "ja-る",
+      "ja-ル"
+    ],
+    "text": "る",
+    "recording": "tofugu/ja-ru.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-re",
+    "glyphs": [
+      "ja-れ",
+      "ja-レ"
+    ],
+    "text": "れ",
+    "recording": "tofugu/ja-re.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ro",
+    "glyphs": [
+      "ja-ろ",
+      "ja-ロ"
+    ],
+    "text": "ろ",
+    "recording": "tofugu/ja-ro.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-a",
+    "glyphs": [
+      "ja-あ",
+      "ja-ア"
+    ],
+    "text": "あ",
+    "recording": "tofugu/ja-a.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-i",
+    "glyphs": [
+      "ja-い",
+      "ja-イ"
+    ],
+    "text": "い",
+    "recording": "tofugu/ja-i.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-e",
+    "glyphs": [
+      "ja-え",
+      "ja-エ"
+    ],
+    "text": "え",
+    "recording": "tofugu/ja-e.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ka",
+    "glyphs": [
+      "ja-か",
+      "ja-カ"
+    ],
+    "text": "か",
+    "recording": "tofugu/ja-ka.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ki",
+    "glyphs": [
+      "ja-き",
+      "ja-キ"
+    ],
+    "text": "き",
+    "recording": "tofugu/ja-ki.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ku",
+    "glyphs": [
+      "ja-く",
+      "ja-ク"
+    ],
+    "text": "く",
+    "recording": "tofugu/ja-ku.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ke",
+    "glyphs": [
+      "ja-け",
+      "ja-ケ"
+    ],
+    "text": "け",
+    "recording": "tofugu/ja-ke.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ko",
+    "glyphs": [
+      "ja-こ",
+      "ja-コ"
+    ],
+    "text": "こ",
+    "recording": "tofugu/ja-ko.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-sa",
+    "glyphs": [
+      "ja-さ",
+      "ja-サ"
+    ],
+    "text": "さ",
+    "recording": "tofugu/ja-sa.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-su",
+    "glyphs": [
+      "ja-す",
+      "ja-ス"
+    ],
+    "text": "す",
+    "recording": "tofugu/ja-su.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-se",
+    "glyphs": [
+      "ja-せ",
+      "ja-セ"
+    ],
+    "text": "せ",
+    "recording": "tofugu/ja-se.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-so",
+    "glyphs": [
+      "ja-そ",
+      "ja-ソ"
+    ],
+    "text": "そ",
+    "recording": "tofugu/ja-so.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ta",
+    "glyphs": [
+      "ja-た",
+      "ja-タ"
+    ],
+    "text": "た",
+    "recording": "tofugu/ja-ta.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-chi",
+    "glyphs": [
+      "ja-ち",
+      "ja-チ"
+    ],
+    "text": "ち",
+    "recording": "tofugu/ja-chi.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-te",
+    "glyphs": [
+      "ja-て",
+      "ja-テ"
+    ],
+    "text": "て",
+    "recording": "tofugu/ja-te.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-to",
+    "glyphs": [
+      "ja-と",
+      "ja-ト"
+    ],
+    "text": "と",
+    "recording": "tofugu/ja-to.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-na",
+    "glyphs": [
+      "ja-な",
+      "ja-ナ"
+    ],
+    "text": "な",
+    "recording": "tofugu/ja-na.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ni",
+    "glyphs": [
+      "ja-に",
+      "ja-ニ"
+    ],
+    "text": "に",
+    "recording": "tofugu/ja-ni.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-nu",
+    "glyphs": [
+      "ja-ぬ",
+      "ja-ヌ"
+    ],
+    "text": "ぬ",
+    "recording": "tofugu/ja-nu.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ne",
+    "glyphs": [
+      "ja-ね",
+      "ja-ネ"
+    ],
+    "text": "ね",
+    "recording": "tofugu/ja-ne.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-no",
+    "glyphs": [
+      "ja-の",
+      "ja-ノ"
+    ],
+    "text": "の",
+    "recording": "tofugu/ja-no.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ha",
+    "glyphs": [
+      "ja-は",
+      "ja-ハ"
+    ],
+    "text": "は",
+    "recording": "tofugu/ja-ha.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-fu",
+    "glyphs": [
+      "ja-ふ",
+      "ja-フ"
+    ],
+    "text": "ふ",
+    "recording": "tofugu/ja-fu.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-he",
+    "glyphs": [
+      "ja-へ",
+      "ja-ヘ"
+    ],
+    "text": "へ",
+    "recording": "tofugu/ja-he.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ho",
+    "glyphs": [
+      "ja-ほ",
+      "ja-ホ"
+    ],
+    "text": "ほ",
+    "recording": "tofugu/ja-ho.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ma",
+    "glyphs": [
+      "ja-ま",
+      "ja-マ"
+    ],
+    "text": "ま",
+    "recording": "tofugu/ja-ma.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-mi",
+    "glyphs": [
+      "ja-み",
+      "ja-ミ"
+    ],
+    "text": "み",
+    "recording": "tofugu/ja-mi.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-mu",
+    "glyphs": [
+      "ja-む",
+      "ja-ム"
+    ],
+    "text": "む",
+    "recording": "tofugu/ja-mu.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-me",
+    "glyphs": [
+      "ja-め",
+      "ja-メ"
+    ],
+    "text": "め",
+    "recording": "tofugu/ja-me.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-mo",
+    "glyphs": [
+      "ja-も",
+      "ja-モ"
+    ],
+    "text": "も",
+    "recording": "tofugu/ja-mo.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-ya",
+    "glyphs": [
+      "ja-や",
+      "ja-ヤ"
+    ],
+    "text": "や",
+    "recording": "tofugu/ja-ya.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-yu",
+    "glyphs": [
+      "ja-ゆ",
+      "ja-ユ"
+    ],
+    "text": "ゆ",
+    "recording": "tofugu/ja-yu.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-yo",
+    "glyphs": [
+      "ja-よ",
+      "ja-ヨ"
+    ],
+    "text": "よ",
+    "recording": "tofugu/ja-yo.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-wa",
+    "glyphs": [
+      "ja-わ",
+      "ja-ワ"
+    ],
+    "text": "わ",
+    "recording": "tofugu/ja-wa.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-wo",
+    "glyphs": [
+      "ja-を",
+      "ja-ヲ"
+    ],
+    "text": "を",
+    "recording": "tofugu/ja-wo.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ja-n",
+    "glyphs": [
+      "ja-ん",
+      "ja-ン"
+    ],
+    "text": "ん",
+    "recording": "tofugu/ja-n.mp3",
+    "kind": "假名读音"
+  },
+  {
+    "id": "ru-a",
+    "glyphs": [
+      "ru-а",
+      "ru-А"
+    ],
+    "text": "а",
+    "recording": "ru-01.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.54,
+      1.04
+    ]
+  },
+  {
+    "id": "ru-be",
+    "glyphs": [
+      "ru-б",
+      "ru-Б"
+    ],
+    "text": "бэ",
+    "recording": "ru-02.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.07,
+      0.62
+    ]
+  },
+  {
+    "id": "ru-03",
+    "glyphs": [
+      "ru-в",
+      "ru-В"
+    ],
+    "text": "вэ",
+    "recording": "ru-03.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.62
+    ]
+  },
+  {
+    "id": "ru-04",
+    "glyphs": [
+      "ru-г",
+      "ru-Г"
+    ],
+    "text": "гэ",
+    "recording": "ru-04.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.05,
+      0.64
+    ]
+  },
+  {
+    "id": "ru-05",
+    "glyphs": [
+      "ru-д",
+      "ru-Д"
+    ],
+    "text": "дэ",
+    "recording": "ru-05.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.05,
+      0.66
+    ]
+  },
+  {
+    "id": "ru-06",
+    "glyphs": [
+      "ru-е",
+      "ru-Е"
+    ],
+    "text": "е",
+    "recording": "ru-06.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.69
+    ]
+  },
+  {
+    "id": "ru-07",
+    "glyphs": [
+      "ru-ё",
+      "ru-Ё"
+    ],
+    "text": "ё",
+    "recording": "ru-07.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.69
+    ]
+  },
+  {
+    "id": "ru-zhe",
+    "glyphs": [
+      "ru-ж",
+      "ru-Ж"
+    ],
+    "text": "жэ",
+    "recording": "ru-08.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.68
+    ]
+  },
+  {
+    "id": "ru-09",
+    "glyphs": [
+      "ru-з",
+      "ru-З"
+    ],
+    "text": "зэ",
+    "recording": "ru-09.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.77
+    ]
+  },
+  {
+    "id": "ru-10",
+    "glyphs": [
+      "ru-и",
+      "ru-И"
+    ],
+    "text": "и",
+    "recording": "ru-10.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.05,
+      0.7
+    ]
+  },
+  {
+    "id": "ru-11",
+    "glyphs": [
+      "ru-й",
+      "ru-Й"
+    ],
+    "text": "и краткое",
+    "recording": "ru-11.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.03,
+      1.24
+    ]
+  },
+  {
+    "id": "ru-12",
+    "glyphs": [
+      "ru-к",
+      "ru-К"
+    ],
+    "text": "ка",
+    "recording": "ru-12.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.01,
+      0.69
+    ]
+  },
+  {
+    "id": "ru-13",
+    "glyphs": [
+      "ru-л",
+      "ru-Л"
+    ],
+    "text": "эль",
+    "recording": "ru-13.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.04,
+      0.66
+    ]
+  },
+  {
+    "id": "ru-14",
+    "glyphs": [
+      "ru-м",
+      "ru-М"
+    ],
+    "text": "эм",
+    "recording": "ru-14.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.05,
+      0.74
+    ]
+  },
+  {
+    "id": "ru-15",
+    "glyphs": [
+      "ru-н",
+      "ru-Н"
+    ],
+    "text": "эн",
+    "recording": "ru-15.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.06,
+      0.75
+    ]
+  },
+  {
+    "id": "ru-16",
+    "glyphs": [
+      "ru-о",
+      "ru-О"
+    ],
+    "text": "о",
+    "recording": "ru-16.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.04,
+      0.71
+    ]
+  },
+  {
+    "id": "ru-17",
+    "glyphs": [
+      "ru-п",
+      "ru-П"
+    ],
+    "text": "пэ",
+    "recording": "ru-17.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.06,
+      0.7
+    ]
+  },
+  {
+    "id": "ru-18",
+    "glyphs": [
+      "ru-р",
+      "ru-Р"
+    ],
+    "text": "эр",
+    "recording": "ru-18.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.05,
+      0.7
+    ]
+  },
+  {
+    "id": "ru-19",
+    "glyphs": [
+      "ru-с",
+      "ru-С"
+    ],
+    "text": "эс",
+    "recording": "ru-19.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.04,
+      0.84
+    ]
+  },
+  {
+    "id": "ru-20",
+    "glyphs": [
+      "ru-т",
+      "ru-Т"
+    ],
+    "text": "тэ",
+    "recording": "ru-20.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.05,
+      0.69
+    ]
+  },
+  {
+    "id": "ru-21",
+    "glyphs": [
+      "ru-у",
+      "ru-У"
+    ],
+    "text": "у",
+    "recording": "ru-21.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.07,
+      0.68
+    ]
+  },
+  {
+    "id": "ru-22",
+    "glyphs": [
+      "ru-ф",
+      "ru-Ф"
+    ],
+    "text": "эф",
+    "recording": "ru-22.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.04,
+      0.81
+    ]
+  },
+  {
+    "id": "ru-23",
+    "glyphs": [
+      "ru-х",
+      "ru-Х"
+    ],
+    "text": "ха",
+    "recording": "ru-23.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.64
+    ]
+  },
+  {
+    "id": "ru-24",
+    "glyphs": [
+      "ru-ц",
+      "ru-Ц"
+    ],
+    "text": "цэ",
+    "recording": "ru-24.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.7
+    ]
+  },
+  {
+    "id": "ru-25",
+    "glyphs": [
+      "ru-ч",
+      "ru-Ч"
+    ],
+    "text": "че",
+    "recording": "ru-25.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.02,
+      0.76
+    ]
+  },
+  {
+    "id": "ru-26",
+    "glyphs": [
+      "ru-ш",
+      "ru-Ш"
+    ],
+    "text": "ша",
+    "recording": "ru-26.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.77
+    ]
+  },
+  {
+    "id": "ru-27",
+    "glyphs": [
+      "ru-щ",
+      "ru-Щ"
+    ],
+    "text": "ща",
+    "recording": "ru-27.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.93
+    ]
+  },
+  {
+    "id": "ru-28",
+    "glyphs": [
+      "ru-ъ",
+      "ru-Ъ"
+    ],
+    "text": "твёрдый знак",
+    "recording": "ru-28.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      1.15
+    ]
+  },
+  {
+    "id": "ru-29",
+    "glyphs": [
+      "ru-ы",
+      "ru-Ы"
+    ],
+    "text": "ы",
+    "recording": "ru-29.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.05,
+      0.66
+    ]
+  },
+  {
+    "id": "ru-30",
+    "glyphs": [
+      "ru-ь",
+      "ru-Ь"
+    ],
+    "text": "мягкий знак",
+    "recording": "ru-30.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.04,
+      1.08
+    ]
+  },
+  {
+    "id": "ru-31",
+    "glyphs": [
+      "ru-э",
+      "ru-Э"
+    ],
+    "text": "э",
+    "recording": "ru-31.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0.04,
+      0.67
+    ]
+  },
+  {
+    "id": "ru-32",
+    "glyphs": [
+      "ru-ю",
+      "ru-Ю"
+    ],
+    "text": "ю",
+    "recording": "ru-32.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.67
+    ]
+  },
+  {
+    "id": "ru-33",
+    "glyphs": [
+      "ru-я",
+      "ru-Я"
+    ],
+    "text": "я",
+    "recording": "ru-33.mp3",
+    "kind": "字母名称",
+    "clip": [
+      0,
+      0.64
+    ]
+  },
+  {
+    "id": "el-alpha",
+    "glyphs": [
+      "el-α",
+      "el-Α"
+    ],
+    "text": "άλφα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      1.82,
+      2.5
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-vita",
+    "glyphs": [
+      "el-β",
+      "el-Β"
+    ],
+    "text": "βήτα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      2.67,
+      3.33
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-gamma",
+    "glyphs": [
+      "el-γ",
+      "el-Γ"
+    ],
+    "text": "γάμμα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      3.51,
+      4.18
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-delta",
+    "glyphs": [
+      "el-δ",
+      "el-Δ"
+    ],
+    "text": "δέλτα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      4.34,
+      5.06
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-epsilon",
+    "glyphs": [
+      "el-ε",
+      "el-Ε"
+    ],
+    "text": "έψιλον",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      5.22,
+      5.98
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-zeta",
+    "glyphs": [
+      "el-ζ",
+      "el-Ζ"
+    ],
+    "text": "ζήτα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      6.1,
+      6.78
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-eta",
+    "glyphs": [
+      "el-η",
+      "el-Η"
+    ],
+    "text": "ήτα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      6.97,
+      7.57
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-theta",
+    "glyphs": [
+      "el-θ",
+      "el-Θ"
+    ],
+    "text": "θήτα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      7.69,
+      8.42
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-iota",
+    "glyphs": [
+      "el-ι",
+      "el-Ι"
+    ],
+    "text": "γιώτα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      8.56,
+      9.28
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-kappa",
+    "glyphs": [
+      "el-κ",
+      "el-Κ"
+    ],
+    "text": "κάππα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      9.41,
+      10.08
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-lambda",
+    "glyphs": [
+      "el-λ",
+      "el-Λ"
+    ],
+    "text": "λάμδα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      10.21,
+      10.95
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-mu",
+    "glyphs": [
+      "el-μ",
+      "el-Μ"
+    ],
+    "text": "μι",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      11.06,
+      11.55
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-nu",
+    "glyphs": [
+      "el-ν",
+      "el-Ν"
+    ],
+    "text": "νι",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      11.8,
+      12.26
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-xi",
+    "glyphs": [
+      "el-ξ",
+      "el-Ξ"
+    ],
+    "text": "ξι",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      12.54,
+      13.3
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-omicron",
+    "glyphs": [
+      "el-ο",
+      "el-Ο"
+    ],
+    "text": "όμικρον",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      13.38,
+      14.17
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-pi",
+    "glyphs": [
+      "el-π",
+      "el-Π"
+    ],
+    "text": "πι",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      14.34,
+      14.73
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-rho",
+    "glyphs": [
+      "el-ρ",
+      "el-Ρ"
+    ],
+    "text": "ρο",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      14.98,
+      15.5
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-sigma",
+    "glyphs": [
+      "el-σ",
+      "el-Σ",
+      "el-ς"
+    ],
+    "text": "σίγμα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      15.55,
+      16.37
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-tau",
+    "glyphs": [
+      "el-τ",
+      "el-Τ"
+    ],
+    "text": "ταυ",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      16.57,
+      17.12
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-upsilon",
+    "glyphs": [
+      "el-υ",
+      "el-Υ"
+    ],
+    "text": "ύψιλον",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      17.29,
+      18.09
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-phi",
+    "glyphs": [
+      "el-φ",
+      "el-Φ"
+    ],
+    "text": "φι",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      18.1,
+      18.61
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-chi",
+    "glyphs": [
+      "el-χ",
+      "el-Χ"
+    ],
+    "text": "χι",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      18.77,
+      19.27
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-psi",
+    "glyphs": [
+      "el-ψ",
+      "el-Ψ"
+    ],
+    "text": "ψι",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      19.44,
+      19.95
+    ],
+    "kind": "字母名称"
+  },
+  {
+    "id": "el-omega",
+    "glyphs": [
+      "el-ω",
+      "el-Ω"
+    ],
+    "text": "ωμέγα",
+    "recording": "el-alphabet.mp3",
+    "clip": [
+      20.05,
+      20.77
+    ],
+    "kind": "字母名称"
+  }
+]

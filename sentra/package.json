@@ -1,6 +1,6 @@
 {
-  "name": "@appocket/sentra",
-  "version": "1.0.0",
+  "name": "@lingrove/sentra",
+  "version": "1.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@appocket/host-sdk": "*",
+    "@lingrove/host-sdk": "*",
     "vue": "^3.5.0"
   },
   "devDependencies": {

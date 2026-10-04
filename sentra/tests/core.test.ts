@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { endpoint, defaults, validateResult } from '../src/models';
-import { SSEParser, analyze } from '../src/api';
+import { defaults, validateResult } from '../src/models';
+import { analyze } from '../src/api';
+import { SSEParser } from '../../packages/host-sdk/src/llm';
 import { partialResult } from '../src/partial';
-import { request, storage } from '@appocket/host-sdk';
+import { getAppLanguage, request, storage } from '@lingrove/host-sdk';
 const valid = {
   source_language: '中文',
   translation_language: '英语',
@@ -18,21 +19,6 @@ beforeEach(() => {
   vi.unstubAllGlobals();
 });
 describe('provider contracts', () => {
-  it('normalizes endpoints and rejects unsafe URLs', () => {
-    expect(endpoint({ ...defaults, baseUrl: 'https://provider.test/v1/' })).toBe(
-      'https://provider.test/v1/chat/completions',
-    );
-    expect(endpoint({ ...defaults, protocol: 'anthropic', baseUrl: 'https://provider.test' })).toBe(
-      'https://provider.test/v1/messages',
-    );
-    for (const baseUrl of [
-      'http://provider.test',
-      'https://user:pass@provider.test',
-      'https://provider.test?token=x',
-      'https://provider.test/messages',
-    ])
-      expect(() => endpoint({ ...defaults, baseUrl })).toThrow();
-  });
   it('requires translation direction and both variants', () => {
     expect(validateResult('translate', JSON.stringify(valid), '你好', '英语')).toEqual(valid);
     expect(() =>
@@ -55,7 +41,7 @@ describe('provider contracts', () => {
       correct: false,
       summary: 'agreement',
       corrections: [{ original: 'go', corrected: 'goes', explanation: 'agreement' }],
-      structure: [{ text: 'He', part: 'pronoun', role: 'subject' }],
+      structure: [{ text: 'He', translation: '他', part: 'pronoun', role: 'subject' }],
       grammar_points: [],
     };
     expect(validateResult('grammar', JSON.stringify(grammar), 'He go.', '英语')).toEqual(grammar);
@@ -81,17 +67,26 @@ describe('streaming', () => {
   it('consumes streamed OpenAI chunks and rejects interrupted responses', async () => {
     const body = JSON.stringify(valid);
     let complete = true;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(
-        async () =>
-          new Response(
-            `data: ${JSON.stringify({ choices: [{ delta: { content: body } }] })}\n\n${complete ? 'data: [DONE]\n\n' : ''}`,
-            { headers: { 'content-type': 'text/event-stream' } },
-          ),
-      ),
-    );
-    const config = { ...defaults, baseUrl: 'https://test.example/v1', model: 'test' };
+    window.webkit = {
+      messageHandlers: {
+        lingrove: {
+          postMessage: vi.fn(async (message: any) => {
+            window.__lingroveChunk?.(
+              message.params.id,
+              `data: ${JSON.stringify({ choices: [{ delta: { content: body } }] })}\n\n${complete ? 'data: [DONE]\n\n' : ''}`,
+            );
+            return {
+              status: 200,
+              headers: { 'content-type': 'text/event-stream' },
+              body: '',
+              model: 'host-model',
+              protocol: 'openAi',
+            };
+          }),
+        },
+      },
+    };
+    const config = { ...defaults };
     const progress = vi.fn();
     const result = await analyze(
       'translate',
@@ -109,33 +104,36 @@ describe('streaming', () => {
   });
   it('accepts Anthropic and non-streaming compatible responses', async () => {
     const content = JSON.stringify(valid);
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(
-        async () =>
-          new Response(
-            JSON.stringify({ content: [{ type: 'text', text: content }], stop_reason: 'end_turn' }),
-            { headers: { 'content-type': 'application/json' } },
-          ),
-      ),
-    );
+    window.webkit = {
+      messageHandlers: {
+        lingrove: {
+          postMessage: vi.fn(async () => ({
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              content: [{ type: 'text', text: content }],
+              stop_reason: 'end_turn',
+            }),
+            model: 'host-model',
+            protocol: 'anthropic',
+          })),
+        },
+      },
+    };
     expect(
-      (
-        await analyze(
-          'translate',
-          '你好',
-          { ...defaults, protocol: 'anthropic', baseUrl: 'https://test.example', model: 'test' },
-          new AbortController().signal,
-          () => {},
-        )
-      ).data,
+      (await analyze('translate', '你好', { ...defaults }, new AbortController().signal, () => {}))
+        .data,
     ).toEqual(valid);
   });
 });
 describe('host SDK', () => {
+  it('uses the browser language outside the host', async () => {
+    vi.stubGlobal('navigator', { language: 'fr-FR' });
+    expect(await getAppLanguage()).toBe('fr-FR');
+  });
   it('routes requests to the native bridge without calling fetch', async () => {
     const postMessage = vi.fn(async () => ({ status: 200, headers: {}, body: 'ok' }));
-    window.webkit = { messageHandlers: { appocket: { postMessage } } };
+    window.webkit = { messageHandlers: { lingrove: { postMessage } } };
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     expect((await request({ url: 'https://first.example/path' })).body).toBe('ok');
@@ -154,5 +152,62 @@ describe('host SDK', () => {
     expect(await storage.get('sentences.v1')).toEqual([{ text: 'hello' }]);
     localStorage.setItem('sentra.sentences.v1', 'broken');
     await expect(storage.get('sentences.v1')).rejects.toThrow();
+  });
+});
+
+describe('grammar component translations', () => {
+  const grammar = {
+    source_language: 'en',
+    analysis_text: 'Hello',
+    analysis_origin: 'original',
+    correct: true,
+    summary: 'Greeting',
+    corrections: [],
+    structure: [
+      { text: 'Hello', translation: 'こんにちは', part: 'interjection', role: 'greeting' },
+    ],
+    grammar_points: [],
+  };
+  it('requires a nonempty translation for each component', () => {
+    for (const translation of [undefined, '', '  ', 42]) {
+      expect(() =>
+        validateResult(
+          'grammar',
+          JSON.stringify({ ...grammar, structure: [{ ...grammar.structure[0], translation }] }),
+          'Hello',
+          '英语',
+        ),
+      ).toThrow('translation');
+    }
+  });
+  it('reads the current host language on every analysis independently of other language settings', async () => {
+    let language = 'ja';
+    const systems: string[] = [];
+    window.webkit = {
+      messageHandlers: {
+        lingrove: {
+          postMessage: vi.fn(async (message: any) => {
+            if (message.method === 'runtime.language') return language;
+            systems.push(message.params.system);
+            return {
+              status: 200,
+              headers: {},
+              model: 'host-model',
+              protocol: 'openAi',
+              body: JSON.stringify({
+                choices: [{ message: { content: JSON.stringify(grammar) }, finish_reason: 'stop' }],
+              }),
+            };
+          }),
+        },
+      },
+    };
+    await analyze('grammar', 'Hello', defaults, new AbortController().signal, () => {});
+    language = 'zh-Hant';
+    await analyze('grammar', 'Hello', defaults, new AbortController().signal, () => {});
+    expect(systems[0]).toContain('COMPONENT_TRANSLATION_LANGUAGE=ja.');
+    expect(systems[1]).toContain('COMPONENT_TRANSLATION_LANGUAGE=zh-Hant.');
+    expect(systems[0]).toContain('EXPLANATION_LANGUAGE=简体中文.');
+    expect(systems[0]).toContain('TRANSLATION_LANGUAGE=英语.');
   });
 });

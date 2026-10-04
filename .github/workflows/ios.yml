@@ -17,4 +17,7 @@ jobs:
           cache: npm
       - run: npm ci && npm run check
       - run: scripts/test-native.sh
-      - run: xcodebuild -project ios/Appocket.xcodeproj -scheme Appocket -sdk iphonesimulator -configuration Debug -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+      # Exercise a clean native build without pre-generated web resources.
+      - run: rm -rf dist ios/Lingrove/Resources/BuiltinModules
+      - run: xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove -sdk iphonesimulator -configuration Debug -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
+      - run: python3 scripts/verify-ios-modules.py build/ios/Build/Products/Debug-iphonesimulator/Lingrove.app

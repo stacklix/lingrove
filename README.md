@@ -1,8 +1,8 @@
 # Lingrove
 
-SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。第一个子应用为重写后的 **Sentra**：翻译、语法分析、地道表达、流式结果、学习记录和服务商设置。没有 Lingrove 账号或登录服务。
+SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。第一个子应用为重写后的 **Sentra**：翻译、语法分析、地道表达、流式结果、学习记录和学习偏好。没有 Lingrove 账号或登录服务。
 
-应用对外名称为 **Lingrove**，子应用仍为 **Sentra**。为兼容现有安装和发布配置，工程路径、Bundle ID、SDK 命名空间及本地数据目录保持不变；更新域名使用 `lingrove.stackli.me`。
+应用对外名称为 **Lingrove**，子应用仍为 **Sentra**。工程和 Scheme 为 `Lingrove`，Bundle ID 为 `me.stackli.lingrove`，SDK 为 `@lingrove/host-sdk`，本地数据目录为 `Lingrove`；更新域名使用 `lingrove.stackli.me`。
 
 ## 运行
 
@@ -12,14 +12,14 @@ SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立
 npm ci
 npm run dev                  # 浏览器预览 Sentra
 npm run build                # 构建网页、ZIP、目录及原生内置模块
-open ios/Appocket.xcodeproj   # 选择 Appocket scheme，运行 iPhone/iPad 模拟器
+open ios/Lingrove.xcodeproj   # 选择 Lingrove scheme，运行 iPhone/iPad 模拟器
 ```
 
-Xcode 项目已提交，不需要安装工程生成器。先运行 `npm run build` 再使用 Xcode，`BuiltinModules/` 是自动生成资源。真机运行时在 Xcode 选择自己的签名 Team 和 Bundle ID。可选工程重生成：`ruby scripts/generate-xcode.rb`（需要 Ruby xcodeproj gem）。
+Xcode 项目已提交，不需要安装工程生成器。Xcode 的 Run、Build、Archive 会自动构建 `modules.json` 中的所有子应用，校验后嵌入 App 的 `BuiltinModules/`，无需提前运行 `npm run build`。首次构建缺少 `node_modules/` 时自动执行 `npm ci`（需要联网）；依赖变动后运行 `npm ci` 同步依赖。子应用构建或资源校验失败会中止 iOS 打包，内置子应用可在首次离线启动时打开。Node 安装在非标准位置时，可在 Xcode Build Settings 设置 `NODE_BINARY` 为 Node 可执行文件绝对路径。真机运行时在 Xcode 选择自己的签名 Team 和 Bundle ID。可选工程重生成：`ruby scripts/generate-xcode.rb`（需要 Ruby xcodeproj gem）。
 
 ## 仓库布局
 
-- `ios/Appocket/`：原生首页、模块更新、安装器、WebView、网络桥、本地存储。
+- `ios/Lingrove/`：原生首页、模块更新、安装器、WebView、网络桥、本地存储。
 - `sentra/`：Vue 子应用，独立版本与 manifest。
 - `packages/host-sdk/`：子应用公共 TypeScript SDK。
 - `scripts/package-modules.mjs`：生成 ZIP、普通 JSON 目录和原生内置资源。
@@ -44,11 +44,11 @@ App 默认从 `https://lingrove.stackli.me/catalog.json` 检查更新；首次�
 1. 指定部署域名并构建：
 
 ```sh
-MODULE_BASE_URL=https://your-domain.example npm run build
+MODULE_BASE_URL=https://your-domain.example npm run build:release
 ```
 
 2. 将 `dist/` 上传至上述 HTTPS 域名。
-3. 在 `ios/Appocket/Resources/HostConfig.json` 填入唯一配置：
+3. 在 `ios/Lingrove/Resources/HostConfig.json` 填入唯一配置：
 
 ```json
 {"catalogURL":"https://your-domain.example/catalog.json"}
@@ -104,12 +104,43 @@ gh-pages/
 - 页面 20 秒内未调用 `runtime.ready`、导航失败或 Web 内容进程退出时尝试回退；不会回退至已被强制淘汰版本。失败版本会被记录，等待更高版本。
 - 记录、偏好与代码包分开保存，更新和回退不覆盖学习数据。目前只接受 stateSchemaVersion=1，未来数据迁移需显式升级协议。
 
+## 宿主大模型服务
+
+从 Lingrove 1.2.0 起，在原生首页的「应用设置 → 大模型配置」中统一设置接口协议（OpenAI / Anthropic 兼容）、HTTPS Base URL、模型名称和可选 API Key。所有子应用共用此配置，修改后下一次请求生效；进行中的请求继续使用启动时的配置。
+
+完整配置保存在宿主独立 Keychain 项中（仅本机、解锁后可访问），不会通过桥接返回 API Key。宿主负责选定请求地址、构造协议与鉴权头、发送请求和流式传输；子应用无需配置模型域名授权。通用 HTTP 桥仍遵守子应用各自的域名权限，不能获取宿主凭据。
+
+任何子应用都可使用公共 SDK：
+
+```ts
+import { llm } from '@lingrove/host-sdk';
+
+const status = await llm.status(); // { configured, model }，不包含凭据
+const controller = new AbortController();
+const result = await llm.complete({
+  system: 'You are a helpful language tutor.',
+  messages: [{ role: 'user', content: 'Explain this sentence.' }],
+  maxTokens: 4096,
+}, {
+  signal: controller.signal,
+  onProgress: (text) => console.log(text), // 累积文本
+});
+// result: { text, model }
+// controller.abort() 可停止请求。
+```
+
+消息角色支持 `user`、`assistant`，系统指令通过 `system` 传入。宿主忽略子应用传入的 URL、鉴权头与模型覆盖值，统一使用已保存的配置。请求最多 100 条消息、1 MiB，输出上限参数为 1–32768；每个子应用最多 6 个并发网络请求，响应最大 8 MiB，超时最长 120 秒。SDK 统一解析 OpenAI / Anthropic 流式及普通 JSON 响应，截断、拒绝和断流会报错。
+
+宿主首次启动时自动迁移原生 Sentra 的旧模型配置及 Keychain 凭据，成功保存后清理旧连接字段与凭据，保留学习偏好与历史。清理被中断时后续读取会重试。Sentra 新偏好保存为 `preferences.v3`，保留旧数据供迁移恢复。Safari/浏览器的旧凭据不会自动进入原生宿主；独立网页仅支持界面和历史预览，模型调用需要 Lingrove 宿主。
+
+Sentra 1.1.0 要求 Lingrove 1.2.0，避免旧宿主安装不支持新接口的子应用。桥接方法为 `llm.status`、`llm.request`、`llm.cancel`，现有桥协议版本保持 1。
+
 ## 多域名网络桥
 
 子应用通过 `host.http` 对应的 SDK `request()` 调用网络：
 
 ```ts
-import { request } from '@appocket/host-sdk';
+import { request } from '@lingrove/host-sdk';
 const response = await request({
   url: 'https://dictionary.example.com/search?q=apple',
   method: 'GET'
@@ -118,11 +149,11 @@ const response = await request({
 
 原生使用 URLSession，不受浏览器 CORS 限制。每个模块支持多个 `allowedOrigins`，按 HTTPS 协议、域名和端口精确匹配，禁止重定向和隐式 Cookie。自定义服务商由子应用设置页触发 `authorizeOrigin()`，原生弹窗展示目标域名并记录用户授权，可从原生设置撤销。模块不能自行把任意域名加到可信发布清单。
 
-桥支持 JSON/文本响应、SSE 分块、取消、超时及响应大小限制。原生注入 CSP，阻止网页绕过网络桥访问远程资源。浏览器开发模式使用 fetch，仍需要服务商正确配置 CORS。服务商 API Key 是 Sentra 可选的第三方凭据，不是 Lingrove 登录；只留在当前页面内存/浏览器 sessionStorage，不写原生历史文件。
+桥支持 JSON/文本响应、SSE 分块、取消、超时及响应大小限制。原生注入 CSP，阻止网页绕过网络桥访问远程资源。浏览器开发模式使用 fetch，仍需要服务商正确配置 CORS。宿主模型调用使用上述独立大模型接口。通用 `secret.*` 接口仍按子应用隔离，只能访问子应用自己的凭据，不能读取宿主模型配置。
 
 ## 数据与迁移
 
-原生历史及偏好保存至 Application Support/Appocket/State/<模块 ID>，由主框架身份限定命名空间。浏览器历史沿用 `sentra.sentences.v1`；原 Flutter Web 的记录在相同来源下可继续读取，API 设置可从旧 sessionStorage 恢复。原生不能自动读取 Safari 或旧 PWA 的存储。未完成/格式不合格的流式结果不写历史；损坏历史会停止写入以保护数据。
+原生历史及偏好保存至 Application Support/Lingrove/State/<模块 ID>，由主框架身份限定命名空间。浏览器历史沿用 `sentra.sentences.v1`；原 Flutter Web 的记录在相同来源下可继续读取，学习偏好可从旧 preferences.v2 恢复。原生不能自动读取 Safari 或旧 PWA 的存储。未完成/格式不合格的流式结果不写历史；损坏历史会停止写入以保护数据。
 
 旧 Flutter 源码和 PWA 构建已由 Vue 替代，原实现可从 Git 历史获取。发布时提供退出旧 service worker 的脚本；浏览器预览不再承诺 PWA 离线缓存，离线使用由原生内置/下载模块提供。
 
@@ -131,10 +162,10 @@ const response = await request({
 ```sh
 npm run check                 # TypeScript、前端测试、生产构建
 scripts/test-native.sh        # Swift 核心：目录校验、安装、版本、域名、回滚、损坏包
-xcodebuild -project ios/Appocket.xcodeproj -scheme Appocket \
+xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
   -sdk iphonesimulator -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
 # 在可用的 iPhone 模拟器上运行 UI 测试：
-xcodebuild -project ios/Appocket.xcodeproj -scheme Appocket \
+xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test
 ```
 
@@ -143,3 +174,34 @@ xcodebuild -project ios/Appocket.xcodeproj -scheme Appocket \
 ## 发布边界
 
 未自动部署服务器、推送 Git 或执行 App Store 提交。上架前需配置签名团队、应用图标/商店资料，并确认 Apple 4.7 对下载 HTML 应用、原生桥、模块索引和隐私共享的要求。本项目的技术实现不代表已获审核许可。
+
+## 真机调试启动异常
+
+如果 Xcode 26 在 iOS 27 Beta 真机启动时出现 `OS_dispatch_mach_msg _setContext:`，这是已报告的队列回溯诊断兼容问题。共享 Scheme 已关闭 Run/Test 的 `Enable backtrace recording`，普通 LLDB 断点调试仍启用。已有 Xcode 窗口若没有加载修改，请重新打开工程，或在 Product → Scheme → Edit Scheme → Run → Options → Queue Debugging 中取消该选项。此设置不改变发布包。参见 [Apple 开发者论坛的同类报告](https://developer.apple.com/forums/thread/835484)。
+
+## 返回子应用
+
+同一次宿主运行期间，返回首页会保留各子应用的 WebView。再次进入相同版本时恢复 Tab、草稿、结果、Sheet 和滚动位置，进行中的请求继续执行。子应用版本或权限清单变化、被禁用或页面进程异常时，会释放旧页面并重新加载。完全退出宿主或系统终止进程后不保留这份内存页面；已保存的学习记录和设置仍持久保存。
+
+模型配置的 Keychain 集成测试需使用 Xcode 默认签名运行 `test`，不要添加 `CODE_SIGNING_ALLOWED=NO`；无签名产物没有访问 Keychain 所需的应用身份。
+
+
+### 调试模式与服务器资源
+
+默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的默认构建及 Archive 使用 Debug；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，保留服务器地址；通过“完成”保存，通过“取消”放弃修改。Release 构建不提供服务器加载能力。
+
+1. 执行 `npm run build`，然后 `npm run debug:serve`（默认端口 8000，可用 `npm run debug:serve -- --port 8080` 修改）。
+2. 在宿主“设置 → 调试模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，点击右上角“完成”保存并刷新全部子应用；左上角“取消”会放弃本次地址修改。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
+3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。每个子应用直接请求 `<根地址>/<子应用ID>/index.html` 及其 JS/CSS（例如 `/sentra/index.html`），不下载或解压 ZIP。新增子应用并运行 `npm run build` 后，同一个服务地址即可访问，无需为每个子应用单独启动服务。
+4. 修改源码后重新运行 `npm run build`，返回宿主点击设置旁的“重新加载子应用”，刷新全部已安装子应用（包括尚未打开的子应用）。子应用页面 Home 按钮右侧也提供原生刷新按钮，用于刷新当前子应用；Debug 模式下会显示刷新成功或失败的提示。
+
+调试服务禁用 HTTP 缓存且不压缩响应；每次重载会重建 WebView 并取消旧请求，未保存的页面状态会清空，已保存数据保留。服务器地址会持久保存；清空并保存即可恢复本地资源。调试失败时可在错误页重新加载。Debug 支持局域网 HTTP 和 Safari Web Inspector。
+
+正式发布请使用 `npm run build:release`（压缩资源）及 `xcodebuild ... -configuration Release`，或在 Xcode 将 Archive 的 Build Configuration 改为 Release。原生 Release 构建阶段会自动使用压缩的正式资源，并忽略此前保存的调试地址。
+
+
+### Glyphora · 字母学习
+
+新增 Glyphora 子应用，使用森林绿主题及手写 g 标志。支持 92 个日语基础假名、66 个俄语大小写字母和 49 个希腊语字形，提供临写、描摹、日语笔顺演示、10 题交错测试与本地记录。
+
+需要 Lingrove 1.3.0 宿主。新版 iOS 宿主内嵌 PencilKit，浏览器和旧宿主使用页内 Canvas，无需弹框；学习、测试、字母三个 Tab 分别提供自动续学、成绩记录和笔顺详情；`npm run debug:serve` 同时提供 `/sentra/` 与 `/glyphora/`。评分为本地字形相似度练习反馈，尚不包含笔顺评分或经真实手写样本校准的识别置信度。详见 [Glyphora 开发说明](glyphora/README.md)。

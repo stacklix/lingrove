@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
-import { authorizeOrigin, copyText, createID, isNative, ready, storage } from '@appocket/host-sdk';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { createID, isNative, ready, setRootPage, storage } from '@lingrove/host-sdk';
 import {
   actions,
   defaults,
-  endpoint,
   languages,
   type Action,
   type Result,
@@ -14,16 +13,46 @@ import {
 import { analyze } from './api';
 import { partialResult } from './partial';
 import ResultView from './components/ResultView.vue';
+import CopyButton from './components/CopyButton.vue';
+import Sheet from './components/Sheet.vue';
 const settings = reactive<Settings>({ ...defaults });
 const draftSettings = reactive<Settings>({ ...defaults });
+const translationLanguage = ref(defaults.translationLanguage);
 const active = ref<Action>('translate');
 const panel = ref<'learn' | 'history' | 'settings'>('learn');
+const sheetPanel = ref<'history' | 'settings'>('history');
+watch(
+  () => panel.value === 'learn',
+  (isRoot) => {
+    void setRootPage(isRoot).catch(() => {});
+  },
+  { immediate: true },
+);
+watch(panel, (value) => {
+  if (value !== 'learn') sheetPanel.value = value;
+});
+const pageScroll = ref<HTMLElement>();
+const sentenceInput = ref<HTMLTextAreaElement>();
+const composing = ref(false);
+watch(active, () => {
+  if (pageScroll.value) pageScroll.value.scrollTop = 0;
+});
 const history = ref<Sentence[]>([]);
 const search = ref('');
 const notice = ref('');
 const loaded = ref(false);
 const historyWritable = ref(true);
 const saving = ref(false);
+const actionLabels = {
+  translate: ['开始翻译', '重新翻译'],
+  grammar: ['分析语法', '重新分析'],
+  improve: ['优化表达', '重新优化'],
+};
+const navIcons = {
+  translate: 'M4 5h12M10 3v2M6 5c0 6 6 10 10 11M14 5c0 6-6 10-10 11M15 21l4-10 4 10M17 17h4',
+  grammar: 'M5 4h14v17l-7-4-7 4zM8 8h8M8 12h5',
+  improve: 'm12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
+};
 const deleting = reactive(new Set<string>());
 const tabs = reactive(
   Object.fromEntries(
@@ -51,6 +80,24 @@ const tabs = reactive(
   >,
 );
 const tab = computed(() => tabs[active.value]);
+async function confirmInput(event: KeyboardEvent) {
+  if (
+    event.key !== 'Enter' ||
+    event.shiftKey ||
+    event.isComposing ||
+    event.keyCode === 229 ||
+    composing.value
+  )
+    return;
+  event.preventDefault();
+  const input = sentenceInput.value;
+  if (!input || !input.value.trim() || tab.value.busy || !loaded.value || !historyWritable.value)
+    return;
+  input.blur();
+  await nextTick();
+  tab.value.text = input.value;
+  await run();
+}
 const preview = computed(() =>
   tab.value.busy ? partialResult(tab.value.progress) : tab.value.result?.data,
 );
@@ -68,16 +115,16 @@ function persistHistory() {
 }
 onMounted(async () => {
   try {
-    const prefs = await storage.get<Partial<Settings>>('preferences.v2');
-    Object.assign(settings, prefs ?? {});
-    settings.token = isNative() ? '' : (sessionStorage.getItem('sentra.token') ?? '');
-    if (!isNative() && !prefs) {
-      const old = sessionStorage.getItem('sentra.settings.v1');
-      if (old) Object.assign(settings, JSON.parse(old));
+    const prefs =
+      (await storage.get<Partial<Settings>>('preferences.v3')) ??
+      (await storage.get<Partial<Settings>>('preferences.v2'));
+    for (const key of ['translationLanguage', 'explanationLanguage', 'level'] as const) {
+      if (typeof prefs?.[key] === 'string') settings[key] = prefs[key];
     }
     if (!languages.includes(settings.translationLanguage)) settings.translationLanguage = '英语';
+    translationLanguage.value = settings.translationLanguage;
   } catch {
-    notice.value = '连接设置读取失败，请重新配置。';
+    notice.value = '设置读取失败，请重新配置。';
   }
   try {
     const saved = await storage.get<Sentence[]>('sentences.v1');
@@ -90,7 +137,7 @@ onMounted(async () => {
     history.value = saved ?? [];
   } catch {
     historyWritable.value = false;
-    notice.value = '学习记录读取失败，已停止写入以保护原数据。请重新打开。';
+    notice.value = '记录读取失败，已停止写入以保护原数据。请重新打开。';
   }
   loaded.value = true;
   try {
@@ -107,36 +154,20 @@ async function saveSettings() {
   saving.value = true;
   notice.value = '';
   try {
-    const url = endpoint(draftSettings);
-    if (!draftSettings.model.trim()) throw new Error('请填写模型名称');
-    await authorizeOrigin(new URL(url).origin);
-    const { token, ...prefs } = draftSettings;
-    await storage.set('preferences.v2', prefs);
-    if (!isNative()) sessionStorage.setItem('sentra.token', token);
+    await storage.set('preferences.v3', { ...draftSettings });
+    if (settings.translationLanguage !== draftSettings.translationLanguage) {
+      translationLanguage.value = draftSettings.translationLanguage;
+    }
     Object.assign(settings, draftSettings);
     panel.value = 'learn';
-    notice.value = '连接设置已保存，API Key 仅保留在本次页面会话。';
   } catch (e) {
     notice.value = message(e);
   } finally {
     saving.value = false;
   }
 }
-function clearToken() {
-  draftSettings.token = '';
-  settings.token = '';
-  if (!isNative()) sessionStorage.removeItem('sentra.token');
-}
 function message(e: unknown) {
   return e instanceof Error ? e.message : String(e);
-}
-async function copy(text: string) {
-  try {
-    await copyText(text);
-    notice.value = '已复制';
-  } catch {
-    notice.value = '复制失败，请长按文字复制';
-  }
 }
 async function run() {
   const action = active.value,
@@ -147,12 +178,11 @@ async function run() {
     current.error = '每次最多输入 4000 个字符';
     return;
   }
-  if (!settings.baseUrl || !settings.model) {
-    openSettings();
-    notice.value = '先连接你的模型服务，即可开始学习。';
-    return;
-  }
-  const config = { ...settings };
+  const config = {
+    ...settings,
+    translationLanguage:
+      action === 'translate' ? translationLanguage.value : settings.translationLanguage,
+  };
   current.busy = true;
   current.error = '';
   current.progress = '';
@@ -190,7 +220,7 @@ async function run() {
 async function retrySave() {
   try {
     await persistHistory();
-    notice.value = '学习记录已保存';
+    notice.value = '记录已保存';
   } catch {
     notice.value = '保存失败，请检查可用空间';
   }
@@ -225,215 +255,218 @@ async function removeSentence(s: Sentence) {
 }
 </script>
 <template>
-  <div class="shell">
-    <header class="header">
-      <button class="brand" @click="panel = 'learn'">
-        <span class="brand-icon">S<span>·</span></span
-        ><span>Sentra<small>一句，一点进步</small></span>
+  <div class="shell" :class="{ 'native-host': isNative() }">
+    <nav class="top-actions" aria-label="页面工具">
+      <button
+        data-action="history"
+        :aria-current="panel === 'history' ? 'page' : undefined"
+        :class="{ selected: panel === 'history' }"
+        @click="panel = 'history'"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 5h16v15H4zM8 3v4M16 3v4M8 11h8M8 15h5" />
+        </svg>
+        <span>记录</span>
       </button>
-      <nav aria-label="主导航">
-        <button :class="{ selected: panel === 'history' }" @click="panel = 'history'">
-          学习记录 <span class="count">{{ history.length }}</span></button
-        ><button :class="{ selected: panel === 'settings' }" @click="openSettings">连接设置</button>
-      </nav>
-    </header>
-    <div v-if="notice" class="notice" role="status">
-      {{ notice }}
-      <button v-if="notice.includes('保存失败')" class="text-button" @click="retrySave">
-        重试保存</button
-      ><button aria-label="关闭提示" @click="notice = ''">×</button>
+      <button
+        data-action="settings"
+        :aria-current="panel === 'settings' ? 'page' : undefined"
+        :class="{ selected: panel === 'settings' }"
+        @click="openSettings"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6" /></svg>
+        <span>设置</span>
+      </button>
+    </nav>
+    <div ref="pageScroll" class="page-scroll">
+      <div v-if="notice && panel === 'learn'" class="notice" role="status">
+        {{ notice }}
+        <button v-if="notice.includes('保存失败')" class="text-button" @click="retrySave">
+          重试保存</button
+        ><button aria-label="关闭提示" @click="notice = ''">×</button>
+      </div>
+      <Transition name="page-switch" mode="out-in">
+        <main :key="active" class="workspace">
+          <section class="input-column">
+            <div class="section-label">YOUR DAILY LANGUAGE SPACE</div>
+            <div class="editor">
+              <div class="card-top">
+                <label for="sentence">你的句子</label
+                ><CopyButton :text="tab.text" :disabled="!tab.text" />
+              </div>
+              <textarea
+                id="sentence"
+                ref="sentenceInput"
+                v-model="tab.text"
+                :disabled="tab.busy"
+                maxlength="4000"
+                placeholder="输入想理解或表达的一句话…"
+                enterkeyhint="done"
+                @compositionstart="composing = true"
+                @compositionend="composing = false"
+                @keydown="confirmInput"
+                @input="tab.result = null"
+              />
+              <div class="editor-footer">
+                <span>{{ tab.text.length }} / 4000</span
+                ><button
+                  class="text-button"
+                  :disabled="tab.busy"
+                  @click="
+                    tab.text = '';
+                    tab.result = null;
+                    tab.error = '';
+                  "
+                >
+                  清空
+                </button>
+              </div>
+            </div>
+            <div class="controls">
+              <label v-if="active === 'translate'" class="translation-language"
+                >翻译为
+                <span class="language-select">
+                  <select v-model="translationLanguage" :disabled="tab.busy">
+                    <option v-for="l in languages" :key="l">{{ l }}</option>
+                  </select>
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="m4 6 4 4 4-4" />
+                  </svg> </span></label
+              ><span v-else class="muted">直接分析原句，保留原文语言</span
+              ><button v-if="tab.busy" class="primary stop" @click="tab.controller?.abort()">
+                停止生成</button
+              ><button
+                v-else
+                class="primary"
+                :disabled="!tab.text.trim() || !loaded || !historyWritable"
+                @click="run"
+              >
+                {{ actionLabels[active][tab.result ? 1 : 0] }} <span>↗</span>
+              </button>
+            </div>
+            <div class="quiet-note">
+              <span class="dot"></span
+              >{{ isNative() ? '记录保存在这台设备' : '记录保存在当前浏览器' }}
+              <p>每天一句，让语言慢慢成为你的习惯。</p>
+            </div>
+          </section>
+          <section class="output-column" aria-label="学习结果" aria-live="polite">
+            <div class="card-top output-heading">
+              <span class="section-label">学习笔记</span
+              ><span v-if="tab.busy" class="generating"
+                >● {{ tab.progress ? '正在生成' : '正在连接' }}</span
+              ><CopyButton
+                v-else-if="tab.result"
+                :text="JSON.stringify(tab.result.data, null, 2)"
+                label="复制完整结果"
+              />
+            </div>
+            <div v-if="tab.error" class="error" role="alert">{{ tab.error }}</div>
+            <ResultView
+              v-if="preview && Object.keys(preview).length"
+              :action="active"
+              :data="preview"
+            />
+            <div v-else class="empty">
+              <div class="empty-art">Aa<span>あ</span></div>
+              <h2>{{ tab.busy ? '正在琢磨这句话…' : '好表达，从一句话开始' }}</h2>
+              <p>
+                {{
+                  tab.busy
+                    ? '结果会逐步出现在这里。'
+                    : '写下一个句子，探索它的意思、结构和更多可能。'
+                }}
+              </p>
+              <div class="empty-line"></div>
+            </div>
+          </section>
+        </main>
+      </Transition>
+      <footer>SENTRA <span>把世界，读成自己的语言。</span></footer>
     </div>
-    <main v-if="panel === 'learn'" class="workspace">
-      <section class="input-column">
-        <div class="section-label">YOUR DAILY LANGUAGE SPACE</div>
-        <div class="tabs" role="tablist" aria-label="学习模式">
-          <button
-            v-for="a in actions"
-            :key="a.id"
-            role="tab"
-            :aria-selected="active === a.id"
-            :class="{ active: active === a.id }"
-            @click="active = a.id"
-          >
-            {{ a.label }}
-          </button>
-        </div>
-        <div class="editor">
-          <div class="card-top">
-            <label for="sentence">你的句子</label
-            ><button class="text-button" :disabled="!tab.text" @click="copy(tab.text)">复制</button>
-          </div>
-          <textarea
-            id="sentence"
-            v-model="tab.text"
-            :disabled="tab.busy"
-            maxlength="4000"
-            placeholder="输入想理解或表达的一句话…"
-            @input="tab.result = null"
-          />
-          <div class="editor-footer">
-            <span>{{ tab.text.length }} / 4000</span
-            ><button
-              class="text-button"
-              :disabled="tab.busy"
-              @click="
-                tab.text = '';
-                tab.result = null;
-                tab.error = '';
-              "
-            >
-              清空
-            </button>
+    <nav class="bottom-nav" aria-label="主导航">
+      <button
+        v-for="a in actions"
+        :key="a.id"
+        :data-action="a.id"
+        :aria-current="panel === 'learn' && active === a.id ? 'page' : undefined"
+        :class="{ selected: panel === 'learn' && active === a.id }"
+        @click="
+          active = a.id;
+          panel = 'learn';
+        "
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="navIcons[a.id]" /></svg>
+        <span>{{ a.label }}</span>
+      </button>
+    </nav>
+    <Sheet
+      :open="panel !== 'learn'"
+      :title="sheetPanel === 'history' ? '记录' : '设置'"
+      :save-form="sheetPanel === 'settings' ? 'connection-settings' : undefined"
+      :saving="saving"
+      @close="panel = 'learn'"
+    >
+      <div v-if="notice" class="notice" role="status">
+        {{ notice }}<button aria-label="关闭提示" @click="notice = ''">×</button>
+      </div>
+      <main v-if="sheetPanel === 'history'" key="history" class="page">
+        <div class="page-heading">
+          <div>
+            <span class="section-label">YOUR COLLECTION</span>
+            <h1>学过的每一句，都在这里。</h1>
           </div>
         </div>
-        <div class="controls">
-          <label v-if="active === 'translate'"
-            >翻译为
-            <select v-model="settings.translationLanguage" :disabled="tab.busy">
-              <option v-for="l in languages" :key="l">{{ l }}</option>
-            </select></label
-          ><span v-else class="muted">直接分析原句，保留原文语言</span
-          ><button v-if="tab.busy" class="primary stop" @click="tab.controller?.abort()">
-            停止生成</button
-          ><button
-            v-else
-            class="primary"
-            :disabled="!tab.text.trim() || !loaded || !historyWritable"
-            @click="run"
-          >
-            {{ tab.result ? '重新生成' : '开始学习' }} <span>↗</span>
-          </button>
-        </div>
-        <div class="quiet-note">
-          <span class="dot"></span
-          >{{ isNative() ? '学习记录保存在这台设备' : '学习记录保存在当前浏览器' }}
-          <p>每天一句，让语言慢慢成为你的习惯。</p>
-        </div>
-      </section>
-      <section class="output-column" aria-label="学习结果" aria-live="polite">
-        <div class="card-top output-heading">
-          <span class="section-label">学习笔记</span
-          ><span v-if="tab.busy" class="generating"
-            >● {{ tab.progress ? '正在生成' : '正在连接' }}</span
-          ><button
-            v-else-if="tab.result"
-            class="text-button"
-            @click="copy(JSON.stringify(tab.result.data, null, 2))"
-          >
-            复制完整结果
-          </button>
-        </div>
-        <div v-if="tab.error" class="error" role="alert">{{ tab.error }}</div>
-        <ResultView
-          v-if="preview && Object.keys(preview).length"
-          :action="active"
-          :data="preview"
-          @copy="copy"
+        <input
+          v-model="search"
+          class="search"
+          aria-label="搜索记录"
+          placeholder="搜索句子或学习笔记…"
         />
-        <div v-else class="empty">
-          <div class="empty-art">Aa<span>あ</span></div>
-          <h2>{{ tab.busy ? '正在琢磨这句话…' : '好表达，从一句话开始' }}</h2>
-          <p>
-            {{
-              tab.busy ? '结果会逐步出现在这里。' : '写下一个句子，探索它的意思、结构和更多可能。'
-            }}
-          </p>
-          <div class="empty-line"></div>
+        <div v-if="!filtered.length" class="empty">
+          <h2>{{ search ? '没有找到相关记录' : '你的第一句，值得留下' }}</h2>
+          <p>完成一次学习，结果会自动保存在这里。</p>
         </div>
-      </section>
-    </main>
-    <main v-else-if="panel === 'history'" class="page">
-      <div class="page-heading">
-        <div>
-          <span class="section-label">YOUR COLLECTION</span>
-          <h1>学过的每一句，都在这里。</h1>
-        </div>
-        <button class="text-button" @click="panel = 'learn'">继续学习 ↗</button>
-      </div>
-      <input
-        v-model="search"
-        class="search"
-        aria-label="搜索学习记录"
-        placeholder="搜索句子或学习笔记…"
-      />
-      <div v-if="!filtered.length" class="empty">
-        <h2>{{ search ? '没有找到相关记录' : '你的第一句，值得留下' }}</h2>
-        <p>完成一次学习，结果会自动保存在这里。</p>
-      </div>
-      <article v-for="s in filtered" :key="s.id" class="history-card">
-        <button class="history-open" @click="openSentence(s)">
-          <span class="eyebrow"
-            >{{ actions.find((a) => a.id === s.results[0]?.action)?.label }} ·
-            {{ new Date(s.createdAt).toLocaleDateString() }}</span
-          >
-          <p>{{ s.text }}</p></button
-        ><button class="text-button danger" aria-label="删除记录" @click="removeSentence(s)">
-          删除
-        </button>
-      </article>
-    </main>
-    <main v-else class="page settings">
-      <span class="section-label">MAKE IT YOURS</span>
-      <h1>连接与学习偏好</h1>
-      <p class="muted">连接你选择的模型服务。无需注册 Lingrove 账号。</p>
-      <form @submit.prevent="saveSettings">
-        <fieldset>
-          <legend>模型连接</legend>
-          <label
-            >接口协议<select v-model="draftSettings.protocol">
-              <option value="openAi">OpenAI 兼容</option>
-              <option value="anthropic">Anthropic 兼容</option>
-            </select></label
-          ><label
-            >API Base URL<input
-              v-model="draftSettings.baseUrl"
-              type="url"
-              placeholder="https://api.openai.com/v1"
-              required /></label
-          ><label
-            >模型名称<input
-              v-model="draftSettings.model"
-              placeholder="服务商提供的模型名称"
-              required /></label
-          ><label
-            >API Key（服务商需要时填写）<input
-              v-model="draftSettings.token"
-              type="password"
-              autocomplete="off"
-              placeholder="仅保留在本次页面会话" /></label
-          ><button type="button" class="text-button" @click="clearToken">移除 API Key</button>
-        </fieldset>
-        <fieldset>
-          <legend>学习偏好</legend>
-          <label
-            >解释语言<select v-model="draftSettings.explanationLanguage">
-              <option>简体中文</option>
-              <option>英语</option>
-              <option>日语</option>
-            </select></label
-          ><label
-            >学习水平<select v-model="draftSettings.level">
-              <option>初级</option>
-              <option>中级</option>
-              <option>高级</option>
-            </select></label
-          ><label
-            >默认翻译语言<select v-model="draftSettings.translationLanguage">
-              <option v-for="l in languages" :key="l">{{ l }}</option>
-            </select></label
-          >
-        </fieldset>
-        <p class="muted small">
-          提交的句子将发送到你配置的服务商。浏览器预览需要服务商支持跨域请求。
-        </p>
-        <div class="form-actions">
-          <button type="button" class="text-button" @click="panel = 'learn'">返回</button
-          ><button class="primary" :disabled="saving">
-            {{ saving ? '正在保存…' : '保存设置' }}
+        <article v-for="s in filtered" :key="s.id" class="history-card">
+          <button class="history-open" @click="openSentence(s)">
+            <span class="eyebrow"
+              >{{ actions.find((a) => a.id === s.results[0]?.action)?.label }} ·
+              {{ new Date(s.createdAt).toLocaleDateString() }}</span
+            >
+            <p>{{ s.text }}</p></button
+          ><button class="text-button danger" aria-label="删除记录" @click="removeSentence(s)">
+            删除
           </button>
-        </div>
-      </form>
-    </main>
-    <footer>SENTRA <span>把世界，读成自己的语言。</span></footer>
+        </article>
+      </main>
+      <main v-else key="settings" class="page settings">
+        <span class="section-label">MAKE IT YOURS</span>
+        <h1>学习偏好</h1>
+        <p class="muted">模型服务由 Lingrove 统一提供。请在宿主设置 → 大模型配置中管理。</p>
+        <form id="connection-settings" @submit.prevent="saveSettings">
+          <fieldset>
+            <legend>学习偏好</legend>
+            <label
+              >解释语言<select v-model="draftSettings.explanationLanguage">
+                <option>简体中文</option>
+                <option>英语</option>
+                <option>日语</option>
+              </select></label
+            ><label
+              >学习水平<select v-model="draftSettings.level">
+                <option>初级</option>
+                <option>中级</option>
+                <option>高级</option>
+              </select></label
+            ><label
+              >默认翻译语言<select v-model="draftSettings.translationLanguage">
+                <option v-for="l in languages" :key="l">{{ l }}</option>
+              </select></label
+            >
+          </fieldset>
+          <p class="muted small">提交的句子将发送到宿主配置的服务商。浏览器仅支持界面预览。</p>
+        </form>
+      </main>
+    </Sheet>
   </div>
 </template>

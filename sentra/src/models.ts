@@ -6,19 +6,11 @@ export const actions: { id: Action; label: string; caption: string }[] = [
 ];
 export const languages = ['英语', '日语', '俄语', '希腊语'];
 export interface Settings {
-  protocol: 'openAi' | 'anthropic';
-  baseUrl: string;
-  model: string;
-  token: string;
   translationLanguage: string;
   explanationLanguage: string;
   level: string;
 }
 export const defaults: Settings = {
-  protocol: 'openAi',
-  baseUrl: '',
-  model: '',
-  token: '',
   translationLanguage: '英语',
   explanationLanguage: '简体中文',
   level: '中级',
@@ -40,25 +32,6 @@ export interface Sentence {
   results: Result[];
   learningVersion: number;
 }
-export function endpoint(settings: Settings): string {
-  let url: URL;
-  try {
-    url = new URL(settings.baseUrl.trim());
-  } catch {
-    throw new Error('请填写有效的 HTTPS API 地址');
-  }
-  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash)
-    throw new Error('API 地址必须使用 HTTPS，不能包含账号、查询参数或片段');
-  const base = url.href.replace(/\/+$/, '');
-  if (settings.protocol === 'anthropic') {
-    if (base.endsWith('/chat/completions')) throw new Error('接口地址与协议不匹配');
-    return base.endsWith('/messages')
-      ? base
-      : `${base}${base.endsWith('/v1') ? '' : '/v1'}/messages`;
-  }
-  if (base.endsWith('/messages')) throw new Error('接口地址与协议不匹配');
-  return base.endsWith('/chat/completions') ? base : `${base}/chat/completions`;
-}
 const languageCode = (s: string) =>
   ({
     英语: 'en',
@@ -66,6 +39,8 @@ const languageCode = (s: string) =>
     en: 'en',
     日语: 'ja',
     japanese: 'ja',
+    日本語: 'ja',
+    'ja-jp': 'ja',
     ja: 'ja',
     俄语: 'ru',
     russian: 'ru',
@@ -74,6 +49,9 @@ const languageCode = (s: string) =>
     greek: 'el',
     el: 'el',
   })[s.toLowerCase()] ?? s.toLowerCase();
+export function isSentenceComponent(text: unknown): boolean {
+  return typeof text === 'string' && /\S/u.test(text) && !/^[\p{P}\s]+$/u.test(text);
+}
 export function validateResult(
   action: Action,
   content: string,
@@ -120,11 +98,29 @@ export function validateResult(
       objects('corrections', ['original', 'corrected', 'explanation'], !d.correct);
       if (d.correct && d.corrections.length) throw new Error('语法判断与纠错矛盾');
       objects('structure', ['text', 'part', 'role'], true);
+      d.structure = d.structure.filter((item: { text: string }) => isSentenceComponent(item.text));
+      for (const item of d.structure) str(item, 'translation');
       objects('grammar_points', ['title', 'explanation']);
       for (const point of d.grammar_points) list(point, 'inflections');
     } else {
       str(d, 'naturalness');
       objects('alternatives', ['text', 'style', 'translation', 'explanation'], true);
+    }
+  }
+  const japanese = languageCode(action === 'translate' ? target : d.source_language) === 'ja';
+  if (japanese) {
+    const reading = (item: any, field: string) => {
+      str(item, field);
+      if (/[\p{Script=Han}a-zA-Z0-9]/u.test(item[field]))
+        throw new Error('模型未返回有效的日语假名，请重试');
+    };
+    if (action === 'grammar') {
+      reading(d, 'analysis_reading');
+      for (const item of d.corrections) reading(item, 'corrected_reading');
+      for (const item of d.structure) reading(item, 'reading');
+    } else {
+      for (const item of d[action === 'translate' ? 'translations' : 'alternatives'])
+        reading(item, 'reading');
     }
   }
   return d;

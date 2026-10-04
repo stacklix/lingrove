@@ -12,19 +12,19 @@ export interface HTTPResponse {
 type Bridge = { postMessage(message: unknown): Promise<unknown> };
 declare global {
   interface Window {
-    webkit?: { messageHandlers?: { appocket?: Bridge } };
-    __appocketChunk?: (id: string, chunk: string) => void;
+    webkit?: { messageHandlers?: { lingrove?: Bridge } };
+    __lingroveChunk?: (id: string, chunk: string) => void;
   }
 }
 export function createID(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
-const streams = new Map<string, (chunk: string) => void>();
-if (typeof window !== 'undefined') window.__appocketChunk = (id, chunk) => streams.get(id)?.(chunk);
-export const isNative = () => !!window.webkit?.messageHandlers?.appocket;
-async function invoke<T>(method: string, params: unknown): Promise<T> {
-  const bridge = window.webkit?.messageHandlers?.appocket;
+export const streams = new Map<string, (chunk: string) => void>();
+if (typeof window !== 'undefined') window.__lingroveChunk = (id, chunk) => streams.get(id)?.(chunk);
+export const isNative = () => !!window.webkit?.messageHandlers?.lingrove;
+export async function invoke<T>(method: string, params: unknown): Promise<T> {
+  const bridge = window.webkit?.messageHandlers?.lingrove;
   if (!bridge) throw new Error('原生宿主不可用');
   return (await bridge.postMessage({ version: 1, method, params })) as T;
 }
@@ -119,4 +119,72 @@ export async function copyText(text: string): Promise<void> {
 }
 export async function ready(): Promise<void> {
   if (isNative()) await invoke('runtime.ready', {});
+}
+
+// iOS secrets are stored in the host Keychain, scoped to this module.
+export const secrets = {
+  async get(key: string): Promise<string | null> {
+    return isNative()
+      ? invoke<string | null>('secret.get', { key })
+      : localStorage.getItem(`sentra.secret.${key}`);
+  },
+  async set(key: string, value: string): Promise<void> {
+    if (isNative()) await invoke('secret.set', { key, value });
+    else localStorage.setItem(`sentra.secret.${key}`, value);
+  },
+  async remove(key: string): Promise<void> {
+    if (isNative()) await invoke('secret.remove', { key });
+    else localStorage.removeItem(`sentra.secret.${key}`);
+  },
+};
+
+export { llm } from './llm';
+export type { LLMRequest, LLMResult, LLMOptions } from './llm';
+
+export async function reload(): Promise<void> {
+  if (isNative()) await invoke('runtime.reload', {});
+  else window.location.reload();
+}
+
+export interface HandwritingResult {
+  strokes: { x: number; y: number }[][];
+}
+export const handwriting = {
+  open(options: {
+    prompt: string;
+    reference?: string;
+    tracing?: boolean;
+  }): Promise<HandwritingResult | null> {
+    if (!isNative()) throw new Error('原生手写板需要 Lingrove 1.3.0 或更新版本');
+    return invoke('handwriting.open', options);
+  },
+};
+
+// Browser previews must keep each child app's state separate too.
+export function moduleStorage(moduleID: string) {
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(moduleID)) throw new Error('模块名称无效');
+  return {
+    async get<T>(key: string): Promise<T | null> {
+      const raw = isNative()
+        ? await invoke<string | null>('state.get', { key })
+        : localStorage.getItem(`${moduleID}.${key}`);
+      return raw === null ? null : (JSON.parse(raw) as T);
+    },
+    async set(key: string, value: unknown): Promise<void> {
+      const encoded = JSON.stringify(value);
+      if (isNative()) await invoke('state.set', { key, value: encoded });
+      else localStorage.setItem(`${moduleID}.${key}`, encoded);
+    },
+  };
+}
+
+// Child apps report whether host-level navigation belongs on the current screen.
+export async function setRootPage(isRoot: boolean): Promise<void> {
+  if (isNative()) await invoke('runtime.navigation', { isRoot });
+}
+
+// Read on demand so changes in host settings apply to the next request.
+export async function getAppLanguage(): Promise<string> {
+  if (isNative()) return invoke<string>('runtime.language', {});
+  return navigator.language || 'zh-CN';
 }

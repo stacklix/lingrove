@@ -8,7 +8,7 @@ if (new URL(base).protocol !== 'https:') throw new Error('MODULE_BASE_URL must u
 const names = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));
 const retire = `self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',event=>event.waitUntil((async()=>{await self.registration.unregister();await self.clients.claim();})()));`;
 const modules = [];
-await rm(path.join(root, 'ios/Appocket/Resources/BuiltinModules'), {
+await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
   recursive: true,
   force: true,
 });
@@ -35,7 +35,7 @@ for (const name of names) {
     size: data.length,
     sha256: createHash('sha256').update(data).digest('hex'),
   });
-  const builtin = path.join(root, 'ios/Appocket/Resources/BuiltinModules', manifest.id);
+  const builtin = path.join(root, 'ios/Lingrove/Resources/BuiltinModules', manifest.id);
   await rm(builtin, { recursive: true, force: true });
   await mkdir(path.dirname(builtin), { recursive: true });
   await cp(output, builtin, { recursive: true });

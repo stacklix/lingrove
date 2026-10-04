@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import type { Action } from '../models';
-defineProps<{ action: Action; data: Record<string, any> }>();
-defineEmits<{ copy: [text: string] }>();
+import { computed } from 'vue';
+import { isSentenceComponent, type Action } from '../models';
+import CopyButton from './CopyButton.vue';
+const props = defineProps<{ action: Action; data: Record<string, any> }>();
+// Also filter streamed results and previously saved history.
+const structure = computed(() =>
+  (props.data.structure || []).filter((item: { text?: string }) => isSentenceComponent(item.text)),
+);
 const styleLabels: Record<string, string> = {
   natural: '自然表达',
   conversational: '日常口语',
@@ -14,11 +19,12 @@ const styleLabels: Record<string, string> = {
       <article v-for="(item, index) in data.translations || []" :key="index" class="result-card">
         <div class="card-top">
           <span class="eyebrow">{{ index === 0 ? '01 · 直译' : '02 · 地道表达' }}</span
-          ><button v-if="item.text" class="text-button" @click="$emit('copy', item.text)">
-            复制
-          </button>
+          ><CopyButton v-if="item.text" :text="item.text" />
         </div>
         <p class="translation">{{ item.text }}</p>
+        <p v-if="typeof item.reading === 'string' && item.reading" class="kana-reading" lang="ja">
+          <span>假名</span>{{ item.reading }}
+        </p>
       </article>
       <aside v-if="data.notes?.length" class="note">
         <span class="eyebrow">表达笔记</span>
@@ -26,6 +32,14 @@ const styleLabels: Record<string, string> = {
       </aside>
     </template>
     <template v-else-if="action === 'grammar'">
+      <article
+        v-if="typeof data.analysis_reading === 'string' && data.analysis_reading"
+        class="result-card"
+      >
+        <span class="eyebrow">原句读音</span>
+        <p lang="ja">{{ data.analysis_text }}</p>
+        <p class="kana-reading" lang="ja"><span>假名</span>{{ data.analysis_reading }}</p>
+      </article>
       <article v-if="data.summary" class="result-card">
         <span class="eyebrow">句子结构</span>
         <p>{{ data.summary }}</p>
@@ -35,14 +49,44 @@ const styleLabels: Record<string, string> = {
         <p>
           <del>{{ item.original }}</del> → <strong>{{ item.corrected }}</strong>
         </p>
+        <p
+          v-if="typeof item.corrected_reading === 'string' && item.corrected_reading"
+          class="kana-reading"
+          lang="ja"
+        >
+          <span>假名</span>{{ item.corrected_reading }}
+        </p>
         <p>{{ item.explanation }}</p>
       </article>
-      <div v-if="data.structure?.length" class="structure">
-        <div v-for="(item, i) in data.structure" :key="i">
-          <strong>{{ item.text }}</strong
-          ><small>{{ item.part }}</small
-          ><span>{{ item.role }}</span>
-        </div>
+      <div v-if="structure.length" class="structure">
+        <table class="structure-table">
+          <colgroup>
+            <col class="structure-text" />
+            <col class="structure-part" />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">句子成分</th>
+              <th scope="col">词性</th>
+              <th scope="col">作用说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, i) in structure" :key="i">
+              <th scope="row">
+                <span>{{ item.text }}</span>
+                <span
+                  v-if="typeof item.translation === 'string' && item.translation.trim()"
+                  class="component-translation"
+                  >{{ item.translation }}</span
+                >
+              </th>
+              <td>{{ item.part }}</td>
+              <td>{{ item.role }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <article v-for="(item, i) in data.grammar_points || []" :key="i" class="result-card">
         <h3>{{ item.title }}</h3>
@@ -57,11 +101,12 @@ const styleLabels: Record<string, string> = {
       <article v-for="(item, i) in data.alternatives || []" :key="i" class="result-card">
         <div class="card-top">
           <span class="eyebrow">{{ styleLabels[item.style] || item.style }}</span
-          ><button v-if="item.text" class="text-button" @click="$emit('copy', item.text)">
-            复制
-          </button>
+          ><CopyButton v-if="item.text" :text="item.text" />
         </div>
         <p class="translation">{{ item.text }}</p>
+        <p v-if="typeof item.reading === 'string' && item.reading" class="kana-reading" lang="ja">
+          <span>假名</span>{{ item.reading }}
+        </p>
         <p class="muted">{{ item.translation }}</p>
         <p>{{ item.explanation }}</p>
       </article>
