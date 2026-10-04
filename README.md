@@ -90,7 +90,6 @@ gh-pages/
 └── sentra/
     ├── index.html                # 浏览器可直接访问
     ├── manifest.json
-    ├── sw.js
     └── assets/                   # 与 ZIP 内文件逐字节一致
 ```
 
@@ -171,7 +170,7 @@ const response = await request({
 
 原生历史及偏好保存至 Application Support/Lingrove/State/<模块 ID>，由主框架身份限定命名空间。浏览器历史沿用 `sentra.sentences.v1`；原 Flutter Web 的记录在相同来源下可继续读取，学习偏好可从旧 preferences.v2 恢复。原生不能自动读取 Safari 或旧 PWA 的存储。未完成/格式不合格的流式结果不写历史；损坏历史会停止写入以保护数据。
 
-旧 Flutter 源码和 PWA 构建已由 Vue 替代，原实现可从 Git 历史获取。发布时提供退出旧 service worker 的脚本；浏览器预览不再承诺 PWA 离线缓存，离线使用由原生内置/下载模块提供。
+浏览器版用于网页预览，不注册 Service Worker，也不生成 `sw.js`。离线使用由原生宿主的内置或已下载子应用资源提供。
 
 ## 验证
 

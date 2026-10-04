@@ -12,13 +12,10 @@ https://github.com/alexeiva/badscript
 Unmodified font redistributed under SIL Open Font License 1.1. See BadScript-OFL.txt.
 Used for display, tracing and the scoring reference.
 
-Legacy bundled font (not used by the current UI): Russkopis-Normalny 0.0.1 by MihailJP.
-Based on glyphs by George Douros and Andrey V. Panov.
-https://github.com/MihailJP/Russkopis
-Unmodified font redistributed under X11 License. See Russkopis-LICENSE.txt.
-
-Greek reference: GFS Olga, Greek Font Society.
-https://www.greekfontsociety-gfs.gr/typefaces/20th_21st_century
-Unmodified font redistributed under SIL Open Font License. See GFSOlga-OFL.txt.
+Greek handwriting reference: Playpen Sans, copyright 2023 The Playpen Sans Project Authors.
+https://github.com/google/fonts/tree/main/ofl/playpensans
+https://github.com/TypeTogether/Playpen-Sans
+Unmodified variable font redistributed under SIL Open Font License 1.1. See PlaypenSans-OFL.txt.
+Used at regular weight for display, tracing and the scoring reference.
 
 These are reference styles, not an exhaustive collection of accepted personal handwriting variants.

@@ -61,7 +61,6 @@ jobs:
           set -euo pipefail
           test -s dist/index.html
           test -s dist/catalog.json
-          test -s dist/sw.js
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

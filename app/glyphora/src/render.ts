@@ -4,7 +4,7 @@ const cache = new Map<string, HTMLCanvasElement>();
 export async function loadFonts() {
   const result = await Promise.all([
     document.fonts.load('100px Bad Script', 'д'),
-    document.fonts.load('100px Olga', 'α'),
+    document.fonts.load('100px Playpen Sans', 'α'),
   ]);
   if (result.some((r) => !r.length)) throw new Error('手写范字资源加载失败，请重新加载子应用。');
 }

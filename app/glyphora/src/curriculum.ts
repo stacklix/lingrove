@@ -86,4 +86,4 @@ export const groups = (language: Language): { id: Group; name: string }[] =>
       ];
 export const poolFor = (language: Language, group: Group) =>
   glyphs.filter((g) => g.language === language && (group === 'mixed' || g.group === group));
-export const fontFor = (g: Glyph) => (g.language === 'ru' ? 'Bad Script' : 'Olga');
+export const fontFor = (g: Glyph) => (g.language === 'ru' ? 'Bad Script' : 'Playpen Sans');

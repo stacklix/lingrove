@@ -1087,7 +1087,7 @@ onMounted(async () => {
           </p>
           <p>
             日语笔顺：KanjiVG / Ulrich Apel，CC BY-SA 3.0。俄语：Bad Script / The Bad Script Project
-            Authors，SIL OFL。希腊语：GFS Olga / Greek Font Society，SIL OFL。范字是一种参考写法。
+            Authors，SIL OFL。希腊语：Playpen Sans / The Playpen Sans Project Authors，SIL OFL。范字是一种参考写法。
           </p>
         </details>
         <PronunciationCredits :language="language" />

@@ -6,7 +6,6 @@ const root = path.resolve(import.meta.dirname, '..');
 const base = (process.env.MODULE_BASE_URL || 'https://lingrove.stackli.me').replace(/\/$/, '');
 if (new URL(base).protocol !== 'https:') throw new Error('MODULE_BASE_URL must use HTTPS');
 const names = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));
-const retire = `self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',event=>event.waitUntil((async()=>{await self.registration.unregister();await self.clients.claim();})()));`;
 const modules = [];
 await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
   recursive: true,
@@ -19,7 +18,6 @@ for (const name of names) {
     throw new Error('Invalid module identity');
   if (manifest.id !== name) throw new Error('Module ID must match its directory name');
   const output = path.join(root, 'dist', name);
-  await writeFile(path.join(output, 'sw.js'), retire);
   await writeFile(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
   const archive = `${manifest.id}-${manifest.version}.zip`;
   const zipPath = path.join(root, 'dist/packages', archive);
@@ -45,7 +43,6 @@ await writeFile(path.join(root, 'dist/catalog.json'), JSON.stringify({ modules }
 await rm(path.join(root, 'dist/public-key.txt'), { force: true });
 await rm(path.join(root, 'dist/catalog.preview.json'), { force: true });
 await cp(path.join(root, 'index.html'), path.join(root, 'dist/index.html'));
-await writeFile(path.join(root, 'dist/sw.js'), retire);
 await writeFile(path.join(root, 'dist/.nojekyll'), '');
 // GitHub project domains use their default hostname; custom domains need CNAME.
 const hostname = new URL(base).hostname;
