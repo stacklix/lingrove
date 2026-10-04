@@ -15,7 +15,7 @@ if (
 // Build from a clean directory so retired modules/assets cannot leak into a release.
 await rm(path.join(root, 'dist'), { recursive: true, force: true });
 for (const module of modules) {
-  const result = spawnSync('npm', ['run', 'build', '--workspace', module, '--', '--mode', mode], {
+  const result = spawnSync('npm', ['run', 'build', '--workspace', `app/${module}`, '--', '--mode', mode], {
     cwd: root,
     stdio: 'inherit',
   });

@@ -12,4 +12,6 @@ Lingrove 的第一个 Vue 3 + TypeScript + Vite 子应用。提供翻译（直�
 - 原生学习历史不受代码包更新影响。浏览器历史兼容旧 Sentra 的 `sentra.sentences.v1` 数据。
 - 无远程字体、运行时 CDN 或 Service Worker 依赖，原生离线可查看历史。
 
-详细运行、更新配置、签名发布及测试见仓库根 README。
+源码位于 `app/sentra/`。可从仓库根目录执行 `npm run test -w @lingrove/sentra` 单独运行测试，或执行 `npm run check` 检查全部子应用。
+
+详细运行、更新配置、签名发布及测试见[仓库根 README](../../README.md)。

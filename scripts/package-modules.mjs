@@ -14,7 +14,7 @@ await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
 });
 await mkdir(path.join(root, 'dist/packages'), { recursive: true });
 for (const name of names) {
-  const manifest = JSON.parse(await readFile(path.join(root, name, 'manifest.json'), 'utf8'));
+  const manifest = JSON.parse(await readFile(path.join(root, 'app', name, 'manifest.json'), 'utf8'));
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(manifest.id) || !/^\d+\.\d+\.\d+$/.test(manifest.version))
     throw new Error('Invalid module identity');
   if (manifest.id !== name) throw new Error('Module ID must match its directory name');

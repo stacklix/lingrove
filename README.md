@@ -1,8 +1,17 @@
 # Lingrove
 
-SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。第一个子应用为重写后的 **Sentra**：翻译、语法分析、地道表达、流式结果、学习记录和学习偏好。没有 Lingrove 账号或登录服务。
+SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。目前包含 **Sentra**（翻译、语法分析与地道表达）和 **Glyphora**（日语、俄语、希腊语字母与书写学习）。没有 Lingrove 账号或登录服务。
 
-应用对外名称为 **Lingrove**，子应用仍为 **Sentra**。工程和 Scheme 为 `Lingrove`，Bundle ID 为 `me.stackli.lingrove`，SDK 为 `@lingrove/host-sdk`，本地数据目录为 `Lingrove`；更新域名使用 `lingrove.stackli.me`。
+应用对外名称为 **Lingrove**，子应用源码统一位于 `app/`。工程和 Scheme 为 `Lingrove`，Bundle ID 为 `me.stackli.lingrove`，SDK 为 `@lingrove/host-sdk`，本地数据目录为 `Lingrove`；更新域名使用 `lingrove.stackli.me`。
+
+## 子应用
+
+所有子应用源码位于 `app/`，使用公共宿主 SDK，并各自维护版本、资源和学习记录。
+
+| 子应用 | 主要功能 | 最低宿主版本 | 详细说明 |
+| --- | --- | --- | --- |
+| Sentra | 翻译、原句语法分析、地道表达优化、流式结果与学习历史 | Lingrove 1.2.0 | [Sentra README](app/sentra/README.md) |
+| Glyphora | 日语假名、俄语与希腊语字母学习，书写练习、真人发音、测试与学习进度 | Lingrove 1.3.0 | [Glyphora README](app/glyphora/README.md) |
 
 ## 运行
 
@@ -11,7 +20,9 @@ SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立
 ```sh
 npm ci
 npm run dev                  # 浏览器预览 Sentra
-npm run build                # 构建网页、ZIP、目录及原生内置模块
+npm run dev -w @lingrove/glyphora # 浏览器预览 Glyphora
+npm run build                # Debug 网页、ZIP、目录及 iOS 内置资源
+npm run debug:serve          # 用 dist/ 启动宿主调试服务，默认端口 8000
 open ios/Lingrove.xcodeproj   # 选择 Lingrove scheme，运行 iPhone/iPad 模拟器
 ```
 
@@ -20,7 +31,9 @@ Xcode 项目已提交，不需要安装工程生成器。Xcode 的 Run、Build�
 ## 仓库布局
 
 - `ios/Lingrove/`：原生首页、模块更新、安装器、WebView、网络桥、本地存储。
-- `sentra/`：Vue 子应用，独立版本与 manifest。
+- `app/`：所有子应用源码，每个应用有独立版本与 manifest。
+  - `app/sentra/`：句子分析与语言学习。
+  - `app/glyphora/`：字母书写与发音学习。
 - `packages/host-sdk/`：子应用公共 TypeScript SDK。
 - `scripts/package-modules.mjs`：生成 ZIP、普通 JSON 目录和原生内置资源。
 - `dist/`：可部署到 HTTPS 静态服务器/CDN 的发布产物。
@@ -39,7 +52,7 @@ Xcode 项目已提交，不需要安装工程生成器。Xcode 的 Run、Build�
 
 ## 配置自动更新
 
-App 默认从 `https://lingrove.stackli.me/catalog.json` 检查更新；首次发布前接口不可用时，仍可使用内置 Sentra。更换部署地址时按以下步骤修改。
+App 默认从 `https://lingrove.stackli.me/catalog.json` 检查更新；首次发布前接口不可用时，仍可打开内置子应用（模型请求仍需联网）。更换部署地址时按以下步骤修改。
 
 1. 指定部署域名并构建：
 
@@ -54,7 +67,7 @@ MODULE_BASE_URL=https://your-domain.example npm run build:release
 {"catalogURL":"https://your-domain.example/catalog.json"}
 ```
 
-4. 构建原生 App。以后修改子应用并提升 `sentra/manifest.json` 中的版本，再构建发布，即可在下一次冷启动自动更新。
+4. 构建原生 App。以后修改子应用并提升对应 `app/<子应用ID>/manifest.json` 中的版本，再构建发布，即可在下一次冷启动自动更新。
 
 发布顺序：先上传不可变版本 ZIP，再替换目录。`catalog.json` 建议 `Cache-Control: no-cache`；版本包可设 immutable。GitHub Actions 直接构建并发布普通 JSON 目录，不需要配置发布密钥 Secret。
 
@@ -71,7 +84,9 @@ gh-pages/
 ├── index.html
 ├── catalog.json                  # App 启动拉取的包信息
 ├── packages/
-│   └── sentra-1.0.0.zip           # 每个子应用独立版本包
+│   ├── sentra-1.1.1.zip           # 每个子应用独立版本包
+│   └── glyphora-1.0.0.zip
+├── glyphora/                     # 字母学习网页及资源
 └── sentra/
     ├── index.html                # 浏览器可直接访问
     ├── manifest.json
@@ -82,8 +97,9 @@ gh-pages/
 沿用仓库的域名 `lingrove.stackli.me`，对应地址为：
 
 - App 更新目录：`https://lingrove.stackli.me/catalog.json`
-- Sentra ZIP：`https://lingrove.stackli.me/packages/sentra-1.0.0.zip`（版本变化后文件名相应变化）
+- Sentra ZIP：`https://lingrove.stackli.me/packages/sentra-1.1.1.zip`（版本变化后文件名相应变化）
 - Sentra 网页：`https://lingrove.stackli.me/sentra/`
+- Glyphora 网页：`https://lingrove.stackli.me/glyphora/`
 
 目录为普通 `{ "modules": [...] }` JSON；模块记录包含 `webUrl`、`downloadUrl`、版本、包大小和 SHA-256。原生根据 `downloadUrl` 下载；`webUrl` 供浏览器访问。`npm run verify:release` 验证目录与所有包一一对应、哈希及大小正确、ZIP 与网页目录一致、HTML 引用的资源存在。
 
@@ -91,7 +107,7 @@ gh-pages/
 
 仓库现有 GitHub Pages 配置为 `gh-pages` 分支根目录、自定义域名 `lingrove.stackli.me`。因为 `GITHUB_TOKEN` 推送不会自动触发分支式 Pages 构建，工作流推送后通过 [GitHub Pages 构建 API](https://docs.github.com/en/rest/pages/pages#request-a-github-pages-build) 显式触发构建，并等待本次产物提交构建成功；失败或超时会使工作流失败。无需切换 Pages 发布源，也不会修改 DNS 设置。
 
-新增子应用时，在根 `package.json` 的 workspaces 和 `modules.json` 中加入目录名，提供该子应用的 `build` 命令、`manifest.json`，并构建到 `dist/<目录名>/`；manifest 的 `id` 与目录名保持一致。统一构建脚本会依次构建清单中的所有子应用并生成相应 ZIP、网页目录和原生内置资源。
+新增子应用时，在 `app/<子应用ID>/` 下创建项目；根 `package.json` 已通过 `app/*` 自动识别工作区。在 `modules.json` 中加入子应用 ID（不带 `app/` 前缀），提供 `package.json` 中的 `build` 命令和 `manifest.json`，并将 Vite 的 `outDir` 设置为 `../../dist/<子应用ID>`；manifest 的 `id` 与子目录名保持一致。添加工作区后运行 `npm install` 更新锁文件。统一构建脚本会依次构建清单中的所有子应用并生成相应 ZIP、网页目录和原生内置资源。
 
 ## 更新行为
 
@@ -106,7 +122,7 @@ gh-pages/
 
 ## 宿主大模型服务
 
-从 Lingrove 1.2.0 起，在原生首页的「应用设置 → 大模型配置」中统一设置接口协议（OpenAI / Anthropic 兼容）、HTTPS Base URL、模型名称和可选 API Key。所有子应用共用此配置，修改后下一次请求生效；进行中的请求继续使用启动时的配置。
+从 Lingrove 1.2.0 起，在原生首页的「应用设置 → 大模型配置」中统一设置接口协议（OpenAI / Anthropic 兼容）、HTTPS Base URL、模型名称、可选 API Key 和推理强度。推理强度由服务商支持情况决定，OpenAI 兼容协议按配置发送 `reasoning_effort`，默认选项不发送该字段。所有子应用共用此配置，修改后下一次请求生效；进行中的请求继续使用启动时的配置。
 
 完整配置保存在宿主独立 Keychain 项中（仅本机、解锁后可访问），不会通过桥接返回 API Key。宿主负责选定请求地址、构造协议与鉴权头、发送请求和流式传输；子应用无需配置模型域名授权。通用 HTTP 桥仍遵守子应用各自的域名权限，不能获取宿主凭据。
 
@@ -160,7 +176,7 @@ const response = await request({
 ## 验证
 
 ```sh
-npm run check                 # TypeScript、前端测试、生产构建
+npm run check                 # TypeScript、前端测试、Debug 构建及产物校验
 scripts/test-native.sh        # Swift 核心：目录校验、安装、版本、域名、回滚、损坏包
 xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
   -sdk iphonesimulator -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
@@ -188,20 +204,13 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 ### 调试模式与服务器资源
 
-默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的默认构建及 Archive 使用 Debug；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，保留服务器地址；通过“完成”保存，通过“取消”放弃修改。Release 构建不提供服务器加载能力。
+默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的默认构建及 Archive 使用 Debug；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；通过“完成”保存，通过“取消”放弃修改。Release 构建不提供服务器加载能力。
 
-1. 执行 `npm run build`，然后 `npm run debug:serve`（默认端口 8000，可用 `npm run debug:serve -- --port 8080` 修改）。
-2. 在宿主“设置 → 调试模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，点击右上角“完成”保存并刷新全部子应用；左上角“取消”会放弃本次地址修改。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
+1. 执行 `npm run build`，然后 `npm run debug:serve`（默认端口 8000，可用 `npm run debug:serve -- --port 8080` 修改）。启动时会打印可用的局域网 IP 地址，按 Ctrl+C 可正常退出。
+2. 在宿主“设置 → 调试模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，先点击“测试连接”检查连通性，再点击右上角“完成”保存；启用调试模式后使用服务器资源；左上角“取消”会放弃本次地址修改。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
 3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。每个子应用直接请求 `<根地址>/<子应用ID>/index.html` 及其 JS/CSS（例如 `/sentra/index.html`），不下载或解压 ZIP。新增子应用并运行 `npm run build` 后，同一个服务地址即可访问，无需为每个子应用单独启动服务。
 4. 修改源码后重新运行 `npm run build`，返回宿主点击设置旁的“重新加载子应用”，刷新全部已安装子应用（包括尚未打开的子应用）。子应用页面 Home 按钮右侧也提供原生刷新按钮，用于刷新当前子应用；Debug 模式下会显示刷新成功或失败的提示。
 
 调试服务禁用 HTTP 缓存且不压缩响应；每次重载会重建 WebView 并取消旧请求，未保存的页面状态会清空，已保存数据保留。服务器地址会持久保存；清空并保存即可恢复本地资源。调试失败时可在错误页重新加载。Debug 支持局域网 HTTP 和 Safari Web Inspector。
 
 正式发布请使用 `npm run build:release`（压缩资源）及 `xcodebuild ... -configuration Release`，或在 Xcode 将 Archive 的 Build Configuration 改为 Release。原生 Release 构建阶段会自动使用压缩的正式资源，并忽略此前保存的调试地址。
-
-
-### Glyphora · 字母学习
-
-新增 Glyphora 子应用，使用森林绿主题及手写 g 标志。支持 92 个日语基础假名、66 个俄语大小写字母和 49 个希腊语字形，提供临写、描摹、日语笔顺演示、10 题交错测试与本地记录。
-
-需要 Lingrove 1.3.0 宿主。新版 iOS 宿主内嵌 PencilKit，浏览器和旧宿主使用页内 Canvas，无需弹框；学习、测试、字母三个 Tab 分别提供自动续学、成绩记录和笔顺详情；`npm run debug:serve` 同时提供 `/sentra/` 与 `/glyphora/`。评分为本地字形相似度练习反馈，尚不包含笔顺评分或经真实手写样本校准的识别置信度。详见 [Glyphora 开发说明](glyphora/README.md)。

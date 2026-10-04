@@ -1,7 +1,7 @@
 from pathlib import Path
 import json,sys,zipfile
 root=Path(sys.argv[1]);root.mkdir(parents=True,exist_ok=True)
-base=json.loads(Path('sentra/manifest.json').read_text())
+base=json.loads(Path('app/sentra/manifest.json').read_text())
 # Keep upgrade scenarios independent of the shipping module version.
 base['version']='1.0.0'
 for name,version in [('valid','1.1.0'),('newer','1.2.0')]:

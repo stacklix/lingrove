@@ -3,17 +3,16 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "sentra",
-    "glyphora",
+    "app/*",
     "packages/host-sdk"
   ],
   "scripts": {
-    "dev": "npm run dev -w sentra",
-    "typecheck": "npm run typecheck -w sentra && npm run typecheck -w glyphora",
-    "test": "npm run test -w sentra && npm run test -w glyphora",
+    "dev": "npm run dev -w @lingrove/sentra",
+    "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora",
+    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora",
     "build": "node scripts/build-modules.mjs",
     "check": "npm run typecheck && npm test && npm run build && npm run verify:release",
-    "format": "prettier --write sentra/src sentra/tests packages/host-sdk/src scripts/package-modules.mjs",
+    "format": "prettier --write app/sentra/src app/sentra/tests packages/host-sdk/src scripts/package-modules.mjs",
     "verify:release": "python3 scripts/verify-release.py",
     "build:release": "node scripts/build-modules.mjs --release",
     "debug:serve": "python3 scripts/serve-debug.py"

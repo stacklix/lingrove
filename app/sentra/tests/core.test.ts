@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { defaults, validateResult } from '../src/models';
 import { analyze } from '../src/api';
-import { SSEParser } from '../../packages/host-sdk/src/llm';
+import { SSEParser } from '../../../packages/host-sdk/src/llm';
 import { partialResult } from '../src/partial';
 import { getAppLanguage, request, storage } from '@lingrove/host-sdk';
 const valid = {

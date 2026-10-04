@@ -5,10 +5,10 @@ Lingrove 的离线字母学习子应用，结合字形认知、书写练习与�
 - 日语：46 个平假名、46 个片假名，KanjiVG 笔顺动画。
 - 俄语：33 个字母的大小写，印刷体与 Bad Script 手写范字对照。
 - 希腊语：24 个字母大小写及词尾 ς，GFS Olga 参考字形。
-- 底部三个 Tab：学习、测试、字母；顶部仅保留语言切换。
-- 学习：开始/继续学习打开进度面板，展示已学与未学字母；按观察→描摹→独立书写推进。每种语言及字母组独立保存当前位置、步骤和未提交笔迹，单字复习不改变顺序学习位置。
+- 底部三个 Tab：学习、测试、字母；标题栏居中显示页面标题。
+- 学习：主页提供继续学习和查看进度入口，进度卡片用样式区分已学与未学。进入学习页后可切换临摹/测试、日语平片假名或俄语/希腊语大小写。当前组每种写法的独立书写测试均达到 80 分后，“下一个”才会启用，临摹不计入。评分后锁定画板，点击“再写一次”或切换字形/模式可继续书写。自动保存当前位置与笔迹。
 - 测试：默认已学范围，也可选全部字母；每轮 10 题，5 道书写与 5 道四选一交替，少于 10 个目标时会明确提示重复抽题。干扰项不泄露其他后续目标。每种语言保留一轮未完成测试，切换 Tab/语言或重启后继续。完成后保存总分、分项成绩与作答回顾。
-- 字母：完整字母表，俄语并排显示手写体和印刷体。日语使用 KanjiVG 逐笔动画（播放/暂停/重播/逐笔）；俄语、希腊语提供逐步书写方向说明，不声称是统一强制笔顺，也不将字体轮廓伪装为动画轨迹。
+- 字母：紧凑的五列字母表，不显示已学标记；日语采用通常的五十音排列，希腊语大小写并排显示。点击卡片打开书写说明，图标按钮播放发音。俄语并排显示手写体和印刷体。日语使用 KanjiVG 逐笔动画（播放/暂停/重播/逐笔）；俄语、希腊语提供逐步书写方向说明，不声称是统一强制笔顺，也不将字体轮廓伪装为动画轨迹。
 - 记录：本机保存最近 500 次学习作答与 50 轮测试；描摹独立记录，不计入独立书写数量。
 
 ## 手写
@@ -28,8 +28,8 @@ Lingrove 的离线字母学习子应用，结合字形认知、书写练习与�
 ## 开发与验证
 
 ```sh
-npm run dev -w glyphora
-npm run test -w glyphora
+npm run dev -w @lingrove/glyphora
+npm run test -w @lingrove/glyphora
 npm run check
 npm run debug:serve
 ```
@@ -47,3 +47,15 @@ Logo 为此前确认的绿色 Glyphora 图稿，原图保留在 `public/logo.png
 ## 笔顺说明参考
 
 俄语和希腊语说明是本项目编写的参考动作分解，范字保留字体自身风格，并非临摹字体轮廓。可对照 [Middlebury 俄语手写指导](https://www.middlebury.edu/institute/sites/default/files/2021-01/Russian-handwriting-and-pronounciation-guide.pdf) 与 [Harry Foundalis 希腊语手写说明](https://foundalis.com/lan/hw/grkhandw.htm) 查看不同写法。上述资料的图片未复制到应用中。
+
+## 发音资源
+
+103 个真人读音覆盖全部 207 个字形，同一字母的两种写法共用录音。日语使用 Tofugu，俄语和希腊语使用 Wikimedia Commons 来源；来源与许可见 [音频说明](public/audio/README.md)。
+
+- `audio-sources/`：当前生成流程使用的原始 MP3，日语位于 `tofugu/`，已清理旧日语录音。
+- `src/pronunciation-samples.json`：字形、读音与裁剪位置配置。
+- `src/pronunciation-sources.json`：来源、作者和许可记录。
+- `public/audio/`：生成的 WAV 与来源说明。
+- `src/pronunciation-audio.json`：实际播放使用的嵌入音频，支持宿主离线加载。
+
+从仓库根目录执行 `python3 scripts/generate-pronunciation-samples.py --recordings-only` 重新生成，然后执行 `npm run build` 同步网页与 iOS 内置资源。转换需要 macOS 的 `afconvert`。

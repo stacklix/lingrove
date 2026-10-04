@@ -12,8 +12,8 @@ root = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--recordings-only', action='store_true', help='Keep existing synthesized WAV files')
 args = parser.parse_args()
-samples = json.loads((root / 'glyphora/src/pronunciation-samples.json').read_text())
-output = root / 'glyphora/public/audio'
+samples = json.loads((root / 'app/glyphora/src/pronunciation-samples.json').read_text())
+output = root / 'app/glyphora/public/audio'
 output.mkdir(parents=True, exist_ok=True)
 with tempfile.TemporaryDirectory(prefix='glyphora-speech-') as temporary:
     for sample in samples:
@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix='glyphora-speech-') as temporary:
             continue
         wav = Path(temporary) / (sample['id'] + '.wav')
         if 'recording' in sample:
-            raw = root / 'glyphora/audio-sources' / sample['recording']
+            raw = root / 'app/glyphora/audio-sources' / sample['recording']
         else:
             raw = Path(temporary) / (sample['id'] + '.aiff')
             subprocess.run(['say', '-v', sample['voice'], '-r', str(sample['rate']), '-o', str(raw), sample['text']], check=True)
@@ -47,5 +47,5 @@ with tempfile.TemporaryDirectory(prefix='glyphora-speech-') as temporary:
 
 encoded = {sample['id']: 'data:audio/wav;base64,' + base64.b64encode(
     (output / (sample['id'] + '.wav')).read_bytes()).decode('ascii') for sample in samples}
-(root / 'glyphora/src/pronunciation-audio.json').write_text(json.dumps(encoded, indent=2) + '\n')
-(output / 'SOURCES.json').write_bytes((root / 'glyphora/src/pronunciation-sources.json').read_bytes())
+(root / 'app/glyphora/src/pronunciation-audio.json').write_text(json.dumps(encoded, indent=2) + '\n')
+(output / 'SOURCES.json').write_bytes((root / 'app/glyphora/src/pronunciation-sources.json').read_bytes())

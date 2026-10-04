@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
     minify: mode === 'production',
     sourcemap: mode !== 'production',
     target: 'safari16',
-    outDir: '../dist/sentra',
+    outDir: '../../dist/glyphora',
     emptyOutDir: true,
   },
   test: { environment: 'jsdom', setupFiles: ['./tests/setup.ts'] },
