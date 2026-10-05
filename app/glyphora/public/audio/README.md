@@ -22,4 +22,4 @@
 
 macOS 上运行 `python3 scripts/generate-pronunciation-samples.py --recordings-only`，从本地来源文件重新转换、按配置裁剪，并更新 `app/glyphora/src/pronunciation-audio.json`。不需要联网；音频解码服务可能需要沙箱外运行。
 
-WAV 与嵌入数据同时离线打包，避免依赖 iOS 自定义地址加载媒体。生成器检查时长和非静音数据；这不能替代发音校对。课程覆盖、字形映射、来源文件和嵌入数据由测试检查。
+生成的 WAV 保存在非发布目录 `app/glyphora/audio-generated/`，用于维护和校验。运行时仅打包嵌入数据，避免依赖 iOS 自定义地址加载媒体；来源与许可说明仍随应用发布。生成器检查时长和非静音数据；这不能替代发音校对。课程覆盖、字形映射、来源文件和嵌入数据由测试检查。

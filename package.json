@@ -8,14 +8,15 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @lingrove/sentra",
-    "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora",
-    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora",
+    "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora && npm run typecheck -w @lingrove/kotoba",
+    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora && npm run test -w @lingrove/kotoba",
     "build": "node scripts/build-modules.mjs",
     "check": "npm run typecheck && npm test && npm run build && npm run verify:release",
     "format": "prettier --write app/sentra/src app/sentra/tests packages/host-sdk/src scripts/package-modules.mjs",
     "verify:release": "python3 scripts/verify-release.py",
     "build:release": "node scripts/build-modules.mjs --release",
-    "debug:serve": "python3 scripts/serve-debug.py"
+    "debug:serve": "python3 scripts/serve-debug.py",
+    "ios:install": "node scripts/install-ios.mjs"
   },
   "devDependencies": {
     "prettier": "^3.9.7"

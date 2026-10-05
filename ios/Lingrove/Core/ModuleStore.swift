@@ -110,6 +110,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     }
     func checkForUpdates() async {
         guard !checking, registryReadable else { return }; checking = true; defer { checking = false }
+        statuses.removeAll()
         guard !config.catalogURL.isEmpty, let url = URL(string: config.catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
             let catalog = try JSONDecoder().decode(Catalog.self, from: await fetch(url, limit: 1024 * 1024))

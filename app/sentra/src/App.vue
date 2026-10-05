@@ -442,7 +442,6 @@ async function removeSentence(s: Sentence) {
       <main v-else key="settings" class="page settings">
         <span class="section-label">MAKE IT YOURS</span>
         <h1>学习偏好</h1>
-        <p class="muted">模型服务由 Lingrove 统一提供。请在宿主设置 → 大模型配置中管理。</p>
         <form id="connection-settings" @submit.prevent="saveSettings">
           <fieldset>
             <legend>学习偏好</legend>
@@ -464,7 +463,6 @@ async function removeSentence(s: Sentence) {
               </select></label
             >
           </fieldset>
-          <p class="muted small">提交的句子将发送到宿主配置的服务商。浏览器仅支持界面预览。</p>
         </form>
       </main>
     </Sheet>

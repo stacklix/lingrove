@@ -114,18 +114,27 @@ enum AppLanguage {
         load()
     }
 
-    private func load() {
-        let remote = DebugServer.entryURL(for: module)
+    private func load(usingLocalFallback: Bool = false) {
+        let remote = usingLocalFallback ? nil : DebugServer.entryURL(for: module)
         let loadGeneration = generation
         runtime = Runtime(module: module, directory: directory,
                           onReady: { [weak self] in
                               guard let self, self.generation == loadGeneration else { return }
                               self.isLoading = false
-                              self.finishReload(remote == nil ? "本地资源重新加载成功" : "服务器资源刷新成功")
+                              self.finishReload(usingLocalFallback ? "服务器不可用，已加载本地资源" : (remote == nil ? "本地资源重新加载成功" : "服务器资源刷新成功"))
                               if remote == nil { self.onReady() }
                           },
                           onFailure: { [weak self] message in
                               guard let self, self.generation == loadGeneration else { return }
+                              if remote != nil {
+                                  self.close()
+                                  self.isLoading = true
+                                  self.isRootPage = true
+                                  self.offset = nil
+                                  self.generation = UUID()
+                                  self.load(usingLocalFallback: true)
+                                  return
+                              }
                               self.failure = message
                               self.isLoading = false
                               self.finishReload((remote == nil ? "本地资源重新加载失败：" : "服务器资源刷新失败：") + message)
@@ -384,7 +393,6 @@ struct ModuleWebView: UIViewRepresentable {
     weak var webView: WKWebView?
     private var networkTasks: [String: Task<Any, Error>] = [:]
     private var watchdog: Task<Void, Never>?
-    private var handwriting: HandwritingController?
     private var inlineHandwriting: InlineHandwriting?
     private let debugEntryURL: URL?
     private let onReload: () -> Void
@@ -393,6 +401,7 @@ struct ModuleWebView: UIViewRepresentable {
     private var closed = false
     private let stateRoot: URL
     private var extraOrigins: [String] = []
+    private let networkDefaults: UserDefaults
     private let llmConfiguration: () throws -> LLMConfiguration
     private let injectedSession: URLSession?
     private lazy var session: URLSession = {
@@ -402,22 +411,23 @@ struct ModuleWebView: UIViewRepresentable {
         config.httpCookieStorage = nil; config.httpShouldSetCookies = false; config.urlCache = nil
         return URLSession(configuration: config, delegate: NoRedirect(), delegateQueue: nil)
     }()
-    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, onStartupFailure: @escaping () -> Void = {}, debugEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onNavigation: @escaping (Bool) -> Void = { _ in }) {
+    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, onStartupFailure: @escaping () -> Void = {}, debugEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onNavigation: @escaping (Bool) -> Void = { _ in }) {
         self.debugEntryURL = DebugServer.enabled ? debugEntryURL : nil
         self.onReload = onReload
         self.onNavigation = onNavigation
         self.onStartupFailure = onStartupFailure
         self.injectedSession = networkSession
+        self.networkDefaults = networkDefaults
         self.llmConfiguration = llmConfiguration
         self.module = module; self.directory = directory; self.onReady = onReady; self.onFailure = onFailure
         stateRoot = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lingrove/State/\(module.id)")
         super.init()
-        extraOrigins = UserDefaults.standard.stringArray(forKey: "origins.\(module.id)") ?? []
+        extraOrigins = networkDefaults.stringArray(forKey: "origins.\(module.id)") ?? []
     }
     func startWatchdog() {
         watchdog = Task { try? await Task.sleep(for: .seconds(20)); guard !Task.isCancelled, !ready, !closed else { return }; fail(debugEntryURL == nil ? "页面启动超时；如果是下载版本，已尝试回退。" : "调试页面启动超时，请检查服务器地址、资源和宿主桥接初始化。") }
     }
-    func close() { closed = true; inlineHandwriting?.detach(); inlineHandwriting = nil; handwriting?.finish(NSNull()); handwriting = nil; watchdog?.cancel(); for task in networkTasks.values { task.cancel() }; networkTasks.removeAll(); session.invalidateAndCancel() }
+    func close() { closed = true; inlineHandwriting?.detach(); inlineHandwriting = nil; watchdog?.cancel(); for task in networkTasks.values { task.cancel() }; networkTasks.removeAll(); session.invalidateAndCancel() }
     private func fail(_ reason: String, startupFailure: Bool = true) {
         guard !closed else { return }
         close()
@@ -431,6 +441,16 @@ struct ModuleWebView: UIViewRepresentable {
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { fail("页面进程已退出，请返回后重试。", startupFailure: false) }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { fail(error.localizedDescription) }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { fail(error.localizedDescription) }
+    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        if debugEntryURL != nil, navigationResponse.isForMainFrame,
+           let response = navigationResponse.response as? HTTPURLResponse,
+           !(200..<300).contains(response.statusCode) {
+            decisionHandler(.cancel)
+            fail("调试服务器返回 HTTP \(response.statusCode)")
+            return
+        }
+        decisionHandler(.allow)
+    }
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         let url = navigationAction.request.url
         decisionHandler(url.map { accepts($0) } == true ? .allow : .cancel)
@@ -483,7 +503,7 @@ struct ModuleWebView: UIViewRepresentable {
         guard status == errSecSuccess else { throw ModuleError.invalid("安全凭据存储不可用（\(status)）") }
     }
     private func handle(_ method: String, _ params: [String: Any]) async throws -> Any {
-        extraOrigins = UserDefaults.standard.stringArray(forKey: "origins.\(module.id)") ?? []
+        extraOrigins = networkDefaults.stringArray(forKey: "origins.\(module.id)") ?? []
         switch method {
         case "secret.get":
             var query = try secretQuery(params)
@@ -559,26 +579,6 @@ struct ModuleWebView: UIViewRepresentable {
             }
             if action == "clear" || action == "undo" { view.command(action) }
             return true
-        case "handwriting.open":
-            guard handwriting == nil, let webView, webView.window != nil,
-                  let prompt = params["prompt"] as? String, !prompt.isEmpty, prompt.count <= 32,
-                  let controller = webView.window?.rootViewController else { throw ModuleError.invalid("当前无法打开手写板") }
-            var reference: UIImage?
-            if let encoded = params["reference"] as? String {
-                guard encoded.hasPrefix("data:image/png;base64,"), encoded.utf8.count < 1024 * 1024,
-                      let data = Data(base64Encoded: String(encoded.dropFirst(22))),
-                      let image = UIImage(data: data), image.size.width <= 512, image.size.height <= 512 else { throw ModuleError.invalid("范字图片无效") }
-                reference = image
-            }
-            var presenter = controller
-            while let presented = presenter.presentedViewController { presenter = presented }
-            return await withCheckedContinuation { continuation in
-                let drawing = HandwritingController(prompt: prompt, reference: reference, tracing: params["tracing"] as? Bool ?? false) { [weak self] result in
-                    self?.handwriting = nil
-                    continuation.resume(returning: result)
-                }
-                handwriting = drawing; presenter.present(drawing, animated: true)
-            }
         case "runtime.ready": ready = true; watchdog?.cancel(); webView?.scrollView.pinchGestureRecognizer?.isEnabled = false; onReady(); return true
         case "state.get":
             guard let key = params["key"] as? String else { throw ModuleError.invalid("缺少存储键") }
@@ -603,7 +603,7 @@ struct ModuleWebView: UIViewRepresentable {
                 presenter.present(alert, animated: true)
             }
             guard allowed, !closed else { throw ModuleError.invalid("未授权此域名") }
-            extraOrigins.append(origin); UserDefaults.standard.set(extraOrigins, forKey: "origins.\(module.id)"); return true
+            extraOrigins.append(origin); networkDefaults.set(extraOrigins, forKey: "origins.\(module.id)"); return true
         case "llm.status":
             let config = try llmConfiguration()
             return ["configured": (try? config.validate()) != nil, "model": config.model]
@@ -632,7 +632,8 @@ struct ModuleWebView: UIViewRepresentable {
         }
     }
     private func request(_ params: [String: Any], id: String) async throws -> Any {
-        guard let raw = params["url"] as? String, let url = URL(string: raw), NetworkPolicy.allows(url, origins: module.allowedOrigins + extraOrigins) else { throw ModuleError.invalid("请求域名未授权，请在连接设置中保存此地址") }
+        guard let raw = params["url"] as? String, let url = URL(string: raw) else { throw ModuleError.invalid("请求地址无效") }
+        guard NetworkPolicy.allows(url, origins: module.allowedOrigins + extraOrigins) else { throw ModuleError.invalid("请求域名未授权，请在连接设置中保存此地址") }
         let method = (params["method"] as? String ?? "GET").uppercased()
         guard ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"].contains(method) else { throw ModuleError.invalid("不支持的 HTTP 方法") }
         var request = URLRequest(url: url); request.httpMethod = method

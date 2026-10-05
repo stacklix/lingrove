@@ -300,16 +300,17 @@ const active = computed(() =>
 const question = computed(() => round.value[questionIndex.value]);
 const languageName = computed(() => languages.find((l) => l.id === language.value)!.name);
 const passedStudy = computed(
-  () => new Set(history.value.practices
-    .filter((practice) => !practice.tracing && practice.score >= 80)
-    .map((practice) => practice.id)),
+  () =>
+    new Set(
+      history.value.practices
+        .filter((practice) => !practice.tracing && practice.score >= 80)
+        .map((practice) => practice.id),
+    ),
 );
-const canAdvanceStudy = computed(() => pair(active.value).every((g) => passedStudy.value.has(g.id)));
+const canAdvanceStudy = computed(() =>
+  pair(active.value).every((g) => passedStudy.value.has(g.id)),
+);
 const stats = computed(() => summarize(answers.value));
-const practices = computed(() => history.value.practices.filter((p) => !p.tracing));
-const mastered = computed(
-  () => new Set(practices.value.filter((p) => p.correct).map((p) => p.id)).size,
-);
 const reviewIDs = computed(() => {
   const outcomes = new Map<string, boolean>();
   const attempts = [
@@ -827,7 +828,7 @@ onMounted(async () => {
                   @click="detail = g"
                   :aria-label="`查看 ${g.name} 的书写说明`"
                 >
-                  <span v-if="language === 'ru'" class="print-small">
+                  <span v-if="language !== 'ja'" class="print-small">
                     {{
                       pair(g)
                         .map((item) => item.text)
@@ -947,7 +948,6 @@ onMounted(async () => {
                   :compact-tools="page === 'learn'"
                   :inline-actions="page === 'learn'"
                   :tracing="page === 'learn' && tracing"
-                  :show-reference="page === 'learn' && tracing"
                   :initial-strokes="currentInk"
                   :initial-drawing="currentDrawing"
                   :disabled="busy || !!detail || !!feedback"
@@ -1087,7 +1087,8 @@ onMounted(async () => {
           </p>
           <p>
             日语笔顺：KanjiVG / Ulrich Apel，CC BY-SA 3.0。俄语：Bad Script / The Bad Script Project
-            Authors，SIL OFL。希腊语：Playpen Sans / The Playpen Sans Project Authors，SIL OFL。范字是一种参考写法。
+            Authors，SIL OFL。希腊语：Playpen Sans / The Playpen Sans Project Authors，SIL
+            OFL。范字是一种参考写法。
           </p>
         </details>
         <PronunciationCredits :language="language" />
@@ -1178,20 +1179,23 @@ onMounted(async () => {
           </button></template
         >
         <template v-else-if="detail">
-          <div
-            v-if="detailCases.length > 1"
-            class="segments"
-            :aria-label="detail.language === 'ja' ? '书写说明假名' : '书写说明大小写'"
-          >
-            <button
-              v-for="g in detailCases"
-              :key="g.id"
-              :class="{ active: detail.id === g.id }"
-              :aria-pressed="detail.id === g.id"
-              @click="detail = g"
+          <div class="writing-sheet-toolbar">
+            <div
+              v-if="detailCases.length > 1"
+              class="segments"
+              :aria-label="detail.language === 'ja' ? '书写说明假名' : '书写说明大小写'"
             >
-              {{ variantLabel(g) }} {{ g.text }}
-            </button>
+              <button
+                v-for="g in detailCases"
+                :key="g.id"
+                :class="{ active: detail.id === g.id }"
+                :aria-pressed="detail.id === g.id"
+                @click="detail = g"
+              >
+                {{ variantLabel(g) }} {{ g.text }}
+              </button>
+            </div>
+            <PronunciationButton :key="detail.id" :glyph="detail" />
           </div>
           <StrokeOrder :key="detail.id" :glyph="detail" :autoplay="page === 'learn'" /><button
             v-if="page !== 'learn'"

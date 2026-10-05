@@ -343,7 +343,8 @@ it('studies Greek lowercase and uppercase together with a practice case selector
   const w = mountApp();
   await flushPromises();
   expect(w.find('.segments').exists()).toBe(false);
-  expect(w.findAll('.study-card .handwritten')).toHaveLength(2);
+  expect(w.findAll('.study-card [aria-label^="手写范字"]').map((g) => g.attributes('aria-label')))
+    .toEqual(['手写范字 Α', '手写范字 α']);
   await button(w, '继续学习').trigger('click');
   expect(w.get('.print-glyph').text()).toBe('α');
   expect(w.find('[aria-label="书写大小写"]').exists()).toBe(true);

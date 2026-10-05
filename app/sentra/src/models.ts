@@ -1,8 +1,8 @@
 export type Action = 'translate' | 'grammar' | 'improve';
-export const actions: { id: Action; label: string; caption: string }[] = [
-  { id: 'translate', label: '翻译', caption: '让意思准确抵达' },
-  { id: 'grammar', label: '语法', caption: '读懂句子的结构' },
-  { id: 'improve', label: '更地道', caption: '像母语者一样表达' },
+export const actions: { id: Action; label: string }[] = [
+  { id: 'translate', label: '翻译' },
+  { id: 'grammar', label: '语法' },
+  { id: 'improve', label: '更地道' },
 ];
 export const languages = ['英语', '日语', '俄语', '希腊语'];
 export interface Settings {
@@ -110,6 +110,16 @@ export function validateResult(
   const japanese = languageCode(action === 'translate' ? target : d.source_language) === 'ja';
   if (japanese) {
     const reading = (item: any, field: string) => {
+      // Grammar readings supplement the analysis; omissions must not discard it.
+      if (
+        action === 'grammar' &&
+        (item[field] == null ||
+          item[field] === '' ||
+          (typeof item[field] === 'string' && !item[field].trim()))
+      ) {
+        delete item[field];
+        return;
+      }
       str(item, field);
       if (/[\p{Script=Han}a-zA-Z0-9]/u.test(item[field]))
         throw new Error('模型未返回有效的日语假名，请重试');

@@ -28,6 +28,9 @@ for module in catalog['modules']:
     assert len(data) == module['size'], f'{name}: size mismatch'
     assert hashlib.sha256(data).hexdigest() == module['sha256'], f'{name}: hash mismatch'
     files = {file.relative_to(directory).as_posix(): file.read_bytes() for file in directory.rglob('*') if file.is_file()}
+    if name == 'glyphora':
+        assert not any(file.endswith('.wav') for file in files), 'glyphora: standalone WAV duplicates embedded audio'
+        assert 'audio/SOURCES.json' in files and 'audio/README.md' in files, 'glyphora: missing audio attribution'
     with zipfile.ZipFile(package) as archive:
         assert archive.testzip() is None, f'{name}: corrupt ZIP'
         assert len(archive.namelist()) == len(set(archive.namelist()))

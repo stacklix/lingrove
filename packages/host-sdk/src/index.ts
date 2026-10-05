@@ -146,20 +146,6 @@ export async function reload(): Promise<void> {
   else window.location.reload();
 }
 
-export interface HandwritingResult {
-  strokes: { x: number; y: number }[][];
-}
-export const handwriting = {
-  open(options: {
-    prompt: string;
-    reference?: string;
-    tracing?: boolean;
-  }): Promise<HandwritingResult | null> {
-    if (!isNative()) throw new Error('原生手写板需要 Lingrove 1.3.0 或更新版本');
-    return invoke('handwriting.open', options);
-  },
-};
-
 // Browser previews must keep each child app's state separate too.
 export function moduleStorage(moduleID: string) {
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(moduleID)) throw new Error('模块名称无效');

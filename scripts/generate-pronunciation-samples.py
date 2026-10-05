@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--recordings-only', action='store_true', help='Keep existing synthesized WAV files')
 args = parser.parse_args()
 samples = json.loads((root / 'app/glyphora/src/pronunciation-samples.json').read_text())
-output = root / 'app/glyphora/public/audio'
+output = root / 'app/glyphora/audio-generated'
 output.mkdir(parents=True, exist_ok=True)
 with tempfile.TemporaryDirectory(prefix='glyphora-speech-') as temporary:
     for sample in samples:
@@ -48,4 +48,4 @@ with tempfile.TemporaryDirectory(prefix='glyphora-speech-') as temporary:
 encoded = {sample['id']: 'data:audio/wav;base64,' + base64.b64encode(
     (output / (sample['id'] + '.wav')).read_bytes()).decode('ascii') for sample in samples}
 (root / 'app/glyphora/src/pronunciation-audio.json').write_text(json.dumps(encoded, indent=2) + '\n')
-(output / 'SOURCES.json').write_bytes((root / 'app/glyphora/src/pronunciation-sources.json').read_bytes())
+(root / 'app/glyphora/public/audio/SOURCES.json').write_bytes((root / 'app/glyphora/src/pronunciation-sources.json').read_bytes())

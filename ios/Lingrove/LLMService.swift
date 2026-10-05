@@ -60,6 +60,7 @@ struct LLMConfiguration: Codable {
 
 // No bridge method exposes this record. All modules use the host-selected destination.
 enum LLMStore {
+    static let credentialsCleanupPreferenceKey = "migration.legacyModelCredentials.cleaned"
     private static func query(_ service: String, _ account: String) -> [String: Any] {
         [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service, kSecAttrAccount as String: account]
     }
@@ -78,12 +79,13 @@ enum LLMStore {
         if status == errSecItemNotFound { status = SecItemAdd(q.merging(attributes) { _, new in new } as CFDictionary, nil) }
         guard status == errSecSuccess else { throw ModuleError.invalid("无法保存模型配置（\(status)）") }
     }
-    static func load(service: String = "me.stackli.lingrove.host.llm", legacyService: String = "me.stackli.lingrove.module.sentra", preferencesURL: URL? = nil) throws -> LLMConfiguration {
+    static func load(service: String = "me.stackli.lingrove.host.llm", legacyService: String = "me.stackli.lingrove.module.sentra", preferencesURL: URL? = nil, defaults: UserDefaults = .standard) throws -> LLMConfiguration {
         let file = preferencesURL ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lingrove/State/sentra/preferences.v2.json")
         if let data = try read(service, "configuration") {
             let configuration = try JSONDecoder().decode(LLMConfiguration.self, from: data)
+            migrateNetworkAuthorizations(configuration, file: file, defaults: defaults)
             // Retry interrupted cleanup without preventing use of a successfully saved host record.
-            try? cleanLegacy(file, service: legacyService)
+            try? cleanLegacy(file, service: legacyService, defaults: defaults)
             return configuration
         }
         guard FileManager.default.fileExists(atPath: file.path) else { return LLMConfiguration() }
@@ -92,10 +94,17 @@ enum LLMStore {
         let token = try read(legacyService, "model-token").flatMap { String(data: $0, encoding: .utf8) } ?? ""
         let migrated = LLMConfiguration(provider: prefs["protocol"] as? String ?? "openAi", baseURL: base, model: model, token: token)
         try save(migrated, service: service)
-        try cleanLegacy(file, service: legacyService)
+        migrateNetworkAuthorizations(migrated, file: file, defaults: defaults)
+        try cleanLegacy(file, service: legacyService, defaults: defaults)
         return migrated
     }
-    private static func cleanLegacy(_ file: URL, service: String) throws {
+    private static func migrateNetworkAuthorizations(_ configuration: LLMConfiguration, file: URL, defaults: UserDefaults) {
+        guard !defaults.bool(forKey: LegacyModelAuthorizationMigration.completedKey) else { return }
+        let legacy = (try? Data(contentsOf: file)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        LegacyModelAuthorizationMigration.run([configuration.baseURL, legacy?["baseUrl"] as? String].compactMap { $0 }, defaults: defaults)
+    }
+    private static func cleanLegacy(_ file: URL, service: String, defaults: UserDefaults) throws {
+        guard !defaults.bool(forKey: credentialsCleanupPreferenceKey) else { return }
         if FileManager.default.fileExists(atPath: file.path) {
             var prefs = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any] ?? [:]
             let keys = ["protocol", "baseUrl", "model", "token"]
@@ -106,6 +115,7 @@ enum LLMStore {
         }
         let status = SecItemDelete(query(service, "model-token") as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else { throw ModuleError.invalid("旧模型凭据清理失败（\(status)）") }
+        defaults.set(true, forKey: credentialsCleanupPreferenceKey)
     }
 
 }

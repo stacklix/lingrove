@@ -63,6 +63,70 @@ enum NetworkPolicy {
     }
 }
 
+// One-time upgrade cleanup only; new authorizations follow the normal network policy.
+enum LegacyModelAuthorizationMigration {
+    static let completedKey = "migration.legacyModelOrigins.cleaned"
+
+    static func run(_ urls: [String], defaults: UserDefaults = .standard) {
+        guard !defaults.bool(forKey: completedKey) else { return }
+        let origins = Set((defaults.stringArray(forKey: "network.hostModelOrigins") ?? []) + urls.compactMap { NetworkPolicy.origin($0) })
+        for (key, value) in defaults.dictionaryRepresentation() where key.hasPrefix("origins.") {
+            guard let saved = value as? [String] else { continue }
+            let retained = saved.filter { raw in
+                guard let origin = NetworkPolicy.origin(raw) else { return true }
+                return !origins.contains(origin)
+            }
+            if retained != saved {
+                if retained.isEmpty { defaults.removeObject(forKey: key) }
+                else { defaults.set(retained, forKey: key) }
+            }
+        }
+        defaults.removeObject(forKey: "network.hostModelOrigins")
+        defaults.set(true, forKey: completedKey)
+    }
+}
+
+// Read-only summary of configured destinations; this does not grant network access.
+struct NetworkAccessDomain: Identifiable, Equatable {
+    // nil identifies host-owned, shared services; module IDs identify child-app permissions.
+    var moduleID: String?
+    var origin: String
+    var sources: [String]
+    var id: String { "\(moduleID ?? "")|\(origin)" }
+
+    static func snapshot(modules: [Module], customOrigins: [String: [String]], catalogURL: String,
+                         modelURL: String?, debugURL: String?) -> [Self] {
+        var domains: [String: Self] = [:]
+        func record(_ origin: String, moduleID: String? = nil, source: String) {
+            let entry = Self(moduleID: moduleID, origin: origin, sources: [])
+            var existing = domains[entry.id] ?? entry
+            existing.sources = Array(Set(existing.sources + [source])).sorted()
+            domains[entry.id] = existing
+        }
+        func add(_ raw: String, moduleID: String? = nil, source: String) {
+            guard let origin = NetworkPolicy.origin(raw) else { return }
+            record(origin, moduleID: moduleID, source: source)
+        }
+        for module in modules {
+            for origin in module.allowedOrigins { add(origin, moduleID: module.id, source: "清单授权") }
+            for origin in customOrigins[module.id] ?? [] { add(origin, moduleID: module.id, source: "自定义授权") }
+            if let url = module.downloadUrl { add(url, source: "子应用更新") }
+        }
+        add(catalogURL, source: "更新目录")
+        if let modelURL { add(modelURL, source: "大模型服务") }
+        if let debugURL, let normalized = try? DebugServer.normalized(debugURL),
+           !normalized.isEmpty, var components = URLComponents(string: normalized) {
+            components.path = ""
+            components.host = components.host?.lowercased()
+            if (components.scheme == "http" && components.port == 80) || (components.scheme == "https" && components.port == 443) {
+                components.port = nil
+            }
+            if let origin = components.string { record(origin, source: "调试资源") }
+        }
+        return domains.values.sorted { $0.origin == $1.origin ? $0.id < $1.id : $0.origin < $1.origin }
+    }
+}
+
 // Only Debug builds can load executable child-app resources from a server.
 enum DebugServer {
     static let preferenceKey = "debug.serverURL"

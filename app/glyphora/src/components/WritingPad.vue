@@ -8,7 +8,6 @@ import { raster, template } from '../render';
 const props = defineProps<{
   glyph: Glyph;
   tracing: boolean;
-  showReference: boolean;
   disabled?: boolean;
   obscured?: boolean;
   compactTools?: boolean;

@@ -21,7 +21,6 @@ const pad = () =>
     props: {
       glyph: { id: 'ru-a', text: 'а', language: 'ru', group: 'lower', name: 'a', hint: '' },
       tracing: false,
-      showReference: true,
     },
   });
 async function draw(w: ReturnType<typeof pad>, pointerType: string) {

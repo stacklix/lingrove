@@ -29,6 +29,39 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
             rejects("reject ZIP \(name)") { try StoredZIP.extract(Data(contentsOf: fixtures.appendingPathComponent("\(name).zip")), to: destination) }
         }
         var module = try JSONDecoder().decode(Module.self, from: Data(contentsOf: fixtures.appendingPathComponent("builtin/sentra/manifest.json")))
+        let networkSuite = "network-policy-test." + UUID().uuidString
+        let networkDefaults = UserDefaults(suiteName: networkSuite)!
+        defer { networkDefaults.removePersistentDomain(forName: networkSuite) }
+        networkDefaults.set(["https://API.example.com:443", "https://custom.test:8443"], forKey: "origins.sentra")
+        networkDefaults.set(["https://api.example.com"], forKey: "origins.old-app")
+        LegacyModelAuthorizationMigration.run(["https://api.example.com/v1"], defaults: networkDefaults)
+        check(networkDefaults.stringArray(forKey: "origins.sentra") == ["https://custom.test:8443"] && networkDefaults.object(forKey: "origins.old-app") == nil, "migration removes model grants across child apps and preserves other domains")
+        networkDefaults.set(["https://api.example.com"], forKey: "origins.sentra")
+        LegacyModelAuthorizationMigration.run(["https://api.example.com/v1"], defaults: networkDefaults)
+        check(networkDefaults.stringArray(forKey: "origins.sentra") == ["https://api.example.com"], "migration runs once and preserves subsequent explicit authorizations")
+        check(networkDefaults.object(forKey: "network.hostModelOrigins") == nil, "obsolete reserved-domain registry removed")
+        networkDefaults.removePersistentDomain(forName: networkSuite)
+        var networkModule = module
+        networkModule.allowedOrigins = ["https://api.example.com", "https://api.example.com"]
+        networkModule.downloadUrl = "https://updates.test/module.zip"
+        let domainSummary = NetworkAccessDomain.snapshot(
+            modules: [networkModule],
+            customOrigins: [module.id: ["https://api.example.com", "https://custom.test:8443", "http://invalid.test"], "uninstalled": ["https://old.test"]],
+            catalogURL: "https://updates.test/catalog.json", modelURL: "https://model.test/v1/chat/completions",
+            debugURL: "http://192.168.1.10:8000/apps/"
+        )
+        check(domainSummary.map(\.origin) == ["http://192.168.1.10:8000", "https://api.example.com", "https://custom.test:8443", "https://model.test", "https://updates.test"], "network summary includes configured services and deduplicates origins")
+        check(domainSummary.first(where: { $0.origin == "https://api.example.com" })?.sources.count == 2, "network summary retains manifest and custom authorization sources")
+        check(domainSummary.filter { $0.moduleID == nil }.map(\.origin) == ["http://192.168.1.10:8000", "https://model.test", "https://updates.test"], "host model and update destinations belong to public group")
+        check(domainSummary.filter { $0.moduleID == module.id }.map(\.origin) == ["https://api.example.com", "https://custom.test:8443"], "child app domains retain their owner")
+        LegacyModelAuthorizationMigration.run(["https://API.example.com:443/v1"], defaults: networkDefaults)
+        let sharedSummary = NetworkAccessDomain.snapshot(modules: [networkModule], customOrigins: [module.id: ["https://api.example.com", "https://custom.test:8443"]], catalogURL: "", modelURL: "https://API.example.com:443/v1", debugURL: nil)
+        let modelDomains = sharedSummary.filter { $0.origin == "https://api.example.com" }
+        check(modelDomains.count == 2 && modelDomains.contains { $0.moduleID == module.id } && modelDomains.contains { $0.moduleID == nil }, "summary shows actual authorizations without model-domain filtering")
+        check(sharedSummary.contains { $0.origin == "https://custom.test:8443" && $0.moduleID == module.id }, "other child app domains remain visible")
+        networkDefaults.removePersistentDomain(forName: networkSuite)
+        let revokedSummary = NetworkAccessDomain.snapshot(modules: [networkModule], customOrigins: [:], catalogURL: "", modelURL: nil, debugURL: nil)
+        check(revokedSummary.map(\.origin) == ["https://api.example.com", "https://updates.test"], "revocation removes only custom origins; disabled services omitted")
         func catalog(_ module: Module) throws -> Data {
             try JSONEncoder().encode(Catalog(modules: [module]))
         }
@@ -75,6 +108,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         MockProtocol.responses["/catalog.json"] = (200, Data("{}".utf8))
         await store.checkForUpdates()
         check(store.modules.first?.version == "1.1.0" && store.notice.contains("更新检查失败"), "invalid JSON catalog preserves active module")
+        check(store.statuses.isEmpty, "failed update check clears previous per-module results")
         module.version = "1.2.0"; module.sha256 = String(repeating: "0", count: 64)
         MockProtocol.responses["/catalog.json"] = (200, try catalog(module))
         await store.checkForUpdates()

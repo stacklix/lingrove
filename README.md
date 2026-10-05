@@ -1,6 +1,6 @@
 # Lingrove
 
-SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。目前包含 **Sentra**（翻译、语法分析与地道表达）和 **Glyphora**（日语、俄语、希腊语字母与书写学习）。没有 Lingrove 账号或登录服务。
+SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。目前包含 **Sentra**（翻译、语法分析与地道表达）、**Glyphora**（日语、俄语、希腊语字母与书写学习）和 **Kotoba**（日语单词活用与例句）。没有 Lingrove 账号或登录服务。
 
 应用对外名称为 **Lingrove**，子应用源码统一位于 `app/`。工程和 Scheme 为 `Lingrove`，Bundle ID 为 `me.stackli.lingrove`，SDK 为 `@lingrove/host-sdk`，本地数据目录为 `Lingrove`；更新域名使用 `lingrove.stackli.me`。
 
@@ -12,6 +12,8 @@ SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立
 | --- | --- | --- | --- |
 | Sentra | 翻译、原句语法分析、地道表达优化、流式结果与学习历史 | Lingrove 1.2.0 | [Sentra README](app/sentra/README.md) |
 | Glyphora | 日语假名、俄语与希腊语字母学习，书写练习、真人发音、测试与学习进度 | Lingrove 1.3.0 | [Glyphora README](app/glyphora/README.md) |
+
+| Kotoba | 日语单词活用、假名读音、用法与例句 | Lingrove 1.2.0 | [Kotoba README](app/kotoba/README.md) |
 
 ## 运行
 
@@ -28,12 +30,26 @@ open ios/Lingrove.xcodeproj   # 选择 Lingrove scheme，运行 iPhone/iPad 模�
 
 Xcode 项目已提交，不需要安装工程生成器。Xcode 的 Run、Build、Archive 会自动构建 `modules.json` 中的所有子应用，校验后嵌入 App 的 `BuiltinModules/`，无需提前运行 `npm run build`。首次构建缺少 `node_modules/` 时自动执行 `npm ci`（需要联网）；依赖变动后运行 `npm ci` 同步依赖。子应用构建或资源校验失败会中止 iOS 打包，内置子应用可在首次离线启动时打开。Node 安装在非标准位置时，可在 Xcode Build Settings 设置 `NODE_BINARY` 为 Node 可执行文件绝对路径。真机运行时在 Xcode 选择自己的签名 Team 和 Bundle ID。可选工程重生成：`ruby scripts/generate-xcode.rb`（需要 Ruby xcodeproj gem）。
 
+## 一键安装到 iPhone / iPad
+
+手机连接电脑并解锁，信任此电脑并开启“设置 → 隐私与安全性 → 开发者模式”。首次使用先在 Xcode 登录 Apple ID，并确认 Lingrove 的 Signing & Capabilities 中 Team 和 Bundle ID 可用于开发签名。
+
+```sh
+npm run ios:install                            # 自动选择唯一已配对设备，构建并安装 Debug
+npm run ios:install -- --list                   # 查看设备名称和 Identifier
+npm run ios:install -- --device '李乔的 iPhone'  # 多台设备时指定名称，也可使用 UDID / Identifier
+npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的签名 Team
+```
+
+支持 USB 和已在 Xcode 配对的无线连接；安装时设备须在线。多台已配对设备时需要明确指定目标。脚本从任意目录通过 `node /项目路径/scripts/install-ios.mjs` 运行也可。构建会自动更新并校验所有内置子应用，成功后才安装到设备；签名或构建失败会停止。Debug 产物保留在 `build/ios-device/Build/Products/Debug-iphoneos/Lingrove.app`，安装后在手机上打开 Lingrove。
+
 ## 仓库布局
 
 - `ios/Lingrove/`：原生首页、模块更新、安装器、WebView、网络桥、本地存储。
 - `app/`：所有子应用源码，每个应用有独立版本与 manifest。
   - `app/sentra/`：句子分析与语言学习。
   - `app/glyphora/`：字母书写与发音学习。
+  - `app/kotoba/`：日语单词活用与例句。
 - `packages/host-sdk/`：子应用公共 TypeScript SDK。
 - `scripts/package-modules.mjs`：生成 ZIP、普通 JSON 目录和原生内置资源。
 - `dist/`：可部署到 HTTPS 静态服务器/CDN 的发布产物。
@@ -162,7 +178,7 @@ const response = await request({
 });
 ```
 
-原生使用 URLSession，不受浏览器 CORS 限制。每个模块支持多个 `allowedOrigins`，按 HTTPS 协议、域名和端口精确匹配，禁止重定向和隐式 Cookie。自定义服务商由子应用设置页触发 `authorizeOrigin()`，原生弹窗展示目标域名并记录用户授权，可从原生设置撤销。模块不能自行把任意域名加到可信发布清单。
+原生使用 URLSession，不受浏览器 CORS 限制。每个模块支持多个 `allowedOrigins`，按 HTTPS 协议、域名和端口精确匹配，禁止重定向和隐式 Cookie。自定义服务商由子应用设置页触发 `authorizeOrigin()`，原生弹窗展示目标域名并记录用户授权，可从原生设置撤销。模块不能自行把任意域名加到可信发布清单。模型调用统一使用宿主 `llm.request`。升级时一次性清理旧模型直连授权；之后通用网络请求沿用清单和用户授权，不对模型域名做额外禁止或展示过滤。网络授权按公共服务和各子应用分组展示。
 
 桥支持 JSON/文本响应、SSE 分块、取消、超时及响应大小限制。原生注入 CSP，阻止网页绕过网络桥访问远程资源。浏览器开发模式使用 fetch，仍需要服务商正确配置 CORS。宿主模型调用使用上述独立大模型接口。通用 `secret.*` 接口仍按子应用隔离，只能访问子应用自己的凭据，不能读取宿主模型配置。
 
@@ -203,7 +219,7 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 ### 调试模式与服务器资源
 
-默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的默认构建及 Archive 使用 Debug；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；通过“完成”保存，通过“取消”放弃修改。Release 构建不提供服务器加载能力。
+默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；通过“完成”保存，通过“取消”放弃修改。Release 构建不提供服务器加载能力。
 
 1. 执行 `npm run build`，然后 `npm run debug:serve`（默认端口 8000，可用 `npm run debug:serve -- --port 8080` 修改）。启动时会打印可用的局域网 IP 地址，按 Ctrl+C 可正常退出。
 2. 在宿主“设置 → 调试模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，先点击“测试连接”检查连通性，再点击右上角“完成”保存；启用调试模式后使用服务器资源；左上角“取消”会放弃本次地址修改。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
@@ -212,4 +228,13 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 调试服务禁用 HTTP 缓存且不压缩响应；每次重载会重建 WebView 并取消旧请求，未保存的页面状态会清空，已保存数据保留。服务器地址会持久保存；清空并保存即可恢复本地资源。调试失败时可在错误页重新加载。Debug 支持局域网 HTTP 和 Safari Web Inspector。
 
-正式发布请使用 `npm run build:release`（压缩资源）及 `xcodebuild ... -configuration Release`，或在 Xcode 将 Archive 的 Build Configuration 改为 Release。原生 Release 构建阶段会自动使用压缩的正式资源，并忽略此前保存的调试地址。
+正式发布请使用 `npm run build:release`（压缩资源）及 `xcodebuild ... -configuration Release`，或直接在 Xcode 执行 Archive（已配置为 Release）。原生 Release 构建阶段会自动使用压缩的正式资源，并忽略此前保存的调试地址。
+
+
+## 设置与资源维护
+
+宿主设置中的“句子成分翻译语言”控制 Sentra 句子成分的翻译，不改变界面语言。“版本与更新”集中显示子应用版本、更新状态与错误，并支持手动检查更新；更新域名统一在“网络授权 → 公共”查看。
+
+保存设置只有在调试地址或调试开关变化时才刷新子应用；主题和翻译语言修改会保留当前页面。旧模型配置和授权迁移完成后跳过重复清理，清理失败则在下次读取时重试。
+
+Glyphora 只发布嵌入音频及来源、许可说明，生成的 WAV 保留在 `app/glyphora/audio-generated/` 用于校验。手写功能使用内嵌 PencilKit 和浏览器画板；已移除无人调用的旧 `handwriting.open` 弹窗接口。

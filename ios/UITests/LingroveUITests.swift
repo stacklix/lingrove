@@ -151,6 +151,20 @@ final class LingroveUITests: XCTestCase {
         app.buttons["返回 Lingrove"].tap()
         XCTAssertFalse(app.keyboards.firstMatch.exists)
     }
+    func testSavingUnchangedSettingsPreservesChildDraft() throws {
+        let app = XCUIApplication(); app.launch()
+        let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sentra")).firstMatch
+        waitForEnabled(entry); entry.tap()
+        let input = app.webViews.textViews.firstMatch
+        XCTAssertTrue(input.waitForExistence(timeout: 20))
+        input.tap(); input.typeText("Keep this unsent draft")
+        app.buttons["返回 Lingrove"].tap()
+        app.buttons["应用设置"].tap()
+        app.buttons["完成"].tap()
+        waitForEnabled(entry); entry.tap()
+        XCTAssertTrue(input.waitForExistence(timeout: 20))
+        XCTAssertEqual(input.value as? String, "Keep this unsent draft")
+    }
     func testDebugSettingsDoneSavesAndCancelDiscardsDraft() throws {
         let app = XCUIApplication(); app.launch()
         func openSettings() {

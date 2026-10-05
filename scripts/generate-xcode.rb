@@ -58,6 +58,6 @@ scheme.set_launch_target(target)
 # Xcode 26 queue backtrace injection crashes at startup on affected iOS 27 betas.
 scheme.launch_action.xml_element.attributes['queueDebuggingEnableBacktraceRecording'] = 'NO'
 scheme.test_action.xml_element.attributes['queueDebuggingEnableBacktraceRecording'] = 'NO'
-scheme.archive_action.build_configuration = 'Debug'
+scheme.archive_action.build_configuration = 'Release'
 scheme.save_as(path, 'Lingrove', true)
 puts path

@@ -23,8 +23,8 @@ afterEach(() => {
 });
 it('bundles each sample and shares pronunciation between both written forms', () => {
   for (const sample of samples) {
-    expect(existsSync(new NodeURL(`../public/audio/${sample.id}.wav`, import.meta.url))).toBe(true);
-    const bytes = readFileSync(new NodeURL(`../public/audio/${sample.id}.wav`, import.meta.url));
+    expect(existsSync(new NodeURL(`../audio-generated/${sample.id}.wav`, import.meta.url))).toBe(true);
+    const bytes = readFileSync(new NodeURL(`../audio-generated/${sample.id}.wav`, import.meta.url));
     expect(audioSources[sample.id as keyof typeof audioSources]).toBe(`data:audio/wav;base64,${bytes.toString('base64')}`);
     for (const id of sample.glyphs) {
       expect(glyphs.some((g) => g.id === id)).toBe(true);

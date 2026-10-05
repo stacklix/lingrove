@@ -99,9 +99,45 @@ it.each(cases)('validates and displays Japanese readings for %s', (action, data,
   expect(wrapper.findAll('.kana-reading').length).toBeGreaterThan(0);
   wrapper.unmount();
   const invalid = structuredClone(data);
-  if (action === 'grammar') delete invalid.analysis_reading;
+  if (action === 'grammar') invalid.analysis_reading = '学校に行く';
   else delete invalid[action === 'translate' ? 'translations' : 'alternatives'][0].reading;
   expect(() => validateResult(action, JSON.stringify(invalid), input, '日语')).toThrow();
+});
+it.each([undefined, null, '', '  '])(
+  'keeps Japanese grammar analysis when readings are %s',
+  (reading) => {
+    const [, original, input] = cases[2];
+    const data = {
+      ...original,
+      analysis_reading: reading,
+      structure: original.structure.map((item: Record<string, any>) => ({ ...item, reading })),
+    };
+    const result = validateResult('grammar', JSON.stringify(data), input, '英语');
+    expect(result.analysis_text).toBe(input);
+    expect(result).not.toHaveProperty('analysis_reading');
+    const wrapper = mount(ResultView, { props: { action: 'grammar', data: result } });
+    expect(wrapper.text()).toContain(original.summary);
+    expect(wrapper.text()).toContain('学校');
+    expect(wrapper.find('.kana-reading').exists()).toBe(false);
+    wrapper.unmount();
+  },
+);
+it('keeps Japanese corrections without readings but still requires their explanation', () => {
+  const [, original] = cases[2];
+  const data = {
+    ...original,
+    analysis_text: '学校を行く。',
+    analysis_reading: undefined,
+    correct: false,
+    corrections: [{ original: 'を', corrected: 'に', explanation: '目的地使用助词に' }],
+  };
+  expect(
+    validateResult('grammar', JSON.stringify(data), data.analysis_text, '英语').corrections,
+  ).toEqual(data.corrections);
+  data.corrections[0].explanation = '';
+  expect(() => validateResult('grammar', JSON.stringify(data), data.analysis_text, '英语')).toThrow(
+    'explanation',
+  );
 });
 it('opens older Japanese history without missing-reading placeholders', () => {
   const wrapper = mount(ResultView, {

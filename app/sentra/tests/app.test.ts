@@ -101,7 +101,7 @@ it('keeps model credentials out of child settings and saved preferences', async 
   await flushPromises();
   await wrapper.get('[data-action=settings]').trigger('click');
   await flushPromises();
-  expect(wrapper.text()).toContain('宿主设置');
+  expect(wrapper.get('.settings').text()).not.toMatch(/模型|服务商|宿主设置/);
   expect(wrapper.find('input[type=password]').exists()).toBe(false);
   expect(wrapper.findAll('.settings input')).toHaveLength(0);
   await wrapper.get('.settings form').trigger('submit');

@@ -3,13 +3,13 @@ import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Glyph } from '../curriculum';
 import { strokeSteps } from '../stroke-order';
 import { russianPaths } from '../russian-paths';
+import { greekPaths } from '../greek-paths';
 import GlyphView from './GlyphView.vue';
-import PronunciationButton from './PronunciationButton.vue';
 const props = defineProps<{ glyph: Glyph; autoplay?: boolean }>();
 const paths = computed(
   () =>
     props.glyph.paths ??
-    (props.glyph.language === 'ru' ? russianPaths[props.glyph.text] : undefined),
+    (props.glyph.language === 'ru' ? russianPaths[props.glyph.text] : greekPaths[props.glyph.text]),
 );
 const hasAnimation = ref(false);
 const step = ref(0),
@@ -56,9 +56,6 @@ const start = computed(() => {
 </script>
 <template>
   <div class="stroke-order">
-    <span class="eyebrow">STROKE ORDER / 书写顺序</span>
-    <h2>{{ glyph.name }}</h2>
-    <PronunciationButton :glyph="glyph" />
     <div class="order-example">
       <div v-if="glyph.language !== 'ja'" class="order-print">
         <small>印刷体</small><b>{{ glyph.text }}</b>
@@ -95,7 +92,7 @@ const start = computed(() => {
       </svg>
       <GlyphView v-else :glyph="glyph" />
     </div>
-    <p v-if="glyph.language === 'ru'" class="fine-print">
+    <p v-if="glyph.language !== 'ja' && paths" class="fine-print">
       动画为一种手写笔顺示意，连笔与字帖字体可有差异。
     </p>
     <p v-if="!paths" class="fine-print">

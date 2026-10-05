@@ -9,7 +9,9 @@ final class StubNetwork: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
-        if request.url?.host == "model.example" {
+        if request.url?.path == "/public" {
+            XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+        } else if request.url?.host == "model.example" {
             XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer native-only-token")
             XCTAssertEqual(request.url?.path, "/v1/chat/completions")
         }
@@ -21,12 +23,61 @@ final class StubNetwork: URLProtocol, @unchecked Sendable {
     override func stopLoading() {}
 }
 final class RuntimeTests: XCTestCase {
+    @MainActor func testUnavailableDebugServerFallsBackLocallyAndReloadRetriesServer() async throws {
+        try XCTSkipUnless(DebugServer.available)
+        let defaults = UserDefaults.standard
+        let originalEnabled = defaults.object(forKey: DebugServer.enabledPreferenceKey)
+        let originalAddress = defaults.object(forKey: DebugServer.preferenceKey)
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer {
+            defaults.set(originalEnabled, forKey: DebugServer.enabledPreferenceKey)
+            defaults.set(originalAddress, forKey: DebugServer.preferenceKey)
+            try? FileManager.default.removeItem(at: directory)
+        }
+        defaults.set(true, forKey: DebugServer.enabledPreferenceKey)
+        defaults.set("http://127.0.0.1:59999", forKey: DebugServer.preferenceKey)
+        try Data("<html><head></head><body>local resource<script src='ready.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
+        try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
+        let module = Module(id: "fallback-test", name: "Fallback", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let ready = expectation(description: "Local fallback bridge ready")
+        var startupFailures = 0
+        var failures = 0
+        let page = ModulePage(module: module, directory: directory, onReady: { ready.fulfill() }, onFailure: { _ in failures += 1 }, onStartupFailure: { startupFailures += 1 }, refreshing: true)
+        defer { page.close() }
+        let remoteRuntime = page.runtime!
+        await fulfillment(of: [ready], timeout: 30)
+        let localURL = URL(string: "lingrove://fallback-test/index.html")!
+        XCTAssertEqual(page.webView.url, localURL)
+        XCTAssertTrue(page.runtime.accepts(localURL))
+        XCTAssertFalse(page.runtime.accepts(DebugServer.entryURL(for: module)!))
+        XCTAssertNil(page.failure)
+        XCTAssertFalse(page.isLoading)
+        XCTAssertFalse(page.isReloading)
+        XCTAssertEqual(page.reloadMessage, "服务器不可用，已加载本地资源")
+        XCTAssertEqual(startupFailures, 0)
+        XCTAssertEqual(failures, 0)
+        remoteRuntime.onFailure("stale failure")
+        XCTAssertNil(page.failure)
+        page.reload()
+        XCTAssertTrue(page.runtime.accepts(DebugServer.entryURL(for: module)!))
+        page.runtime.webView(page.webView, didFailProvisionalNavigation: nil, withError: URLError(.cannotConnectToHost))
+        page.runtime.webView(page.webView, didFailProvisionalNavigation: nil, withError: URLError(.fileDoesNotExist))
+        XCTAssertNotNil(page.failure)
+        XCTAssertEqual(startupFailures, 1)
+        XCTAssertEqual(failures, 1)
+    }
+
     @MainActor func testBundledPronunciationDecodesOffline() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
-        let bundled = try XCTUnwrap(Bundle.main.resourceURL).appendingPathComponent("BuiltinModules/glyphora/audio/el-alpha.wav")
-        let audioSource = "data:audio/wav;base64," + (try Data(contentsOf: bundled)).base64EncodedString()
+        let assets = try XCTUnwrap(Bundle.main.resourceURL).appendingPathComponent("BuiltinModules/glyphora/assets")
+        let scripts = try FileManager.default.contentsOfDirectory(at: assets, includingPropertiesForKeys: nil)
+            .filter { $0.pathExtension == "js" }
+            .map { try String(contentsOf: $0, encoding: .utf8) }.joined()
+        let audioRange = try XCTUnwrap(scripts.range(of: "data:audio/wav;base64,[A-Za-z0-9+/=]+", options: .regularExpression))
+        let audioSource = String(scripts[audioRange])
         try Data("<html><head></head><body><script src='ready.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
         try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
         let module = Module(id: "audio-test", name: "Audio", version: "1.0.0", entry: "index.html", minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
@@ -179,7 +230,7 @@ final class RuntimeTests: XCTestCase {
         page.runtime.onReady()
         XCTAssertEqual(page.reloadMessage, "本地资源重新加载成功")
     }
-    @MainActor func testDebugReloadReportsActualServerSourceWithoutLocalFallback() throws {
+    @MainActor func testDebugReloadReportsServerSuccessAndLocalFallback() throws {
         try XCTSkipUnless(DebugServer.enabled)
         let original = UserDefaults.standard.object(forKey: DebugServer.preferenceKey)
         defer { UserDefaults.standard.set(original, forKey: DebugServer.preferenceKey) }
@@ -195,8 +246,10 @@ final class RuntimeTests: XCTestCase {
         page.reload()
         UserDefaults.standard.removeObject(forKey: DebugServer.preferenceKey)
         page.runtime.onFailure("服务器无法连接")
-        XCTAssertEqual(page.reloadMessage, "服务器资源刷新失败：服务器无法连接")
-        XCTAssertEqual(page.failure, "服务器无法连接")
+        XCTAssertNil(page.failure)
+        XCTAssertTrue(page.isReloading)
+        page.runtime.onReady()
+        XCTAssertEqual(page.reloadMessage, "服务器不可用，已加载本地资源")
         XCTAssertFalse(page.isReloading)
     }
     @MainActor func testDebugReloadAllIncludesUnopenedModulesAndReportsIndividualResults() async throws {
@@ -303,21 +356,56 @@ final class RuntimeTests: XCTestCase {
     func testMigratesLegacyCredentialsAndPreservesLearningPreferences() throws {
         let identity = UUID().uuidString
         let service = "llm-test." + identity, legacy = "legacy-test." + identity
+        let defaults = UserDefaults(suiteName: identity)!
+        defer { defaults.removePersistentDomain(forName: identity) }
+        defaults.set(["https://model.example", "https://dictionary.example"], forKey: "origins.sentra")
         let file = FileManager.default.temporaryDirectory.appendingPathComponent(identity + ".json")
         func query(_ name: String) -> [String: Any] { [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: name] }
         defer { SecItemDelete(query(service) as CFDictionary); SecItemDelete(query(legacy) as CFDictionary); try? FileManager.default.removeItem(at: file) }
         var key = query(legacy); key[kSecAttrAccount as String] = "model-token"; key[kSecValueData as String] = Data("migration-test-secret".utf8)
         XCTAssertEqual(SecItemAdd(key as CFDictionary, nil), errSecSuccess)
         try JSONSerialization.data(withJSONObject: ["baseUrl": "https://model.example/v1", "model": "legacy-model", "protocol": "openAi", "level": "中级", "translationLanguage": "日语"]).write(to: file)
-        let migrated = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file)
+        let migrated = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file, defaults: defaults)
+        XCTAssertEqual(defaults.stringArray(forKey: "origins.sentra"), ["https://dictionary.example"])
         XCTAssertEqual(migrated.model, "legacy-model"); XCTAssertEqual(migrated.token, "migration-test-secret")
         let preferences = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: String]
         XCTAssertEqual(preferences, ["level": "中级", "translationLanguage": "日语"])
         XCTAssertEqual(SecItemCopyMatching(query(legacy) as CFDictionary, nil), errSecItemNotFound)
-        var edited = migrated; edited.model = "host-model"; edited.token = ""
+        var edited = migrated; edited.model = "host-model"; edited.token = ""; edited.baseURL = "https://new-model.example/v1"
+        defaults.set(["https://model.example", "https://new-model.example", "https://dictionary.example"], forKey: "origins.sentra")
         try LLMStore.save(edited, service: service)
-        let restored = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file)
+        let restored = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file, defaults: defaults)
         XCTAssertEqual(restored.model, "host-model"); XCTAssertEqual(restored.token, "")
+        XCTAssertEqual(defaults.stringArray(forKey: "origins.sentra"), ["https://model.example", "https://new-model.example", "https://dictionary.example"])
+        defaults.set(["https://new-model.example"], forKey: "origins.kotoba")
+        _ = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file, defaults: defaults)
+        XCTAssertEqual(defaults.stringArray(forKey: "origins.kotoba"), ["https://new-model.example"])
+
+    }
+    func testLegacyCleanupRetriesFailureAndStopsAfterCompletion() throws {
+        let identity = UUID().uuidString
+        let defaults = UserDefaults(suiteName: identity)!
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(identity)
+        let service = "cleanup-test." + identity
+        defer {
+            defaults.removePersistentDomain(forName: identity)
+            try? FileManager.default.removeItem(at: file)
+            SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service] as CFDictionary)
+        }
+        try LLMStore.save(LLMConfiguration(model: "saved-model"), service: service)
+        try Data("invalid JSON".utf8).write(to: file)
+        let saved = try LLMStore.load(service: service, legacyService: identity, preferencesURL: file, defaults: defaults)
+        XCTAssertEqual(saved.model, "saved-model")
+        XCTAssertFalse(defaults.bool(forKey: LLMStore.credentialsCleanupPreferenceKey))
+        try Data(#"{"model":"old","level":"advanced"}"#.utf8).write(to: file)
+        _ = try LLMStore.load(service: service, legacyService: identity, preferencesURL: file, defaults: defaults)
+        XCTAssertTrue(defaults.bool(forKey: LLMStore.credentialsCleanupPreferenceKey))
+        let cleaned = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: String]
+        XCTAssertEqual(cleaned, ["level": "advanced"])
+        let later = Data(#"{"model":"later-write"}"#.utf8)
+        try later.write(to: file)
+        _ = try LLMStore.load(service: service, legacyService: identity, preferencesURL: file, defaults: defaults)
+        XCTAssertEqual(try Data(contentsOf: file), later)
     }
     @MainActor func testProcessTerminationDoesNotRejectVersionBeforeReady() {
         let module = Module(id: "termination-test", name: "Test", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
@@ -409,7 +497,11 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(upgraded.webView.navigationDelegate)
     }
     @MainActor func testWebKitBridgeStreamsAndRestrictsOrigins() async throws {
-        let module = Module(id: "runtime-test", name: "Test", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: ["https://allowed.example"])
+        let module = Module(id: "runtime-test", name: "Test", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: ["https://allowed.example", "https://model.example"])
+        let suite = UUID().uuidString
+        let networkDefaults = UserDefaults(suiteName: suite)!
+        networkDefaults.set(["https://model.example"], forKey: "origins.runtime-test")
+        defer { networkDefaults.removePersistentDomain(forName: suite) }
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -418,7 +510,7 @@ final class RuntimeTests: XCTestCase {
         try Data("window.__testChunks=[];window.__lingroveChunk=(id,chunk)=>{window.__testChunks.push(chunk)};window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}});".utf8).write(to: directory.appendingPathComponent("test.js"))
         let loaded = expectation(description: "JS host handshake")
         let networkConfig = URLSessionConfiguration.ephemeral; networkConfig.protocolClasses = [StubNetwork.self]
-        let runtime = Runtime(module: module, directory: directory, onReady: { loaded.fulfill() }, onFailure: { XCTFail($0) }, networkSession: URLSession(configuration: networkConfig), llmConfiguration: { LLMConfiguration(provider: "openAi", baseURL: "https://model.example/v1", model: "shared-test", token: "native-only-token") })
+        let runtime = Runtime(module: module, directory: directory, onReady: { loaded.fulfill() }, onFailure: { XCTFail($0) }, networkSession: URLSession(configuration: networkConfig), networkDefaults: networkDefaults, llmConfiguration: { LLMConfiguration(provider: "openAi", baseURL: "https://model.example/v1", model: "shared-test", token: "native-only-token") })
         let config = WKWebViewConfiguration(); config.websiteDataStore = .nonPersistent()
         config.setURLSchemeHandler(runtime, forURLScheme: "lingrove")
         config.userContentController.addScriptMessageHandler(runtime, contentWorld: .page, name: "lingrove")
@@ -432,6 +524,11 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(result?["chunks"] as? String, "data: {\"text\":\"你好\"}\n\ndata: [DONE]\n\n")
         let denied = try await webView.callAsyncJavaScript("try{await window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'http.request',params:{id:'denied',url:'https://allowed.example.evil.test'}});return false;}catch(e){return true;}", arguments: [:], in: nil, contentWorld: .page)
         XCTAssertEqual(denied as? Bool, true)
+        let authorized = try await webView.callAsyncJavaScript("return await window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'network.authorize',params:{origin:'https://model.example'}});", arguments: [:], in: nil, contentWorld: .page)
+        XCTAssertEqual(authorized as? Bool, true)
+        let direct = try await webView.callAsyncJavaScript("return await window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'http.request',params:{id:'direct-model',url:'https://model.example/public'}});", arguments: [:], in: nil, contentWorld: .page) as? [String: Any]
+        XCTAssertEqual(direct?["status"] as? Int, 200)
+        XCTAssertEqual(networkDefaults.stringArray(forKey: "origins.runtime-test"), ["https://model.example"])
         let llm = try await webView.callAsyncJavaScript("const status=await window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'llm.status',params:{}});const r=await window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'llm.request',params:{id:'llm-test',system:'Test',messages:[{role:'user',content:'hello'}],maxTokens:32,url:'https://evil.example',headers:{Authorization:'evil'},model:'override'}});return {status,result:r};", arguments: [:], in: nil, contentWorld: .page) as? [String: Any]
         let status = llm?["status"] as? [String: Any]
         XCTAssertEqual(status?["configured"] as? Bool, true)
