@@ -43,20 +43,10 @@ const stage = ref<'observe' | 'trace' | 'write'>('observe');
 const currentInk = ref<Strokes>([]);
 const currentDrawing = ref<string | undefined>();
 const testScope = ref<'learned' | 'all'>('learned');
-const cursorKey = computed(
-  () => `${language.value}:${language.value !== 'ru' ? 'mixed' : group.value}`,
-);
+const cursorKey = computed(() => `${language.value}:mixed`);
 const learned = computed(() => new Set(progress.value.learned));
 const learnedPool = computed(() => pool.value.filter(letterLearned));
-const cursor = computed(
-  () =>
-    progress.value.cursors[cursorKey.value] ??
-    (language.value === 'ja'
-      ? (progress.value.cursors['ja:hiragana'] ?? progress.value.cursors['ja:katakana'])
-      : language.value === 'el'
-        ? (progress.value.cursors['el:lower'] ?? progress.value.cursors['el:upper'])
-        : undefined),
-);
+const cursor = computed(() => progress.value.cursors[cursorKey.value]);
 const nextStudy = computed(
   () =>
     studyPool.value.find((g) => g.id === cursor.value?.id && !learned.value.has(g.id)) ??
@@ -528,12 +518,12 @@ async function advance(skip = false) {
   answers.value.push({
     id: active.value.id,
     text: active.value.text,
-    type: question.value.type,
     score: skip ? 0 : feedback.value.score,
     correct: skip ? false : feedback.value.correct,
     status: skip ? 'skipped' : feedback.value.status,
-    strokes: question.value.type === 'write' ? currentInk.value : undefined,
-    chosenID: selected.value ?? undefined,
+    ...(question.value.type === 'write'
+      ? { type: 'write' as const, strokes: currentInk.value }
+      : { type: 'choice' as const, chosenID: selected.value }),
   });
   if (questionIndex.value === 9) {
     history.value.rounds.push({
@@ -561,7 +551,7 @@ function openRecord(record: RoundRecord) {
   answers.value = record.answers;
   const first = glyphs.find((g) => g.id === record.answers[0]?.id)!;
   language.value = first.language;
-  group.value = record.group ?? (first.language === 'ja' ? first.group : 'mixed');
+  group.value = record.group;
   tab.value = 'tests';
   page.value = 'summary';
 }
@@ -1155,16 +1145,16 @@ onMounted(async () => {
           <p>正确的手写范字</p>
           <template v-if="reviewAnswer.type === 'write'"
             ><img
-              v-if="reviewAnswer.strokes?.length"
+              v-if="reviewAnswer.strokes.length"
               class="answer-ink"
               :src="raster(reviewAnswer.strokes).toDataURL()"
               alt="当时的书写"
             />
-            <p v-else>这条旧记录没有保存原始笔迹。</p></template
+            <p v-else>本题未书写。</p></template
           >
           <p v-else>
             你的选择：{{
-              glyphs.find((g) => g.id === reviewAnswer!.chosenID)?.text ?? '旧记录未保存选项'
+              glyphs.find((g) => reviewAnswer!.type === 'choice' && g.id === reviewAnswer!.chosenID)?.text ?? '未作答'
             }}
           </p>
           <p>{{ reviewAnswer.correct ? '已匹配' : '建议再练习这个字母' }}</p>

@@ -1,6 +1,6 @@
 import { moduleStorage } from '@lingrove/host-sdk';
-import { glyphs, type Group } from './curriculum';
-import type { Answer } from './session';
+import { glyphs, groups, type Group } from './curriculum';
+import { validAnswer, type Answer } from './session';
 export interface Practice {
   id: string;
   score: number;
@@ -11,7 +11,7 @@ export interface Practice {
 export interface RoundRecord {
   id: string;
   language: string;
-  group?: Group;
+  group: Group;
   at: string;
   answers: Answer[];
 }
@@ -44,13 +44,13 @@ export async function loadHistory(): Promise<History> {
         r &&
         typeof r.id === 'string' &&
         typeof r.language === 'string' &&
+        groups(glyphs.find((g) => g.id === r.answers?.[0]?.id)?.language ?? 'ru').some(
+          (g) => g.id === r.group,
+        ) &&
         validDate(r.at) &&
         Array.isArray(r.answers) &&
         r.answers.length === 10 &&
-        r.answers.every(
-          (a) =>
-            validScore(a) && ['write', 'choice'].includes(a.type) && typeof a.status === 'string',
-        ),
+        r.answers.every(validAnswer),
     )
   )
     throw new Error('练习记录格式异常，暂不写入新记录。');

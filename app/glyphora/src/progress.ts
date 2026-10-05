@@ -1,7 +1,7 @@
 import { moduleStorage } from '@lingrove/host-sdk';
 import { glyphs, groups, type Language, type Group } from './curriculum';
 import type { Strokes, Assessment } from './scoring';
-import type { Answer, Question } from './session';
+import { validAnswer, type Answer, type Question } from './session';
 export type Tab = 'study' | 'tests' | 'letters';
 export type Stage = 'observe' | 'trace' | 'write';
 export interface StudyCursor {
@@ -23,7 +23,6 @@ export interface DraftRound {
   selected: string | null;
 }
 export interface Progress {
-  version: 1;
   lastGroups: Partial<Record<Language, Group>>;
   language: Language;
   tab: Tab;
@@ -32,7 +31,6 @@ export interface Progress {
   drafts: Partial<Record<Language, DraftRound>>;
 }
 export const emptyProgress = (): Progress => ({
-  version: 1,
   lastGroups: {},
   language: 'ru',
   tab: 'study',
@@ -79,14 +77,15 @@ function validDrawing(v: any): boolean {
   return v === undefined || (typeof v === 'string' && v.length < 2_000_000);
 }
 export async function loadProgress(): Promise<Progress> {
-  const p = await store.get<Progress>('progress-v1');
+  const p = await store.get<Progress>('progress');
   if (!p) return emptyProgress();
-  p.lastGroups ??= {};
   const invalid = () => {
     throw new Error('学习进度格式异常，原始记录已保留。');
   };
   if (
-    p.version !== 1 ||
+    !p.lastGroups ||
+    Array.isArray(p.lastGroups) ||
+    typeof p.lastGroups !== 'object' ||
     !['ja', 'ru', 'el'].includes(p.language) ||
     !['study', 'tests', 'letters'].includes(p.tab) ||
     !Array.isArray(p.learned) ||
@@ -102,11 +101,7 @@ export async function loadProgress(): Promise<Progress> {
     const g = known.get(c?.id);
     if (
       !g ||
-      (!(g.language === 'ja' && key === 'ja:mixed') &&
-        !groups(g.language).some(
-          (group) =>
-            key === `${g.language}:${group.id}` && (group.id === 'mixed' || group.id === g.group),
-        )) ||
+      key !== `${g.language}:mixed` ||
       !['observe', 'trace', 'write'].includes(c.stage) ||
       !validInk(c.strokes) ||
       !validDrawing(c.drawing) ||
@@ -151,6 +146,7 @@ export async function loadProgress(): Promise<Progress> {
     if (
       !d.answers.every(
         (a, i) =>
+          validAnswer(a) &&
           a.id === d.questions[i].glyph.id &&
           a.type === d.questions[i].type &&
           Number.isFinite(a.score) &&
@@ -175,7 +171,7 @@ export async function loadProgress(): Promise<Progress> {
 let queue = Promise.resolve();
 export function saveProgress(p: Progress): Promise<void> {
   const snapshot = JSON.parse(JSON.stringify(p));
-  const write = queue.catch(() => {}).then(() => store.set('progress-v1', snapshot));
+  const write = queue.catch(() => {}).then(() => store.set('progress', snapshot));
   queue = write;
   return write;
 }

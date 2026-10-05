@@ -1,7 +1,6 @@
 import SwiftUI
 import WebKit
 import CryptoKit
-import Security
 
 enum AppLanguage {
     static let preferenceKey = "app.language"
@@ -303,7 +302,7 @@ struct ModuleScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
-        .onAppear { if DebugServer.entryURL(for: module) == nil { store.begin(module) } }.onDisappear { store.end(module) }
+        .onAppear { store.begin(module, trackingStartup: DebugServer.entryURL(for: module) == nil) }.onDisappear { store.end(module) }
     }
 }
 
@@ -491,43 +490,9 @@ struct ModuleWebView: UIViewRepresentable {
         try FileManager.default.createDirectory(at: stateRoot, withIntermediateDirectories: true)
         return stateRoot.appendingPathComponent(key + ".json")
     }
-    private func secretQuery(_ params: [String: Any]) throws -> [String: Any] {
-        guard let key = params["key"] as? String,
-              key.range(of: "^[a-zA-Z0-9._-]{1,100}$", options: .regularExpression) != nil else { throw ModuleError.invalid("凭据名称无效") }
-        return [kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: "me.stackli.lingrove.module.\(module.id)",
-                kSecAttrAccount as String: key]
-    }
-    private func checkKeychain(_ status: OSStatus) throws {
-        if status == errSecInteractionNotAllowed { throw ModuleError.invalid("请解锁设备后重新访问凭据") }
-        guard status == errSecSuccess else { throw ModuleError.invalid("安全凭据存储不可用（\(status)）") }
-    }
     private func handle(_ method: String, _ params: [String: Any]) async throws -> Any {
         extraOrigins = networkDefaults.stringArray(forKey: "origins.\(module.id)") ?? []
         switch method {
-        case "secret.get":
-            var query = try secretQuery(params)
-            query[kSecReturnData as String] = true
-            query[kSecMatchLimit as String] = kSecMatchLimitOne
-            var item: CFTypeRef?
-            let status = SecItemCopyMatching(query as CFDictionary, &item)
-            if status == errSecItemNotFound { return NSNull() }
-            try checkKeychain(status)
-            guard let data = item as? Data, let value = String(data: data, encoding: .utf8) else { throw ModuleError.invalid("凭据读取失败") }
-            return value
-        case "secret.set":
-            let query = try secretQuery(params)
-            guard let value = params["value"] as? String, value.utf8.count <= 16384 else { throw ModuleError.invalid("凭据内容无效或过大") }
-            let attributes: [String: Any] = [kSecValueData as String: Data(value.utf8), kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
-            let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-            if status == errSecItemNotFound {
-                try checkKeychain(SecItemAdd(query.merging(attributes) { _, new in new } as CFDictionary, nil))
-            } else { try checkKeychain(status) }
-            return true
-        case "secret.remove":
-            let status = SecItemDelete(try secretQuery(params) as CFDictionary)
-            if status != errSecItemNotFound { try checkKeychain(status) }
-            return true
         case "runtime.language": return AppLanguage.current
         case "runtime.navigation":
             guard let isRoot = params["isRoot"] as? Bool else { throw ModuleError.invalid("页面层级无效") }

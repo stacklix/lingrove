@@ -1,19 +1,54 @@
-import type { Glyph } from './curriculum';
+import { glyphs, type Glyph } from './curriculum';
 export interface Question {
   glyph: Glyph;
   type: 'write' | 'choice';
   options: Glyph[];
 }
-export interface Answer {
+interface AnswerBase {
   id: string;
-  type: 'write' | 'choice';
   score: number;
   correct: boolean;
   status: string;
   text: string;
-  strokes?: import('./scoring').Strokes;
-  chosenID?: string;
 }
+export type Answer = AnswerBase &
+  (
+    | { type: 'write'; strokes: import('./scoring').Strokes }
+    | { type: 'choice'; chosenID: string | null }
+  );
+export function validAnswer(a: any): a is Answer {
+  return (
+    !!a &&
+    glyphs.some((g) => g.id === a.id) &&
+    typeof a.text === 'string' &&
+    Number.isFinite(a.score) &&
+    a.score >= 0 &&
+    a.score <= 100 &&
+    typeof a.correct === 'boolean' &&
+    ['match', 'different', 'uncertain', 'skipped'].includes(a.status) &&
+    (a.type === 'write'
+      ? Array.isArray(a.strokes) &&
+        a.strokes.length <= 128 &&
+        a.strokes.every(
+          (s: any) =>
+            Array.isArray(s) &&
+            s.length <= 2048 &&
+            s.every(
+              (p: any) =>
+                p &&
+                Number.isFinite(p.x) &&
+                Number.isFinite(p.y) &&
+                p.x >= 0 &&
+                p.x <= 1 &&
+                p.y >= 0 &&
+                p.y <= 1,
+            ),
+        )
+      : a.type === 'choice' &&
+        (a.chosenID === null ? a.status === 'skipped' : glyphs.some((g) => g.id === a.chosenID)))
+  );
+}
+
 export function shuffle<T>(values: T[], random = Math.random): T[] {
   const result = [...values];
   for (let i = result.length - 1; i > 0; i--) {

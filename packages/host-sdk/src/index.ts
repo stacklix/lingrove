@@ -97,19 +97,6 @@ export async function request(
     options.signal?.removeEventListener('abort', abort);
   }
 }
-export const storage = {
-  async get<T>(key: string): Promise<T | null> {
-    const raw = isNative()
-      ? await invoke<string | null>('state.get', { key })
-      : localStorage.getItem(`sentra.${key}`);
-    return raw === null ? null : (JSON.parse(raw) as T);
-  },
-  async set(key: string, value: unknown): Promise<void> {
-    const encoded = JSON.stringify(value);
-    if (isNative()) await invoke('state.set', { key, value: encoded });
-    else localStorage.setItem(`sentra.${key}`, encoded);
-  },
-};
 export async function authorizeOrigin(origin: string): Promise<void> {
   if (isNative()) await invoke('network.authorize', { origin: new URL(origin).origin });
 }
@@ -120,23 +107,6 @@ export async function copyText(text: string): Promise<void> {
 export async function ready(): Promise<void> {
   if (isNative()) await invoke('runtime.ready', {});
 }
-
-// iOS secrets are stored in the host Keychain, scoped to this module.
-export const secrets = {
-  async get(key: string): Promise<string | null> {
-    return isNative()
-      ? invoke<string | null>('secret.get', { key })
-      : localStorage.getItem(`sentra.secret.${key}`);
-  },
-  async set(key: string, value: string): Promise<void> {
-    if (isNative()) await invoke('secret.set', { key, value });
-    else localStorage.setItem(`sentra.secret.${key}`, value);
-  },
-  async remove(key: string): Promise<void> {
-    if (isNative()) await invoke('secret.remove', { key });
-    else localStorage.removeItem(`sentra.secret.${key}`);
-  },
-};
 
 export { llm } from './llm';
 export type { LLMRequest, LLMResult, LLMOptions } from './llm';

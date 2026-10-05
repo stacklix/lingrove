@@ -22,10 +22,6 @@ beforeEach(() => {
   delete window.webkit;
 });
 it('keeps independent tab drafts, saves results and reopens/deletes history', async () => {
-  localStorage.setItem(
-    'sentra.preferences.v2',
-    JSON.stringify({ baseUrl: 'https://provider.test/v1', model: 'test' }),
-  );
   const wrapper = mount(App);
   await flushPromises();
   await wrapper.get('textarea').setValue('你好');
@@ -39,7 +35,7 @@ it('keeps independent tab drafts, saves results and reopens/deletes history', as
   await flushPromises();
   expect(wrapper.text()).toContain('Hello');
   expect(wrapper.get('button.primary').text()).toContain('重新翻译');
-  expect(JSON.parse(localStorage.getItem('sentra.sentences.v1')!)).toHaveLength(1);
+  expect(JSON.parse(localStorage.getItem('sentra.history')!)).toHaveLength(1);
   await wrapper.get('[data-action=history]').trigger('click');
   expect(wrapper.findAll('.history-card')).toHaveLength(1);
   await wrapper.get('.history-open').trigger('click');
@@ -47,15 +43,15 @@ it('keeps independent tab drafts, saves results and reopens/deletes history', as
   await wrapper.get('[data-action=history]').trigger('click');
   await wrapper.get('.danger').trigger('click');
   await flushPromises();
-  expect(JSON.parse(localStorage.getItem('sentra.sentences.v1')!)).toHaveLength(0);
+  expect(JSON.parse(localStorage.getItem('sentra.history')!)).toHaveLength(0);
   wrapper.unmount();
 });
 it('does not overwrite corrupt existing history', async () => {
-  localStorage.setItem('sentra.sentences.v1', 'corrupt');
+  localStorage.setItem('sentra.history', 'corrupt');
   const wrapper = mount(App);
   await flushPromises();
   expect(wrapper.text()).toContain('已停止写入');
-  expect(localStorage.getItem('sentra.sentences.v1')).toBe('corrupt');
+  expect(localStorage.getItem('sentra.history')).toBe('corrupt');
   wrapper.unmount();
 });
 
@@ -88,15 +84,7 @@ it('dismisses sheets without losing the learning draft', async () => {
 });
 
 it('keeps model credentials out of child settings and saved preferences', async () => {
-  localStorage.setItem(
-    'sentra.preferences.v2',
-    JSON.stringify({
-      baseUrl: 'https://old.example',
-      model: 'old',
-      token: 'legacy-secret',
-      level: '初级',
-    }),
-  );
+  localStorage.setItem('sentra.preferences', JSON.stringify({ level: '初级' }));
   const wrapper = mount(App);
   await flushPromises();
   await wrapper.get('[data-action=settings]').trigger('click');
@@ -106,7 +94,7 @@ it('keeps model credentials out of child settings and saved preferences', async 
   expect(wrapper.findAll('.settings input')).toHaveLength(0);
   await wrapper.get('.settings form').trigger('submit');
   await flushPromises();
-  expect(JSON.parse(localStorage.getItem('sentra.preferences.v3')!)).toEqual({
+  expect(JSON.parse(localStorage.getItem('sentra.preferences')!)).toEqual({
     level: '初级',
     explanationLanguage: '简体中文',
     translationLanguage: '英语',
@@ -116,10 +104,8 @@ it('keeps model credentials out of child settings and saved preferences', async 
 
 it('keeps the temporary translation language separate from the saved default', async () => {
   localStorage.setItem(
-    'sentra.preferences.v2',
+    'sentra.preferences',
     JSON.stringify({
-      baseUrl: 'https://provider.test/v1',
-      model: 'test',
       translationLanguage: '英语',
     }),
   );
@@ -138,7 +124,7 @@ it('keeps the temporary translation language separate from the saved default', a
   await wrapper.get('.settings form').trigger('submit');
   await flushPromises();
   expect(wrapper.get('.translation-language select').element.value).toBe('日语');
-  expect(JSON.parse(localStorage.getItem('sentra.preferences.v3')!).translationLanguage).toBe(
+  expect(JSON.parse(localStorage.getItem('sentra.preferences')!).translationLanguage).toBe(
     '英语',
   );
   wrapper.unmount();
@@ -151,7 +137,7 @@ it('keeps the temporary translation language separate from the saved default', a
   await wrapper.get('.settings form').trigger('submit');
   await flushPromises();
   expect(wrapper.get('.translation-language select').element.value).toBe('俄语');
-  expect(JSON.parse(localStorage.getItem('sentra.preferences.v3')!).translationLanguage).toBe(
+  expect(JSON.parse(localStorage.getItem('sentra.preferences')!).translationLanguage).toBe(
     '俄语',
   );
   wrapper.unmount();
@@ -205,4 +191,24 @@ it('hides host navigation while a child sheet is open and restores it on close',
   expect(report).toHaveBeenLastCalledWith(false);
   wrapper.unmount();
   report.mockRestore();
+});
+
+it('starts fresh when only obsolete data exists', async () => {
+  localStorage.setItem('sentra.preferences.v2', JSON.stringify({ level: '高级' }));
+  localStorage.setItem('sentra.preferences.v3', JSON.stringify({ translationLanguage: '日语' }));
+  localStorage.setItem('sentra.sentences.v1', 'obsolete history');
+  const wrapper = mount(App);
+  await flushPromises();
+  expect(wrapper.get('.translation-language select').element.value).toBe('英语');
+  expect(wrapper.text()).not.toContain('已停止写入');
+  await wrapper.get('[data-action=history]').trigger('click');
+  expect(wrapper.findAll('.history-card')).toHaveLength(0);
+  await wrapper.get('.sheet-close').trigger('click');
+  await wrapper.get('[data-action=settings]').trigger('click');
+  await flushPromises();
+  expect(wrapper.findAll('.settings select')[1].element.value).not.toBe('高级');
+  await wrapper.get('.settings form').trigger('submit');
+  await flushPromises();
+  expect(JSON.parse(localStorage.getItem('sentra.preferences')!).translationLanguage).toBe('英语');
+  wrapper.unmount();
 });

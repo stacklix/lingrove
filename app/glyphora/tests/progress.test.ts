@@ -7,31 +7,33 @@ import { strokeSteps } from '../src/stroke-order';
 beforeEach(() => localStorage.clear());
 it('restores unfinished ink and stage without overwriting a different language', async () => {
   const p = emptyProgress();
-  p.cursors['ru:lower'] = {
+  p.cursors['ru:mixed'] = {
     id: 'ru-а',
     stage: 'write',
     strokes: [[{ x: 0.2, y: 0.3 }]],
     feedback: null,
   };
-  p.cursors['el:upper'] = { id: 'el-Α', stage: 'observe', strokes: [], feedback: null };
-  p.cursors['ja:hiragana'] = { id: 'ja-あ', stage: 'trace', strokes: [], feedback: null };
+  p.cursors['el:mixed'] = { id: 'el-Α', stage: 'observe', strokes: [], feedback: null };
   p.cursors['ja:mixed'] = {
-    id: 'ja-ア', stage: 'write', strokes: [[{ x: 0.4, y: 0.5 }]], feedback: null,
+    id: 'ja-ア',
+    stage: 'write',
+    strokes: [[{ x: 0.4, y: 0.5 }]],
+    feedback: null,
   };
   await saveProgress(p);
   expect(await loadProgress()).toEqual(p);
 });
 it('rejects corrupt cursors and leaves the stored data untouched', async () => {
   const p = emptyProgress();
-  p.cursors['ru:lower'] = {
+  p.cursors['ru:mixed'] = {
     id: 'ru-а',
     stage: 'write',
     strokes: [[{ x: Infinity, y: 0 }]],
     feedback: null,
   };
-  await moduleStorage('glyphora').set('progress-v1', p);
+  await moduleStorage('glyphora').set('progress', p);
   await expect(loadProgress()).rejects.toThrow('进度格式异常');
-  expect(await moduleStorage('glyphora').get('progress-v1')).not.toBeNull();
+  expect(await moduleStorage('glyphora').get('progress')).not.toBeNull();
 });
 it('serializes snapshots in save order', async () => {
   const p = emptyProgress();
@@ -54,4 +56,16 @@ it('repeats a small learned pool with four distinct choice options', () => {
 });
 it('has ordered instructions for every supported letter', () => {
   expect(glyphs.every((g) => strokeSteps(g).length > 0)).toBe(true);
+});
+
+it('requires current progress fields and cursor keys', async () => {
+  const store = moduleStorage('glyphora');
+  const missing = { ...emptyProgress() } as any;
+  delete missing.lastGroups;
+  await store.set('progress', missing);
+  await expect(loadProgress()).rejects.toThrow('进度格式异常');
+  const p = emptyProgress();
+  p.cursors['ja:hiragana'] = { id: 'ja-あ', stage: 'trace', strokes: [], feedback: null };
+  await store.set('progress', p);
+  await expect(loadProgress()).rejects.toThrow('进度格式异常');
 });

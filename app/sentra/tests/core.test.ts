@@ -3,7 +3,8 @@ import { defaults, validateResult } from '../src/models';
 import { analyze } from '../src/api';
 import { SSEParser } from '../../../packages/host-sdk/src/llm';
 import { partialResult } from '../src/partial';
-import { getAppLanguage, request, storage } from '@lingrove/host-sdk';
+import { getAppLanguage, request, moduleStorage } from '@lingrove/host-sdk';
+const storage = moduleStorage('sentra');
 const valid = {
   source_language: '中文',
   translation_language: '英语',
@@ -146,12 +147,12 @@ describe('host SDK', () => {
     abort.abort();
     await expect(request({ url: 'https://a.example' }, { signal: abort.signal })).rejects.toThrow();
   });
-  it('keeps browser history under its legacy key and exposes corruption', async () => {
-    await storage.set('sentences.v1', [{ text: 'hello' }]);
-    expect(localStorage.getItem('sentra.sentences.v1')).toContain('hello');
-    expect(await storage.get('sentences.v1')).toEqual([{ text: 'hello' }]);
-    localStorage.setItem('sentra.sentences.v1', 'broken');
-    await expect(storage.get('sentences.v1')).rejects.toThrow();
+  it('persists browser history and exposes corruption', async () => {
+    await storage.set('history', [{ text: 'hello' }]);
+    expect(localStorage.getItem('sentra.history')).toContain('hello');
+    expect(await storage.get('history')).toEqual([{ text: 'hello' }]);
+    localStorage.setItem('sentra.history', 'broken');
+    await expect(storage.get('history')).rejects.toThrow();
   });
 });
 

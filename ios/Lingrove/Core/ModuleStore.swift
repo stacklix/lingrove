@@ -75,7 +75,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         if FileManager.default.fileExists(atPath: downloaded.appendingPathComponent("manifest.json").path) { return downloaded }
         return builtinRoot!.appendingPathComponent(module.id)
     }
-    func begin(_ module: Module) { activeSessions.insert(module.id); if registry[module.id]?.healthy == false { UserDefaults.standard.set(true, forKey: "launching.\(module.id).\(module.version)") } }
+    func begin(_ module: Module, trackingStartup: Bool = true) { activeSessions.insert(module.id); if trackingStartup && registry[module.id]?.healthy == false { UserDefaults.standard.set(true, forKey: "launching.\(module.id).\(module.version)") } }
     func end(_ module: Module) { activeSessions.remove(module.id) }
     func clearLaunchMarker(_ module: Module) {
         UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.version)")
@@ -127,16 +127,21 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 guard rejectedVersions[remote.id] != remote.version else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
                 statuses[remote.id] = "正在下载 \(remote.version)…"
-                do { try await install(remote); statuses[remote.id] = "已更新至 \(remote.version)" }
+                do {
+                    let installed = try await install(remote)
+                    statuses[remote.id] = installed ? "已更新至 \(remote.version)" : "发现更新，退出模块后再检查"
+                }
                 catch { statuses[remote.id] = "更新失败，保留本地版本：\(error.localizedDescription)" }
             }
         } catch { notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)" }
     }
-    private func install(_ module: Module) async throws {
+    private func install(_ module: Module) async throws -> Bool {
         guard let rawURL = module.downloadUrl, let url = URL(string: rawURL), let expectedHash = module.sha256, expectedHash.count == 64,
               let expectedSize = module.size, expectedSize > 0, expectedSize <= 50 * 1024 * 1024 else { throw ModuleError.invalid("下载元数据无效") }
         let data = try await fetch(url, limit: expectedSize)
         guard data.count == expectedSize, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == expectedHash else { throw ModuleError.invalid("安装包哈希不匹配") }
+        // A module may have been opened while its package was downloading.
+        guard !activeSessions.contains(module.id) else { return false }
         let stage = root.appendingPathComponent("staging-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: stage, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: stage) }
@@ -159,5 +164,6 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         if let versions = try? FileManager.default.contentsOfDirectory(at: destination.deletingLastPathComponent(), includingPropertiesForKeys: nil) {
             for version in versions where !retained.contains(version.lastPathComponent) { try? FileManager.default.removeItem(at: version) }
         }
+        return true
     }
 }

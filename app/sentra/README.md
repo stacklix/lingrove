@@ -9,7 +9,7 @@ Lingrove 的第一个 Vue 3 + TypeScript + Vite 子应用。提供翻译（直�
 - 需要 Lingrove 1.2.0；在宿主「应用设置 → 大模型配置」中管理协议、地址、模型与 API Key，所有子应用共用。
 - 模型调用使用 `@lingrove/host-sdk` 的 `llm.complete()`；宿主构造并发送请求，子应用不读取 API Key。独立浏览器仅支持界面与历史预览。
 - 流式结果只做展示，完整结果通过结构和原句/目标语言校验后保存。
-- 原生学习历史不受代码包更新影响。浏览器历史兼容旧 Sentra 的 `sentra.sentences.v1` 数据。
+- 原生学习历史不受代码包更新影响。浏览器历史保存在当前网站的本地存储中，与原生历史不自动同步。
 - 无远程字体、运行时 CDN 或 Service Worker 依赖，原生离线可查看历史。
 
 源码位于 `app/sentra/`。可从仓库根目录执行 `npm run test -w @lingrove/sentra` 单独运行测试，或执行 `npm run check` 检查全部子应用。

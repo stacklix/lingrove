@@ -63,29 +63,6 @@ enum NetworkPolicy {
     }
 }
 
-// One-time upgrade cleanup only; new authorizations follow the normal network policy.
-enum LegacyModelAuthorizationMigration {
-    static let completedKey = "migration.legacyModelOrigins.cleaned"
-
-    static func run(_ urls: [String], defaults: UserDefaults = .standard) {
-        guard !defaults.bool(forKey: completedKey) else { return }
-        let origins = Set((defaults.stringArray(forKey: "network.hostModelOrigins") ?? []) + urls.compactMap { NetworkPolicy.origin($0) })
-        for (key, value) in defaults.dictionaryRepresentation() where key.hasPrefix("origins.") {
-            guard let saved = value as? [String] else { continue }
-            let retained = saved.filter { raw in
-                guard let origin = NetworkPolicy.origin(raw) else { return true }
-                return !origins.contains(origin)
-            }
-            if retained != saved {
-                if retained.isEmpty { defaults.removeObject(forKey: key) }
-                else { defaults.set(retained, forKey: key) }
-            }
-        }
-        defaults.removeObject(forKey: "network.hostModelOrigins")
-        defaults.set(true, forKey: completedKey)
-    }
-}
-
 // Read-only summary of configured destinations; this does not grant network access.
 struct NetworkAccessDomain: Identifiable, Equatable {
     // nil identifies host-owned, shared services; module IDs identify child-app permissions.

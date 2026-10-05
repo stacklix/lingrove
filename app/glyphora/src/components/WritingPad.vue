@@ -26,7 +26,8 @@ const strokes = ref<Strokes>(copyStrokes(props.initialStrokes ?? [])),
   eraser = ref(false),
   undoStack = ref<Strokes[]>([]),
   error = ref('');
-const native = ref(false),
+const nativeFailed = ref(false);
+const native = ref(isNative()),
   nativeUndo = ref(false);
 const sessionID = createID();
 let alive = true;
@@ -233,8 +234,8 @@ onMounted(async () => {
     console.warn('Inline PencilKit unavailable', e);
     streams.delete(sessionID);
     await nativeCall('detach').catch(() => {});
-    // Older hosts retain the fully functional inline web canvas.
-    native.value = false;
+    nativeFailed.value = true;
+    error.value = '原生手写初始化失败，请重新加载子应用。';
   }
 });
 defineExpose({ clear });
@@ -252,18 +253,26 @@ defineExpose({ clear });
         @pointerup.prevent="up"
         @pointercancel="cancel"
         @lostpointercapture="cancel"
-        :class="{ locked: disabled || native, erasing: eraser, 'native-placeholder': native }"
+        :class="{
+          locked: disabled || nativeFailed || native,
+          erasing: eraser,
+          'native-placeholder': native,
+        }"
       />
     </div>
     <div class="pad-tools">
       <button
         v-if="!compactTools"
         @click="undo"
-        :disabled="disabled || (native ? !nativeUndo : !undoStack.length)"
+        :disabled="disabled || nativeFailed || (native ? !nativeUndo : !undoStack.length)"
       >
         撤销
       </button>
-      <button v-if="!inlineActions" @click="clear" :disabled="disabled || !strokes.length">
+      <button
+        v-if="!inlineActions"
+        @click="clear"
+        :disabled="disabled || nativeFailed || !strokes.length"
+      >
         清空
       </button>
       <button
@@ -271,17 +280,23 @@ defineExpose({ clear });
         :aria-pressed="eraser"
         :class="{ selected: eraser }"
         @click="eraser = !eraser"
-        :disabled="disabled"
+        :disabled="disabled || nativeFailed"
       >
         {{ eraser ? '切换为笔' : '橡皮' }}
       </button>
-      <label><input type="checkbox" v-model="finger" :disabled="disabled" />允许手指</label>
+      <label
+        ><input
+          type="checkbox"
+          v-model="finger"
+          :disabled="disabled || nativeFailed"
+        />允许手指</label
+      >
     </div>
     <div v-if="inlineActions" class="pad-actions">
-      <button @click="clear" :disabled="disabled || !strokes.length">清空</button>
+      <button @click="clear" :disabled="disabled || nativeFailed || !strokes.length">清空</button>
       <button
         class="primary"
-        :disabled="disabled || !strokes.length"
+        :disabled="disabled || nativeFailed || !strokes.length"
         @click="emit('submit', copyStrokes(strokes))"
       >
         评分 <span>→</span>
@@ -292,7 +307,7 @@ defineExpose({ clear });
     <button
       v-if="!inlineActions"
       class="primary wide"
-      :disabled="disabled || !strokes.length"
+      :disabled="disabled || nativeFailed || !strokes.length"
       @click="emit('submit', copyStrokes(strokes))"
     >
       评分 <span>→</span>

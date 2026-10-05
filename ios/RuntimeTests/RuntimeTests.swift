@@ -304,9 +304,9 @@ final class RuntimeTests: XCTestCase {
         page.close()
     }
 
-    func testLLMReasoningEffortCompatibilityAndRequests() throws {
-        let legacy = Data(#"{"provider":"openAi","baseURL":"https://api.kimi.com/coding/v1","model":"k3","token":""}"#.utf8)
-        var config = try JSONDecoder().decode(LLMConfiguration.self, from: legacy)
+    func testLLMReasoningEffortDefaultsAndRequests() throws {
+        let defaultConfiguration = Data(#"{"provider":"openAi","baseURL":"https://api.kimi.com/coding/v1","model":"k3","token":""}"#.utf8)
+        var config = try JSONDecoder().decode(LLMConfiguration.self, from: defaultConfiguration)
         XCTAssertNil(config.reasoningEffort)
         let params: [String: Any] = ["system": "test", "messages": [["role": "user", "content": "hello"]], "maxTokens": 512]
         func body(_ config: LLMConfiguration) throws -> [String: Any] {
@@ -353,59 +353,20 @@ final class RuntimeTests: XCTestCase {
         config.token = "bad\r\nheader"
         XCTAssertThrowsError(try config.request(params))
     }
-    func testMigratesLegacyCredentialsAndPreservesLearningPreferences() throws {
-        let identity = UUID().uuidString
-        let service = "llm-test." + identity, legacy = "legacy-test." + identity
-        let defaults = UserDefaults(suiteName: identity)!
-        defer { defaults.removePersistentDomain(forName: identity) }
-        defaults.set(["https://model.example", "https://dictionary.example"], forKey: "origins.sentra")
-        let file = FileManager.default.temporaryDirectory.appendingPathComponent(identity + ".json")
-        func query(_ name: String) -> [String: Any] { [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: name] }
-        defer { SecItemDelete(query(service) as CFDictionary); SecItemDelete(query(legacy) as CFDictionary); try? FileManager.default.removeItem(at: file) }
-        var key = query(legacy); key[kSecAttrAccount as String] = "model-token"; key[kSecValueData as String] = Data("migration-test-secret".utf8)
-        XCTAssertEqual(SecItemAdd(key as CFDictionary, nil), errSecSuccess)
-        try JSONSerialization.data(withJSONObject: ["baseUrl": "https://model.example/v1", "model": "legacy-model", "protocol": "openAi", "level": "中级", "translationLanguage": "日语"]).write(to: file)
-        let migrated = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file, defaults: defaults)
-        XCTAssertEqual(defaults.stringArray(forKey: "origins.sentra"), ["https://dictionary.example"])
-        XCTAssertEqual(migrated.model, "legacy-model"); XCTAssertEqual(migrated.token, "migration-test-secret")
-        let preferences = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: String]
-        XCTAssertEqual(preferences, ["level": "中级", "translationLanguage": "日语"])
-        XCTAssertEqual(SecItemCopyMatching(query(legacy) as CFDictionary, nil), errSecItemNotFound)
-        var edited = migrated; edited.model = "host-model"; edited.token = ""; edited.baseURL = "https://new-model.example/v1"
-        defaults.set(["https://model.example", "https://new-model.example", "https://dictionary.example"], forKey: "origins.sentra")
-        try LLMStore.save(edited, service: service)
-        let restored = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file, defaults: defaults)
-        XCTAssertEqual(restored.model, "host-model"); XCTAssertEqual(restored.token, "")
-        XCTAssertEqual(defaults.stringArray(forKey: "origins.sentra"), ["https://model.example", "https://new-model.example", "https://dictionary.example"])
-        defaults.set(["https://new-model.example"], forKey: "origins.kotoba")
-        _ = try LLMStore.load(service: service, legacyService: legacy, preferencesURL: file, defaults: defaults)
-        XCTAssertEqual(defaults.stringArray(forKey: "origins.kotoba"), ["https://new-model.example"])
-
-    }
-    func testLegacyCleanupRetriesFailureAndStopsAfterCompletion() throws {
-        let identity = UUID().uuidString
-        let defaults = UserDefaults(suiteName: identity)!
-        let file = FileManager.default.temporaryDirectory.appendingPathComponent(identity)
-        let service = "cleanup-test." + identity
-        defer {
-            defaults.removePersistentDomain(forName: identity)
-            try? FileManager.default.removeItem(at: file)
-            SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service] as CFDictionary)
-        }
-        try LLMStore.save(LLMConfiguration(model: "saved-model"), service: service)
-        try Data("invalid JSON".utf8).write(to: file)
-        let saved = try LLMStore.load(service: service, legacyService: identity, preferencesURL: file, defaults: defaults)
-        XCTAssertEqual(saved.model, "saved-model")
-        XCTAssertFalse(defaults.bool(forKey: LLMStore.credentialsCleanupPreferenceKey))
-        try Data(#"{"model":"old","level":"advanced"}"#.utf8).write(to: file)
-        _ = try LLMStore.load(service: service, legacyService: identity, preferencesURL: file, defaults: defaults)
-        XCTAssertTrue(defaults.bool(forKey: LLMStore.credentialsCleanupPreferenceKey))
-        let cleaned = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: String]
-        XCTAssertEqual(cleaned, ["level": "advanced"])
-        let later = Data(#"{"model":"later-write"}"#.utf8)
-        try later.write(to: file)
-        _ = try LLMStore.load(service: service, legacyService: identity, preferencesURL: file, defaults: defaults)
-        XCTAssertEqual(try Data(contentsOf: file), later)
+    func testHostModelConfigurationDefaultsAndRoundTrips() throws {
+        let service = "llm-test." + UUID().uuidString
+        defer { SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service] as CFDictionary) }
+        let empty = try LLMStore.load(service: service)
+        XCTAssertEqual(empty.model, "")
+        XCTAssertEqual(empty.token, "")
+        let configuration = LLMConfiguration(provider: "anthropic", baseURL: "https://model.example", model: "host-model", token: "test-secret", reasoningEffort: "high")
+        try LLMStore.save(configuration, service: service)
+        let restored = try LLMStore.load(service: service)
+        XCTAssertEqual(restored.provider, configuration.provider)
+        XCTAssertEqual(restored.baseURL, configuration.baseURL)
+        XCTAssertEqual(restored.model, configuration.model)
+        XCTAssertEqual(restored.token, configuration.token)
+        XCTAssertEqual(restored.reasoningEffort, configuration.reasoningEffort)
     }
     @MainActor func testProcessTerminationDoesNotRejectVersionBeforeReady() {
         let module = Module(id: "termination-test", name: "Test", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
@@ -415,38 +376,6 @@ final class RuntimeTests: XCTestCase {
         runtime.webViewWebContentProcessDidTerminate(WKWebView())
         XCTAssertEqual(failures, 1)
         XCTAssertEqual(startupFailures, 0)
-    }
-    @MainActor func testSecretsPersistAcrossPagesAndAreModuleScoped() async throws {
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: directory) }
-        try Data("<html><head></head><body><script src='ready.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
-        try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
-        let identity = "secret-" + UUID().uuidString.lowercased()
-        func open(_ id: String) async -> ModulePage {
-            let module = Module(id: id, name: "Secret test", version: "1.0.0", entry: "index.html", minHostVersion: "1.1.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
-            let ready = expectation(description: "secret page ready")
-            let page = ModulePage(module: module, directory: directory, onReady: { ready.fulfill() }, onFailure: { XCTFail($0) })
-            await fulfillment(of: [ready], timeout: 15)
-            return page
-        }
-        func call(_ page: ModulePage, _ method: String, value: String = "") async throws -> Any {
-            try await page.webView.callAsyncJavaScript("return await window.webkit.messageHandlers.lingrove.postMessage({version:1,method,params:{key:'token',value}})", arguments: ["method": method, "value": value], in: nil, contentWorld: .page)
-        }
-        let first = await open(identity)
-        _ = try await call(first, "secret.set", value: "test-token-only")
-        first.close()
-        let reopened = await open(identity)
-        defer { reopened.close() }
-        let saved = try await call(reopened, "secret.get")
-        XCTAssertEqual(saved as? String, "test-token-only")
-        let other = await open(identity + "-other")
-        defer { other.close() }
-        let isolated = try await call(other, "secret.get")
-        XCTAssertTrue(isolated is NSNull)
-        _ = try await call(reopened, "secret.remove")
-        let removed = try await call(reopened, "secret.get")
-        XCTAssertTrue(removed is NSNull)
     }
     @MainActor func testPagePreservesDOMAndJavaScriptAfterDetaching() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { createID, isNative, ready, setRootPage, storage } from '@lingrove/host-sdk';
+import { createID, isNative, ready, setRootPage, moduleStorage } from '@lingrove/host-sdk';
 import {
   actions,
   defaults,
@@ -15,6 +15,7 @@ import { partialResult } from './partial';
 import ResultView from './components/ResultView.vue';
 import CopyButton from './components/CopyButton.vue';
 import Sheet from './components/Sheet.vue';
+const storage = moduleStorage('sentra');
 const settings = reactive<Settings>({ ...defaults });
 const draftSettings = reactive<Settings>({ ...defaults });
 const translationLanguage = ref(defaults.translationLanguage);
@@ -109,15 +110,13 @@ const filtered = computed(() =>
 let writeQueue = Promise.resolve();
 function persistHistory() {
   const snapshot = JSON.parse(JSON.stringify(history.value));
-  const next = writeQueue.catch(() => {}).then(() => storage.set('sentences.v1', snapshot));
+  const next = writeQueue.catch(() => {}).then(() => storage.set('history', snapshot));
   writeQueue = next;
   return next;
 }
 onMounted(async () => {
   try {
-    const prefs =
-      (await storage.get<Partial<Settings>>('preferences.v3')) ??
-      (await storage.get<Partial<Settings>>('preferences.v2'));
+    const prefs = await storage.get<Partial<Settings>>('preferences');
     for (const key of ['translationLanguage', 'explanationLanguage', 'level'] as const) {
       if (typeof prefs?.[key] === 'string') settings[key] = prefs[key];
     }
@@ -127,7 +126,7 @@ onMounted(async () => {
     notice.value = '设置读取失败，请重新配置。';
   }
   try {
-    const saved = await storage.get<Sentence[]>('sentences.v1');
+    const saved = await storage.get<Sentence[]>('history');
     if (
       saved &&
       (!Array.isArray(saved) ||
@@ -154,7 +153,7 @@ async function saveSettings() {
   saving.value = true;
   notice.value = '';
   try {
-    await storage.set('preferences.v3', { ...draftSettings });
+    await storage.set('preferences', { ...draftSettings });
     if (settings.translationLanguage !== draftSettings.translationLanguage) {
       translationLanguage.value = draftSettings.translationLanguage;
     }

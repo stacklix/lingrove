@@ -1,5 +1,6 @@
 import { beforeEach, it, expect } from 'vitest';
-import { moduleStorage, storage } from '@lingrove/host-sdk';
+import { moduleStorage } from '@lingrove/host-sdk';
+const storage = moduleStorage('sentra');
 import { loadHistory, saveHistory } from '../src/persistence';
 beforeEach(() => localStorage.clear());
 it('keeps Glyphora browser data separate from Sentra', async () => {
@@ -33,4 +34,38 @@ it('bounds saved practice history and rejects impossible scores', async () => {
     rounds: [],
   });
   await expect(loadHistory()).rejects.toThrow();
+});
+
+it('round-trips current answers and rejects missing group, ink or choice data', async () => {
+  const store = moduleStorage('glyphora');
+  const data = {
+    practices: [],
+    rounds: [
+      {
+        id: 'round',
+        language: '俄语',
+        group: 'mixed' as const,
+        at: new Date().toISOString(),
+        answers: Array.from({ length: 10 }, (_, i) => ({
+          id: 'ru-а',
+          text: 'а',
+          score: 100,
+          correct: true,
+          status: 'match',
+          ...(i % 2
+            ? { type: 'choice' as const, chosenID: 'ru-а' }
+            : { type: 'write' as const, strokes: [[{ x: 0.2, y: 0.3 }]] }),
+        })),
+      },
+    ],
+  };
+  await saveHistory(data);
+  expect(await loadHistory()).toEqual(data);
+  for (const field of ['group', 'strokes', 'chosenID']) {
+    const invalid = JSON.parse(JSON.stringify(data));
+    if (field === 'group') delete invalid.rounds[0].group;
+    else delete invalid.rounds[0].answers[field === 'strokes' ? 0 : 1][field];
+    await store.set('history', invalid);
+    await expect(loadHistory()).rejects.toThrow('记录格式异常');
+  }
 });

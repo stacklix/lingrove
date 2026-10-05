@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { beforeEach, expect, it, vi } from 'vitest';
 import WritingPad from '../src/components/WritingPad.vue';
 import { eraseAt } from '../src/ink';
@@ -75,4 +75,27 @@ it('erases between sparse samples while preserving distant strokes', () => {
   ];
   expect(eraseAt(strokes, { x: 0.5, y: 0.5 })).toEqual([strokes[1]]);
   expect(strokes).toHaveLength(2);
+});
+
+it('reports native initialization failure without enabling the browser canvas', async () => {
+  const sdk = await import('@lingrove/host-sdk');
+  const native = vi.spyOn(sdk, 'isNative').mockReturnValue(true);
+  const invoke = vi.spyOn(sdk, 'invoke').mockImplementation(async (_method, params: any) => {
+    if (params.action === 'attach') throw new Error('attach failed');
+    return true;
+  });
+  const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const w = pad();
+  try {
+    await flushPromises();
+    expect(w.get('[role=alert]').text()).toContain('原生手写初始化失败');
+    await draw(w, 'pen');
+    expect(w.emitted('ink')).toBeUndefined();
+    expect(w.get('button.primary').attributes('disabled')).toBeDefined();
+  } finally {
+    w.unmount();
+    native.mockRestore();
+    invoke.mockRestore();
+    warning.mockRestore();
+  }
 });

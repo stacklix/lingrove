@@ -1,19 +1,8 @@
 # Lingrove
 
-SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。目前包含 **Sentra**（翻译、语法分析与地道表达）、**Glyphora**（日语、俄语、希腊语字母与书写学习）和 **Kotoba**（日语单词活用与例句）。没有 Lingrove 账号或登录服务。
+SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立更新的 Vue 3 + TypeScript + Vite 子应用。没有 Lingrove 账号或登录服务。
 
 应用对外名称为 **Lingrove**，子应用源码统一位于 `app/`。工程和 Scheme 为 `Lingrove`，Bundle ID 为 `me.stackli.lingrove`，SDK 为 `@lingrove/host-sdk`，本地数据目录为 `Lingrove`；更新域名使用 `lingrove.stackli.me`。
-
-## 子应用
-
-所有子应用源码位于 `app/`，使用公共宿主 SDK，并各自维护版本、资源和学习记录。
-
-| 子应用 | 主要功能 | 最低宿主版本 | 详细说明 |
-| --- | --- | --- | --- |
-| Sentra | 翻译、原句语法分析、地道表达优化、流式结果与学习历史 | Lingrove 1.2.0 | [Sentra README](app/sentra/README.md) |
-| Glyphora | 日语假名、俄语与希腊语字母学习，书写练习、真人发音、测试与学习进度 | Lingrove 1.3.0 | [Glyphora README](app/glyphora/README.md) |
-
-| Kotoba | 日语单词活用、假名读音、用法与例句 | Lingrove 1.2.0 | [Kotoba README](app/kotoba/README.md) |
 
 ## 运行
 
@@ -47,9 +36,6 @@ npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的
 
 - `ios/Lingrove/`：原生首页、模块更新、安装器、WebView、网络桥、本地存储。
 - `app/`：所有子应用源码，每个应用有独立版本与 manifest。
-  - `app/sentra/`：句子分析与语言学习。
-  - `app/glyphora/`：字母书写与发音学习。
-  - `app/kotoba/`：日语单词活用与例句。
 - `packages/host-sdk/`：子应用公共 TypeScript SDK。
 - `scripts/package-modules.mjs`：生成 ZIP、普通 JSON 目录和原生内置资源。
 - `dist/`：可部署到 HTTPS 静态服务器/CDN 的发布产物。
@@ -102,7 +88,7 @@ gh-pages/
 ├── packages/
 │   ├── sentra-1.1.1.zip           # 每个子应用独立版本包
 │   └── glyphora-1.0.0.zip
-├── glyphora/                     # 字母学习网页及资源
+├── glyphora/                     # 子应用网页及资源
 └── sentra/
     ├── index.html                # 浏览器可直接访问
     ├── manifest.json
@@ -137,7 +123,7 @@ gh-pages/
 
 ## 宿主大模型服务
 
-从 Lingrove 1.2.0 起，在原生首页的「应用设置 → 大模型配置」中统一设置接口协议（OpenAI / Anthropic 兼容）、HTTPS Base URL、模型名称、可选 API Key 和推理强度。推理强度由服务商支持情况决定，OpenAI 兼容协议按配置发送 `reasoning_effort`，默认选项不发送该字段。所有子应用共用此配置，修改后下一次请求生效；进行中的请求继续使用启动时的配置。
+在原生首页的「应用设置 → 大模型配置」中统一设置接口协议（OpenAI / Anthropic 兼容）、HTTPS Base URL、模型名称、可选 API Key 和推理强度。推理强度由服务商支持情况决定，OpenAI 兼容协议按配置发送 `reasoning_effort`，默认选项不发送该字段。所有子应用共用此配置，修改后下一次请求生效；进行中的请求继续使用启动时的配置。
 
 完整配置保存在宿主独立 Keychain 项中（仅本机、解锁后可访问），不会通过桥接返回 API Key。宿主负责选定请求地址、构造协议与鉴权头、发送请求和流式传输；子应用无需配置模型域名授权。通用 HTTP 桥仍遵守子应用各自的域名权限，不能获取宿主凭据。
 
@@ -162,9 +148,9 @@ const result = await llm.complete({
 
 消息角色支持 `user`、`assistant`，系统指令通过 `system` 传入。宿主忽略子应用传入的 URL、鉴权头与模型覆盖值，统一使用已保存的配置。请求最多 100 条消息、1 MiB，输出上限参数为 1–32768；每个子应用最多 6 个并发网络请求，响应最大 8 MiB，超时最长 120 秒。SDK 统一解析 OpenAI / Anthropic 流式及普通 JSON 响应，截断、拒绝和断流会报错。
 
-宿主首次启动时自动迁移原生 Sentra 的旧模型配置及 Keychain 凭据，成功保存后清理旧连接字段与凭据，保留学习偏好与历史。清理被中断时后续读取会重试。Sentra 新偏好保存为 `preferences.v3`，保留旧数据供迁移恢复。Safari/浏览器的旧凭据不会自动进入原生宿主；独立网页仅支持界面和历史预览，模型调用需要 Lingrove 宿主。
+宿主模型配置仅从当前 Keychain 项读取；未配置时需在宿主设置中填写。模型调用需要 Lingrove 宿主。
 
-Sentra 1.1.0 要求 Lingrove 1.2.0，避免旧宿主安装不支持新接口的子应用。桥接方法为 `llm.status`、`llm.request`、`llm.cancel`，现有桥协议版本保持 1。
+桥接方法为 `llm.status`、`llm.request`、`llm.cancel`，现有桥协议版本保持 1。
 
 ## 多域名网络桥
 
@@ -178,13 +164,13 @@ const response = await request({
 });
 ```
 
-原生使用 URLSession，不受浏览器 CORS 限制。每个模块支持多个 `allowedOrigins`，按 HTTPS 协议、域名和端口精确匹配，禁止重定向和隐式 Cookie。自定义服务商由子应用设置页触发 `authorizeOrigin()`，原生弹窗展示目标域名并记录用户授权，可从原生设置撤销。模块不能自行把任意域名加到可信发布清单。模型调用统一使用宿主 `llm.request`。升级时一次性清理旧模型直连授权；之后通用网络请求沿用清单和用户授权，不对模型域名做额外禁止或展示过滤。网络授权按公共服务和各子应用分组展示。
+原生使用 URLSession，不受浏览器 CORS 限制。每个模块支持多个 `allowedOrigins`，按 HTTPS 协议、域名和端口精确匹配，禁止重定向和隐式 Cookie。自定义服务商由子应用设置页触发 `authorizeOrigin()`，原生弹窗展示目标域名并记录用户授权，可从原生设置撤销。模块不能自行把任意域名加到可信发布清单。模型调用统一使用宿主 `llm.request`。通用网络请求沿用清单和用户授权，不对模型域名做额外禁止或展示过滤。网络授权按公共服务和各子应用分组展示。
 
-桥支持 JSON/文本响应、SSE 分块、取消、超时及响应大小限制。原生注入 CSP，阻止网页绕过网络桥访问远程资源。浏览器开发模式使用 fetch，仍需要服务商正确配置 CORS。宿主模型调用使用上述独立大模型接口。通用 `secret.*` 接口仍按子应用隔离，只能访问子应用自己的凭据，不能读取宿主模型配置。
+桥支持 JSON/文本响应、SSE 分块、取消、超时及响应大小限制。原生注入 CSP，阻止网页绕过网络桥访问远程资源。浏览器开发模式使用 fetch，仍需要服务商正确配置 CORS。宿主模型调用使用上述独立大模型接口。子应用不能读取宿主模型凭据。
 
-## 数据与迁移
+## 本地数据
 
-原生历史及偏好保存至 Application Support/Lingrove/State/<模块 ID>，由主框架身份限定命名空间。浏览器历史沿用 `sentra.sentences.v1`；原 Flutter Web 的记录在相同来源下可继续读取，学习偏好可从旧 preferences.v2 恢复。原生不能自动读取 Safari 或旧 PWA 的存储。未完成/格式不合格的流式结果不写历史；损坏历史会停止写入以保护数据。
+子应用数据保存在本机，按模块 ID 独立存储，与代码包分开管理。原生数据位于 `Application Support/Lingrove/State/<模块 ID>`，浏览器数据保存在当前网站的本地存储中，两者不自动同步。不提供旧版数据迁移。
 
 浏览器版用于网页预览，不注册 Service Worker，也不生成 `sw.js`。离线使用由原生宿主的内置或已下载子应用资源提供。
 
@@ -202,22 +188,7 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 前端测试使用模拟模型响应，不调用收费服务。WebKit 集成测试使用本地模拟响应验证原生 SSE 转发、域名拦截和持久存储。iOS UI 测试检查内置 Vue 页面、通信桥和跨重启偏好保存；请在专用测试模拟器运行。
 
-## 发布边界
-
-未自动部署服务器、推送 Git 或执行 App Store 提交。上架前需配置签名团队、应用图标/商店资料，并确认 Apple 4.7 对下载 HTML 应用、原生桥、模块索引和隐私共享的要求。本项目的技术实现不代表已获审核许可。
-
-## 真机调试启动异常
-
-如果 Xcode 26 在 iOS 27 Beta 真机启动时出现 `OS_dispatch_mach_msg _setContext:`，这是已报告的队列回溯诊断兼容问题。共享 Scheme 已关闭 Run/Test 的 `Enable backtrace recording`，普通 LLDB 断点调试仍启用。已有 Xcode 窗口若没有加载修改，请重新打开工程，或在 Product → Scheme → Edit Scheme → Run → Options → Queue Debugging 中取消该选项。此设置不改变发布包。参见 [Apple 开发者论坛的同类报告](https://developer.apple.com/forums/thread/835484)。
-
-## 返回子应用
-
-同一次宿主运行期间，返回首页会保留各子应用的 WebView。再次进入相同版本时恢复 Tab、草稿、结果、Sheet 和滚动位置，进行中的请求继续执行。子应用版本或权限清单变化、被禁用或页面进程异常时，会释放旧页面并重新加载。完全退出宿主或系统终止进程后不保留这份内存页面；已保存的学习记录和设置仍持久保存。
-
-模型配置的 Keychain 集成测试需使用 Xcode 默认签名运行 `test`，不要添加 `CODE_SIGNING_ALLOWED=NO`；无签名产物没有访问 Keychain 所需的应用身份。
-
-
-### 调试模式与服务器资源
+## 调试模式与服务器资源
 
 默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；通过“完成”保存，通过“取消”放弃修改。Release 构建不提供服务器加载能力。
 
@@ -229,12 +200,3 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 调试服务禁用 HTTP 缓存且不压缩响应；每次重载会重建 WebView 并取消旧请求，未保存的页面状态会清空，已保存数据保留。服务器地址会持久保存；清空并保存即可恢复本地资源。调试失败时可在错误页重新加载。Debug 支持局域网 HTTP 和 Safari Web Inspector。
 
 正式发布请使用 `npm run build:release`（压缩资源）及 `xcodebuild ... -configuration Release`，或直接在 Xcode 执行 Archive（已配置为 Release）。原生 Release 构建阶段会自动使用压缩的正式资源，并忽略此前保存的调试地址。
-
-
-## 设置与资源维护
-
-宿主设置中的“句子成分翻译语言”控制 Sentra 句子成分的翻译，不改变界面语言。“版本与更新”集中显示子应用版本、更新状态与错误，并支持手动检查更新；更新域名统一在“网络授权 → 公共”查看。
-
-保存设置只有在调试地址或调试开关变化时才刷新子应用；主题和翻译语言修改会保留当前页面。旧模型配置和授权迁移完成后跳过重复清理，清理失败则在下次读取时重试。
-
-Glyphora 只发布嵌入音频及来源、许可说明，生成的 WAV 保留在 `app/glyphora/audio-generated/` 用于校验。手写功能使用内嵌 PencilKit 和浏览器画板；已移除无人调用的旧 `handwriting.open` 弹窗接口。

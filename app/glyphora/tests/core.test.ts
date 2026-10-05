@@ -50,8 +50,8 @@ describe('round generation', () => {
   it('keeps handwriting and choice results separate', () => {
     expect(
       summarize([
-        { id: 'a', text: 'a', type: 'write', score: 80, correct: true, status: 'match' },
-        { id: 'b', text: 'b', type: 'choice', score: 0, correct: false, status: 'different' },
+        { id: 'a', text: 'a', type: 'write', strokes: [], score: 80, correct: true, status: 'match' },
+        { id: 'b', text: 'b', type: 'choice', chosenID: 'a', score: 0, correct: false, status: 'different' },
       ]),
     ).toEqual({ writing: 80, choices: 0, choiceCount: 1, wrong: ['b'] });
   });

@@ -82,7 +82,7 @@ struct HomeView: View {
                                     Label("暂时无法打开", systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.secondary)
                                 }
                             }.padding(22).background(Color(uiColor: LingroveTheme.surface)).clipShape(RoundedRectangle(cornerRadius: 22))
-                        }.buttonStyle(.plain).disabled(store.checking || !didCheck || store.blocked.contains(module.id))
+                        }.buttonStyle(.plain).disabled(store.blocked.contains(module.id))
                     }
                 }.padding(24)
             }.background(Color(uiColor: LingroveTheme.background)).navigationTitle("Lingrove")
@@ -160,7 +160,7 @@ struct HomeView: View {
                     }
                 }
             }
-            .task { guard !didCheck else { return }; do { _ = try LLMStore.load() } catch { modelError = error.localizedDescription }; await store.checkForUpdates(); didCheck = true }
+            .task { guard !didCheck else { return }; didCheck = true; do { _ = try LLMStore.load() } catch { modelError = error.localizedDescription }; await store.checkForUpdates() }
             .alert("模型配置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(modelError) }
         }.tint(Color(uiColor: LingroveTheme.accent))
         .onChange(of: store.modules) { _, modules in pages.reconcile(modules: modules, blocked: store.blocked) }

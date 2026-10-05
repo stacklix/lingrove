@@ -5,7 +5,6 @@ vi.mock('@lingrove/host-sdk', () => ({
   ready: vi.fn().mockResolvedValue(undefined),
   createID: () => 'round-test',
   isNative: () => false,
-  handwriting: { open: vi.fn() },
   moduleStorage: () => ({
     get: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(undefined),
@@ -179,7 +178,7 @@ it('restores language, letter group and study step after restarting', async () =
   const saved = emptyProgress();
   saved.language = 'ja';
   saved.lastGroups.ja = 'katakana';
-  saved.cursors['ja:katakana'] = { id: 'ja-ア', stage: 'write', strokes: [], feedback: null };
+  saved.cursors['ja:mixed'] = { id: 'ja-ア', stage: 'write', strokes: [], feedback: null };
   vi.mocked(loadProgress).mockResolvedValueOnce(saved);
   const w = mountApp();
   await flushPromises();
@@ -191,10 +190,10 @@ it('restores language, letter group and study step after restarting', async () =
   w.unmount();
 });
 
-it('skips a learned cursor and keeps legacy Russian groups mixed', async () => {
+it('skips a learned cursor in Russian mixed study', async () => {
   const { loadProgress, emptyProgress } = await import('../src/progress');
   const saved = emptyProgress();
-  saved.lastGroups.ru = 'lower';
+  saved.lastGroups.ru = 'mixed';
   saved.learned = ['ru-а'];
   saved.cursors['ru:mixed'] = { id: 'ru-а', stage: 'write', strokes: [], feedback: null };
   vi.mocked(loadProgress).mockResolvedValueOnce(saved);
@@ -293,7 +292,7 @@ it('uses the shared Japanese study layout and switches kana independently in wri
   const { loadProgress, emptyProgress, saveProgress } = await import('../src/progress');
   const saved = emptyProgress();
   saved.language = 'ja';
-  saved.cursors['ja:hiragana'] = { id: 'ja-あ', stage: 'observe', strokes: [], feedback: null };
+  saved.cursors['ja:mixed'] = { id: 'ja-あ', stage: 'observe', strokes: [], feedback: null };
   vi.mocked(loadProgress).mockResolvedValueOnce(saved);
   const w = mountApp();
   await flushPromises();
