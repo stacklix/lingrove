@@ -64,7 +64,7 @@ export const llm = {
   },
   async complete(input: LLMRequest, options: LLMOptions = {}): Promise<LLMResult> {
     if (options.signal?.aborted) throw new DOMException('已取消', 'AbortError');
-    if (!isNative()) throw new Error('请在 Lingrove 宿主中使用模型服务；浏览器仅支持界面预览');
+    if (!isNative()) throw new Error('请在 Lingrove 中使用此功能。');
     let content = '';
     let reasoning = '';
     let outputTokens = 0;
@@ -99,7 +99,7 @@ export const llm = {
         return;
       }
       const event = JSON.parse(payload);
-      if (event.error || event.type === 'error') throw new Error('模型服务返回流式错误');
+      if (event.error || event.type === 'error') throw new Error('生成中断，请重试。');
       const reason = event.delta?.stop_reason ?? event.choices?.[0]?.finish_reason;
       checkReason(reason);
       let delta = event.choices?.[0]?.delta?.content ?? '';
@@ -108,7 +108,7 @@ export const llm = {
       if (event.type === 'content_block_start' && event.content_block?.type === 'text')
         delta = event.content_block.text;
       if (event.type === 'message_stop' || event.choices?.[0]?.finish_reason) completed = true;
-      if (typeof delta !== 'string') throw new Error('模型响应格式无效');
+      if (typeof delta !== 'string') throw new Error('生成结果不完整，请重试。');
       const thought = event.choices?.[0]?.delta?.reasoning_content ?? event.delta?.thinking ?? '';
       if (typeof thought === 'string') reasoning += thought;
       content += delta;
@@ -148,7 +148,7 @@ export const llm = {
       if (options.signal?.aborted) throw new DOMException('已取消', 'AbortError');
       if (streamError) throw streamError;
       if (response.status < 200 || response.status >= 300)
-        throw new Error(`请求失败（HTTP ${response.status}），请检查宿主中的模型配置`);
+        throw new Error('请求失败，请检查「应用设置 → 通用模型」中的设置。');
       if (response.headers['content-type']?.includes('text/event-stream')) {
         parser.finish();
         if (!completed) throw new Error('连接中断，结果未完成，请重试');
@@ -163,7 +163,7 @@ export const llm = {
               .map((b: any) => b.text)
               .join('')
           : envelope.choices?.[0]?.message?.content;
-        if (typeof content !== 'string') throw new Error('模型响应格式无效');
+        if (typeof content !== 'string') throw new Error('生成结果不完整，请重试。');
         estimate();
         updateUsage(envelope);
         report();
@@ -172,7 +172,10 @@ export const llm = {
       return { text: content, model: response.model };
     } catch (error) {
       if (options.signal?.aborted) throw new DOMException('已取消', 'AbortError');
-      throw streamError ?? error;
+      const failure = streamError ?? error;
+      if (failure instanceof SyntaxError)
+        throw new Error('生成结果不完整，请重试。', { cause: failure });
+      throw failure;
     } finally {
       clearInterval(statusTimer);
       streams.delete(id);

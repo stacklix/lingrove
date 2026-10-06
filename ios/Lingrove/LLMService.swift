@@ -3,7 +3,7 @@ import Security
 import SwiftUI
 import Charts
 
-struct LLMConfiguration: Codable {
+struct LLMConfiguration: Codable, Equatable {
     var provider = "openAi"
     var baseURL = ""
     var model = ""
@@ -77,7 +77,7 @@ enum LLMStore {
         var item: CFTypeRef?
         let status = SecItemCopyMatching(q as CFDictionary, &item)
         if status == errSecItemNotFound { return nil }
-        guard status == errSecSuccess, let data = item as? Data else { throw ModuleError.invalid("无法读取模型配置，请解锁设备后重试（\(status)）") }
+        guard status == errSecSuccess, let data = item as? Data else { throw ModuleError.invalid("无法读取通用模型设置，请解锁设备后重试（\(status)）") }
         return data
     }
     static func save(_ configuration: LLMConfiguration, service: String = "me.stackli.lingrove.host.llm") throws {
@@ -85,7 +85,7 @@ enum LLMStore {
         let attributes: [String: Any] = [kSecValueData as String: try JSONEncoder().encode(configuration), kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
         var status = SecItemUpdate(q as CFDictionary, attributes as CFDictionary)
         if status == errSecItemNotFound { status = SecItemAdd(q.merging(attributes) { _, new in new } as CFDictionary, nil) }
-        guard status == errSecSuccess else { throw ModuleError.invalid("无法保存模型配置（\(status)）") }
+        guard status == errSecSuccess else { throw ModuleError.invalid("无法保存通用模型设置（\(status)）") }
     }
     static func load(service: String = "me.stackli.lingrove.host.llm") throws -> LLMConfiguration {
         guard let data = try read(service, "configuration") else { return LLMConfiguration() }
@@ -95,6 +95,7 @@ enum LLMStore {
 }
 
 struct LLMSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var configuration = LLMConfiguration()
     @State private var message = ""
     @State private var loaded = false
@@ -123,7 +124,7 @@ struct LLMSettingsView: View {
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .accessibilityLabel("API Key（服务商需要时填写）")
                 }
-            } header: { Text("模型服务") } footer: { Text("所有子应用共用此配置。提交的内容会发送到此服务商，API Key 仅保存在本机宿主的安全存储中。") }
+            } header: { Text("通用模型") } footer: { Text("此设置适用于所有应用。提交的内容会发送给所选服务商，API Key 仅安全保存在此设备上。") }
             Section {
                 Picker("推理强度", selection: $configuration.reasoningEffort) {
                     Text("默认（由模型决定）").tag(String?.none)
@@ -140,21 +141,30 @@ struct LLMSettingsView: View {
                      : "推理强度设置仅用于 OpenAI 兼容接口，当前协议不会发送此参数。"))
             }
             Section {
-                Button("保存") {
-                    do { try configuration.validate(); try LLMStore.save(configuration); message = "已保存，所有子应用将使用此模型服务。" }
-                    catch { message = error.localizedDescription }
-                }.disabled(!loaded)
                 Button("移除 API Key", role: .destructive) {
-                    do { var saved = try LLMStore.load(); saved.token = ""; try LLMStore.save(saved); configuration.token = ""; message = "API Key 已移除。" }
-                    catch { message = error.localizedDescription }
+                    configuration.token = ""
                 }.disabled(!loaded)
                 if !message.isEmpty { Text(AppLanguage.text(message)).font(.footnote) }
             }
-        }.navigationTitle("大模型服务")
+        }.disabled(!loaded).navigationTitle("通用模型")
         .task {
+            guard !loaded else { return }
             do { configuration = try LLMStore.load(); loaded = true }
             catch { message = error.localizedDescription }
         }
+        .onChange(of: configuration) { _, _ in message = "" }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: saveConfiguration) { Image(systemName: "checkmark") }
+                    .accessibilityLabel("保存").disabled(!loaded)
+                    .accessibilityIdentifier("llm-save")
+            }
+        }
+    }
+    private func saveConfiguration() {
+        guard loaded else { return }
+        do { try configuration.validate(); try LLMStore.save(configuration); dismiss() }
+        catch { message = error.localizedDescription }
     }
 }
 
@@ -474,7 +484,7 @@ struct LLMUsageView: View {
                 }
             }
             if store.records.isEmpty {
-                Section { Text("暂无使用记录，子应用调用大模型后将自动统计。").foregroundStyle(.secondary) }
+                Section { Text("暂无使用记录，使用 AI 功能后将自动统计。").foregroundStyle(.secondary) }
             } else {
                 Section {
                     LLMUsageAppRows(groups: apps)
@@ -510,7 +520,7 @@ struct LLMUsageView: View {
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("大模型使用统计").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("通用模型使用统计").navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingNotes = true } label: { Image(systemName: "info.circle") }
@@ -521,7 +531,7 @@ struct LLMUsageView: View {
             NavigationStack {
                 List {
                     Section("累计用量") {
-                        Text("从启用统计后开始累计，仅记录本机宿主大模型服务请求。请求数含失败和取消；Token 以服务商返回为准，含缓存输入与推理用量，未返回的部分不估算。")
+                        Text("从启用统计后开始累计，仅记录此设备的 AI 使用情况。请求数包含失败和取消；Token 用量以服务商返回为准，包含缓存输入与推理用量，未提供的部分不估算。")
                     }
                     Section("每日 Token 用量") {
                         Text("按请求结束时的本地日期归集发送与接收 Token。左右滑动可查看其他日期。")

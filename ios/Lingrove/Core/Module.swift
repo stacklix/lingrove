@@ -87,10 +87,10 @@ struct NetworkAccessDomain: Identifiable, Equatable {
         for module in modules {
             for origin in module.allowedOrigins { add(origin, moduleID: module.id, source: "清单授权") }
             for origin in customOrigins[module.id] ?? [] { add(origin, moduleID: module.id, source: "自定义授权") }
-            if let url = module.downloadUrl { add(url, source: "子应用更新") }
+            if let url = module.downloadUrl { add(url, source: "应用更新") }
         }
         add(catalogURL, source: "更新目录")
-        if let modelURL { add(modelURL, source: "大模型服务") }
+        if let modelURL { add(modelURL, source: "通用模型") }
         if let debugURL, let normalized = try? DebugServer.normalized(debugURL),
            !normalized.isEmpty, var components = URLComponents(string: normalized) {
             components.path = ""

@@ -6,7 +6,7 @@ export async function loadFonts() {
     document.fonts.load('100px Bad Script', 'д'),
     document.fonts.load('100px Playpen Sans', 'α'),
   ]);
-  if (result.some((r) => !r.length)) throw new Error('手写范字资源加载失败，请重新加载子应用。');
+  if (result.some((r) => !r.length)) throw new Error('范字加载失败，请重新打开。');
 }
 export function template(g: Glyph): HTMLCanvasElement {
   if (cache.has(g.id)) return cache.get(g.id)!;

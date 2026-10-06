@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   set: vi.fn(),
   get: vi.fn(),
   root: vi.fn(),
+  play: vi.fn(),
+  ttsStatus: vi.fn(),
 }));
 vi.mock('../src/sentence-analysis', async (original) => ({
   ...(await original<typeof import('../src/sentence-analysis')>()),
@@ -23,6 +25,7 @@ vi.mock('../src/import', async (importOriginal) => ({
 }));
 vi.mock('@lingrove/host-sdk', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@lingrove/host-sdk')>()),
+  tts: { play: mocks.play, status: mocks.ttsStatus },
   ready: vi.fn().mockResolvedValue(undefined),
   setRootPage: mocks.root,
   isNative: () => false,
@@ -38,6 +41,7 @@ beforeEach(() => {
   mocks.importArticle.mockResolvedValue(structuredClone(demo));
   mocks.analyzeSentence.mockResolvedValue(structuredClone(analysis));
   mocks.readTextFile.mockResolvedValue(demoSource);
+  mocks.ttsStatus.mockResolvedValue({ voices: [] });
   window.scrollTo = vi.fn();
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute('open', '');
@@ -271,7 +275,9 @@ it('caches sentence analysis across reopen and reload, without analyzing during 
   await flushPromises();
   expect(mocks.analyzeSentence).toHaveBeenCalledTimes(1);
   const saved = mocks.set.mock.calls.at(-1)![1];
-  expect(saved.library[0].analyses[JSON.stringify(analysis.analysis_text)]).toEqual(analysis);
+  expect(
+    saved.library[0].analyses[JSON.stringify([analysis.analysis_text, 'ja', analysis.language])],
+  ).toEqual({ ...analysis, sourceLanguage: 'ja' });
   w.unmount();
   mocks.get.mockResolvedValue(saved);
   const restored = await setup();
@@ -306,8 +312,10 @@ it('deduplicates pending clicks and caches results arriving after sheet closure'
   finish(analysis);
   await flushPromises();
   expect(
-    mocks.set.mock.calls.at(-1)![1].library[0].analyses?.[JSON.stringify(analysis.analysis_text)],
-  ).toEqual(analysis);
+    mocks.set.mock.calls.at(-1)![1].library[0].analyses?.[
+      JSON.stringify([analysis.analysis_text, 'ja', analysis.language])
+    ],
+  ).toEqual({ ...analysis, sourceLanguage: 'ja' });
   expect(w.get('.sentence').classes()).toContain('cached');
   expect(w.get('.analysis-sheet').attributes()).not.toHaveProperty('open');
   w.unmount();
@@ -471,7 +479,11 @@ it('opens and analyzes only one sentence when a model batch contains three', asy
   await w.get('.analyze-sentence').trigger('click');
   await flushPromises();
   expect(mocks.analyzeSentence.mock.calls[0][0]).toBe(demoSource);
-  expect(mocks.analyzeSentence.mock.calls[0][1]).toEqual({ before: demoSource, after: demoSource });
+  expect(mocks.analyzeSentence.mock.calls[0][1]).toEqual({
+    before: demoSource,
+    after: demoSource,
+    sourceLanguage: 'ja',
+  });
   const saved = structuredClone(mocks.set.mock.calls.at(-1)![1]);
   w.unmount();
   mocks.get.mockResolvedValue(saved);
@@ -555,8 +567,423 @@ it('retains background progress on reopen and isolates results while another sen
   expect(w.findAll('.sentence')[0].classes()).not.toContain('analyzing');
   expect(w.findAll('.sentence-trigger')[0].attributes('aria-busy')).toBe('false');
   expect(w.findAll('.sentence')[1].classes()).not.toContain('cached');
-  expect(mocks.set.mock.calls.at(-1)![1].library[0].analyses[JSON.stringify(demoSource)]).toEqual(
-    analysis,
-  );
+  expect(
+    mocks.set.mock.calls.at(-1)![1].library[0].analyses[
+      JSON.stringify([demoSource, 'ja', analysis.language])
+    ],
+  ).toEqual({ ...analysis, sourceLanguage: 'ja' });
   w.unmount();
+});
+
+it('floats a play button, expands progress, and stops on the second click', async () => {
+  const scrollIntoView = vi.fn();
+  const sentenceElement = document.createElement('span');
+  sentenceElement.scrollIntoView = scrollIntoView;
+  const lookup = vi.spyOn(document, 'getElementById').mockReturnValue(sentenceElement);
+  let onState!: (state: string) => void;
+  const stop = vi.fn().mockResolvedValue(undefined);
+  mocks.play.mockImplementation((_input, options) => {
+    onState = options.onState;
+    return { finished: new Promise(() => {}), stop };
+  });
+  const w = await setup();
+  await w.get('.empty button').trigger('click');
+  expect(w.find('.speech-progress').exists()).toBe(false);
+  await w.get('.speech-toggle').trigger('click');
+  expect(w.find('.speech-progress').exists()).toBe(true);
+  expect(w.find('.speech-spinner').exists()).toBe(false);
+  expect(w.find('.sentence.speaking').exists()).toBe(false);
+  scrollIntoView.mockClear();
+  onState('playing');
+  await flushPromises();
+  expect(w.findAll('.sentence')[0].classes()).toContain('speaking');
+  expect(lookup).toHaveBeenLastCalledWith('sentence-0');
+  expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+  expect(w.get('.speech-toggle').attributes('aria-label')).toBe('停止朗读');
+  expect(w.find('.speech-toggle rect').exists()).toBe(true);
+  await w.get('.speech-toggle').trigger('click');
+  expect(stop).toHaveBeenCalledOnce();
+  expect(w.find('.sentence.speaking').exists()).toBe(false);
+  expect(w.find('.speech-progress').exists()).toBe(false);
+  expect(w.get('.speech-toggle').attributes('aria-label')).toBe('开始朗读');
+  w.unmount();
+  lookup.mockRestore();
+});
+
+it('saves the article voice, restores it on reload, and lets app settings take over again', async () => {
+  mocks.ttsStatus.mockResolvedValue({
+    voices: [{ id: 'voice-a', title: 'Voice A', language: 'ja' }],
+  });
+  mocks.play.mockImplementation(() => ({
+    finished: new Promise(() => {}),
+    stop: vi.fn().mockResolvedValue(undefined),
+  }));
+  let w = await setup();
+  await begin(w);
+  await submit(w);
+  await w.get('.article-open').trigger('click');
+  await flushPromises();
+  await w.get('.speech-toggle').trigger('click');
+  await w.get('.speech-settings').trigger('click');
+  await flushPromises();
+  await w.get('.voice-settings-content select').setValue('voice-a');
+  await flushPromises();
+  expect(mocks.play.mock.calls.at(-1)![0].voice).toBe('voice-a');
+  const saved = structuredClone(mocks.set.mock.calls.at(-1)![1]);
+  expect(saved.library[0].speechVoice).toBe('voice-a');
+  w.unmount();
+  mocks.get.mockResolvedValue(saved);
+  w = await setup();
+  await w.get('.article-open').trigger('click');
+  await flushPromises();
+  await w.get('.speech-toggle').trigger('click');
+  expect(mocks.play.mock.calls.at(-1)![0].voice).toBe('voice-a');
+  await w.get('.speech-settings').trigger('click');
+  await flushPromises();
+  expect((w.get('.voice-settings-content select').element as HTMLSelectElement).value).toBe(
+    'voice-a',
+  );
+  await w.get('.voice-settings-content select').setValue('');
+  await flushPromises();
+  expect(mocks.play.mock.calls.at(-1)![0]).not.toHaveProperty('voice');
+  expect(mocks.set.mock.calls.at(-1)![1].library[0]).not.toHaveProperty('speechVoice');
+  w.unmount();
+});
+
+it('passes the import language and persists changes from article details for narration and analysis', async () => {
+  mocks.importArticle.mockResolvedValue({ ...structuredClone(demo), language: 'en' });
+  mocks.play.mockImplementation(() => ({
+    finished: new Promise(() => {}),
+    stop: vi.fn().mockResolvedValue(undefined),
+  }));
+  let w = await setup();
+  await begin(w);
+  await w.get('#article-language').setValue('en');
+  await submit(w);
+  expect(mocks.importArticle.mock.calls[0][6]).toBe('en');
+  await w.get('.lingrove-bottom-tabs button:last-child').trigger('click');
+  await w.get('.data-article > button').trigger('click');
+  await w.get('#edit-language').setValue('zh');
+  await w.get('.edit-sheet form').trigger('submit');
+  await flushPromises();
+  const saved = structuredClone(mocks.set.mock.calls.at(-1)![1]);
+  expect(saved.library[0].reading.language).toBe('zh');
+  w.unmount();
+  mocks.get.mockResolvedValue(saved);
+  w = await setup();
+  await w.get('.article-open').trigger('click');
+  await flushPromises();
+  await w.get('.speech-toggle').trigger('click');
+  expect(mocks.play.mock.calls.at(-1)![0].language).toBe('zh');
+  await w.get('.sentence-trigger').trigger('keydown', { key: 'Enter', shiftKey: true });
+  await w.get('.analyze-sentence').trigger('click');
+  await flushPromises();
+  expect(mocks.analyzeSentence.mock.calls.at(-1)![1].sourceLanguage).toBe('zh');
+  w.unmount();
+});
+
+it('edits article metadata and tags, filters voices by language, and saves the selection', async () => {
+  mocks.ttsStatus.mockResolvedValue({
+    voices: [
+      { id: 'ja-voice', title: '日语音色', language: 'ja' },
+      { id: 'el-voice', title: '希腊音色', language: 'el' },
+      { id: 'shared', title: '通用音色', language: '' },
+    ],
+  });
+  let w = await setup();
+  await begin(w);
+  await submit(w);
+  expect(w.findAll('#article-language option').map((o) => o.attributes('value'))).toEqual([
+    'zh',
+    'en',
+    'ja',
+    'ru',
+    'el',
+  ]);
+  await w.get('.lingrove-bottom-tabs button:last-child').trigger('click');
+  await w.get('.data-article > button').trigger('click');
+  await flushPromises();
+  expect(w.findAll('#edit-voice option').map((o) => o.attributes('value'))).toEqual([
+    '',
+    'ja-voice',
+    'shared',
+  ]);
+  await w.get('#edit-voice').setValue('ja-voice');
+  await w.get('#edit-language').setValue('el');
+  expect((w.get('#edit-voice').element as HTMLSelectElement).value).toBe('');
+  expect(w.findAll('#edit-voice option').map((o) => o.attributes('value'))).toEqual([
+    '',
+    'el-voice',
+    'shared',
+  ]);
+  await w.get('#edit-article-title').setValue('新标题');
+  await w.get('#edit-origin').setValue('书籍');
+  await w.get('#edit-tags').setValue('旅行，学习,旅行');
+  await w.get('#edit-voice').setValue('el-voice');
+  await w.get('.edit-sheet form').trigger('submit');
+  await flushPromises();
+  const saved = structuredClone(mocks.set.mock.calls.at(-1)![1]);
+  expect(saved.library[0]).toMatchObject({
+    title: '新标题',
+    origin: '书籍',
+    tags: ['旅行', '学习'],
+    speechVoice: 'el-voice',
+    reading: { language: 'el' },
+  });
+  w.unmount();
+  mocks.get.mockResolvedValue(saved);
+  w = await setup();
+  await w.get('.lingrove-bottom-tabs button:last-child').trigger('click');
+  await w.get('.data-article > button').trigger('click');
+  await flushPromises();
+  expect((w.get('#edit-tags').element as HTMLInputElement).value).toBe('旅行，学习');
+  expect((w.get('#edit-voice').element as HTMLSelectElement).value).toBe('el-voice');
+  await w.get('#edit-article-title').setValue('未保存');
+  await w.get('[aria-label="关闭文章编辑"]').trigger('click');
+  expect(w.get('.data-article').text()).toContain('新标题');
+  expect(w.get('.data-article').text()).not.toContain('未保存');
+  w.unmount();
+});
+it('preserves the original article when rebuilding edited content fails', async () => {
+  const w = await setup();
+  await begin(w);
+  await submit(w);
+  await w.get('.lingrove-bottom-tabs button:last-child').trigger('click');
+  await w.get('.data-article > button').trigger('click');
+  await flushPromises();
+  await w.get('#edit-source').setValue('変更した文章。');
+  mocks.importArticle.mockRejectedValueOnce(new Error('连接失败'));
+  await w.get('.edit-sheet form').trigger('submit');
+  await flushPromises();
+  expect(w.get('.edit-sheet .error').text()).toBe('连接失败');
+  expect(mocks.set.mock.calls.at(-1)![1].library[0].source).toBe(demoSource);
+  w.unmount();
+});
+
+it('rebuilds edited text and commits only after the new reading is ready', async () => {
+  const w = await setup();
+  await begin(w);
+  await submit(w);
+  await w.get('.lingrove-bottom-tabs button:last-child').trigger('click');
+  await w.get('.data-article > button').trigger('click');
+  await flushPromises();
+  await w.get('#edit-language').setValue('en');
+  await w.get('#edit-source').setValue('Hello!');
+  let finish!: (value: unknown) => void;
+  mocks.importArticle.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  await w.get('.edit-sheet form').trigger('submit');
+  expect(mocks.set.mock.calls.at(-1)![1].library[0].source).toBe(demoSource);
+  expect(mocks.importArticle.mock.calls.at(-1)![6]).toBe('en');
+  const { analyze } = await import('../src/api');
+  const reading = await analyze('Hello!', 'en', new AbortController().signal, () => {});
+  finish(reading);
+  await flushPromises();
+  expect(mocks.set.mock.calls.at(-1)![1].library[0]).toMatchObject({
+    source: 'Hello!',
+    reading,
+    sentence: 0,
+  });
+  expect(w.get('.edit-sheet').attributes('open')).toBeUndefined();
+  w.unmount();
+});
+
+it('shows loading only after sustained buffering and cancels stale loading timers', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  let onState!: (state: string) => void;
+  mocks.play.mockImplementation((_input, options) => {
+    onState = options.onState;
+    return { finished: new Promise(() => {}), stop: vi.fn().mockResolvedValue(undefined) };
+  });
+  const w = await setup();
+  try {
+    await w.get('.empty button').trigger('click');
+    await w.get('.speech-toggle').trigger('click');
+    await vi.advanceTimersByTimeAsync(599);
+    expect(w.find('.speech-spinner').exists()).toBe(false);
+    onState('playing');
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(w.find('.speech-spinner').exists()).toBe(false);
+    onState('buffering');
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(600);
+    expect(w.find('.speech-spinner').exists()).toBe(true);
+    onState('playing');
+    await flushPromises();
+    expect(w.find('.speech-spinner').exists()).toBe(false);
+    onState('buffering');
+    await flushPromises();
+    await w.get('.speech-toggle').trigger('click');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(w.find('.speech-spinner').exists()).toBe(false);
+  } finally {
+    w.unmount();
+    vi.useRealTimers();
+  }
+});
+
+it('jumps on taps during playback and pauses for long-press analysis without a release-click jump', async () => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  const calls: {
+    pause: ReturnType<typeof vi.fn>;
+    resume: ReturnType<typeof vi.fn>;
+    stop: ReturnType<typeof vi.fn>;
+  }[] = [];
+  mocks.play.mockImplementation((_input, options) => {
+    const controls = {
+      pause: vi.fn(async () => options.onState('paused')),
+      resume: vi.fn(async () => options.onState('playing')),
+      stop: vi.fn().mockResolvedValue(undefined),
+    };
+    calls.push(controls);
+    options.onState('playing');
+    return { ...controls, finished: new Promise(() => {}) };
+  });
+  mocks.importArticle.mockResolvedValue({
+    ...structuredClone(demo),
+    sentences: [...structuredClone(demo.sentences), ...structuredClone(demo.sentences)],
+  });
+  const w = await setup();
+  try {
+    await begin(w);
+    await w.get('#source').setValue(demoSource + demoSource);
+    await w.get('.import-sheet form').trigger('submit');
+    await flushPromises();
+    await w.get('.article-open').trigger('click');
+    await flushPromises();
+    await w.get('.speech-toggle').trigger('click');
+    expect(w.get('.playback-hint').text()).toBe('点句子跳播，长按看解析');
+    const sentences = w.findAll('.sentence-trigger');
+    await sentences[0].trigger('click');
+    expect(mocks.play).toHaveBeenCalledTimes(1);
+    await sentences[1].trigger('click');
+    expect(mocks.play).toHaveBeenCalledTimes(2);
+    expect(calls[0].stop).toHaveBeenCalledOnce();
+    expect(w.get('.analysis-sheet').attributes('open')).toBeUndefined();
+    await sentences[0].trigger('pointerdown', {
+      button: 0,
+      pointerId: 1,
+      clientX: 10,
+      clientY: 10,
+    });
+    await vi.advanceTimersByTimeAsync(500);
+    await flushPromises();
+    expect(calls[1].pause).toHaveBeenCalledOnce();
+    expect(w.get('.analysis-sheet').attributes()).toHaveProperty('open');
+    await sentences[0].trigger('pointerup');
+    await sentences[0].trigger('click');
+    expect(mocks.play).toHaveBeenCalledTimes(2);
+    await w.get('[aria-label="关闭句子解析"]').trigger('click');
+    await flushPromises();
+    expect(calls[1].resume).toHaveBeenCalledOnce();
+    await sentences[0].trigger('pointerdown', {
+      button: 0,
+      pointerId: 2,
+      clientX: 10,
+      clientY: 10,
+    });
+    await sentences[0].trigger('pointermove', { pointerId: 2, clientX: 10, clientY: 40 });
+    await vi.advanceTimersByTimeAsync(600);
+    await sentences[0].trigger('pointerup');
+    await sentences[0].trigger('click');
+    expect(w.get('.analysis-sheet').attributes('open')).toBeUndefined();
+    expect(mocks.play).toHaveBeenCalledTimes(2);
+    await sentences[0].trigger('keydown', { key: 'Enter', shiftKey: true });
+    expect(w.get('.analysis-sheet').attributes()).toHaveProperty('open');
+    await w.get('[aria-label="关闭句子解析"]').trigger('click');
+    await flushPromises();
+    await w.get('.speech-toggle').trigger('click');
+    await w.get('.speech-toggle').trigger('click');
+    expect(w.find('.playback-hint').exists()).toBe(false);
+    expect(mocks.set.mock.calls.at(-1)![1].playbackHintSeen).toBe(true);
+  } finally {
+    w.unmount();
+    vi.useRealTimers();
+  }
+});
+
+it('suspends following after manual scroll, keeps highlighting, and restores it explicitly or on a jump', async () => {
+  const scrollIntoView = vi.fn();
+  const target = document.createElement('span');
+  target.scrollIntoView = scrollIntoView;
+  const lookup = vi.spyOn(document, 'getElementById').mockReturnValue(target);
+  const calls: { emit: (state: string) => void; finish: () => void }[] = [];
+  mocks.play.mockImplementation((_input, options) => {
+    let finish!: () => void;
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    calls.push({ emit: options.onState, finish });
+    return {
+      finished,
+      stop: vi.fn().mockResolvedValue(undefined),
+      pause: vi.fn(async () => options.onState('paused')),
+      resume: vi.fn(async () => options.onState('playing')),
+    };
+  });
+  mocks.importArticle.mockResolvedValue({
+    ...structuredClone(demo),
+    sentences: Array.from({ length: 3 }, () => structuredClone(demo.sentences)).flat(),
+  });
+  const w = mount(App, { attachTo: document.body });
+  await flushPromises();
+  try {
+    await begin(w);
+    await w.get('#source').setValue(demoSource.repeat(3));
+    await w.get('.import-sheet form').trigger('submit');
+    await flushPromises();
+    await w.get('.article-open').trigger('click');
+    await flushPromises();
+    await w.get('.speech-toggle').trigger('click');
+    calls[0].emit('playing');
+    await flushPromises();
+    scrollIntoView.mockClear();
+    window.dispatchEvent(new Event('scroll'));
+    await flushPromises();
+    expect(w.find('.speech-return').exists()).toBe(false);
+    window.dispatchEvent(new Event('touchmove'));
+    await flushPromises();
+    expect(w.get('.speech-return').text()).toBe('回到当前句');
+    calls[0].finish();
+    await flushPromises();
+    calls[1].emit('playing');
+    await flushPromises();
+    expect(w.findAll('.sentence')[1].classes()).toContain('speaking');
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    await w.get('.speech-return').trigger('click');
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start' });
+    expect(lookup).toHaveBeenLastCalledWith('sentence-1');
+    expect(w.find('.speech-return').exists()).toBe(false);
+    scrollIntoView.mockClear();
+    calls[1].finish();
+    await flushPromises();
+    calls[2].emit('playing');
+    await flushPromises();
+    expect(scrollIntoView).toHaveBeenCalledOnce();
+    window.dispatchEvent(new Event('wheel'));
+    await flushPromises();
+    expect(w.find('.speech-return').exists()).toBe(true);
+    await w.findAll('.sentence-trigger')[0].trigger('click');
+    calls[3].emit('playing');
+    await flushPromises();
+    expect(w.find('.speech-return').exists()).toBe(false);
+    expect(lookup).toHaveBeenLastCalledWith('sentence-0');
+    await w.findAll('.sentence-trigger')[0].trigger('keydown', { key: 'Enter', shiftKey: true });
+    window.dispatchEvent(new Event('wheel'));
+    await flushPromises();
+    expect(w.find('.speech-return').exists()).toBe(false);
+    await w.get('[aria-label="关闭句子解析"]').trigger('click');
+    await flushPromises();
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageDown' }));
+    await flushPromises();
+    expect(w.find('.speech-return').exists()).toBe(true);
+  } finally {
+    w.unmount();
+    lookup.mockRestore();
+  }
 });

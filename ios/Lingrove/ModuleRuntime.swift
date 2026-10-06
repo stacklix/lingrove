@@ -62,7 +62,7 @@ enum AppLanguage {
         reloadMessages.removeAll()
         reconcile(modules: store.modules, blocked: store.blocked)
         if DebugServer.enabled && store.modules.isEmpty {
-            reloadMessages["empty"] = "暂无已安装的子应用。"
+            reloadMessages["empty"] = "暂无已安装的应用。"
         }
         for module in store.modules {
             guard !store.blocked.contains(module.id) else {
@@ -232,6 +232,7 @@ enum AppLanguage {
     func detach() {
         offset = webView.scrollView.contentOffset
         webView.endEditing(true)
+        runtime.stopTTSPlayback()
         // Keep the DOM, JavaScript state, open sheet and in-flight requests alive.
     }
     func restorePosition() {
@@ -265,7 +266,7 @@ struct ModuleScreen: View {
     var body: some View {
         Group {
             if let failure = page.failure {
-                ContentUnavailableView { Label("子应用暂时无法打开", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && debugEnabled { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
+                ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && debugEnabled { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
             } else {
                 ZStack {
                     ModuleWebView(page: page).id(page.generation)
@@ -414,6 +415,8 @@ struct ModuleWebView: UIViewRepresentable {
     let onStartupFailure: () -> Void
     weak var webView: WKWebView?
     private var networkTasks: [String: Task<Any, Error>] = [:]
+    private var ttsPlayers: [String: TTSPlayback] = [:]
+    private var ttsPreload: (owner: String, request: TTSRequestIdentity, audio: Task<Data, Error>)?
     private var watchdog: Task<Void, Never>?
     private var inlineHandwriting: InlineHandwriting?
     private let debugEntryURL: URL?
@@ -424,6 +427,7 @@ struct ModuleWebView: UIViewRepresentable {
     private let stateRoot: URL
     private var extraOrigins: [String] = []
     private let networkDefaults: UserDefaults
+    private let ttsConfiguration: () throws -> TTSConfiguration
     private let llmConfiguration: () throws -> LLMConfiguration
     private let injectedSession: URLSession?
     private lazy var session: URLSession = {
@@ -433,7 +437,7 @@ struct ModuleWebView: UIViewRepresentable {
         config.httpCookieStorage = nil; config.httpShouldSetCookies = false; config.urlCache = nil
         return URLSession(configuration: config, delegate: NoRedirect(), delegateQueue: nil)
     }()
-    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, onStartupFailure: @escaping () -> Void = {}, debugEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onNavigation: @escaping (Bool) -> Void = { _ in }) {
+    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, ttsConfiguration: @escaping () throws -> TTSConfiguration = { try TTSStore.load() }, onStartupFailure: @escaping () -> Void = {}, debugEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onNavigation: @escaping (Bool) -> Void = { _ in }) {
         self.debugEntryURL = DebugServer.enabled ? debugEntryURL : nil
         self.onReload = onReload
         self.onNavigation = onNavigation
@@ -441,6 +445,7 @@ struct ModuleWebView: UIViewRepresentable {
         self.injectedSession = networkSession
         self.networkDefaults = networkDefaults
         self.llmConfiguration = llmConfiguration
+        self.ttsConfiguration = ttsConfiguration
         self.module = module; self.directory = directory; self.onReady = onReady; self.onFailure = onFailure
         stateRoot = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lingrove/State/\(module.id)")
         super.init()
@@ -449,7 +454,11 @@ struct ModuleWebView: UIViewRepresentable {
     func startWatchdog() {
         watchdog = Task { try? await Task.sleep(for: .seconds(20)); guard !Task.isCancelled, !ready, !closed else { return }; fail(debugEntryURL == nil ? "页面启动超时；如果是下载版本，已尝试回退。" : "调试页面启动超时，请检查服务器地址、资源和宿主桥接初始化。") }
     }
-    func close() { closed = true; inlineHandwriting?.detach(); inlineHandwriting = nil; watchdog?.cancel(); for task in networkTasks.values { task.cancel() }; networkTasks.removeAll(); session.invalidateAndCancel() }
+    func stopTTSPlayback() {
+        ttsPreload?.audio.cancel(); ttsPreload = nil
+        for (id, player) in ttsPlayers { player.stop(); networkTasks[id]?.cancel() }
+    }
+    func close() { stopTTSPlayback(); closed = true; inlineHandwriting?.detach(); inlineHandwriting = nil; watchdog?.cancel(); for task in networkTasks.values { task.cancel() }; networkTasks.removeAll(); session.invalidateAndCancel() }
     private func fail(_ reason: String, startupFailure: Bool = true) {
         guard !closed else { return }
         close()
@@ -592,13 +601,83 @@ struct ModuleWebView: UIViewRepresentable {
             }
             guard allowed, !closed else { throw ModuleError.invalid("未授权此域名") }
             extraOrigins.append(origin); networkDefaults.set(extraOrigins, forKey: "origins.\(module.id)"); return true
+        case "tts.pause", "tts.resume", "tts.stop":
+            guard let id = params["id"] as? String else { throw ModuleError.invalid("请求数量或标识无效") }
+            guard let player = ttsPlayers[id] else { return false }
+            if method == "tts.pause" { player.pause() }
+            else if method == "tts.resume" { player.resume() }
+            else {
+                player.stop(); networkTasks[id]?.cancel()
+                if ttsPreload?.owner == id { ttsPreload?.audio.cancel(); ttsPreload = nil }
+            }
+            return true
+        case "tts.play":
+            guard !closed else { throw CancellationError() }
+            guard let id = params["id"] as? String, !id.isEmpty, id.count <= 80, networkTasks[id] == nil, networkTasks.count < 6 else { throw ModuleError.invalid("请求数量或标识无效") }
+            let config = try ttsConfiguration()
+            guard (try? config.validate()) != nil else { throw ModuleError.invalid("请先前往「应用设置 → 语音合成」完成设置。") }
+            let currentRequest = try config.request(params, streaming: true)
+            var nextParams: [String: Any]?
+            var nextRequest: URLRequest?
+            if let next = params["nextText"] {
+                guard let text = next as? String else { throw ModuleError.invalid("朗读文本无效") }
+                var candidate = params
+                candidate["text"] = text
+                candidate.removeValue(forKey: "nextText")
+                nextRequest = try config.request(candidate, streaming: true)
+                nextParams = candidate
+            }
+            let prepared: Task<Data, Error>?
+            if ttsPreload?.request == TTSRequestIdentity(currentRequest) { prepared = ttsPreload?.audio }
+            else { ttsPreload?.audio.cancel(); prepared = nil }
+            ttsPreload = nil
+            var prefetched = false
+            let player = TTSPlayback { [weak self] state in
+                guard let self, !self.closed else { return }
+                if state == .playing, self.ttsPlayers[id]?.state == .playing, !prefetched, let nextParams, let nextRequest {
+                    prefetched = true
+                    self.ttsPreload?.audio.cancel()
+                    let audio = Task { try await TTSService.preparePCM(nextParams, configuration: config, session: self.session) }
+                    self.ttsPreload = (id, TTSRequestIdentity(nextRequest), audio)
+                }
+                guard let data = try? JSONSerialization.data(withJSONObject: ["state": state.rawValue]),
+                      let chunk = String(data: data, encoding: .utf8) else { return }
+                try? await self.emit(id, chunk)
+            }
+            ttsPlayers[id] = player
+            let task = Task<Any, Error> {
+                try await player.run(params, configuration: config, session: self.session, prepared: prepared)
+                return ["model": config.model, "provider": config.provider.rawValue]
+            }
+            networkTasks[id] = task
+            defer {
+                networkTasks.removeValue(forKey: id); ttsPlayers.removeValue(forKey: id)
+                if player.state != .ended, ttsPreload?.owner == id { ttsPreload?.audio.cancel(); ttsPreload = nil }
+            }
+            return try await task.value
+        case "tts.status":
+            let config = try ttsConfiguration()
+            return ["configured": (try? config.validate()) != nil, "provider": config.provider.rawValue, "model": config.model, "voice": config.voice, "voices": config.provider.voices(for: config.model).map { ["id": $0.id, "title": $0.title, "language": $0.language] }]
+        case "tts.synthesize":
+            guard !closed else { throw CancellationError() }
+            guard let id = params["id"] as? String, !id.isEmpty, id.count <= 80, networkTasks[id] == nil, networkTasks.count < 6 else { throw ModuleError.invalid("请求数量或标识无效") }
+            let config = try ttsConfiguration()
+            guard (try? config.validate()) != nil else { throw ModuleError.invalid("请先前往「应用设置 → 语音合成」完成设置。") }
+            let task = Task<Any, Error> {
+                let audio = try await TTSService.synthesize(params, configuration: config, session: self.session)
+                try Task.checkCancellation()
+                return audio.bridgeResult
+            }
+            networkTasks[id] = task
+            defer { networkTasks.removeValue(forKey: id) }
+            return try await task.value
         case "llm.status":
             let config = try llmConfiguration()
             return ["configured": (try? config.validate()) != nil, "model": config.model]
         case "llm.request":
             guard let id = params["id"] as? String, !id.isEmpty, id.count <= 80, networkTasks[id] == nil, networkTasks.count < 6 else { throw ModuleError.invalid("请求数量或标识无效") }
             let config = try llmConfiguration()
-            guard (try? config.validate()) != nil else { throw ModuleError.invalid("请先返回 Lingrove，在设置 → 大模型配置中配置模型服务") }
+            guard (try? config.validate()) != nil else { throw ModuleError.invalid("请先前往「应用设置 → 通用模型」完成设置。") }
             let request = try config.request(params)
             let task = Task<Any, Error> {
                 var result = try await self.perform(request, id: id, stream: true, llm: config, timeoutSeconds: params["timeoutSeconds"] as? Double)
@@ -609,14 +688,14 @@ struct ModuleWebView: UIViewRepresentable {
             networkTasks[id] = task
             defer { networkTasks.removeValue(forKey: id) }
             return try await task.value
-        case "llm.cancel", "http.cancel": if let id = params["id"] as? String { networkTasks[id]?.cancel() }; return true
+        case "tts.cancel", "llm.cancel", "http.cancel": if let id = params["id"] as? String { networkTasks[id]?.cancel() }; return true
         case "http.request":
             guard let id = params["id"] as? String, id.count <= 80, networkTasks[id] == nil, networkTasks.count < 6 else { throw ModuleError.invalid("请求数量或标识无效") }
             let task = Task<Any, Error> { try await self.request(params, id: id) }
             networkTasks[id] = task
             defer { networkTasks.removeValue(forKey: id) }
             return try await task.value
-        default: throw ModuleError.invalid("不支持的宿主方法")
+        default: throw ModuleError.invalid("此功能暂时不可用，请重新打开应用。")
         }
     }
     private func request(_ params: [String: Any], id: String) async throws -> Any {

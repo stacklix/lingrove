@@ -237,7 +237,7 @@ onMounted(async () => {
     streams.delete(sessionID);
     await nativeCall('detach').catch(() => {});
     nativeFailed.value = true;
-    error.value = '原生手写初始化失败，请重新加载子应用。';
+    error.value = '书写区域加载失败，请重新打开。';
   }
 });
 defineExpose({ clear });

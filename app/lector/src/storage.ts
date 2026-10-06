@@ -2,8 +2,16 @@ import { splitReadingSentences } from './reading-layout';
 import type { CompletedPart } from './import';
 import { validateAnalysis, type SentenceAnalysis } from './sentence-analysis';
 import { moduleStorage } from '@lingrove/host-sdk';
-import { MAX_ARTICLE_LENGTH, validateReading, type SavedReading } from './model';
+import {
+  MAX_ARTICLE_LENGTH,
+  validateReading,
+  isLanguage,
+  type Language,
+  type SavedReading,
+} from './model';
 export interface AnalysisJob {
+  language: Language;
+  tags?: string[];
   id: string;
   source: string;
   title: string;
@@ -16,6 +24,9 @@ export interface AnalysisJob {
   error: string;
 }
 export interface State {
+  playbackHintSeen: boolean;
+  draftLanguage: Language;
+  draftTags: string;
   draft: string;
   draftTitle: string;
   draftOrigin: string;
@@ -25,6 +36,9 @@ export interface State {
   activeID: string;
 }
 export const freshState = (): State => ({
+  playbackHintSeen: false,
+  draftLanguage: 'ja',
+  draftTags: '',
   draft: '',
   draftTitle: '',
   draftOrigin: '文本导入',
@@ -91,6 +105,9 @@ export async function loadState(): Promise<State> {
     };
   });
   return {
+    playbackHintSeen: raw.playbackHintSeen === true,
+    draftTags: typeof raw.draftTags === 'string' ? raw.draftTags : '',
+    draftLanguage: isLanguage(raw.draftLanguage) ? raw.draftLanguage : 'ja',
     draft: typeof raw.draft === 'string' ? raw.draft.slice(0, MAX_ARTICLE_LENGTH) : '',
     draftTitle: typeof raw.draftTitle === 'string' ? raw.draftTitle.slice(0, 120) : '',
     draftOrigin: typeof raw.draftOrigin === 'string' ? raw.draftOrigin : '文本导入',
@@ -107,6 +124,8 @@ export async function loadState(): Promise<State> {
           )
           .map((j) => ({
             id: j.id,
+            language: j.language,
+            tags: j.tags,
             parts: Array.isArray(j.parts)
               ? j.parts.filter(
                   (p) =>

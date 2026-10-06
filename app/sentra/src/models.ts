@@ -57,22 +57,28 @@ export function validateResult(
   text: string,
   target: string,
 ): Record<string, any> {
-  const d = JSON.parse(
-    content
-      .trim()
-      .replace(/^```(?:json)?\s*/, '')
-      .replace(/\s*```$/, ''),
-  );
-  if (!d || typeof d !== 'object' || Array.isArray(d)) throw new Error('模型未返回有效对象');
+  let d;
+  try {
+    d = JSON.parse(
+      content
+        .trim()
+        .replace(/^```(?:json)?\s*/, '')
+        .replace(/\s*```$/, ''),
+    );
+  } catch (cause) {
+    throw new Error('生成结果不完整，请重试。', { cause });
+  }
+  if (!d || typeof d !== 'object' || Array.isArray(d)) throw new Error('生成结果不完整，请重试。');
   const str = (o: any, k: string) => {
-    if (typeof o?.[k] !== 'string' || !o[k].trim()) throw new Error(`结果缺少 ${k}`);
+    if (typeof o?.[k] !== 'string' || !o[k].trim()) throw new Error('生成结果不完整，请重试。');
   };
   const list = (o: any, k: string) => {
     if (!Array.isArray(o[k]) || o[k].some((s: unknown) => typeof s !== 'string'))
-      throw new Error(`结果字段 ${k} 无效`);
+      throw new Error('生成结果不完整，请重试。');
   };
   const objects = (key: string, fields: string[], nonempty = false) => {
-    if (!Array.isArray(d[key]) || (nonempty && !d[key].length)) throw new Error(`结果缺少 ${key}`);
+    if (!Array.isArray(d[key]) || (nonempty && !d[key].length))
+      throw new Error('生成结果不完整，请重试。');
     for (const item of d[key]) for (const field of fields) str(item, field);
   };
   str(d, 'source_language');

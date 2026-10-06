@@ -136,7 +136,7 @@ it('keeps Japanese corrections without readings but still requires their explana
   ).toEqual(data.corrections);
   data.corrections[0].explanation = '';
   expect(() => validateResult('grammar', JSON.stringify(data), data.analysis_text, '英语')).toThrow(
-    'explanation',
+    '生成结果不完整，请重试。',
   );
 });
 it('opens older Japanese history without missing-reading placeholders', () => {

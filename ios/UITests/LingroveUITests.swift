@@ -2,19 +2,33 @@ import XCTest
 final class LingroveUITests: XCTestCase {
     func testLLMUsageSettingsEntry() {
         let app = XCUIApplication()
-        app.launchArguments += ["-debug.enabled", "NO"]
+        app.launchArguments += ["-debug.enabled", "NO", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launch()
         let settings = app.buttons["应用设置"]
         XCTAssertTrue(settings.waitForExistence(timeout: 20))
         settings.tap()
-        let usage = app.buttons["大模型使用统计"]
+        let configuration = app.buttons["通用模型"]
+        for _ in 0..<5 {
+            if configuration.exists && configuration.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(configuration.isEnabled)
+        configuration.tap()
+        XCTAssertTrue(app.navigationBars["通用模型"].waitForExistence(timeout: 5))
+        app.navigationBars["通用模型"].buttons.firstMatch.tap()
+        let usage = app.buttons["通用模型使用统计"]
         for _ in 0..<5 {
             if usage.exists && usage.isHittable { break }
             app.swipeUp()
         }
         XCTAssertTrue(usage.exists)
+        XCTAssertTrue(usage.isEnabled)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Settings-navigation-and-reordering"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
         usage.tap()
-        XCTAssertTrue(app.staticTexts["累计用量"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["用量总览"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["发送 Token"].firstMatch.exists)
         XCTAssertTrue(app.staticTexts["接收 Token"].firstMatch.exists)
     }
@@ -117,16 +131,11 @@ final class LingroveUITests: XCTestCase {
         openSettings()
         let originalOn = app.switches["debug-mode-toggle"].firstMatch.value as? String == "1"
         if !originalOn { toggleDebug() }
-        app.buttons["完成"].tap()
+        app.buttons["settings-back"].tap()
         XCTAssertTrue(app.buttons["重新加载子应用"].waitForExistence(timeout: 5))
         openSettings()
         toggleDebug()
-        app.buttons["取消"].tap()
-        XCTAssertTrue(app.buttons["重新加载子应用"].waitForExistence(timeout: 5))
-        openSettings()
-        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
-        toggleDebug()
-        app.buttons["完成"].tap()
+        app.buttons["settings-back"].tap()
         XCTAssertFalse(app.buttons["重新加载子应用"].exists)
         openChild()
         XCTAssertFalse(app.buttons["module-reload"].exists)
@@ -138,13 +147,13 @@ final class LingroveUITests: XCTestCase {
         openSettings()
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         toggleDebug()
-        app.buttons["完成"].tap()
+        app.buttons["settings-back"].tap()
         XCTAssertTrue(app.buttons["重新加载子应用"].waitForExistence(timeout: 5))
         openChild()
         XCTAssertFalse(app.buttons["module-reload"].exists)
         app.buttons["返回 Lingrove"].tap()
         if !originalOn {
-            openSettings(); toggleDebug(); app.buttons["完成"].tap()
+            openSettings(); toggleDebug(); app.buttons["settings-back"].tap()
         }
     }
     func testKeyboardReturnKeyIsDoneWithoutExtraConfirmationBar() throws {
@@ -179,16 +188,18 @@ final class LingroveUITests: XCTestCase {
         input.tap(); input.typeText("Keep this unsent draft")
         app.buttons["返回 Lingrove"].tap()
         app.buttons["应用设置"].tap()
-        app.buttons["完成"].tap()
+        app.buttons["settings-back"].tap()
         waitForEnabled(entry); entry.tap()
         XCTAssertTrue(input.waitForExistence(timeout: 20))
         XCTAssertEqual(input.value as? String, "Keep this unsent draft")
     }
-    func testDebugSettingsDoneSavesAndCancelDiscardsDraft() throws {
-        let app = XCUIApplication(); app.launch()
+    func testDebugSettingsAutoSaveAndReturn() throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
         func openSettings() {
-            let settings = app.buttons["应用设置"]
-            XCTAssertTrue(settings.waitForExistence(timeout: 15)); settings.tap()
+            XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 15))
+            app.buttons["应用设置"].tap()
             XCTAssertTrue(app.textFields["调试服务器地址"].waitForExistence(timeout: 5))
         }
         func address() -> String {
@@ -204,25 +215,18 @@ final class LingroveUITests: XCTestCase {
         }
         openSettings()
         let original = address()
-        XCTAssertFalse(app.buttons["保存并重新加载子应用"].exists)
-        XCTAssertLessThan(app.buttons["取消"].frame.minX, app.buttons["完成"].frame.minX)
+        XCTAssertFalse(app.navigationBars.buttons["完成"].exists)
+        XCTAssertFalse(app.navigationBars.buttons["取消"].exists)
+        XCTAssertTrue(app.buttons["settings-back"].exists)
         replaceAddress("not-a-url")
-        app.buttons["完成"].tap()
         XCTAssertTrue(app.staticTexts["debug-settings-error"].waitForExistence(timeout: 5))
-        app.buttons["取消"].tap()
-        openSettings()
-        XCTAssertEqual(address(), original)
-        XCTAssertFalse(app.staticTexts["debug-settings-error"].exists)
+        app.buttons["settings-back"].tap(); openSettings()
+        XCTAssertEqual(address(), "not-a-url")
         replaceAddress("http://127.0.0.1:1")
-        app.buttons["完成"].tap()
         app.terminate(); app.launch(); openSettings()
-        XCTAssertEqual(address(), "http://127.0.0.1:1/")
-        replaceAddress("http://127.0.0.1:2")
-        app.buttons["取消"].tap()
-        openSettings()
-        XCTAssertEqual(address(), "http://127.0.0.1:1/")
+        XCTAssertEqual(address(), "http://127.0.0.1:1")
         replaceAddress(original)
-        app.buttons["完成"].tap()
+        app.buttons["settings-back"].tap()
     }
     func testChildPageDoesNotZoomWithPinch() throws {
         let app = XCUIApplication(); app.launch()
@@ -265,28 +269,37 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(app.webViews.staticTexts["学习偏好"].firstMatch.waitForExistence(timeout: 10))
     }
     func testHostModelConfigurationPersists() throws {
-        let app = XCUIApplication(); app.launch()
+        let app = XCUIApplication()
+        app.launchArguments += ["-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
         func openModelSettings() {
             let settings = app.buttons["应用设置"]
             XCTAssertTrue(settings.waitForExistence(timeout: 15)); settings.tap()
-            let modelSettings = app.buttons["大模型配置"]
+            let modelSettings = app.buttons["通用模型"]
+            for _ in 0..<5 { if modelSettings.isHittable { break }; app.swipeUp() }
             XCTAssertTrue(modelSettings.waitForExistence(timeout: 5)); modelSettings.tap()
         }
         func replace(_ field: XCUIElement, _ text: String) {
             XCTAssertTrue(field.waitForExistence(timeout: 5)); field.tap()
-            let current = field.value as? String ?? ""
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count) + text)
+            field.press(forDuration: 1.2)
+            let selectAll = app.menuItems.matching(NSPredicate(format: "label IN %@", ["全选", "Select All"])).firstMatch
+            XCTAssertTrue(selectAll.waitForExistence(timeout: 3))
+            selectAll.tap()
+            field.typeText(text)
+            XCTAssertEqual(field.value as? String, text)
         }
         openModelSettings()
         replace(app.textFields["API Base URL"], "https://model.example/v1")
         replace(app.textFields["模型名称"], "host-ui-test")
-        app.swipeUp()
-        let save = app.buttons["保存"]
-        XCTAssertTrue(save.waitForExistence(timeout: 5)); save.tap()
-        XCTAssertTrue(app.staticTexts["已保存，所有子应用将使用此模型服务。"].waitForExistence(timeout: 5))
+        app.buttons["llm-save"].tap()
+        XCTAssertTrue(app.navigationBars["设置"].waitForExistence(timeout: 5))
         app.terminate(); app.launch(); openModelSettings()
         XCTAssertEqual(app.textFields["模型名称"].value as? String, "host-ui-test")
         XCTAssertEqual(app.textFields["API Base URL"].value as? String, "https://model.example/v1")
+        replace(app.textFields["模型名称"], "unsaved-model")
+        app.navigationBars["通用模型"].buttons.firstMatch.tap()
+        app.terminate(); app.launch(); openModelSettings()
+        XCTAssertEqual(app.textFields["模型名称"].value as? String, "host-ui-test")
     }
     func testReturningHomePreservesTabScrollAndSheet() throws {
         let app = XCUIApplication(); app.launch()
@@ -341,5 +354,101 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(app.webViews.staticTexts["学习偏好"].firstMatch.waitForExistence(timeout: 5))
         app.buttons["返回 Lingrove"].tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sentra")).firstMatch.waitForExistence(timeout: 5))
+    }
+}
+
+
+extension LingroveUITests {
+    func testTTSSettingsProviderSwitching() { checkTTSSettings(style: "Light") }
+    func testTTSSettingsDarkMode() { checkTTSSettings(style: "Dark") }
+    private func checkTTSSettings(style: String) {
+        let app = XCUIApplication()
+        app.launchArguments += ["-debug.enabled", "NO", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launchArguments += ["-app.appearance", style.lowercased()]
+        app.launch()
+        XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))
+        app.buttons["应用设置"].tap()
+        let entry = app.buttons["tts-settings-entry"]
+        for _ in 0..<5 { if entry.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(entry.isEnabled); entry.tap()
+        XCTAssertTrue(app.navigationBars["语音合成"].waitForExistence(timeout: 5))
+        let provider = app.buttons["tts-provider"]
+        XCTAssertTrue(provider.waitForExistence(timeout: 5)); provider.tap()
+        app.buttons["OpenAI"].tap()
+        XCTAssertFalse(app.textFields["tts-model"].exists)
+        let model = app.buttons["tts-model"]
+        let voice = app.buttons["tts-voice"]
+        XCTAssertTrue(model.exists); XCTAssertTrue(voice.exists)
+        voice.tap(); app.buttons["Cedar"].tap()
+        app.buttons["tts-language-voices"].tap()
+        let japaneseVoice = app.buttons["tts-voice-ja"]
+        japaneseVoice.tap(); app.buttons["Echo"].tap()
+        let search = app.searchFields.firstMatch
+        search.tap(); search.typeText("el")
+        let greekVoice = app.buttons["tts-voice-el"]
+        XCTAssertTrue(greekVoice.waitForExistence(timeout: 5))
+        greekVoice.tap(); app.buttons["Nova"].tap()
+        app.buttons["关闭"].tap()
+        let languagesScreenshot = XCTAttachment(screenshot: app.screenshot())
+        languagesScreenshot.name = "TTS-languages-" + style
+        languagesScreenshot.lifetime = .keepAlways
+        add(languagesScreenshot)
+        app.navigationBars["按语言设置音色"].buttons.firstMatch.tap()
+        model.tap(); app.buttons["tts-1"].tap()
+        voice.tap(); XCTAssertFalse(app.buttons["Cedar"].exists); app.buttons["Alloy"].tap()
+        XCTAssertFalse(app.textFields["tts-url"].exists)
+        provider.tap(); app.buttons["minimax-cn"].tap()
+        model.tap(); app.buttons["speech-2.8-turbo"].tap()
+        XCTAssertTrue((model.value as? String ?? model.label).contains("speech-2.8-turbo"))
+        provider.tap(); app.buttons["OpenAI"].tap()
+        XCTAssertTrue((model.value as? String ?? model.label).contains("tts-1"))
+        XCTAssertTrue((voice.value as? String ?? voice.label).contains("Alloy"))
+        app.buttons["tts-language-voices"].tap()
+        XCTAssertTrue((japaneseVoice.value as? String ?? japaneseVoice.label).contains("Echo"))
+        app.navigationBars["按语言设置音色"].buttons.firstMatch.tap()
+        provider.tap(); app.buttons["minimax-cn"].tap()
+        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "TTS-settings-" + style; screenshot.lifetime = .keepAlways; add(screenshot)
+        XCTAssertTrue(app.buttons["tts-save"].exists)
+        app.buttons["tts-save"].tap()
+        XCTAssertTrue(app.navigationBars["设置"].waitForExistence(timeout: 5))
+        app.buttons["tts-settings-entry"].tap()
+        XCTAssertFalse(app.staticTexts["未单独设置、未指定或暂不支持的语言使用默认音色。"].exists)
+        XCTAssertFalse(app.staticTexts["试听使用当前填写的配置，点击右上角保存后生效。播放的是 AI 生成语音。"].exists)
+        let previewLanguage = app.buttons["tts-preview-language"]
+        let sample = app.descendants(matching: .any).matching(identifier: "tts-sample").firstMatch
+        for _ in 0..<4 { if previewLanguage.isHittable && sample.exists && sample.isHittable { break }; app.swipeUp() }
+        previewLanguage.tap(); app.buttons["英语"].tap()
+        XCTAssertTrue((sample.value as? String ?? "").contains("Hello"))
+        previewLanguage.tap(); app.buttons["中文"].tap()
+        XCTAssertTrue((sample.value as? String ?? "").contains("你好"))
+        previewLanguage.tap(); app.buttons["日语"].tap()
+        XCTAssertTrue((sample.value as? String ?? "").contains("こんにちは"))
+        previewLanguage.tap(); app.buttons["俄语"].tap()
+        XCTAssertTrue((sample.value as? String ?? "").contains("Здравствуйте"))
+        previewLanguage.tap(); app.buttons["希腊语"].tap()
+        XCTAssertTrue((sample.value as? String ?? "").contains("Γεια"))
+        previewLanguage.tap(); app.buttons["默认音色"].tap()
+        XCTAssertTrue((sample.value as? String ?? "").contains("你好"))
+        // Explicitly saved settings persist when the page is reopened.
+        app.navigationBars["语音合成"].buttons.firstMatch.tap()
+        let entryAgain = app.buttons["tts-settings-entry"]
+        for _ in 0..<5 { if entryAgain.isHittable { break }; app.swipeUp() }
+        entryAgain.tap()
+        XCTAssertTrue((app.buttons["tts-model"].value as? String ?? "").contains("speech-2.8-turbo"))
+        app.buttons["tts-language-voices"].tap()
+        let chineseVoice = app.buttons["tts-voice-zh"]
+        chineseVoice.tap(); app.buttons["青涩青年音色"].tap()
+        app.buttons["tts-language-save"].tap()
+        XCTAssertTrue(app.navigationBars["语音合成"].waitForExistence(timeout: 5))
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20)); app.buttons["应用设置"].tap()
+        for _ in 0..<5 { if entryAgain.isHittable { break }; app.swipeUp() }
+        entryAgain.tap(); app.buttons["tts-language-voices"].tap()
+        XCTAssertTrue((chineseVoice.value as? String ?? "").contains("青涩青年音色"))
+        chineseVoice.tap(); app.buttons["精英青年音色"].tap()
+        app.navigationBars["按语言设置音色"].buttons.firstMatch.tap()
+        app.navigationBars["语音合成"].buttons.firstMatch.tap()
+        entryAgain.tap(); app.buttons["tts-language-voices"].tap()
+        XCTAssertTrue((chineseVoice.value as? String ?? "").contains("青涩青年音色"))
     }
 }

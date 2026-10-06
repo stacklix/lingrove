@@ -183,7 +183,7 @@ describe('grammar component translations', () => {
           'Hello',
           '英语',
         ),
-      ).toThrow('translation');
+      ).toThrow('生成结果不完整，请重试。');
     }
   });
   it('reads the current host language on every analysis independently of other language settings', async () => {

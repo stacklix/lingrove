@@ -1,7 +1,7 @@
 import type { LLMStatus } from '@lingrove/host-sdk';
 import { SourceMismatchError } from './source-alignment';
 import { analyze } from './api';
-import { MAX_ARTICLE_LENGTH, validateReading, type Reading } from './model';
+import { MAX_ARTICLE_LENGTH, validateReading, type Reading, type Language } from './model';
 export const CHUNK_LENGTH = 240;
 export interface CompletedPart {
   start: number;
@@ -9,7 +9,7 @@ export interface CompletedPart {
   reading: Reading;
 }
 export function splitArticle(source: string): string[] {
-  if (!source.trim()) throw new Error('请输入或导入日语文本。');
+  if (!source.trim()) throw new Error('请输入或导入文本。');
   if (source.length > MAX_ARTICLE_LENGTH)
     throw new Error(`文章最多 ${MAX_ARTICLE_LENGTH.toLocaleString()} 字符。`);
   const chunks: string[] = [];
@@ -46,9 +46,10 @@ export async function importArticle(
   detail: (value: ImportDetail) => void = () => {},
   completed: CompletedPart[] = [],
   checkpoint: (parts: CompletedPart[]) => Promise<void> = async () => {},
+  language: Language = 'ja',
 ): Promise<Reading> {
   const chunks = splitArticle(source);
-  const reading: Reading = { language: 'ja', sentences: [] };
+  const reading: Reading = { language, sentences: [] };
   let offset = 0;
   let received = 0;
   let requestStatus: LLMStatus | undefined;
@@ -99,7 +100,7 @@ export async function importArticle(
       continue;
     }
     let parsed: Reading | undefined;
-    const saved = completed.find((part) => part.start === offset && part.source === chunk);
+    const saved = completed.find((part) => part.start === offset && part.source === chunk && part.reading.language === language);
     if (saved) {
       try {
         parsed = validateReading(saved.reading, chunk);
@@ -113,7 +114,7 @@ export async function importArticle(
         const previousReceived = received;
         requestStatus = undefined;
         try {
-          parsed = await analyze(chunk, 'ja', signal, (count, stage, status) => {
+          parsed = await analyze(chunk, language, signal, (count, stage, status) => {
             if (status) requestStatus = status;
             received = previousReceived + count;
             report(stage, index, chunk);

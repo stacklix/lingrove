@@ -88,7 +88,7 @@ it('reports native initialization failure without enabling the browser canvas', 
   const w = pad();
   try {
     await flushPromises();
-    expect(w.get('[role=alert]').text()).toContain('原生手写初始化失败');
+    expect(w.get('[role=alert]').text()).toContain('书写区域加载失败，请重新打开。');
     await draw(w, 'pen');
     expect(w.emitted('ink')).toBeUndefined();
     expect(w.get('button.primary').attributes('disabled')).toBeDefined();

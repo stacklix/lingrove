@@ -65,5 +65,5 @@ it('rejects unannotated strings and missing token arrays with an actionable sent
   ).toThrow('第 1 句');
   expect(() =>
     parseCompactReading(JSON.stringify({ sentences: [{ text: '読んだ。' }] }), '読んだ。'),
-  ).toThrow('缺少 tokens');
+  ).toThrow('第 1 句的注音生成失败，请重试。');
 });

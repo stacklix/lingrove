@@ -78,7 +78,7 @@ onMounted(async () => {
     await ready();
     await setRootPage(page.value !== 'result');
   } catch {
-    notice.value = '宿主初始化失败，请返回后重新打开。';
+    notice.value = '打开失败，请返回后重试。';
   }
 });
 onUnmounted(() => controller?.abort());

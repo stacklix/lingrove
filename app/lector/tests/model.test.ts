@@ -35,7 +35,7 @@ describe('lossless reading contract', () => {
     expect(() => validateReading(data, demoSource)).toThrow('注音');
     const noReading = copy();
     noReading.sentences[0].tokens[0].ruby[0].reading = '';
-    expect(() => validateReading(noReading, demoSource)).toThrow('注音');
+    expect(validateReading(noReading, demoSource).language).toBe('ja');
     const noRole = copy();
     noRole.sentences[0].tokens[1].role = '';
     expect(validateReading(noRole, demoSource).sentences[0].tokens[1].role).toBe('');
@@ -46,7 +46,7 @@ describe('lossless reading contract', () => {
     expect(() => validateReading(data, demoSource)).toThrow('遗漏');
   });
   it('handles unsupported language, refusal, truncation, and input bounds', () => {
-    expect(() => validateReading({ ...demo, language: 'en' }, demoSource)).toThrow('语言');
+    expect(() => validateReading({ ...demo, language: 'invalid' }, demoSource)).toThrow('未能完成文章分析，请重试。');
     expect(() => parseReading('{"error":"请提供日语文本。"}', 'abc')).toThrow('请提供日语');
     expect(() => parseReading('{"sentences":', demoSource)).toThrow('不完整');
     expect(() => validateInput(' \n ')).toThrow('输入');

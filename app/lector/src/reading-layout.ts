@@ -1,5 +1,13 @@
 import type { Sentence } from './model';
 
+// Add paragraph breathing room only when rendering; keep source text and
+// analysis/cache keys unchanged, and preserve existing blank lines.
+export function paragraphSpacing(text: string): string {
+  return text.replace(/\r\n?/g, '\n').replace(/\n(?:[^\S\n]*\n)*/g, (breaks) =>
+    breaks === '\n' ? '\n\n' : breaks,
+  );
+}
+
 // Put the analysis action before original trailing paragraph whitespace, while
 // leaving stored text/ruby and sentence indices untouched.
 export function readingLayout(sentence: Sentence) {
@@ -64,14 +72,14 @@ export function splitReadingSentences(sentences: Sentence[]): Sentence[] {
       text = '';
     };
     for (const char of token.text) {
-      if (pendingEnd && !/[。！？!?\s」』）)】〉》]/u.test(char)) {
+      if (pendingEnd && !/[。！？.!?\s」』）)】〉》]/u.test(char)) {
         append();
         flush();
       }
       text += char;
       if (pairs[char]) brackets.push(pairs[char]);
       else if (brackets.at(-1) === char) brackets.pop();
-      if (/[。！？!?]/u.test(char) && brackets.length === 0) pendingEnd = true;
+      if (/[。！？.!?]/u.test(char) && brackets.length === 0) pendingEnd = true;
     }
     append();
   }

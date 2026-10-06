@@ -1,14 +1,23 @@
 <script setup lang="ts">
 import { useAppI18n } from '@lingrove/host-sdk/vue';
 const { t, locale } = useAppI18n();
-import { formatLLMStatus, type LLMStatus } from '@lingrove/host-sdk';
+import { tts, formatLLMStatus, type LLMStatus } from '@lingrove/host-sdk';
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowReactive, watch } from 'vue';
 import { createID, isNative, ready, setRootPage, installFocusMode } from '@lingrove/host-sdk';
 import { importArticle, readTextFile, splitArticle, type ImportDetail } from './import';
 import { analyzeSentence, type SentenceAnalysis } from './sentence-analysis';
 import { demo, demoSource } from './demo';
-import { readingLayout, splitReadingSentences } from './reading-layout';
-import { MAX_ARTICLE_LENGTH, type SavedReading } from './model';
+import VoiceField from './components/VoiceField.vue';
+import { useNarration } from './narration';
+import { paragraphSpacing, readingLayout, splitReadingSentences } from './reading-layout';
+import {
+  MAX_ARTICLE_LENGTH,
+  languages,
+  languageName,
+  parseTags,
+  type Language,
+  type SavedReading,
+} from './model';
 import { freshState, loadState, saveState, type AnalysisJob } from './storage';
 const state = ref(freshState());
 const initialized = ref(false);
@@ -24,10 +33,137 @@ const result = computed(() =>
 );
 function cachedAnalysis(text: string) {
   return Object.values(active.value?.analyses ?? {}).find(
-    (analysis) => analysis.analysis_text === text && analysis.language === locale.value,
+    (analysis) =>
+      analysis.analysis_text === text &&
+      analysis.language === locale.value &&
+      analysis.sourceLanguage === active.value?.reading.language,
   );
 }
 const displayedSentences = computed(() => result.value?.sentences.map(readingLayout) ?? []);
+const narration = useNarration(
+  () =>
+    displayedSentences.value.map(
+      (sentence) => sentence.tokens.map((token) => token.text).join('') + sentence.trailing,
+    ),
+  () => result.value?.language,
+  tts,
+  () => active.value?.speechVoice,
+);
+const {
+  position: speechPosition,
+  state: speechState,
+  error: speechError,
+  speakingSentence,
+} = narration;
+const followSpeech = ref(true);
+function scrollToSpeakingSentence() {
+  const index = speakingSentence.value ?? narration.requestedSentence.value;
+  if (
+    !followSpeech.value ||
+    index === null ||
+    page.value !== 'reader' ||
+    document.querySelector('dialog[open]')
+  )
+    return;
+  document.getElementById(`sentence-${index}`)?.scrollIntoView?.({ block: 'start' });
+}
+function restoreSpeechFollow() {
+  followSpeech.value = true;
+  scrollToSpeakingSentence();
+}
+function handleManualScroll(event: Event) {
+  if (
+    !speechActive.value ||
+    page.value !== 'reader' ||
+    event.defaultPrevented ||
+    document.querySelector('dialog[open]')
+  )
+    return;
+  const target = event.target;
+  if (
+    target instanceof Element &&
+    target.closest('input, textarea, select, button, .speech-float, dialog')
+  )
+    return;
+  if (
+    event instanceof KeyboardEvent &&
+    !['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)
+  )
+    return;
+  followSpeech.value = false;
+}
+watch(speakingSentence, scrollToSpeakingSentence, { flush: 'post' });
+const voiceSheet = ref<HTMLDialogElement>();
+const voiceOptions = ref<{ id: string; title: string; language: string }[]>([]);
+const voiceLoading = ref(false);
+const voiceError = ref('');
+async function loadVoices() {
+  voiceLoading.value = true;
+  voiceError.value = '';
+  try {
+    voiceOptions.value = (await tts.status()).voices;
+  } catch {
+    voiceError.value = '无法加载音色，请重试。';
+  } finally {
+    voiceLoading.value = false;
+  }
+}
+function openVoiceSettings() {
+  voiceSheet.value?.showModal();
+  void loadVoices();
+}
+function changeArticleVoice(value: string) {
+  if (!active.value) return;
+  active.value.speechVoice = value || undefined;
+  void persist();
+  if (speechActive.value) void narration.seek(speechPosition.value);
+}
+const seekPreview = ref<number | null>(null);
+const showSpeechLoading = ref(false);
+watch(speechState, (value, _previous, onCleanup) => {
+  showSpeechLoading.value = false;
+  if (value !== 'buffering') return;
+  const timer = setTimeout(() => {
+    showSpeechLoading.value = true;
+  }, 600);
+  onCleanup(() => clearTimeout(timer));
+});
+const speechActive = computed(() => ['playing', 'buffering', 'paused'].includes(speechState.value));
+const showPlaybackHint = ref(false);
+watch(speechActive, (active, _previous, onCleanup) => {
+  showPlaybackHint.value = false;
+  if (!active || state.value.playbackHintSeen) return;
+  state.value.playbackHintSeen = true;
+  showPlaybackHint.value = true;
+  void persist();
+  const timer = setTimeout(() => {
+    showPlaybackHint.value = false;
+  }, 5000);
+  onCleanup(() => clearTimeout(timer));
+});
+function toggleSpeech() {
+  seekPreview.value = null;
+  if (speechActive.value) narration.stop();
+  else {
+    followSpeech.value = true;
+    void narration.seek(speechPosition.value >= 100 ? 0 : speechPosition.value);
+  }
+}
+function commitSpeechSeek(event: Event) {
+  followSpeech.value = true;
+  const value = Number((event.target as HTMLInputElement).value);
+  seekPreview.value = null;
+  void narration.seek(value);
+}
+watch(
+  () => active.value?.id,
+  () => {
+    narration.stop();
+    followSpeech.value = true;
+    speechPosition.value = 0;
+    speechError.value = '';
+  },
+);
 const readerToolbarHidden = ref(false);
 let lastReaderScroll = 0;
 let readerScrollDelta = 0;
@@ -67,7 +203,7 @@ function isSentenceAnalyzing(text: string) {
   return !!active.value && sentenceTasks.has(sentenceTaskKey(active.value.id, text));
 }
 function sentenceTaskKey(articleID: string, text: string) {
-  return JSON.stringify([articleID, text, locale.value]);
+  return JSON.stringify([articleID, text, locale.value, active.value?.reading.language]);
 }
 const sentenceText = computed(() =>
   selectedSentence.value === null
@@ -143,6 +279,98 @@ let observer: IntersectionObserver | undefined;
 let lastTick = Date.now();
 let wasVisible = !document.hidden;
 const currentSentence = computed(() => active.value?.sentence ?? 0);
+const editSheet = ref<HTMLDialogElement>();
+const editingArticle = ref<SavedReading | null>(null);
+const editDraft = ref({
+  title: '',
+  source: '',
+  origin: '',
+  language: 'ja' as Language,
+  tags: '',
+  voice: '',
+});
+const editBusy = ref(false);
+const editError = ref('');
+let editController: AbortController | undefined;
+function openArticleEditor(item: SavedReading) {
+  editingArticle.value = item;
+  editDraft.value = {
+    title: item.title ?? '',
+    source: item.source,
+    origin: item.origin ?? '',
+    language: item.reading.language,
+    tags: (item.tags ?? []).join('，'),
+    voice: item.speechVoice ?? '',
+  };
+  editError.value = '';
+  editSheet.value?.showModal();
+  void loadVoices();
+}
+function closeArticleEditor() {
+  editController?.abort();
+  editController = undefined;
+  editBusy.value = false;
+  editSheet.value?.close();
+}
+function updateEditLanguage() {
+  // A voice selected for the previous language must not override the new language.
+  editDraft.value.voice = '';
+}
+async function saveArticleEdit() {
+  const item = editingArticle.value;
+  if (!item || editBusy.value) return;
+  const draft = { ...editDraft.value };
+  const request = new AbortController();
+  editController = request;
+  editBusy.value = true;
+  editError.value = '';
+  try {
+    splitArticle(draft.source);
+    const contentChanged = item.source !== draft.source;
+    const languageChanged = item.reading.language !== draft.language;
+    const reading =
+      contentChanged || (languageChanged && draft.language === 'ja')
+        ? await importArticle(
+            draft.source,
+            request.signal,
+            () => {},
+            undefined,
+            [],
+            undefined,
+            draft.language,
+          )
+        : { ...item.reading, language: draft.language };
+    if (request.signal.aborted || disposed || !state.value.library.includes(item)) return;
+    if (contentChanged || languageChanged) {
+      for (const [key, task] of sentenceTasks) {
+        if (JSON.parse(key)[0] === item.id) {
+          task.controller.abort();
+          sentenceTasks.delete(key);
+        }
+      }
+      if (active.value?.id === item.id) narration.stop();
+    }
+    Object.assign(item, {
+      title: draft.title.trim() || draft.source.trim().slice(0, 36),
+      source: draft.source,
+      origin: draft.origin.trim(),
+      reading,
+      tags: parseTags(draft.tags),
+      speechVoice: draft.voice || undefined,
+    });
+    if (contentChanged) item.sentence = 0;
+    await persist();
+    if (!storageError.value) editSheet.value?.close();
+    else editError.value = '保存失败，请重试。';
+  } catch (e) {
+    if (!request.signal.aborted) editError.value = e instanceof Error ? e.message : String(e);
+  } finally {
+    if (editController === request) {
+      editBusy.value = false;
+      editController = undefined;
+    }
+  }
+}
 function stats(item: SavedReading) {
   return (item.stats ??= { opens: 0, seconds: 0, lookups: 0, visited: [], lastRead: 0 });
 }
@@ -175,7 +403,7 @@ async function persist() {
   }
 }
 watch(
-  () => [state.value.draft, state.value.draftTitle, state.value.draftOrigin],
+  () => [state.value.draft, state.value.draftTitle, state.value.draftOrigin, state.value.draftTags],
   () => {
     if (!initialized.value) return;
     clearTimeout(draftTimer);
@@ -183,6 +411,7 @@ watch(
   },
 );
 watch(page, (value) => {
+  if (value !== 'reader') narration.stop();
   void setRootPage(value !== 'reader').catch(() => {});
   window.scrollTo?.(0, 0);
   resetReaderToolbar();
@@ -190,11 +419,14 @@ watch(page, (value) => {
 onMounted(async () => {
   removeFocusMode = installFocusMode();
   window.addEventListener('scroll', handleReaderScroll, { passive: true });
+  window.addEventListener('touchmove', handleManualScroll, { passive: true });
+  window.addEventListener('wheel', handleManualScroll, { passive: true });
+  window.addEventListener('keydown', handleManualScroll);
   try {
     await ready();
     await setRootPage(true);
   } catch {
-    error.value = '宿主初始化失败，请重新打开应用。';
+    error.value = '打开失败，请重新打开应用。';
   }
   try {
     state.value = await loadState();
@@ -212,11 +444,18 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', visibility);
 });
 onUnmounted(() => {
+  narration.stop();
   removeFocusMode?.();
   window.removeEventListener('scroll', handleReaderScroll);
+  window.removeEventListener('touchmove', handleManualScroll);
+  window.removeEventListener('wheel', handleManualScroll);
+  window.removeEventListener('keydown', handleManualScroll);
   stopSentenceRequest();
   tick();
   disposed = true;
+  clearSentencePress();
+  analysisPause = undefined;
+  editController?.abort();
   controller?.abort();
   for (const job of state.value.jobs)
     if (job.status === 'running' || job.status === 'queued') {
@@ -300,6 +539,90 @@ function stopSentenceRequest() {
   sentenceTasks.clear();
   sentenceBusy.value = false;
 }
+let sentencePress:
+  | { id: number; index: number; x: number; y: number; timer: ReturnType<typeof setTimeout> }
+  | undefined;
+let suppressSentenceClick: number | null = null;
+let analysisPause: { articleID: string; ready: Promise<void> } | undefined;
+function clearSentencePress() {
+  if (sentencePress) clearTimeout(sentencePress.timer);
+  sentencePress = undefined;
+}
+function beginSentencePress(event: PointerEvent, index: number) {
+  clearSentencePress();
+  suppressSentenceClick = null;
+  if (!speechActive.value || event.button !== 0 || event.isPrimary === false) return;
+  sentencePress = {
+    id: event.pointerId,
+    index,
+    x: event.clientX,
+    y: event.clientY,
+    timer: setTimeout(() => {
+      clearSentencePress();
+      suppressSentenceClick = index;
+      void inspectDuringPlayback(index);
+    }, 500),
+  };
+}
+function moveSentencePress(event: PointerEvent) {
+  if (!sentencePress || event.pointerId !== sentencePress.id) return;
+  if (Math.hypot(event.clientX - sentencePress.x, event.clientY - sentencePress.y) > 10) {
+    suppressSentenceClick = sentencePress.index;
+    clearSentencePress();
+  }
+}
+function cancelSentencePress() {
+  if (sentencePress) suppressSentenceClick = sentencePress.index;
+  clearSentencePress();
+}
+function activateSentence(index: number) {
+  if (suppressSentenceClick === index) {
+    suppressSentenceClick = null;
+    return;
+  }
+  if (!speechActive.value) {
+    void inspectSentence(index);
+    return;
+  }
+  if (index === narration.requestedSentence.value) return;
+  seekPreview.value = null;
+  followSpeech.value = true;
+  void narration.seekSentence(index);
+}
+async function inspectDuringPlayback(index: number) {
+  if (speechActive.value && speechState.value !== 'paused' && active.value) {
+    analysisPause = { articleID: active.value.id, ready: narration.pause() };
+  }
+  await inspectSentence(index);
+}
+async function resumeAfterAnalysis() {
+  const pending = analysisPause;
+  analysisPause = undefined;
+  if (!pending) return;
+  await pending.ready;
+  if (
+    !disposed &&
+    page.value === 'reader' &&
+    active.value?.id === pending.articleID &&
+    !sheet.value?.open &&
+    speechState.value === 'paused'
+  ) {
+    await narration.resume();
+    scrollToSpeakingSentence();
+  }
+}
+function sentenceContextMenu(event: MouseEvent, index: number) {
+  if (!speechActive.value) return;
+  event.preventDefault();
+  clearSentencePress();
+  suppressSentenceClick = index;
+  if (!sheet.value?.open) void inspectDuringPlayback(index);
+}
+function sentenceKey(event: KeyboardEvent, index: number) {
+  suppressSentenceClick = null;
+  if (event.shiftKey) void inspectDuringPlayback(index);
+  else activateSentence(index);
+}
 async function inspectSentence(index: number) {
   if (!active.value) return;
   selectedSentence.value = index;
@@ -343,7 +666,11 @@ async function startSentenceAnalysis() {
   try {
     const analysis = await analyzeSentence(
       text,
-      { before: textAt(index - 1), after: textAt(index + 1) },
+      {
+        before: textAt(index - 1),
+        after: textAt(index + 1),
+        sourceLanguage: article.reading.language,
+      },
       task.controller.signal,
       (status) => {
         if (task.controller.signal.aborted || disposed) return;
@@ -357,7 +684,10 @@ async function startSentenceAnalysis() {
       !state.value.library.some((item) => item.id === article.id)
     )
       return;
-    (article.analyses ??= {})[JSON.stringify(analysis.analysis_text)] = analysis;
+    analysis.sourceLanguage = article.reading.language;
+    (article.analyses ??= {})[
+      JSON.stringify([analysis.analysis_text, analysis.sourceLanguage, analysis.language])
+    ] = analysis;
     if (isSelected()) sentenceResult.value = analysis;
     await persist();
   } catch (e) {
@@ -415,6 +745,8 @@ async function start() {
   const job: AnalysisJob = {
     id: createID(),
     source: state.value.draft,
+    language: state.value.draftLanguage,
+    tags: parseTags(state.value.draftTags),
     title: importTitle.value.trim() || state.value.draft.trim().slice(0, 36),
     origin: origin.value,
     createdAt: Date.now(),
@@ -425,6 +757,7 @@ async function start() {
   };
   state.value.jobs.unshift(job);
   state.value.draft = '';
+  state.value.draftTags = '';
   importTitle.value = '';
   origin.value = '文本导入';
   await persist();
@@ -489,6 +822,7 @@ async function pump() {
         job.parts = parts;
         await persist();
       },
+      job.language,
     );
     if (request.signal.aborted || disposed || !state.value.jobs.some((j) => j.id === job.id))
       return;
@@ -497,6 +831,7 @@ async function pump() {
       source: job.source,
       title: job.title,
       origin: job.origin,
+      tags: job.tags,
       createdAt: job.createdAt,
       reading,
       sentence: 0,
@@ -628,9 +963,9 @@ function duration(seconds: number) {
         </div>
         <article v-for="job in state.jobs" :key="job.id" class="article-card pending-card">
           <button class="article-open" @click="openJob(job)">
-            <small>{{ t('日语 ·') }} {{ t(date(job.createdAt)) }}</small>
+            <small>{{ t(languageName(job.language)) }} · {{ t(date(job.createdAt)) }}</small>
             <h2>{{ job.title }}</h2>
-            <p lang="ja">{{ job.source.slice(0, 100) }}</p>
+            <p :lang="job.language" dir="auto">{{ job.source.slice(0, 100) }}</p>
             <div class="article-meta">
               <span>{{ job.source.length }} {{ t('字') }}</span
               ><span role="status">{{ t(jobLabel(job)) }} →</span>
@@ -639,9 +974,11 @@ function duration(seconds: number) {
         </article>
         <article v-for="item in state.library" :key="item.id" class="article-card">
           <button class="article-open" @click="openReading(item)">
-            <small>{{ t('日语 ·') }} {{ t(date(item.createdAt)) }}</small>
+            <small
+              >{{ t(languageName(item.reading.language)) }} · {{ t(date(item.createdAt)) }}</small
+            >
             <h2>{{ item.title || item.source.trim().slice(0, 36) }}</h2>
-            <p lang="ja">{{ item.source.slice(0, 100) }}</p>
+            <p :lang="item.reading.language" dir="auto">{{ item.source.slice(0, 100) }}</p>
             <div class="article-meta">
               <span
                 >{{ item.source.length.toLocaleString() }} {{ t('字 ·') }}
@@ -703,7 +1040,7 @@ function duration(seconds: number) {
           {{ t('导入文章后，这里会显示文章与阅读数据。') }}
         </p>
         <article v-for="item in state.library" :key="item.id" class="data-article">
-          <button @click="openReading(item)">
+          <button @click="openArticleEditor(item)">
             <strong>{{ item.title || item.source.slice(0, 36) }}</strong
             ><span
               >{{ t(item.origin || '文本导入') }} · {{ item.source.length }} {{ t('字 ·') }}
@@ -712,6 +1049,8 @@ function duration(seconds: number) {
               >{{ t('阅读') }} {{ t(duration(item.stats?.seconds ?? 0)) }} {{ t('· 查看解析') }}
               {{ t(item.stats?.lookups ?? 0) }} {{ t('次') }}</span
             ><span>{{ t('最近阅读：') }}{{ t(date(item.stats?.lastRead ?? 0)) }}</span></button
+          ><span v-if="item.tags?.length" class="article-tags"
+            ><span v-for="tag in item.tags" :key="tag">{{ tag }}</span></span
           ><button
             class="delete"
             :aria-label="t(`删除文章：${item.title || item.source.slice(0, 20)}`)"
@@ -729,14 +1068,83 @@ function duration(seconds: number) {
         @focusin="resetReaderToolbar"
       >
         <button class="text-button" @click="navigate('library')">{{ t('← 返回文章') }}</button
-        ><label
+        ><label v-if="active.reading.language === 'ja'"
           ><input v-model="state.ruby" type="checkbox" @change="persist" />{{
             t('假名注音')
           }}</label
         >
       </div>
+      <section class="speech-float" :aria-label="t('文章朗读')">
+        <button
+          v-if="speechActive && !followSpeech"
+          class="speech-return"
+          @click="restoreSpeechFollow"
+        >
+          {{ t('回到当前句') }}
+        </button>
+        <p v-if="showPlaybackHint" class="playback-hint" role="status">
+          {{ t('点句子跳播，长按看解析') }}
+        </p>
+        <p v-if="speechError" class="speech-error" role="alert">{{ t(speechError) }}</p>
+        <div class="speech-float-row">
+          <button
+            class="speech-toggle"
+            :aria-label="t(speechActive ? '停止朗读' : '开始朗读')"
+            :title="t(speechActive ? '停止朗读' : '开始朗读')"
+            :aria-expanded="speechActive"
+            @click="toggleSpeech"
+          >
+            <svg
+              v-if="showSpeechLoading"
+              class="speech-spinner"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="8" />
+            </svg>
+            <svg v-else-if="speechActive" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5 19 12 8 19Z" /></svg>
+          </button>
+          <div v-if="speechActive" class="speech-progress">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              :value="seekPreview ?? speechPosition"
+              :aria-label="t('朗读位置')"
+              :title="t('按文本比例定位，松手后从目标句子开始朗读。')"
+              @input="seekPreview = Number(($event.target as HTMLInputElement).value)"
+              @change="commitSpeechSeek"
+              @pointercancel="seekPreview = null"
+            />
+            <span>{{ Math.round(seekPreview ?? speechPosition) }}%</span>
+            <button
+              class="speech-settings"
+              :aria-label="t('文章音色设置')"
+              :title="t('文章音色设置')"
+              @click="openVoiceSettings"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+            <span class="speech-sr-status" role="status">{{
+              showSpeechLoading ? t('正在加载语音…') : ''
+            }}</span>
+          </div>
+        </div>
+      </section>
       <h1 class="article-title">{{ active.title }}</h1>
-      <div class="reading-paper">
+      <div
+        :lang="active?.reading.language"
+        dir="auto"
+        class="reading-paper"
+        :class="{ 'speech-follow': speechActive }"
+      >
         <span
           v-for="(sentence, si) in displayedSentences"
           :id="`sentence-${si}`"
@@ -745,6 +1153,7 @@ function duration(seconds: number) {
           class="sentence"
           :class="{
             current: currentSentence === si,
+            speaking: speakingSentence === si,
             analyzing: isSentenceAnalyzing(
               sentence.tokens.map((token) => token.text).join('') + sentence.trailing,
             ),
@@ -757,33 +1166,43 @@ function duration(seconds: number) {
             class="sentence-text sentence-trigger"
             role="button"
             tabindex="0"
-            :aria-label="t(`查看第 ${si + 1} 句解析`)"
+            :aria-label="speechActive ? t('播放此句，长按查看解析') : t(`查看第 ${si + 1} 句解析`)"
+            :aria-description="speechActive ? t('按 Shift+Enter 查看解析') : undefined"
             :aria-busy="
               isSentenceAnalyzing(
                 sentence.tokens.map((token) => token.text).join('') + sentence.trailing,
               )
             "
-            @click="inspectSentence(si)"
-            @keydown.enter.prevent="inspectSentence(si)"
-            @keydown.space.prevent="inspectSentence(si)"
+            @pointerdown="beginSentencePress($event, si)"
+            @pointermove="moveSentencePress"
+            @pointerup="clearSentencePress"
+            @pointercancel="cancelSentencePress"
+            @pointerleave="cancelSentencePress"
+            @contextmenu="sentenceContextMenu($event, si)"
+            @click="activateSentence(si)"
+            @keydown.enter.prevent="sentenceKey($event, si)"
+            @keydown.space.prevent="sentenceKey($event, si)"
             :class="{
               'has-ruby':
                 state.ruby &&
+                active?.reading.language === 'ja' &&
                 sentence.tokens.some((token) => token.ruby.some((part) => !!part.reading)),
             }"
-            lang="ja"
+            :lang="active.reading.language"
           >
             <template v-for="(token, ti) in sentence.tokens" :key="ti"
-              ><span v-if="token.kind === 'separator'" class="separator">{{ token.text }}</span
+              ><span v-if="token.kind === 'separator'" class="separator">{{
+                paragraphSpacing(token.text)
+              }}</span
               ><span v-else class="word"
                 ><template v-for="(part, pi) in token.ruby" :key="pi"
-                  ><ruby v-if="state.ruby && part.reading"
+                  ><ruby v-if="state.ruby && active?.reading.language === 'ja' && part.reading"
                     >{{ part.text }}<rt>{{ part.reading }}</rt></ruby
                   ><template v-else>{{ part.text }}</template></template
                 ></span
               ></template
             ></span
-          ><span class="sentence-whitespace">{{ t(sentence.trailing) }}</span></span
+          ><span class="sentence-whitespace">{{ paragraphSpacing(sentence.trailing) }}</span></span
         >
       </div>
     </template>
@@ -842,22 +1261,35 @@ function duration(seconds: number) {
       </header>
       <div class="word-sheet-content">
         <p class="hint">
-          {{ t(origin === '文本导入' ? '粘贴日语文章，提前生成假名注音。' : origin) }}
+          {{
+            t(origin === '文本导入' ? '粘贴文章并选择语言；日语文章会提前生成假名注音。' : origin)
+          }}
         </p>
-        <form @submit.prevent="start">
+        <form class="article-form" @submit.prevent="start">
+          <label for="article-language">{{ t('文章语言') }}</label>
+          <select
+            id="article-language"
+            v-model="state.draftLanguage"
+            :disabled="submitting"
+            @change="persist"
+          >
+            <option v-for="language in languages" :key="language.id" :value="language.id">
+              {{ t(language.name) }}
+            </option>
+          </select>
           <label for="article-title">{{ t('文章标题') }}</label
           ><input
             id="article-title"
             v-model="importTitle"
             maxlength="120"
             :disabled="submitting"
-          /><label for="source">{{ t('日语原文') }}</label
+          /><label for="source">{{ t('原文') }}</label
           ><textarea
             id="source"
             v-model="state.draft"
             :maxlength="MAX_ARTICLE_LENGTH"
             :disabled="submitting"
-            lang="ja"
+            :lang="state.draftLanguage"
             @compositionstart="composing = true"
             @compositionend="composing = false"
           ></textarea>
@@ -865,11 +1297,134 @@ function duration(seconds: number) {
             {{ state.draft.length.toLocaleString() }} / {{ t(MAX_ARTICLE_LENGTH.toLocaleString()) }}
             {{ t('字符 · 文件支持 UTF-8 编码的 TXT / Markdown') }}
           </p>
+          <label for="import-tags">{{ t('标签') }}</label>
+          <input
+            id="import-tags"
+            v-model="state.draftTags"
+            :placeholder="t('用逗号分隔多个标签')"
+            :disabled="submitting"
+          />
           <p v-if="error" class="error" role="alert">{{ t(error) }}</p>
           <div class="editor-footer">
             <button class="primary" :disabled="submitting || !state.draft.trim()">
               {{ t(submitting ? '正在提交…' : '加入书架并分析') }}
             </button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+    <dialog
+      ref="editSheet"
+      class="word-sheet edit-sheet"
+      aria-labelledby="edit-title"
+      @cancel.prevent="closeArticleEditor"
+    >
+      <header class="word-sheet-header">
+        <button
+          class="close lingrove-sheet-close"
+          :aria-label="t('关闭文章编辑')"
+          @click="closeArticleEditor"
+        >
+          ×
+        </button>
+        <h2 id="edit-title">{{ t('编辑文章') }}</h2>
+      </header>
+      <div class="word-sheet-content">
+        <form class="article-form" @submit.prevent="saveArticleEdit">
+          <label for="edit-language">{{ t('文章语言') }}</label>
+          <select
+            id="edit-language"
+            v-model="editDraft.language"
+            :disabled="editBusy"
+            @change="updateEditLanguage"
+          >
+            <option v-for="language in languages" :key="language.id" :value="language.id">
+              {{ t(language.name) }}
+            </option>
+          </select>
+          <label for="edit-article-title">{{ t('文章标题') }}</label>
+          <input
+            id="edit-article-title"
+            v-model="editDraft.title"
+            maxlength="120"
+            :disabled="editBusy"
+          />
+          <label for="edit-origin">{{ t('文章来源') }}</label>
+          <input id="edit-origin" v-model="editDraft.origin" :disabled="editBusy" />
+          <label for="edit-source">{{ t('原文') }}</label>
+          <textarea
+            id="edit-source"
+            v-model="editDraft.source"
+            :lang="editDraft.language"
+            dir="auto"
+            :maxlength="MAX_ARTICLE_LENGTH"
+            :disabled="editBusy"
+          ></textarea>
+          <label for="edit-tags">{{ t('标签') }}</label>
+          <input
+            id="edit-tags"
+            v-model="editDraft.tags"
+            :placeholder="t('用逗号分隔多个标签')"
+            :disabled="editBusy"
+          />
+          <VoiceField
+            id="edit-voice"
+            v-model="editDraft.voice"
+            :language="editDraft.language"
+            :options="voiceOptions"
+            :loading="voiceLoading"
+            :error="voiceError"
+            :disabled="editBusy"
+            @retry="loadVoices"
+          />
+          <p class="hint">
+            {{ t('仅用于当前文章，下次打开仍有效。选择后优先于应用设置中的音色。') }}
+          </p>
+          <p v-if="editBusy" class="hint" role="status">{{ t('正在保存并更新阅读内容…') }}</p>
+          <p v-if="editError" class="error" role="alert">{{ t(editError) }}</p>
+          <div class="editor-footer">
+            <button type="button" class="text-button" @click="closeArticleEditor">
+              {{ t('取消') }}</button
+            ><button class="primary" :disabled="editBusy || !editDraft.source.trim()">
+              {{ t('保存修改') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+    <dialog
+      ref="voiceSheet"
+      class="word-sheet voice-sheet"
+      aria-labelledby="voice-title"
+      @click="$event.target === voiceSheet && voiceSheet?.close()"
+    >
+      <header class="word-sheet-header">
+        <button
+          class="close lingrove-sheet-close"
+          :aria-label="t('关闭音色设置')"
+          @click="voiceSheet?.close()"
+        >
+          ×
+        </button>
+        <h2 id="voice-title">{{ t('文章音色设置') }}</h2>
+      </header>
+      <div class="word-sheet-content voice-settings-content">
+        <form class="article-form" @submit.prevent="voiceSheet?.close()">
+          <p class="hint">
+            {{ t('仅用于当前文章，下次打开仍有效。选择后优先于应用设置中的音色。') }}
+          </p>
+          <VoiceField
+            id="playback-voice"
+            :model-value="active?.speechVoice ?? ''"
+            :language="active?.reading.language ?? ''"
+            :options="voiceOptions"
+            :loading="voiceLoading"
+            :error="voiceError"
+            @update:model-value="changeArticleVoice"
+            @retry="loadVoices"
+          />
+          <div class="editor-footer">
+            <button class="primary">{{ t('完成') }}</button>
           </div>
         </form>
       </div>
@@ -895,7 +1450,13 @@ function duration(seconds: number) {
           ></progress>
           <p class="hint" role="status">
             {{ t('已完成') }} {{ t(selectedJob.done) }} / {{ t(selectedJob.total) }} {{ t('段。')
-            }}{{ t(selectedJob.status === 'running' ? '正在生成下一段的假名注音。' : '') }}
+            }}{{
+              t(
+                selectedJob.status === 'running' && selectedJob.language === 'ja'
+                  ? '正在生成下一段的假名注音。'
+                  : '',
+              )
+            }}
           </p>
           <section v-if="currentDetail" class="analysis-progress-detail">
             <p v-if="currentDetail.requestStatus" class="hint">
@@ -960,7 +1521,7 @@ function duration(seconds: number) {
               {{ t(Math.floor((now - currentDetail.updatedAt) / 1000)) }}
               {{ t('秒未收到新内容，仍在等待模型响应。') }}
             </p>
-            <blockquote lang="ja">
+            <blockquote :lang="selectedJob.language" dir="auto">
               {{ currentDetail.preview
               }}{{ currentDetail.end - currentDetail.start + 1 > 100 ? '…' : '' }}
             </blockquote>
@@ -1006,6 +1567,7 @@ function duration(seconds: number) {
       @pointerdown="sentencePointerStartedOutside = isOutsideSentenceSheet($event)"
       @pointercancel="sentencePointerStartedOutside = false"
       @click="closeSentenceFromBackdrop"
+      @close="resumeAfterAnalysis"
     >
       <header class="word-sheet-header">
         <button
@@ -1019,7 +1581,7 @@ function duration(seconds: number) {
         <h2 id="analysis-title">{{ t('句子解析') }}</h2>
       </header>
       <div class="word-sheet-content">
-        <p class="analysis-original" lang="ja">{{ sentenceText }}</p>
+        <p class="analysis-original" :lang="active?.reading.language">{{ sentenceText }}</p>
         <p v-if="sentenceBusy" role="status" class="notice sentence-progress">
           <span>{{ t('正在分析句子结构与语法…') }}</span>
           <span v-for="line in formatLLMStatus(sentenceStatus).split(' · ')" :key="line">{{
@@ -1067,7 +1629,7 @@ function duration(seconds: number) {
               <tbody>
                 <tr v-for="(part, pi) in sentenceResult.structure" :key="pi">
                   <th scope="row">
-                    <span lang="ja">{{ part.text }}</span
+                    <span :lang="active?.reading.language" dir="auto">{{ part.text }}</span
                     ><span class="component-translation">{{ part.translation }}</span>
                   </th>
                   <td>{{ part.part }}</td>
@@ -1084,7 +1646,12 @@ function duration(seconds: number) {
             <h3>{{ point.title }}</h3>
             <p>{{ point.explanation }}</p>
             <div class="tags">
-              <span v-for="(form, fi) in point.inflections" :key="fi" lang="ja">{{ form }}</span>
+              <span
+                v-for="(form, fi) in point.inflections"
+                :key="fi"
+                :lang="active?.reading.language"
+                >{{ form }}</span
+              >
             </div>
           </article>
         </div>

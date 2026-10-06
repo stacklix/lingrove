@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA2000000000000000000001 /* TTSStreaming.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000002 /* TTSStreaming.swift */; };
+		AA1900000000000000000001 /* TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1900000000000000000002 /* TTSService.swift */; };
 		AA1800000000000000000001 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = AA1800000000000000000002 /* Localizable.xcstrings */; };
 		141489A826CF22B06D03ED1D /* LingroveApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3141EA1A801FFACD7914DE9 /* LingroveApp.swift */; };
 		2F0589B18B6221B63FA1AA49 /* HostConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 575CB22ADB6835BA1E24AF00 /* HostConfig.json */; };
@@ -42,6 +44,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AA2000000000000000000002 /* TTSStreaming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSStreaming.swift; sourceTree = "<group>"; };
+		AA1900000000000000000002 /* TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSService.swift; sourceTree = "<group>"; };
 		AA1800000000000000000002 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		172EA4DEE36E904A1A1CA822 /* StoredZIP.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoredZIP.swift; path = Core/StoredZIP.swift; sourceTree = "<group>"; };
 		424092A96CD971389484FF48 /* Module.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Module.swift; path = Core/Module.swift; sourceTree = "<group>"; };
@@ -136,6 +140,8 @@
 				6BCC862F26DB766FEB2E080E /* ModuleRuntime.swift */,
 				F6B4D20BBB92998D2FD0C1CF /* Resources */,
 				E5106270A5CA6793A48275A4 /* LLMService.swift */,
+				AA1900000000000000000002 /* TTSService.swift */,
+				AA2000000000000000000002 /* TTSStreaming.swift */,
 				58D9174378D1745DA20E1D67 /* Handwriting.swift */,
 			);
 			path = Lingrove;
@@ -324,6 +330,8 @@
 				F805393E3DC565BFE86E5C82 /* StoredZIP.swift in Sources */,
 				41AF4F5AA48DA1564349E8F1 /* ModuleRuntime.swift in Sources */,
 				FD4E235CAC8A1C38F3760EE0 /* LLMService.swift in Sources */,
+				AA1900000000000000000001 /* TTSService.swift in Sources */,
+				AA2000000000000000000001 /* TTSStreaming.swift in Sources */,
 				7D86C5F75A9476ADD2F0B9EA /* Handwriting.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

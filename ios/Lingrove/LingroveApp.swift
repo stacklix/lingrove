@@ -43,6 +43,9 @@ struct HomeView: View {
     @StateObject private var pages = ModulePageCache()
     @State private var didCheck = false
     @State private var showingSettings = false
+    @State private var showingLLMSettings = false
+    @State private var showingTTSSettings = false
+    @State private var showingLLMUsage = false
     @State private var modelError = ""
     @State private var debugAddress = UserDefaults.standard.string(forKey: DebugServer.preferenceKey) ?? ""
     @State private var debugError = ""
@@ -52,8 +55,11 @@ struct HomeView: View {
     @State private var connectionTestID = UUID()
     @AppStorage(DebugServer.enabledPreferenceKey) private var debugEnabled = true
     @State private var draftDebugEnabled = true
+    @State private var initialDebugAddress = ""
+    @State private var initialDebugEnabled = true
     @State private var draftAppLanguage = "system"
     @State private var draftAppearance = AppAppearance.system
+    @State private var draftModules: [Module] = []
     @State private var networkSummaryRevision = 0
     var body: some View {
         NavigationStack {
@@ -79,7 +85,7 @@ struct HomeView: View {
                                     VStack(alignment: .leading, spacing: 4) { Text(module.name).font(.title2.weight(.semibold)); Text("语言学习 · v\(module.version)").font(.caption).foregroundStyle(.secondary) }
                                     Spacer(); Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
                                 }
-                                Text(AppLanguage.text(module.description ?? "独立学习子应用")).font(.subheadline).foregroundStyle(.secondary)
+                                Text(AppLanguage.text(module.description ?? "学习应用")).font(.subheadline).foregroundStyle(.secondary)
                                 if store.blocked.contains(module.id) {
                                     Label("暂时无法打开", systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.secondary)
                                 }
@@ -94,18 +100,27 @@ struct HomeView: View {
                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }.padding()
                 }
             }
-            .sheet(isPresented: $showingSettings, onDismiss: resetSettingsDraft) {
+            .sheet(isPresented: $showingSettings, onDismiss: finishSettings) {
                 NavigationStack {
                     Form {
                         if DebugServer.available {
                             Section("调试模式") {
                                 Toggle("调试模式", isOn: $draftDebugEnabled)
                                     .accessibilityIdentifier("debug-mode-toggle")
+                                    .onChange(of: draftDebugEnabled) { _, value in
+                                        if showingSettings { debugEnabled = value }
+                                    }
                                 Text("开启后显示刷新按钮并使用配置的服务器资源；关闭后使用本地资源，仍可编辑和保存服务器地址。").font(.footnote)
                                 TextField("http://192.168.1.10:8000", text: $debugAddress)
                                     .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                                     .accessibilityLabel("调试服务器地址")
-                                    .onChange(of: debugAddress) { _, _ in clearConnectionTest() }
+                                    .onChange(of: debugAddress) { _, value in
+                                        guard showingSettings else { return }
+                                        clearConnectionTest()
+                                        UserDefaults.standard.set(value, forKey: DebugServer.preferenceKey)
+                                        do { _ = try DebugServer.normalized(value); debugError = "" }
+                                        catch { debugError = error.localizedDescription }
+                                    }
                                 Button(action: testDebugConnection) {
                                     HStack {
                                         if connectionTest != nil { ProgressView() }
@@ -133,6 +148,9 @@ struct HomeView: View {
                                     Text(LocalizedStringKey(appearance.title)).tag(appearance)
                                 }
                             }.accessibilityIdentifier("appearance-picker")
+                            .onChange(of: draftAppearance) { _, value in
+                                if showingSettings { UserDefaults.standard.set(value.rawValue, forKey: AppAppearance.preferenceKey) }
+                            }
                         }
                         Section("App 语言") {
                             Picker("App 语言", selection: $draftAppLanguage) {
@@ -141,29 +159,63 @@ struct HomeView: View {
                                 Text("English").tag("en")
                                 Text("日本語").tag("ja")
                             }
+                            .onChange(of: draftAppLanguage) { _, value in
+                                guard showingSettings else { return }
+                                UserDefaults.standard.set(value, forKey: AppLanguage.preferenceKey)
+                                pages.updateLanguage()
+                            }
                             Text("用于应用界面和新生成的讲解，已有学习记录保留原语言。").font(.footnote)
                         }
                         Section("模型服务") {
-                            NavigationLink("大模型配置") { LLMSettingsView().onDisappear { networkSummaryRevision += 1 } }
-                            NavigationLink("大模型使用统计") { LLMUsageView() }
+                            Button { showingLLMSettings = true } label: {
+                                HStack {
+                                    Text("通用模型")
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                                }.contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                            Button { showingTTSSettings = true } label: {
+                                HStack {
+                                    Text("语音合成")
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                                }.contentShape(Rectangle())
+                            }.buttonStyle(.plain).accessibilityIdentifier("tts-settings-entry")
+                            Button { showingLLMUsage = true } label: {
+                                HStack {
+                                    Text("通用模型使用统计")
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                                }.contentShape(Rectangle())
+                            }.buttonStyle(.plain)
                         }
-                        Section("子应用") {
-                            NavigationLink("版本与更新") { ModuleUpdatesView(store: store) }
-                        }
+                        ModuleManagementSection(store: store, modules: $draftModules)
                         NetworkAuthorizationSection(modules: store.modules).id(networkSummaryRevision)
                         Section("关于") { Text("Lingrove \(HostConfiguration.currentVersion)") }
-                    }.navigationTitle("设置").toolbar {
+                    }
+                    .environment(\.editMode, .constant(.active))
+                    .navigationDestination(isPresented: $showingLLMSettings) {
+                        LLMSettingsView()
+                            .environment(\.editMode, .constant(.inactive))
+                            .onDisappear { networkSummaryRevision += 1 }
+                    }
+                    .navigationDestination(isPresented: $showingTTSSettings) {
+                        TTSSettingsView().environment(\.editMode, .constant(.inactive))
+                    }
+                    .navigationDestination(isPresented: $showingLLMUsage) {
+                        LLMUsageView().environment(\.editMode, .constant(.inactive))
+                    }
+                    .navigationTitle("设置").toolbar {
                         ToolbarItem(placement: .topBarLeading) {
-                            Button("取消") { resetSettingsDraft(); showingSettings = false }
-                        }
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("完成") { saveSettings() }
+                            Button { showingSettings = false } label: {
+                                Image(systemName: "chevron.left")
+                            }.accessibilityLabel("返回").accessibilityIdentifier("settings-back")
                         }
                     }
                 }
             }
             .task { guard !didCheck else { return }; didCheck = true; do { _ = try LLMStore.load() } catch { modelError = error.localizedDescription }; await store.checkForUpdates() }
-            .alert("模型配置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(AppLanguage.text(modelError)) }
+            .alert("通用模型设置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(AppLanguage.text(modelError)) }
         }.tint(Color(uiColor: LingroveTheme.accent))
         .onChange(of: store.modules) { _, modules in pages.reconcile(modules: modules, blocked: store.blocked) }
         .onChange(of: store.blocked) { _, blocked in pages.reconcile(modules: store.modules, blocked: blocked) }
@@ -196,74 +248,89 @@ struct HomeView: View {
     private func resetSettingsDraft() {
         clearConnectionTest()
         debugAddress = UserDefaults.standard.string(forKey: DebugServer.preferenceKey) ?? ""
+        initialDebugAddress = debugAddress
+        initialDebugEnabled = debugEnabled
         draftDebugEnabled = debugEnabled
         draftAppLanguage = UserDefaults.standard.string(forKey: AppLanguage.preferenceKey) ?? "system"
         draftAppearance = AppAppearance(rawValue: UserDefaults.standard.string(forKey: AppAppearance.preferenceKey) ?? "") ?? .system
+        draftModules = store.modules
         debugError = ""
     }
-    private func saveSettings() {
-        if DebugServer.available {
-            do {
-                let address = try DebugServer.normalized(debugAddress)
-                let savedAddress = UserDefaults.standard.string(forKey: DebugServer.preferenceKey) ?? ""
-                let previousAddress = (try? DebugServer.normalized(savedAddress)) ?? savedAddress
-                let needsReload = previousAddress != address || debugEnabled != draftDebugEnabled
-                UserDefaults.standard.set(address, forKey: DebugServer.preferenceKey)
-                UserDefaults.standard.set(draftAppLanguage, forKey: AppLanguage.preferenceKey)
-                pages.updateLanguage()
-                UserDefaults.standard.set(draftAppearance.rawValue, forKey: AppAppearance.preferenceKey)
-                debugAddress = address
-                debugEnabled = draftDebugEnabled
-                debugError = ""
-                showingSettings = false
-                if needsReload { pages.reloadAll(store: store) }
-            } catch { debugError = error.localizedDescription }
-        } else {
-            UserDefaults.standard.set(draftAppLanguage, forKey: AppLanguage.preferenceKey)
-                pages.updateLanguage()
-            UserDefaults.standard.set(draftAppearance.rawValue, forKey: AppAppearance.preferenceKey)
-            showingSettings = false
+    private func finishSettings() {
+        clearConnectionTest()
+        if DebugServer.available,
+           initialDebugAddress != debugAddress || initialDebugEnabled != debugEnabled {
+            pages.reloadAll(store: store)
         }
     }
 
+
 }
 
-struct ModuleUpdatesView: View {
+struct ModuleManagementSection: View {
     @ObservedObject var store: ModuleStore
-    private var moduleIDs: [String] {
-        Set(store.modules.map(\.id)).union(store.statuses.keys).sorted()
+    @Binding var modules: [Module]
+    private var uninstalledIDs: [String] {
+        Set(store.statuses.keys).subtracting(store.modules.map(\.id)).sorted()
     }
     var body: some View {
-        Form {
-            Section {
-                Button {
-                    Task { await store.checkForUpdates() }
-                } label: {
-                    HStack {
-                        if store.checking { ProgressView() }
-                        Text(LocalizedStringKey(store.checking ? "正在检查更新…" : "检查更新"))
-                    }
-                }.disabled(store.checking)
-                if !store.notice.isEmpty {
-                    Text(store.notice).font(.footnote)
-                        .accessibilityIdentifier("module-update-notice")
+        Section {
+            ForEach(modules) { module in
+                moduleRow(id: module.id, module: module)
+            }
+            .onMove { source, destination in
+                modules.move(fromOffsets: source, toOffset: destination)
+                store.setDisplayOrder(modules.map(\.id))
+            }
+            ForEach(uninstalledIDs, id: \.self) { id in
+                moduleRow(id: id, module: nil)
+            }
+            if modules.isEmpty { Text("暂无已安装的应用").foregroundStyle(.secondary) }
+            Button {
+                Task { await store.checkForUpdates() }
+            } label: {
+                HStack {
+                    if store.checking { ProgressView() }
+                    Text(LocalizedStringKey(store.checking ? "正在检查更新…" : "检查更新"))
+                }
+            }.disabled(store.checking)
+            if !store.notice.isEmpty {
+                Text(store.notice).font(.footnote)
+                    .accessibilityIdentifier("module-update-notice")
+            }
+        } header: {
+            Text("应用")
+        } footer: {
+            Text("拖动右侧手柄调整首页显示顺序，调整后自动保存。")
+        }
+        .onAppear { refreshModules() }
+        .onChange(of: store.modules) { _, _ in refreshModules() }
+    }
+    private func moduleRow(id: String, module: Module?) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(module?.name ?? id)
+                if let status = store.statuses[id] {
+                    Text(status).font(.footnote).foregroundStyle(.secondary)
+                } else if store.blocked.contains(id) {
+                    Text("当前版本已停用，请检查更新。").font(.footnote).foregroundStyle(.secondary)
                 }
             }
-            Section("子应用版本与状态") {
-                ForEach(moduleIDs, id: \.self) { id in
-                    let module = store.modules.first { $0.id == id }
-                    VStack(alignment: .leading, spacing: 6) {
-                        LabeledContent(module?.name ?? id, value: module.map { "v\($0.version)" } ?? "未安装")
-                        if let status = store.statuses[id] {
-                            Text(status).font(.footnote).foregroundStyle(.secondary)
-                        } else if store.blocked.contains(id) {
-                            Text("当前版本已停用，请检查更新。").font(.footnote).foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                if moduleIDs.isEmpty { Text("暂无已安装的子应用").foregroundStyle(.secondary) }
+            Spacer(minLength: 8)
+            Group {
+                if let module { Text(verbatim: "v\(module.version)") }
+                else { Text("未安装") }
             }
-        }.navigationTitle("版本与更新")
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: true, vertical: false)
+
+        }
+    }
+    private func refreshModules() {
+        let current = Dictionary(uniqueKeysWithValues: store.modules.map { ($0.id, $0) })
+        let draftIDs = Set(modules.map(\.id))
+        modules = modules.compactMap { current[$0.id] }
+            + store.modules.filter { !draftIDs.contains($0.id) }
     }
 }
 
@@ -295,7 +362,7 @@ struct NetworkAuthorizationSection: View {
         } header: {
             Text("网络授权")
         } footer: {
-            Text("公共：宿主的大模型、更新等服务。子应用域名按应用分别列出。撤销自定义授权后，再次连接需重新授权。")
+            Text("公共服务包括 AI 和应用更新。其他网络地址按应用分别列出。撤销自定义授权后，再次连接时需要重新授权。")
         }
         .onAppear(perform: refresh)
         .onChange(of: modules) { _, _ in refresh() }

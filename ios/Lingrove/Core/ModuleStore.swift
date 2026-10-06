@@ -6,6 +6,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }
 @MainActor final class ModuleStore: ObservableObject {
+    static let displayOrderKey = "modules.displayOrder"
     struct Installed: Codable { var active: Module; var previous: Module?; var healthy: Bool; var minimumAllowedVersion: String? }
     @Published var modules: [Module] = []
     @Published var checking = false
@@ -21,8 +22,10 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     private let config: HostConfiguration
     private let session: URLSession
     private let builtinRoot: URL?
+    private let defaults: UserDefaults
     private var registryURL: URL { root.appendingPathComponent("registry.json") }
-    init(root: URL? = nil, config: HostConfiguration = .bundled, session: URLSession? = nil, builtinRoot: URL? = nil) {
+    init(root: URL? = nil, config: HostConfiguration = .bundled, session: URLSession? = nil, builtinRoot: URL? = nil, defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         self.session = session ?? URLSession(configuration: .ephemeral, delegate: NoRedirect(), delegateQueue: nil)
         self.builtinRoot = builtinRoot ?? Bundle.main.resourceURL?.appendingPathComponent("BuiltinModules")
         self.config = config
@@ -64,10 +67,22 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     private func refresh() {
         var all = builtins
         for (id, install) in registry { all[id] = install.active }
-        modules = all.values.sorted { $0.id < $1.id }
+        let order = defaults.stringArray(forKey: Self.displayOrderKey) ?? []
+        modules = all.values.sorted {
+            let left = order.firstIndex(of: $0.id) ?? Int.max
+            let right = order.firstIndex(of: $1.id) ?? Int.max
+            return left == right ? $0.id < $1.id : left < right
+        }
         blocked = Set(registry.compactMap { id, install in
             guard let minimum = install.minimumAllowedVersion.flatMap(Version.init), let current = Version(install.active.version), current < minimum else { return nil }; return id
         })
+    }
+    func setDisplayOrder(_ ids: [String]) {
+        var seen = Set<String>()
+        let available = Set(modules.map(\.id))
+        let order = (ids + modules.map(\.id)).filter { available.contains($0) && seen.insert($0).inserted }
+        defaults.set(order, forKey: Self.displayOrderKey)
+        refresh()
     }
     private func persist() throws { try JSONEncoder().encode(registry).write(to: registryURL, options: .atomic); refresh() }
     func directory(for module: Module) -> URL {

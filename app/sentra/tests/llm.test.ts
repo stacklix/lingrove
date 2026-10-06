@@ -95,11 +95,11 @@ it('keeps concurrent requests independent', async () => {
 });
 it('does not expose server error bodies and does not fetch in browser preview', async () => {
   bridge(async () => ({ ...response, status: 401, body: 'private upstream details' }));
-  await expect(llm.complete(input)).rejects.toThrow('HTTP 401');
+  await expect(llm.complete(input)).rejects.toThrow('请求失败，请检查「应用设置 → 通用模型」中的设置。');
   delete window.webkit;
   const fetch = vi.fn();
   vi.stubGlobal('fetch', fetch);
-  await expect(llm.complete(input)).rejects.toThrow('宿主');
+  await expect(llm.complete(input)).rejects.toThrow('请在 Lingrove 中');
   expect(fetch).not.toHaveBeenCalled();
 });
 

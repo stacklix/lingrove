@@ -156,6 +156,53 @@ const result = await llm.complete({
 
 桥接方法为 `llm.status`、`llm.request`、`llm.cancel`，现有桥协议版本保持 1。
 
+## 宿主语音合成（TTS）
+
+在「应用设置 → 语音合成」中选择 **minimax-cn** 或 **OpenAI**，从下拉菜单选择模型和音色，再填写 API Key 和默认语速。模型列表按服务商区分；minimax-cn 提供官方系统音色，OpenAI 音色按所选模型过滤。服务地址由服务商自动决定，不提供 URL 输入：MiniMax 使用国内 `https://api.minimax.cn/v1`，OpenAI 使用 `https://api.openai.com/v1`。MiniMax 暂仅支持国内账户，默认模型 `speech-2.8-hd`、音色 `Japanese_Whisper_Belle`；请填写国内账户对应的密钥。订阅密钥能否调用所选模型由服务商套餐决定。
+
+语音合成设置独立于通用模型设置，保存在本机 Keychain。点击右上角“保存”后，下一次调用生效，进行中的请求使用原配置。切换服务商时采用独立表单草稿，不会把前一家密钥自动发给新地址；通用模型、语音合成及按语言设置音色页面均需点击右上角勾选图标写入配置，保存成功后返回上一级；直接返回不会自动保存。页面提供「试听」，边生成边播放，并支持暂停、继续和停止。试听使用当前配置并消耗服务商额度。
+
+```ts
+import { tts } from '@lingrove/host-sdk';
+
+const status = await tts.status(); // { configured, provider, model, voice }，voice 是默认音色，无密钥
+const controller = new AbortController();
+const result = await tts.synthesize({ text: 'こんにちは。', language: 'ja', speed: 0.8 }, {
+  signal: controller.signal,
+});
+const audio = new Audio(result.audioURL);
+await audio.play(); // 在用户点击播放后调用，并处理浏览器可能的播放拒绝
+// controller.abort() 取消生成；audio.pause() 停止已生成音频的播放。
+```
+
+统一接口返回 `{ audioURL, mimeType, model, provider }`，`audioURL` 为 MP3 data URL，可直接播放，也可由子应用自行保存。单次文本限制为 1–4000 个 UTF-16 单元，语速 0.5–2 倍（省略时使用宿主默认值），长文由调用方分段。`synthesize()` 生成完成后一次性返回文件，不自动播放或缓存。响应最多 17 MiB，解码音频最多 8 MiB，超时 120 秒；与其他宿主网络请求共享每个子应用 6 个并发上限。关闭子应用运行实例或调用取消接口会终止生成。调用方应标明音频为 AI 生成。
+
+桥接方法为 `tts.status`、`tts.synthesize`、`tts.cancel`。宿主按服务商适配请求和响应，忽略子应用传入的地址、密钥、模型和音色覆盖值；仅接受文本、可选语速和可选语言。MiniMax 适配 `/t2a_v2` 的非流式十六进制音频，OpenAI 适配 `/audio/speech` 的二进制 MP3。服务商错误（包括 HTTP 200 内的 MiniMax 业务错误）、空音频和异常响应会拒绝请求，不向子应用透传供应商响应正文。浏览器预览的 `tts.status()` 返回未配置，生成须在宿主中执行。
+
+### 流式播放
+
+`tts.play()` 直接启动宿主原生播放：第一段音频到达后即可开始，不等待整段生成。MiniMax 使用 SSE 十六进制 PCM 分片，OpenAI 使用 `response_format: "pcm"` 的增量二进制响应（24 kHz、单声道、16 位小端 PCM）。
+
+```ts
+const playback = tts.play({ text: 'こんにちは。今日はいい天気ですね。', language: 'ja' }, {
+  signal: controller.signal,
+  onState: (state) => {
+    // buffering / playing / paused / ended / stopped / error
+    console.log(state);
+  },
+});
+// UI 按钮可调用 await playback.pause() / resume() / stop()。
+try {
+  await playback.finished; // 音频全部播放完毕后才完成，不是网络下载完即完成
+} catch (error) {
+  // 主动停止、AbortSignal 或宿主中断对应 AbortError；服务商失败会拒绝 Promise。
+}
+```
+
+音频由 `AVAudioEngine` 增量排队播放，不经 JavaScript 拼接音频文件；桥接方法为 `tts.play`、`tts.pause`、`tts.resume`、`tts.stop`，状态通过已有 chunk 通道按请求 ID 分发。MiniMax 请求排除末包聚合音频，且宿主不重复播放末包的整段数据。断流、业务错误、非法分片和样本字节不完整都会中止播放。流式 PCM 上限 24 MiB，传输上限 49 MiB，网络空闲超时 120 秒、总传输超时 600 秒。
+
+同一宿主同时仅有一个流式播放会话；开始新播放会停止上一会话。暂停保留播放位置，网络可继续接收（仍受大小及超时限制）；停止会立即清空播放队列并取消网络。返回宿主首页、子应用关闭或重载、进入后台、音频中断或拔下耳机会停止播放，不自动恢复。`finished` 在暂停时保持未完成，须继续或停止。设置页试听使用相同实现。Lector 阅读页提供朗读与位置滑块：按文本长度比例定位到句子，松手后取消旧请求，从目标句子重新流式生成并顺序朗读后文；百分比代表文本位置，并非音频时间。
+
 ## 多域名网络桥
 
 子应用通过 `host.http` 对应的 SDK `request()` 调用网络：
@@ -194,13 +241,21 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 ## 调试模式与服务器资源
 
-默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；通过“完成”保存，通过“取消”放弃修改。Release 构建不提供服务器加载能力。
+默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；调整后自动保存，左上角“返回”关闭设置；调试资源变更会在关闭设置时重新加载。Release 构建不提供服务器加载能力。
 
 1. 执行 `npm run build`，然后 `npm run debug:serve`（默认端口 8000，可用 `npm run debug:serve -- --port 8080` 修改）。启动时会打印可用的局域网 IP 地址，按 Ctrl+C 可正常退出。
-2. 在宿主“设置 → 调试模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，先点击“测试连接”检查连通性，再点击右上角“完成”保存；启用调试模式后使用服务器资源；左上角“取消”会放弃本次地址修改。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
+2. 在宿主“设置 → 调试模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，地址输入后自动保存，可点击“测试连接”检查连通性；启用调试模式后使用服务器资源，点击左上角“返回”关闭设置。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
 3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。每个子应用直接请求 `<根地址>/<子应用ID>/index.html` 及其 JS/CSS（例如 `/sentra/index.html`），不下载或解压 ZIP。新增子应用并运行 `npm run build` 后，同一个服务地址即可访问，无需为每个子应用单独启动服务。
 4. 修改源码后重新运行 `npm run build`，返回宿主点击设置旁的“重新加载子应用”，刷新全部已安装子应用（包括尚未打开的子应用）。子应用页面 Home 按钮右侧也提供原生刷新按钮，用于刷新当前子应用；Debug 模式下会显示刷新成功或失败的提示。
 
-调试服务禁用 HTTP 缓存且不压缩响应；每次重载会重建 WebView 并取消旧请求，未保存的页面状态会清空，已保存数据保留。服务器地址会持久保存；清空并保存即可恢复本地资源。调试失败时可在错误页重新加载。Debug 支持局域网 HTTP 和 Safari Web Inspector。
+调试服务禁用 HTTP 缓存且不压缩响应；每次重载会重建 WebView 并取消旧请求，未保存的页面状态会清空，已保存数据保留。服务器地址会持久保存；清空即可恢复本地资源。调试失败时可在错误页重新加载。Debug 支持局域网 HTTP 和 Safari Web Inspector。
 
 正式发布请使用 `npm run build:release`（压缩资源）及 `xcodebuild ... -configuration Release`，或直接在 Xcode 执行 Archive（已配置为 Release）。原生 Release 构建阶段会自动使用压缩的正式资源，并忽略此前保存的调试地址。
+
+### 按语言选择朗读音色
+
+语音合成设置可选择默认音色，并进入可搜索的“按语言设置音色”页面，为中文、英语、日语、俄语、希腊语分别选择音色；各语言可选择“使用默认音色”。MiniMax 优先列出对应语言的系统音色，没有专属音色的语言可选择多语言系统音色。模型和 API Key 共用，切换服务商仍保留各自的表单草稿，点击右上角“保存”后生效。
+
+`tts.play()` 与 `tts.synthesize()` 共用可选 `language` 参数，传入朗读文本的 BCP 47 语言代码（如 `ja`、`ja-JP`、`zh-CN`、`en-US`），不要传界面语言。宿主按上述五种语言选择音色；省略、未单独设置或其他语言使用默认音色，不自动猜测文本语言。混合语言内容由子应用按语言分段请求。Lector 使用文章语言为每个朗读分段传参。子应用不能通过该参数覆盖密钥、模型或音色 ID。
+
+试听可选择语言，切换时自动填入对应语言的示例文本并停止当前播放，使用当前对应音色设置；选择默认音色时，示例文本跟随界面语言。切换模型会保留支持的音色；不受新模型支持的语言音色改为使用默认音色。

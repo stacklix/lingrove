@@ -207,10 +207,6 @@
     "en": "Could not load history. Saving is paused to protect your data. Please reopen.",
     "ja": "履歴を読み込めません。元データを保護するため保存を停止しました。開き直してください。"
   },
-  "宿主初始化失败，请返回后重试。": {
-    "en": "Could not initialize the host. Go back and retry.",
-    "ja": "ホストの初期化に失敗しました。戻って再試行してください。"
-  },
   "每次最多输入 4000 个字符": {
     "en": "Enter up to 4,000 characters at a time",
     "ja": "一度に入力できるのは4,000文字までです"
@@ -342,18 +338,6 @@
   "希腊语": {
     "en": "Greek",
     "ja": "ギリシャ語"
-  },
-  "模型未返回有效对象": {
-    "en": "The model did not return a valid object",
-    "ja": "モデルの応答形式が無効です"
-  },
-  "结果缺少 {0}": {
-    "en": "Result is missing {0}",
-    "ja": "結果に {0} がありません"
-  },
-  "结果字段 {0} 无效": {
-    "en": "Invalid result field: {0}",
-    "ja": "結果の項目 {0} が無効です"
   },
   "模型未按目标语言返回直译和地道表达": {
     "en": "The model did not return both translations in the target language",
@@ -995,10 +979,6 @@
     "en": "Too many strokes. Clear and write again.",
     "ja": "筆画が多すぎます。クリアして書き直してください。"
   },
-  "原生手写初始化失败，请重新加载子应用。": {
-    "en": "Could not initialize handwriting. Reload the app.",
-    "ja": "手書き機能を初期化できません。子アプリを再読み込みしてください。"
-  },
   "从五十音开始": {
     "en": "Start with kana",
     "ja": "五十音から始める"
@@ -1082,10 +1062,6 @@
   "学习进度格式异常，原始记录已保留。": {
     "en": "Invalid progress format. Original records are preserved.",
     "ja": "進捗の形式が無効です。元の記録は保持されています。"
-  },
-  "手写范字资源加载失败，请重新加载子应用。": {
-    "en": "Could not load handwriting guides. Reload the app.",
-    "ja": "手本を読み込めません。子アプリを再読み込みしてください。"
   },
   "还没有写下字形，请先书写。": {
     "en": "Write a letter first.",
@@ -1274,10 +1250,6 @@
   "活用语法": {
     "en": "Conjugation guide",
     "ja": "活用文法"
-  },
-  "宿主初始化失败，请返回后重新打开。": {
-    "en": "Host initialization failed. Go back and reopen.",
-    "ja": "ホストの初期化に失敗しました。戻って開き直してください。"
   },
   "查询已取消，以下仅为已收到的部分结果。": {
     "en": "Lookup canceled. Only the partial results received are shown.",
@@ -1486,10 +1458,6 @@
   "容易误判的五段动词": {
     "en": "Commonly misclassified godan verbs",
     "ja": "間違えやすい五段動詞"
-  },
-  "活用结果格式有误：{0}。请重新查询。": {
-    "en": "Invalid conjugation format: {0}. Please look up again.",
-    "ja": "活用結果の形式が無効です：{0}。再検索してください。"
   },
   "缺少资料对象": {
     "en": "Missing data object",
@@ -1935,10 +1903,6 @@
     "en": "Local save failed. Retry; if storage is full, delete unneeded articles in My learning.",
     "ja": "端末への保存に失敗しました。空き容量がない場合は「マイページ」で不要な文章を削除してください。"
   },
-  "宿主初始化失败，请重新打开应用。": {
-    "en": "Host initialization failed. Reopen the app.",
-    "ja": "ホストの初期化に失敗しました。アプリを開き直してください。"
-  },
   "本地记录无法读取，本次未恢复。": {
     "en": "Local records could not be read and were not restored.",
     "ja": "端末内の記録を読み込めず、復元しませんでした。"
@@ -2039,17 +2003,9 @@
     "en": "Incomplete analysis format. Retry.",
     "ja": "解析形式が不完全です。再試行してください。"
   },
-  "解析字段缺失，请重试。": {
-    "en": "Missing analysis fields. Retry.",
-    "ja": "解析項目が不足しています。再試行してください。"
-  },
   "文章长度无效": {
     "en": "Invalid article length",
     "ja": "文章の長さが無効です"
-  },
-  "解析语言或句子格式无效。": {
-    "en": "Invalid analysis language or sentence format.",
-    "ja": "解析言語または文の形式が無効です。"
   },
   "缺少注音片段。": {
     "en": "Reading segments are missing.",
@@ -2107,10 +2063,6 @@
     "en": "Insufficient local storage",
     "ja": "端末の空き容量が不足しています"
   },
-  "原生宿主不可用": {
-    "en": "Native host unavailable",
-    "ja": "ネイティブホストを利用できません"
-  },
   "接口必须使用 HTTPS": {
     "en": "The endpoint must use HTTPS",
     "ja": "接続先にはHTTPSが必要です"
@@ -2131,25 +2083,9 @@
     "en": "about ",
     "ja": "約 "
   },
-  "请在 Lingrove 宿主中使用模型服务；浏览器仅支持界面预览": {
-    "en": "Use Lingrove for model services. The browser only supports UI preview.",
-    "ja": "モデル機能はLingroveでご利用ください。ブラウザは画面プレビューのみ対応しています。"
-  },
   "模型输出被截断或拒绝，请缩短输入后重试": {
     "en": "Model output truncated or refused. Shorten input and retry.",
     "ja": "出力が途中で終了、または拒否されました。入力を短くして再試行してください"
-  },
-  "模型服务返回流式错误": {
-    "en": "Model streaming error",
-    "ja": "モデルのストリームエラー"
-  },
-  "模型响应格式无效": {
-    "en": "Invalid model response format",
-    "ja": "モデルの応答形式が無効です"
-  },
-  "请求失败（HTTP {0}），请检查宿主中的模型配置": {
-    "en": "Request failed (HTTP {0}). Check model settings in the host.",
-    "ja": "リクエスト失敗（HTTP {0}）。ホストのモデル設定をご確認ください"
   },
   "连接中断，结果未完成，请重试": {
     "en": "Connection interrupted. Result incomplete; retry.",
@@ -3891,10 +3827,6 @@
     "en": "Language learning · v%@",
     "ja": "語学学習 · v%@"
   },
-  "独立学习子应用": {
-    "en": "Independent learning app",
-    "ja": "学習用の子アプリ"
-  },
   "暂时无法打开": {
     "en": "Temporarily unavailable",
     "ja": "一時的に利用できません"
@@ -3935,18 +3867,6 @@
     "en": "Model service",
     "ja": "モデルサービス"
   },
-  "大模型配置": {
-    "en": "Model configuration",
-    "ja": "モデル設定"
-  },
-  "大模型使用统计": {
-    "en": "Model usage",
-    "ja": "モデル使用状況"
-  },
-  "子应用": {
-    "en": "Child apps",
-    "ja": "子アプリ"
-  },
   "版本与更新": {
     "en": "Versions and updates",
     "ja": "バージョンと更新"
@@ -3958,10 +3878,6 @@
   "完成": {
     "en": "Done",
     "ja": "完了"
-  },
-  "模型配置读取失败": {
-    "en": "Could not load model configuration",
-    "ja": "モデル設定を読み込めません"
   },
   "好": {
     "en": "OK",
@@ -3975,10 +3891,6 @@
     "en": "Check for updates",
     "ja": "更新を確認"
   },
-  "子应用版本与状态": {
-    "en": "App versions and status",
-    "ja": "子アプリのバージョンと状態"
-  },
   "未安装": {
     "en": "Not installed",
     "ja": "未インストール"
@@ -3986,14 +3898,6 @@
   "当前版本已停用，请检查更新。": {
     "en": "This version is disabled. Check for updates.",
     "ja": "このバージョンは無効です。更新をご確認ください。"
-  },
-  "暂无已安装的子应用": {
-    "en": "No child apps installed",
-    "ja": "インストール済みの子アプリはありません"
-  },
-  "暂无已安装的子应用。": {
-    "en": "No child apps installed.",
-    "ja": "インストール済みの子アプリはありません。"
   },
   "公共": {
     "en": "Shared",
@@ -4010,10 +3914,6 @@
   "网络授权": {
     "en": "Network access",
     "ja": "ネットワークの許可"
-  },
-  "公共：宿主的大模型、更新等服务。子应用域名按应用分别列出。撤销自定义授权后，再次连接需重新授权。": {
-    "en": "Shared domains serve host models and updates. App domains are listed separately. Revoking custom access requires authorization on the next connection.",
-    "ja": "共通はホストのモデルや更新用です。子アプリのドメインは個別に表示します。許可を取り消すと、次回接続時に再許可が必要です。"
   },
   "API Key 已移除。": {
     "en": "API key removed.",
@@ -4039,17 +3939,9 @@
     "en": "Unsupported HTTP method",
     "ja": "未対応のHTTPメソッドです"
   },
-  "不支持的宿主方法": {
-    "en": "Unsupported host method",
-    "ja": "未対応のホストメソッドです"
-  },
   "仅适用于支持推理强度的模型；不确定时请选择默认。Kimi Code 的 k3 建议先选低；选择关闭会由服务端切换为非思考模型。": {
     "en": "Only for models supporting reasoning effort. Choose default if unsure. For Kimi Code k3, try low first; off switches to a non-thinking model on the server.",
     "ja": "推論強度対応モデル専用です。不明な場合は既定値を選んでください。Kimi Code k3は低を推奨します。オフではサーバー側で非思考モデルに切り替わります。"
-  },
-  "从启用统计后开始累计，仅记录本机宿主大模型服务请求。请求数含失败和取消；Token 以服务商返回为准，含缓存输入与推理用量，未返回的部分不估算。": {
-    "en": "Counts requests from this device since tracking began, including failures and cancellations. Tokens use provider-reported values, including cached input and reasoning. Missing usage is not estimated.",
-    "ja": "統計開始後のこの端末からのリクエストを集計し、失敗とキャンセルも含みます。トークン数は提供元の値を使用し、キャッシュ入力と推論を含みます。未報告分は推定しません。"
   },
   "从屏幕左边缘向右滑动，也可以返回应用列表": {
     "en": "Swipe right from the left edge to return to the app list",
@@ -4083,14 +3975,6 @@
     "en": "Copy content too large",
     "ja": "コピー内容が大きすぎます"
   },
-  "大模型服务": {
-    "en": "Model service",
-    "ja": "モデルサービス"
-  },
-  "子应用暂时无法打开": {
-    "en": "Child app temporarily unavailable",
-    "ja": "子アプリを一時的に開けません"
-  },
   "存储内容无效或过大": {
     "en": "Stored content invalid or too large",
     "ja": "保存内容が無効、または大きすぎます"
@@ -4098,14 +3982,6 @@
   "存储键无效": {
     "en": "Invalid storage key",
     "ja": "保存キーが無効です"
-  },
-  "已保存，所有子应用将使用此模型服务。": {
-    "en": "Saved. All child apps will use this model service.",
-    "ja": "保存しました。すべての子アプリでこのモデルサービスを使用します。"
-  },
-  "所有子应用共用此配置。提交的内容会发送到此服务商，API Key 仅保存在本机宿主的安全存储中。": {
-    "en": "All child apps share this configuration. Submitted content is sent to this provider. The API key stays in secure storage on this device.",
-    "ja": "すべての子アプリで設定を共有します。送信内容はこの提供元に送られ、APIキーは端末の安全な領域にのみ保存されます。"
   },
   "手写会话已结束": {
     "en": "Handwriting session ended",
@@ -4174,10 +4050,6 @@
   "无法读取已保存的用量统计，未覆盖原数据。": {
     "en": "Could not read usage statistics. Original data was preserved.",
     "ja": "保存済みの使用量を読み込めません。元データは保持しました。"
-  },
-  "暂无使用记录，子应用调用大模型后将自动统计。": {
-    "en": "No usage yet. Requests from child apps will be tracked automatically.",
-    "ja": "使用履歴はありません。子アプリのモデル利用時に自動集計します。"
   },
   "最高": {
     "en": "Maximum",
@@ -4278,10 +4150,6 @@
   "范字图片无效": {
     "en": "Invalid guide image",
     "ja": "手本の画像が無効です"
-  },
-  "请先返回 Lingrove，在设置 → 大模型配置中配置模型服务": {
-    "en": "Return to Lingrove and configure the model under Settings → Model configuration",
-    "ja": "Lingroveに戻り、設定 → モデル設定でサービスを設定してください"
   },
   "请填写有效的 HTTPS API 地址，不能包含账号、查询参数或片段": {
     "en": "Enter a valid HTTPS API URL without credentials, query parameters or fragments",
@@ -4918,5 +4786,561 @@
   "正在分析句子结构与语法…": {
     "en": "Analyzing sentence structure and grammar…",
     "ja": "文の構造と文法を解析中…"
+  },
+  "显示顺序": {
+    "en": "Display Order",
+    "ja": "表示順序"
+  },
+  "拖动右侧手柄调整首页显示顺序，点击右上角勾选按钮保存。": {
+    "en": "Drag the handles to reorder apps on the home screen. Tap the checkmark in the top right to save.",
+    "ja": "右側のハンドルをドラッグしてホーム画面の表示順序を変更し、右上のチェックマークをタップして保存してください。"
+  },
+  "语音服务商": {
+    "en": "Speech provider",
+    "ja": "音声サービス提供元"
+  },
+  "音色 ID": {
+    "en": "Voice ID",
+    "ja": "音声 ID"
+  },
+  "默认语速": {
+    "en": "Default speaking speed",
+    "ja": "標準の読み上げ速度"
+  },
+  "试听文本": {
+    "en": "Preview text",
+    "ja": "試聴テキスト"
+  },
+  "生成并试听": {
+    "en": "Generate and preview",
+    "ja": "生成して試聴"
+  },
+  "取消生成": {
+    "en": "Cancel generation",
+    "ja": "生成をキャンセル"
+  },
+  "停止播放": {
+    "en": "Stop playback",
+    "ja": "再生を停止"
+  },
+  "AI 语音试听": {
+    "en": "AI speech preview",
+    "ja": "AI 音声の試聴"
+  },
+  "试听使用当前填写的配置，不会自动保存。播放的是 AI 生成语音。": {
+    "en": "Preview uses the current form without saving. The voice is AI-generated.",
+    "ja": "現在の入力内容で試聴します。設定は自動保存されません。音声は AI により生成されます。"
+  },
+  "试听音频已生成。": {
+    "en": "Preview audio generated.",
+    "ja": "試聴音声を生成しました。"
+  },
+  "无法播放语音，请重试": {
+    "en": "Unable to play audio. Please retry.",
+    "ja": "音声を再生できません。もう一度お試しください。"
+  },
+  "朗读文本须为 1–4000 个字符，请将长文章分段生成": {
+    "en": "Text must contain 1–4000 characters. Split long articles into sections.",
+    "ja": "テキストは 1～4000 文字で指定してください。長文は分割して生成してください。"
+  },
+  "语音服务响应无效": {
+    "en": "Invalid response from the speech service.",
+    "ja": "音声サービスの応答が無効です。"
+  },
+  "语音响应过大，请缩短文本": {
+    "en": "Audio response is too large. Shorten the text.",
+    "ja": "音声データが大きすぎます。テキストを短くしてください。"
+  },
+  "语音服务未返回完整音频": {
+    "en": "The speech service returned incomplete audio.",
+    "ja": "音声サービスから完全な音声が返されませんでした。"
+  },
+  "语音服务未返回有效的 MP3 音频": {
+    "en": "The speech service did not return valid MP3 audio.",
+    "ja": "音声サービスから有効な MP3 音声が返されませんでした。"
+  },
+  "语速须为 0.5–2 倍": {
+    "en": "Speed must be between 0.5 and 2.",
+    "ja": "速度は 0.5～2 倍で指定してください。"
+  },
+  "暂停播放": {
+    "en": "Pause playback",
+    "ja": "再生を一時停止"
+  },
+  "继续播放": {
+    "en": "Resume playback",
+    "ja": "再生を再開"
+  },
+  "正在缓冲语音…": {
+    "en": "Buffering speech…",
+    "ja": "音声をバッファリング中…"
+  },
+  "语音已暂停。": {
+    "en": "Speech paused.",
+    "ja": "音声を一時停止しました。"
+  },
+  "语音播放完成。": {
+    "en": "Speech playback finished.",
+    "ja": "音声の再生が完了しました。"
+  },
+  "语音播放已停止。": {
+    "en": "Speech playback stopped.",
+    "ja": "音声の再生を停止しました。"
+  },
+  "语音连接中断，音频未生成完整": {
+    "en": "Speech connection interrupted; audio is incomplete.",
+    "ja": "音声接続が中断され、音声が完了していません。"
+  },
+  "文章朗读": {
+    "en": "Article narration",
+    "ja": "記事の読み上げ"
+  },
+  "继续朗读": {
+    "en": "Resume",
+    "ja": "読み上げを再開"
+  },
+  "暂停朗读": {
+    "en": "Pause",
+    "ja": "読み上げを一時停止"
+  },
+  "开始朗读": {
+    "en": "Read aloud",
+    "ja": "読み上げを開始"
+  },
+  "停止朗读": {
+    "en": "Stop",
+    "ja": "読み上げを停止"
+  },
+  "正在加载语音…": {
+    "en": "Loading audio…",
+    "ja": "音声を読み込み中…"
+  },
+  "朗读位置": {
+    "en": "Reading position",
+    "ja": "読み上げ位置"
+  },
+  "按文本比例定位，松手后从目标句子开始朗读。": {
+    "en": "Position is based on text. Release to read from the target sentence.",
+    "ja": "テキストの割合で移動します。指を離すと対象の文から読み上げます。"
+  },
+  "打开失败，请返回后重试。": {
+    "en": "Could not open. Go back and try again.",
+    "ja": "開けませんでした。戻ってもう一度お試しください。"
+  },
+  "打开失败，请重新打开应用。": {
+    "en": "Could not open. Please reopen the app.",
+    "ja": "開けませんでした。アプリを開き直してください。"
+  },
+  "此功能暂时不可用，请重新打开应用。": {
+    "en": "This feature is unavailable. Please reopen the app.",
+    "ja": "この機能は現在利用できません。アプリを開き直してください。"
+  },
+  "请在 Lingrove 中使用朗读功能。": {
+    "en": "Please use read aloud in Lingrove.",
+    "ja": "読み上げ機能は Lingrove でご利用ください。"
+  },
+  "请在 Lingrove 中使用此功能。": {
+    "en": "Please use this feature in Lingrove.",
+    "ja": "この機能は Lingrove でご利用ください。"
+  },
+  "书写区域加载失败，请重新打开。": {
+    "en": "Could not load the writing area. Please reopen the app.",
+    "ja": "書き取りエリアを読み込めませんでした。開き直してください。"
+  },
+  "范字加载失败，请重新打开。": {
+    "en": "Could not load the sample characters. Please reopen the app.",
+    "ja": "お手本を読み込めませんでした。開き直してください。"
+  },
+  "暂时无法打开此应用。": {
+    "en": "This app cannot be opened right now.",
+    "ja": "現在このアプリを開けません。"
+  },
+  "暂无已安装的应用。": {
+    "en": "No apps installed.",
+    "ja": "インストール済みのアプリはありません。"
+  },
+  "暂无已安装的应用": {
+    "en": "No apps installed",
+    "ja": "インストール済みのアプリはありません"
+  },
+  "学习应用": {
+    "en": "Learning app",
+    "ja": "学習アプリ"
+  },
+  "应用版本与状态": {
+    "en": "App versions and status",
+    "ja": "アプリのバージョンと状態"
+  },
+  "应用管理": {
+    "en": "Manage apps",
+    "ja": "アプリ管理"
+  },
+  "应用更新": {
+    "en": "App updates",
+    "ja": "アプリの更新"
+  },
+  "应用": {
+    "en": "Apps",
+    "ja": "アプリ"
+  },
+  "已保存，此设置适用于所有应用。": {
+    "en": "Saved. These settings apply to all apps.",
+    "ja": "保存しました。すべてのアプリに適用されます。"
+  },
+  "此设置适用于所有应用。提交的内容会发送给所选服务商，API Key 仅安全保存在此设备上。": {
+    "en": "These settings apply to all apps. Submitted content is sent to the selected provider. Your API key is stored securely on this device only.",
+    "ja": "すべてのアプリに適用されます。入力内容は選択したサービス提供元に送信され、API キーはこの端末にのみ安全に保存されます。"
+  },
+  "试听": {
+    "en": "Preview",
+    "ja": "試聴"
+  },
+  "正在播放…": {
+    "en": "Playing…",
+    "ja": "再生中…"
+  },
+  "暂无使用记录，使用 AI 功能后将自动统计。": {
+    "en": "No usage yet. Usage is recorded automatically when you use AI features.",
+    "ja": "利用履歴はまだありません。AI 機能を使うと自動的に記録されます。"
+  },
+  "公共服务包括 AI 和应用更新。其他网络地址按应用分别列出。撤销自定义授权后，再次连接时需要重新授权。": {
+    "en": "Shared services include AI and app updates. Other network addresses are listed by app. Revoking a custom permission requires approval again on the next connection.",
+    "ja": "共通サービスには AI とアプリ更新が含まれます。他の接続先はアプリごとに表示されます。カスタム許可を取り消すと、次の接続時に再度許可が必要です。"
+  },
+  "从启用统计后开始累计，仅记录此设备的 AI 使用情况。请求数包含失败和取消；Token 用量以服务商返回为准，包含缓存输入与推理用量，未提供的部分不估算。": {
+    "en": "Totals begin when tracking is enabled and cover AI usage on this device only. Request counts include failures and cancellations. Token usage comes from the provider, including cached input and reasoning; missing usage is not estimated.",
+    "ja": "集計を有効にしてからの、この端末での AI 利用のみを記録します。リクエスト数には失敗とキャンセルを含みます。トークン数は提供元の報告に基づき、キャッシュ入力と推論を含みます。未報告分は推定しません。"
+  },
+  "生成中断，请重试。": {
+    "en": "Generation was interrupted. Please try again.",
+    "ja": "生成が中断されました。もう一度お試しください。"
+  },
+  "生成结果不完整，请重试。": {
+    "en": "The result is incomplete. Please try again.",
+    "ja": "結果が不完全です。もう一度お試しください。"
+  },
+  "请填写有效的语音模型、音色和 API Key": {
+    "en": "Enter a valid voice model, voice and API key.",
+    "ja": "有効な音声モデル、声と API キーを入力してください。"
+  },
+  "活用结果未完整生成，请重新查询。": {
+    "en": "Conjugation results are incomplete. Please search again.",
+    "ja": "活用結果が不完全です。もう一度検索してください。"
+  },
+  "第 {0} 句的注音生成失败，请重试。": {
+    "en": "Could not generate readings for sentence {0}. Please try again.",
+    "ja": "{0} 文目の読み仮名を生成できませんでした。再試行してください。"
+  },
+  "分析结果不完整，请重试。": {
+    "en": "The analysis is incomplete. Please try again.",
+    "ja": "分析結果が不完全です。もう一度お試しください。"
+  },
+  "未能完成文章分析，请重试。": {
+    "en": "Could not finish analyzing the article. Please try again.",
+    "ja": "文章の分析を完了できませんでした。もう一度お試しください。"
+  },
+  "通用模型": {
+    "en": "General-purpose model",
+    "ja": "汎用モデル"
+  },
+  "语音合成": {
+    "en": "Speech synthesis",
+    "ja": "音声合成"
+  },
+  "通用模型使用统计": {
+    "en": "General-purpose model usage",
+    "ja": "汎用モデルの利用状況"
+  },
+  "通用模型设置读取失败": {
+    "en": "Could not load general-purpose model settings",
+    "ja": "汎用モデル設定を読み込めませんでした"
+  },
+  "请先前往「应用设置 → 通用模型」完成设置。": {
+    "en": "First, complete setup in App Settings → General-purpose model.",
+    "ja": "「アプリ設定 → 汎用モデル」で設定を完了してください。"
+  },
+  "请先前往「应用设置 → 语音合成」完成设置。": {
+    "en": "First, complete setup in App Settings → Speech synthesis.",
+    "ja": "「アプリ設定 → 音声合成」で設定を完了してください。"
+  },
+  "请求失败，请检查「应用设置 → 通用模型」中的设置。": {
+    "en": "Request failed. Check your settings in App Settings → General-purpose model.",
+    "ja": "リクエストに失敗しました。「アプリ設定 → 汎用モデル」の設定を確認してください。"
+  },
+  "朗读失败，请检查「语音合成」中的设置和可用额度。": {
+    "en": "Read aloud failed. Check your speech synthesis settings and remaining quota.",
+    "ja": "読み上げに失敗しました。「音声合成」の設定と利用枠の残量を確認してください。"
+  },
+  "暂时无法播放，请在「语音合成」中更换模型后重试。": {
+    "en": "Cannot play right now. Choose another model in Speech synthesis and try again.",
+    "ja": "現在再生できません。「音声合成」で別のモデルを選んで再試行してください。"
+  },
+  "语音合成设置无效，语速须为 0.5–2 倍": {
+    "en": "Invalid speech synthesis settings. Speed must be between 0.5× and 2×.",
+    "ja": "音声合成設定が無効です。速度は 0.5〜2 倍にしてください。"
+  },
+  "语音合成设置已保存，已对所有应用生效。": {
+    "en": "Speech synthesis settings saved and applied to all apps.",
+    "ja": "音声合成設定を保存し、すべてのアプリに適用しました。"
+  },
+  "此语音合成设置适用于所有应用。文本将发送给所选服务商，密钥仅安全保存在此设备上。生成语音会消耗服务商额度。": {
+    "en": "These speech synthesis settings apply to all apps. Text is sent to the selected provider. Your key is stored securely on this device only. Generating speech uses your provider quota.",
+    "ja": "音声合成設定はすべてのアプリに適用されます。テキストは選択したサービス提供元に送信され、キーはこの端末にのみ安全に保存されます。音声生成にはサービスの利用枠を消費します。"
+  },
+  "无法保存通用模型设置（{0}）": {
+    "en": "Could not save general-purpose model settings ({0})",
+    "ja": "汎用モデル設定を保存できませんでした（{0}）"
+  },
+  "无法读取通用模型设置，请解锁设备后重试（{0}）": {
+    "en": "Could not load general-purpose model settings. Unlock your device and try again ({0})",
+    "ja": "汎用モデル設定を読み込めませんでした。端末のロックを解除して再試行してください（{0}）"
+  },
+  "无法保存语音合成设置（{0}）": {
+    "en": "Could not save speech synthesis settings ({0})",
+    "ja": "音声合成設定を保存できませんでした（{0}）"
+  },
+  "无法读取语音合成设置，请解锁设备后重试（{0}）": {
+    "en": "Could not load speech synthesis settings. Unlock your device and try again ({0})",
+    "ja": "音声合成設定を読み込めませんでした。端末のロックを解除して再試行してください（{0}）"
+  },
+  "minimax-cn": {
+    "en": "minimax-cn",
+    "ja": "minimax-cn"
+  },
+  "音色": {
+    "en": "Voice",
+    "ja": "音声"
+  },
+  "青涩青年音色": {
+    "en": "Youthful man",
+    "ja": "初々しい青年"
+  },
+  "精英青年音色": {
+    "en": "Professional young man",
+    "ja": "知的な青年"
+  },
+  "霸道青年音色": {
+    "en": "Confident young man",
+    "ja": "力強い青年"
+  },
+  "青年大学生音色": {
+    "en": "College student",
+    "ja": "男子大学生"
+  },
+  "少女音色": {
+    "en": "Young woman",
+    "ja": "少女"
+  },
+  "御姐音色": {
+    "en": "Confident woman",
+    "ja": "落ち着いた女性"
+  },
+  "成熟女性音色": {
+    "en": "Mature woman",
+    "ja": "大人の女性"
+  },
+  "甜美女性音色": {
+    "en": "Sweet woman",
+    "ja": "優しい女性"
+  },
+  "默认音色": {
+    "en": "Default voice",
+    "ja": "標準の声"
+  },
+  "日语音色": {
+    "en": "Japanese voice",
+    "ja": "日本語の声"
+  },
+  "中文音色": {
+    "en": "Chinese voice",
+    "ja": "中国語の声"
+  },
+  "英语音色": {
+    "en": "English voice",
+    "ja": "英語の声"
+  },
+  "使用默认音色": {
+    "en": "Use default voice",
+    "ja": "標準の声を使用"
+  },
+  "试听语言": {
+    "en": "Preview language",
+    "ja": "試聴言語"
+  },
+  "请选择有效的朗读语言。": {
+    "en": "Choose a valid reading language.",
+    "ja": "有効な読み上げ言語を選択してください。"
+  },
+  "未单独设置、未指定或暂不支持的语言使用默认音色。": {
+    "en": "The default voice is used when no language voice is set, no language is specified, or the language is not supported.",
+    "ja": "個別の声が未設定、言語が未指定、または未対応の言語には標準の声を使用します。"
+  },
+  "按语言设置音色": {
+    "en": "Voices by language",
+    "ja": "言語別の声"
+  },
+  "搜索语言": {
+    "en": "Search languages",
+    "ja": "言語を検索"
+  },
+  "拖动右侧手柄调整首页显示顺序，调整后自动保存。": {
+    "en": "Drag the handles to reorder apps on the home screen. Changes are saved automatically.",
+    "ja": "右側のハンドルをドラッグしてホーム画面の表示順を変更できます。変更は自動保存されます。"
+  },
+  "试听使用当前填写的配置，点击右上角保存后生效。播放的是 AI 生成语音。": {
+    "en": "Preview uses the current entries. Tap Save in the top right to apply your settings. Playback is AI-generated speech.",
+    "ja": "現在入力されている設定で試聴します。右上の保存を押すと設定が適用されます。再生されるのは AI が生成した音声です。"
+  },
+  "文章音色设置": {
+    "en": "Article voice settings",
+    "ja": "記事の音声設定"
+  },
+  "关闭音色设置": {
+    "en": "Close voice settings",
+    "ja": "音声設定を閉じる"
+  },
+  "仅用于当前文章，下次打开仍有效。选择后优先于应用设置中的音色。": {
+    "en": "Saved for this article and used the next time you open it. Overrides the voice in app settings.",
+    "ja": "この記事に保存され、次回も適用されます。アプリ設定の音声より優先されます。"
+  },
+  "正在加载音色…": {
+    "en": "Loading voices…",
+    "ja": "音声を読み込み中…"
+  },
+  "无法加载音色，请重试。": {
+    "en": "Could not load voices. Please try again.",
+    "ja": "音声を読み込めませんでした。再試行してください。"
+  },
+  "跟随应用设置": {
+    "en": "Use app settings",
+    "ja": "アプリ設定に従う"
+  },
+  "所选音色不可用，请重新选择。": {
+    "en": "This voice is unavailable. Please select another voice.",
+    "ja": "この音声は利用できません。選び直してください。"
+  },
+  "文章语言": {
+    "en": "Article language",
+    "ja": "記事の言語"
+  },
+  "原文": {
+    "en": "Original text",
+    "ja": "原文"
+  },
+  "粘贴文章并选择语言；日语文章会提前生成假名注音。": {
+    "en": "Paste an article and select its language. Japanese articles get kana readings.",
+    "ja": "記事を貼り付けて言語を選択してください。日本語の記事には振り仮名を付けます。"
+  },
+  "请输入或导入文本。": {
+    "en": "Enter or import text.",
+    "ja": "テキストを入力または読み込んでください。"
+  },
+  "请先输入一段文本。": {
+    "en": "Enter some text first.",
+    "ja": "まずテキストを入力してください。"
+  },
+  "没有可阅读的词语，请输入文本。": {
+    "en": "No readable words found. Please enter text.",
+    "ja": "読み取れる単語がありません。テキストを入力してください。"
+  },
+  "中文": {
+    "en": "Chinese",
+    "ja": "中国語"
+  },
+  "韩语": {
+    "en": "Korean",
+    "ja": "韓国語"
+  },
+  "法语": {
+    "en": "French",
+    "ja": "フランス語"
+  },
+  "德语": {
+    "en": "German",
+    "ja": "ドイツ語"
+  },
+  "西班牙语": {
+    "en": "Spanish",
+    "ja": "スペイン語"
+  },
+  "意大利语": {
+    "en": "Italian",
+    "ja": "イタリア語"
+  },
+  "葡萄牙语": {
+    "en": "Portuguese",
+    "ja": "ポルトガル語"
+  },
+  "阿拉伯语": {
+    "en": "Arabic",
+    "ja": "アラビア語"
+  },
+  "印地语": {
+    "en": "Hindi",
+    "ja": "ヒンディー語"
+  },
+  "泰语": {
+    "en": "Thai",
+    "ja": "タイ語"
+  },
+  "越南语": {
+    "en": "Vietnamese",
+    "ja": "ベトナム語"
+  },
+  "编辑文章": {
+    "en": "Edit article",
+    "ja": "記事を編集"
+  },
+  "关闭文章编辑": {
+    "en": "Close article editor",
+    "ja": "記事の編集を閉じる"
+  },
+  "文章来源": {
+    "en": "Source",
+    "ja": "出典"
+  },
+  "标签": {
+    "en": "Tags",
+    "ja": "タグ"
+  },
+  "用逗号分隔多个标签": {
+    "en": "Separate tags with commas",
+    "ja": "タグをコンマで区切って入力"
+  },
+  "保存修改": {
+    "en": "Save changes",
+    "ja": "変更を保存"
+  },
+  "正在保存并更新阅读内容…": {
+    "en": "Saving and updating reading content…",
+    "ja": "保存して読書内容を更新中…"
+  },
+  "保存失败，请重试。": {
+    "en": "Could not save. Please try again.",
+    "ja": "保存できませんでした。再試行してください。"
+  },
+  "当前没有该语言的可选音色，可跟随应用设置。": {
+    "en": "No voices are listed for this language. You can use app settings.",
+    "ja": "この言語の音声はありません。アプリ設定を使用できます。"
+  },
+  "句子": {
+    "en": "Sentence",
+    "ja": "文"
+  },
+  "点句子跳播，长按看解析": {
+    "en": "Tap a sentence to jump. Hold to analyze.",
+    "ja": "文をタップで移動、長押しで解析"
+  },
+  "播放此句，长按查看解析": {
+    "en": "Play this sentence. Hold to analyze.",
+    "ja": "この文を再生。長押しで解析"
+  },
+  "按 Shift+Enter 查看解析": {
+    "en": "Press Shift+Enter to analyze",
+    "ja": "Shift+Enterで解析"
+  },
+  "回到当前句": {
+    "en": "Back to current sentence",
+    "ja": "再生中の文に戻る"
   }
 }

@@ -51,15 +51,7 @@ export function parseCompactReading(raw: string, source: string) {
   const sentences = normalized.map((sentence: unknown, index: number) => {
     const tokens = sentenceTokens(sentence);
     if (!Array.isArray(tokens)) {
-      const shape =
-        sentence === null
-          ? '空值'
-          : typeof sentence === 'string'
-            ? '纯文本'
-            : typeof sentence === 'object'
-              ? '缺少 tokens 的对象'
-              : typeof sentence;
-      throw new Error(`第 ${index + 1} 句的注音格式无效：收到${shape}，需要词语数组。`);
+      throw new Error(`第 ${index + 1} 句的注音生成失败，请重试。`);
     }
     return {
       tokens: tokens.map((token: unknown) => {
@@ -95,6 +87,10 @@ export function parseCompactReading(raw: string, source: string) {
       }),
     };
   });
+  for (const sentence of sentences)
+    for (const token of sentence.tokens)
+      if (token.kind === 'word' && token.ruby?.some((part: { text: string; reading: string }) => /\p{Script=Han}/u.test(part.text) && !part.reading))
+        throw new Error('汉字注音缺失或无效，请重试。');
   return validateReading({ language: 'ja', sentences }, source);
 }
 export async function analyze(
@@ -108,6 +104,14 @@ export async function analyze(
   ) => void,
 ) {
   validateInput(source);
+  if (language !== 'ja') {
+    if (signal.aborted) throw new DOMException('已取消', 'AbortError');
+    const tokens = (source.match(/[\p{P}\p{Z}\p{S}\s]+|[^\p{P}\p{Z}\p{S}\s]+/gu) ?? []).map(text => ({
+      text, kind: separator(text) ? 'separator' : 'word',
+      ruby: separator(text) ? [] : [{ text, reading: '' }],
+    }));
+    return validateReading({ language, sentences: [{ tokens }] }, source);
+  }
   let received = 0;
   const result = await llm.complete(
     {

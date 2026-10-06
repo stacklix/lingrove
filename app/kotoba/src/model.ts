@@ -24,7 +24,8 @@ export interface Entry {
   schoolForms: SchoolForm[];
   forms: Form[];
 }
-const invalid = (detail: string) => new Error(`活用结果格式有误：${detail}。请重新查询。`);
+const invalid = (detail: string) =>
+  new Error('活用结果未完整生成，请重新查询。', { cause: detail });
 const groupAliases: Record<string, string> = {
   連用形: '连用形',
   終止形: '终止形',

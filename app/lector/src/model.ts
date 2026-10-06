@@ -2,8 +2,17 @@ import { restoreSourceWhitespace } from './source-alignment';
 import type { SentenceAnalysis } from './sentence-analysis';
 export const MAX_LENGTH = 800;
 export const MAX_ARTICLE_LENGTH = 20000;
-export type Language = 'ja';
-export const languages = [{ id: 'ja' as Language, name: '日语', hasRuby: true }];
+export const languages = [
+  { id: 'zh', name: '中文', hasRuby: false },
+  { id: 'en', name: '英语', hasRuby: false },
+  { id: 'ja', name: '日语', hasRuby: true },
+  { id: 'ru', name: '俄语', hasRuby: false },
+  { id: 'el', name: '希腊语', hasRuby: false },
+] as const;
+export type Language = (typeof languages)[number]['id'];
+export const isLanguage = (value: unknown): value is Language =>
+  languages.some((l) => l.id === value);
+export const languageName = (value: Language) => languages.find((l) => l.id === value)!.name;
 export interface RubyPart {
   text: string;
   reading: string;
@@ -34,13 +43,15 @@ export interface SavedReading {
   createdAt: number;
   reading: Reading;
   sentence: number;
+  speechVoice?: string;
+  tags?: string[];
   analyses?: Record<string, SentenceAnalysis>;
   title?: string;
   origin?: string;
   stats?: { opens: number; seconds: number; lookups: number; visited: number[]; lastRead: number };
 }
 export function validateInput(source: string): string {
-  if (!source.trim()) throw new Error('请先输入一段日语。');
+  if (!source.trim()) throw new Error('请先输入一段文本。');
   if (source.length > MAX_LENGTH)
     throw new Error(`每次最多解析 ${MAX_LENGTH} 个字符，请将长文分段。`);
   return source;
@@ -52,19 +63,19 @@ function object(value: unknown): Record<string, unknown> {
 }
 function string(value: unknown, required = false): string {
   if (typeof value !== 'string' || value.length > 4000 || (required && !value.trim()))
-    throw new Error('解析字段缺失，请重试。');
+    throw new Error('分析结果不完整，请重试。');
   return value;
 }
 export function validateReading(value: unknown, source: string): Reading {
   if (!source.trim() || source.length > MAX_ARTICLE_LENGTH) throw new Error('文章长度无效');
   const data = object(value);
   if (
-    data.language !== 'ja' ||
+    !isLanguage(data.language) ||
     !Array.isArray(data.sentences) ||
     !data.sentences.length ||
     data.sentences.length > MAX_ARTICLE_LENGTH
   )
-    throw new Error('解析语言或句子格式无效。');
+    throw new Error('未能完成文章分析，请重试。');
   const sentences = data.sentences.map((raw): Sentence => {
     const s = object(raw);
     if (!Array.isArray(s.tokens) || !s.tokens.length || s.tokens.length > MAX_LENGTH)
@@ -97,6 +108,8 @@ export function validateReading(value: unknown, source: string): Reading {
       if (
         ruby.some(
           (p) =>
+            data.language === 'ja' &&
+            !!p.reading &&
             /\p{Script=Han}/u.test(p.text) &&
             !/^[\p{Script=Hiragana}\p{Script=Katakana}ー・\s]+$/u.test(p.reading),
         )
@@ -121,8 +134,8 @@ export function validateReading(value: unknown, source: string): Reading {
     };
   });
   if (!sentences.some((s) => s.tokens.some((t) => t.kind === 'word')))
-    throw new Error('没有可阅读的词语，请输入日语文本。');
-  return restoreSourceWhitespace({ language: 'ja', sentences }, source);
+    throw new Error('没有可阅读的词语，请输入文本。');
+  return restoreSourceWhitespace({ language: data.language as Language, sentences }, source);
 }
 export function parseReading(raw: string, source: string): Reading {
   const cleaned = raw
@@ -138,4 +151,15 @@ export function parseReading(raw: string, source: string): Reading {
   const record = object(data);
   if (typeof record.error === 'string') throw new Error(record.error.slice(0, 300));
   return validateReading(data, source);
+}
+
+export function parseTags(text: string): string[] {
+  return [
+    ...new Set(
+      text
+        .split(/[,，、\n]/)
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    ),
+  ];
 }

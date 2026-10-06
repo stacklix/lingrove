@@ -157,7 +157,7 @@ onMounted(async () => {
   try {
     await ready();
   } catch {
-    notice.value = '宿主初始化失败，请返回后重试。';
+    notice.value = '打开失败，请返回后重试。';
   }
 });
 function openSettings() {

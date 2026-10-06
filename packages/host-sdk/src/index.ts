@@ -26,7 +26,7 @@ if (typeof window !== 'undefined') window.__lingroveChunk = (id, chunk) => strea
 export const isNative = () => !!window.webkit?.messageHandlers?.lingrove;
 export async function invoke<T>(method: string, params: unknown): Promise<T> {
   const bridge = window.webkit?.messageHandlers?.lingrove;
-  if (!bridge) throw new Error('原生宿主不可用');
+  if (!bridge) throw new Error('此功能暂时不可用，请重新打开应用。');
   return (await bridge.postMessage({ version: 1, method, params })) as T;
 }
 export async function request(
@@ -155,3 +155,14 @@ export {
   translate,
   onAppLocaleChange,
 } from './i18n';
+
+export { tts } from './tts';
+export type {
+  TTSStatus,
+  TTSRequest,
+  TTSResult,
+  TTSOptions,
+  TTSPlaybackState,
+  TTSPlaybackOptions,
+  TTSPlayback,
+} from './tts';
