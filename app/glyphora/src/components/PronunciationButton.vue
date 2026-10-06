@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAppI18n } from '@lingrove/host-sdk/vue';
+const { t } = useAppI18n();
 import { computed, onBeforeUnmount } from 'vue';
 import type { Glyph } from '../curriculum';
 import {
@@ -22,9 +24,19 @@ onBeforeUnmount(() => {
       type="button"
       class="pronunciation-button"
       :class="{ playing, failed }"
-      :aria-label="`${failed ? '播放失败，重试' : playing ? '正在播放' : '播放'} ${glyph.text} 的${sample.kind}`"
+      :aria-label="
+        t('{0} {1} 的{2}', [
+          t(failed ? '播放失败，重试' : playing ? '正在播放' : '播放'),
+          glyph.text,
+          t(sample.kind),
+        ])
+      "
       :aria-busy="playing"
-      :title="failed ? '播放失败，点击重试' : `${playing ? '正在播放：' : ''}${sample.kind}：${sample.text}`"
+      :title="
+        failed
+          ? t('播放失败，点击重试')
+          : `${playing ? t('正在播放：') : ''}${t(sample.kind)}: ${sample.text}`
+      "
       @click.stop="playPronunciation(glyph.id)"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">

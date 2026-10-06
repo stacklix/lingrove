@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @lingrove/sentra",
-    "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora && npm run typecheck -w @lingrove/kotoba",
-    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora && npm run test -w @lingrove/kotoba",
+    "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora && npm run typecheck -w @lingrove/kotoba && npm run typecheck -w @lingrove/lector",
+    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora && npm run test -w @lingrove/kotoba && npm run test -w @lingrove/lector",
     "build": "node scripts/build-modules.mjs",
     "check": "npm run typecheck && npm test && npm run build && npm run verify:release",
     "format": "prettier --write app/sentra/src app/sentra/tests packages/host-sdk/src scripts/package-modules.mjs",

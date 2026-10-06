@@ -1,3 +1,4 @@
+import { resolveAppLocale } from './i18n';
 export interface HTTPRequest {
   url: string;
   method?: string;
@@ -108,8 +109,8 @@ export async function ready(): Promise<void> {
   if (isNative()) await invoke('runtime.ready', {});
 }
 
-export { llm } from './llm';
-export type { LLMRequest, LLMResult, LLMOptions } from './llm';
+export { llm, formatLLMStatus } from './llm';
+export type { LLMRequest, LLMResult, LLMOptions, LLMStatus } from './llm';
 
 export async function reload(): Promise<void> {
   if (isNative()) await invoke('runtime.reload', {});
@@ -141,6 +142,16 @@ export async function setRootPage(isRoot: boolean): Promise<void> {
 
 // Read on demand so changes in host settings apply to the next request.
 export async function getAppLanguage(): Promise<string> {
-  if (isNative()) return invoke<string>('runtime.language', {});
-  return navigator.language || 'zh-CN';
+  if (isNative()) return resolveAppLocale(await invoke<string>('runtime.language', {}));
+  return resolveAppLocale(navigator.language || 'en');
 }
+
+export { installFocusMode } from './focus';
+
+export {
+  initializeAppLanguage,
+  resolveAppLocale,
+  currentAppLocale,
+  translate,
+  onAppLocaleChange,
+} from './i18n';

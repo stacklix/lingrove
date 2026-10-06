@@ -102,3 +102,77 @@ it('does not expose server error bodies and does not fetch in browser preview', 
   await expect(llm.complete(input)).rejects.toThrow('宿主');
   expect(fetch).not.toHaveBeenCalled();
 });
+
+it('updates elapsed time before text arrives, estimates streaming tokens, then uses reported usage', async () => {
+  vi.useFakeTimers();
+  try {
+    let finish!: (value: typeof response) => void;
+    let id = '';
+    bridge(async ({ params }) => {
+      id = params.id;
+      return new Promise((resolve) => {
+        finish = resolve;
+      });
+    });
+    const onStatus = vi.fn();
+    const pending = llm.complete(input, { onStatus });
+    expect(onStatus).toHaveBeenLastCalledWith({ elapsedMs: 0, outputTokens: 0, estimated: true });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(onStatus.mock.calls.at(-1)![0].elapsedMs).toBe(3000);
+    window.__lingroveChunk?.(id, 'data: {"choices":[{"delta":{"content":"日本語"}}]}\n\n');
+    expect(onStatus.mock.calls.at(-1)![0]).toMatchObject({ outputTokens: 3, estimated: true });
+    window.__lingroveChunk?.(
+      id,
+      'data: {"usage":{"completion_tokens":5},"choices":[]}\n\ndata: [DONE]\n\n',
+    );
+    expect(onStatus.mock.calls.at(-1)![0]).toMatchObject({ outputTokens: 5, estimated: false });
+    finish(response);
+    await pending;
+    const calls = onStatus.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(onStatus).toHaveBeenCalledTimes(calls);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('reads cumulative Anthropic output usage without summing repeated snapshots', async () => {
+  bridge(async ({ params }) => {
+    for (const event of [
+      { type: 'content_block_delta', delta: { type: 'text_delta', text: 'こんにちは' } },
+      { type: 'message_delta', usage: { output_tokens: 7 } },
+      { type: 'message_delta', usage: { output_tokens: 7 } },
+      { type: 'message_stop' },
+    ])
+      window.__lingroveChunk?.(params.id, `data: ${JSON.stringify(event)}\n\n`);
+    return { ...response, protocol: 'anthropic' };
+  });
+  const onStatus = vi.fn();
+  await llm.complete(input, { onStatus });
+  expect(onStatus.mock.calls.at(-1)![0]).toMatchObject({ outputTokens: 7, estimated: false });
+});
+
+it('stops elapsed-time updates immediately on cancellation', async () => {
+  vi.useFakeTimers();
+  try {
+    let finish!: (value: typeof response) => void;
+    bridge(async ({ method }) =>
+      method === 'llm.cancel'
+        ? true
+        : new Promise((resolve) => {
+            finish = resolve;
+          }),
+    );
+    const controller = new AbortController();
+    const onStatus = vi.fn();
+    const pending = llm.complete(input, { signal: controller.signal, onStatus });
+    controller.abort();
+    const calls = onStatus.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(onStatus).toHaveBeenCalledTimes(calls);
+    finish(response);
+    await expect(pending).rejects.toThrow('取消');
+  } finally {
+    vi.useRealTimers();
+  }
+});

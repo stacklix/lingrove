@@ -72,6 +72,7 @@ describe('streaming', () => {
       messageHandlers: {
         lingrove: {
           postMessage: vi.fn(async (message: any) => {
+            if (message.method === 'runtime.language') return 'zh-Hans';
             window.__lingroveChunk?.(
               message.params.id,
               `data: ${JSON.stringify({ choices: [{ delta: { content: body } }] })}\n\n${complete ? 'data: [DONE]\n\n' : ''}`,
@@ -108,16 +109,20 @@ describe('streaming', () => {
     window.webkit = {
       messageHandlers: {
         lingrove: {
-          postMessage: vi.fn(async () => ({
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({
-              content: [{ type: 'text', text: content }],
-              stop_reason: 'end_turn',
-            }),
-            model: 'host-model',
-            protocol: 'anthropic',
-          })),
+          postMessage: vi.fn(async (message: any) =>
+            message.method === 'runtime.language'
+              ? 'zh-Hans'
+              : {
+                  status: 200,
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({
+                    content: [{ type: 'text', text: content }],
+                    stop_reason: 'end_turn',
+                  }),
+                  model: 'host-model',
+                  protocol: 'anthropic',
+                },
+          ),
         },
       },
     };
@@ -130,7 +135,7 @@ describe('streaming', () => {
 describe('host SDK', () => {
   it('uses the browser language outside the host', async () => {
     vi.stubGlobal('navigator', { language: 'fr-FR' });
-    expect(await getAppLanguage()).toBe('fr-FR');
+    expect(await getAppLanguage()).toBe('en');
   });
   it('routes requests to the native bridge without calling fetch', async () => {
     const postMessage = vi.fn(async () => ({ status: 200, headers: {}, body: 'ok' }));
@@ -207,8 +212,8 @@ describe('grammar component translations', () => {
     language = 'zh-Hant';
     await analyze('grammar', 'Hello', defaults, new AbortController().signal, () => {});
     expect(systems[0]).toContain('COMPONENT_TRANSLATION_LANGUAGE=ja.');
-    expect(systems[1]).toContain('COMPONENT_TRANSLATION_LANGUAGE=zh-Hant.');
-    expect(systems[0]).toContain('EXPLANATION_LANGUAGE=简体中文.');
+    expect(systems[1]).toContain('COMPONENT_TRANSLATION_LANGUAGE=zh-Hans.');
+    expect(systems[0]).toContain('EXPLANATION_LANGUAGE=ja.');
     expect(systems[0]).toContain('TRANSLATION_LANGUAGE=英语.');
   });
 });

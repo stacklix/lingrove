@@ -3,10 +3,24 @@ import WebKit
 import CryptoKit
 
 enum AppLanguage {
+    static func text(_ source: String) -> String {
+        guard let path = Bundle.main.path(forResource: current, ofType: "lproj"),
+              let bundle = Bundle(path: path) else { return source }
+        return bundle.localizedString(forKey: source, value: source, table: nil)
+    }
+
+    static func resolve(_ language: String) -> String {
+        let code = language.lowercased().replacingOccurrences(of: "_", with: "-")
+        if code == "zh" || code.hasPrefix("zh-") {
+            return "zh-Hans"
+        }
+        return code == "ja" || code.hasPrefix("ja-") ? "ja" : "en"
+    }
+
     static let preferenceKey = "app.language"
     static var current: String {
         let selected = UserDefaults.standard.string(forKey: preferenceKey) ?? "system"
-        return selected == "system" ? (Locale.preferredLanguages.first ?? "zh-Hans") : selected
+        return resolve(selected == "system" ? (Locale.preferredLanguages.first ?? "en") : selected)
     }
 }
 
@@ -33,6 +47,15 @@ enum AppLanguage {
                               refreshing: refreshing)
         pages[module.id] = page
         return page
+    }
+
+    func updateLanguage() {
+        for page in pages.values {
+            page.webView.callAsyncJavaScript(
+                "window.dispatchEvent(new CustomEvent('lingrove:languagechange', { detail: { language } }))",
+                arguments: ["language": AppLanguage.current], in: nil, in: .page,
+                completionHandler: nil)
+        }
     }
 
     func reloadAll(store: ModuleStore) {
@@ -578,7 +601,7 @@ struct ModuleWebView: UIViewRepresentable {
             guard (try? config.validate()) != nil else { throw ModuleError.invalid("请先返回 Lingrove，在设置 → 大模型配置中配置模型服务") }
             let request = try config.request(params)
             let task = Task<Any, Error> {
-                var result = try await self.perform(request, id: id, stream: true)
+                var result = try await self.perform(request, id: id, stream: true, llm: config, timeoutSeconds: params["timeoutSeconds"] as? Double)
                 result["model"] = config.model
                 result["protocol"] = config.provider
                 return result
@@ -609,8 +632,26 @@ struct ModuleWebView: UIViewRepresentable {
         }
         return try await perform(request, id: id, stream: params["stream"] as? Bool == true)
     }
-    private func perform(_ request: URLRequest, id: String, stream: Bool) async throws -> [String: Any] {
-        let (bytes, response) = try await session.bytes(for: request)
+    private func perform(_ request: URLRequest, id: String, stream: Bool, llm: LLMConfiguration? = nil, timeoutSeconds: TimeInterval? = nil) async throws -> [String: Any] {
+        var usage = LLMUsageCollector(protocolName: llm?.provider ?? "")
+        let provider = request.url.map(LLMUsageStore.providerID) ?? "未知服务商"
+        if llm != nil { LLMUsageStore.shared.begin(appID: module.id, appName: module.name, provider: provider) }
+        defer {
+            if llm != nil {
+                usage.flushEvent()
+                LLMUsageStore.shared.finish(appID: module.id, provider: provider, usage: usage)
+            }
+        }
+        // Both the idle wait and total resource deadline must honor long LLM requests.
+        // A dedicated session keeps ordinary HTTP and other model requests unchanged.
+        let timedSession: URLSession? = timeoutSeconds.map { seconds in
+            let configuration = session.configuration
+            configuration.timeoutIntervalForRequest = seconds
+            configuration.timeoutIntervalForResource = seconds
+            return URLSession(configuration: configuration, delegate: NoRedirect(), delegateQueue: nil)
+        }
+        defer { timedSession?.invalidateAndCancel() }
+        let (bytes, response) = try await (timedSession ?? session).bytes(for: request)
         guard let response = response as? HTTPURLResponse else { throw ModuleError.invalid("无效 HTTP 响应") }
         let headers = response.allHeaderFields.reduce(into: [String: String]()) { result, entry in
             let key = String(describing: entry.key).lowercased()
@@ -623,10 +664,18 @@ struct ModuleWebView: UIViewRepresentable {
             guard total <= 8 * 1024 * 1024 else { throw ModuleError.invalid("响应超过大小限制") }
             buffer.append(byte)
             if streaming && byte == 10 {
+                if llm != nil { usage.consumeLine(String(decoding: buffer, as: UTF8.self)) }
                 try await emit(id, String(decoding: buffer, as: UTF8.self)); buffer.removeAll(keepingCapacity: true)
             }
         }
-        if streaming && !buffer.isEmpty { try await emit(id, String(decoding: buffer, as: UTF8.self)); buffer.removeAll() }
+        if streaming && !buffer.isEmpty {
+            if llm != nil { usage.consumeLine(String(decoding: buffer, as: UTF8.self)) }
+            try await emit(id, String(decoding: buffer, as: UTF8.self)); buffer.removeAll()
+        }
+        if llm != nil {
+            if streaming { usage.flushEvent() }
+            else if (200..<300).contains(response.statusCode) { usage.consumeJSON(buffer) }
+        }
         return ["status": response.statusCode, "headers": headers, "body": String(decoding: buffer, as: UTF8.self)]
     }
     private func emit(_ id: String, _ chunk: String) async throws {

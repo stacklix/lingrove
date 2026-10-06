@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeAll, expect, it, vi } from 'vitest';
-vi.mock('@lingrove/host-sdk', () => ({
+vi.mock('@lingrove/host-sdk', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@lingrove/host-sdk')>()),
   ready: vi.fn().mockResolvedValue(undefined),
   setRootPage: vi.fn().mockResolvedValue(undefined),
   isNative: () => false,

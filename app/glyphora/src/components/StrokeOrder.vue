@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAppI18n } from '@lingrove/host-sdk/vue';
+const { t } = useAppI18n();
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue';
 import type { Glyph } from '../curriculum';
 import { strokeSteps } from '../stroke-order';
@@ -58,14 +60,15 @@ const start = computed(() => {
   <div class="stroke-order">
     <div class="order-example">
       <div v-if="glyph.language !== 'ja'" class="order-print">
-        <small>印刷体</small><b>{{ glyph.text }}</b>
+        <small>{{ t('印刷体') }}</small
+        ><b>{{ glyph.text }}</b>
       </div>
       <svg
         v-if="paths"
         viewBox="0 0 109 109"
         class="order-canvas"
         role="img"
-        :aria-label="`${glyph.text} 第 ${step + 1} 笔`"
+        :aria-label="t(`${glyph.text} 第 ${step + 1} 笔`)"
       >
         <path
           v-for="(path, i) in paths"
@@ -93,21 +96,24 @@ const start = computed(() => {
       <GlyphView v-else :glyph="glyph" />
     </div>
     <p v-if="glyph.language !== 'ja' && paths" class="fine-print">
-      动画为一种手写笔顺示意，连笔与字帖字体可有差异。
+      {{ t('动画为一种手写笔顺示意，连笔与字帖字体可有差异。') }}
     </p>
     <p v-if="!paths" class="fine-print">
-      一种参考书写顺序；实际连笔与起收笔可有合理变体。下方逐步说明笔的走向。
+      {{ t('一种参考书写顺序；实际连笔与起收笔可有合理变体。下方逐步说明笔的走向。') }}
     </p>
     <div v-if="paths" class="order-controls">
-      <button @click="play">{{ playing ? '暂停' : '播放' }}</button
-      ><button :disabled="step === 0" @click="select(step - 1)">上一笔</button
-      ><button :disabled="step === steps.length - 1" @click="select(step + 1)">下一笔</button>
+      <button @click="play">{{ t(playing ? '暂停' : '播放') }}</button
+      ><button :disabled="step === 0" @click="select(step - 1)">{{ t('上一笔') }}</button
+      ><button :disabled="step === steps.length - 1" @click="select(step + 1)">
+        {{ t('下一笔') }}
+      </button>
     </div>
     <ol class="stroke-steps">
       <li v-for="(text, i) in steps" :key="i" :class="{ current: paths && step === i }">
-        <button v-if="paths" @click="select(i)">{{ text }}</button><span v-else>{{ text }}</span>
+        <button v-if="paths" @click="select(i)">{{ t(text) }}</button
+        ><span v-else>{{ t(text) }}</span>
       </li>
     </ol>
-    <p>{{ glyph.hint }}</p>
+    <p>{{ t(glyph.hint) }}</p>
   </div>
 </template>

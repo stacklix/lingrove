@@ -96,7 +96,6 @@ it('keeps model credentials out of child settings and saved preferences', async 
   await flushPromises();
   expect(JSON.parse(localStorage.getItem('sentra.preferences')!)).toEqual({
     level: '初级',
-    explanationLanguage: '简体中文',
     translationLanguage: '英语',
   });
   wrapper.unmount();
@@ -124,9 +123,7 @@ it('keeps the temporary translation language separate from the saved default', a
   await wrapper.get('.settings form').trigger('submit');
   await flushPromises();
   expect(wrapper.get('.translation-language select').element.value).toBe('日语');
-  expect(JSON.parse(localStorage.getItem('sentra.preferences')!).translationLanguage).toBe(
-    '英语',
-  );
+  expect(JSON.parse(localStorage.getItem('sentra.preferences')!).translationLanguage).toBe('英语');
   wrapper.unmount();
   wrapper = mount(App);
   await flushPromises();
@@ -137,9 +134,7 @@ it('keeps the temporary translation language separate from the saved default', a
   await wrapper.get('.settings form').trigger('submit');
   await flushPromises();
   expect(wrapper.get('.translation-language select').element.value).toBe('俄语');
-  expect(JSON.parse(localStorage.getItem('sentra.preferences')!).translationLanguage).toBe(
-    '俄语',
-  );
+  expect(JSON.parse(localStorage.getItem('sentra.preferences')!).translationLanguage).toBe('俄语');
   wrapper.unmount();
 });
 

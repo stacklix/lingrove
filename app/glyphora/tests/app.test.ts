@@ -1,6 +1,7 @@
 import { mount, flushPromises } from '@vue/test-utils';
 import { it, expect, vi, beforeEach } from 'vitest';
-vi.mock('@lingrove/host-sdk', () => ({
+vi.mock('@lingrove/host-sdk', async () => ({
+  installFocusMode: (await import('../../../packages/host-sdk/src/focus')).installFocusMode,
   setRootPage: vi.fn().mockResolvedValue(undefined),
   ready: vi.fn().mockResolvedValue(undefined),
   createID: () => 'round-test',
@@ -36,7 +37,12 @@ vi.mock('../src/persistence', () => ({
 }));
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(assess).mockReturnValue({ score: 85, correct: true, status: 'match', feedback: '字形匹配' });
+  vi.mocked(assess).mockReturnValue({
+    score: 85,
+    correct: true,
+    status: 'match',
+    feedback: '字形匹配',
+  });
   vi.mocked(loadHistory).mockResolvedValue({ practices: [], rounds: [] });
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
@@ -56,8 +62,10 @@ const mountApp = () =>
   });
 function button(w: ReturnType<typeof mountApp>, text: string) {
   const buttons = w.findAll('button');
-  return buttons.find((b) => (b.attributes('aria-label') || b.text()) === text) ??
-    buttons.find((b) => (b.attributes('aria-label') || b.text()).includes(text))!;
+  return (
+    buttons.find((b) => (b.attributes('aria-label') || b.text()) === text) ??
+    buttons.find((b) => (b.attributes('aria-label') || b.text()).includes(text))!
+  );
 }
 
 async function startTest(w: ReturnType<typeof mountApp>) {
@@ -342,8 +350,9 @@ it('studies Greek lowercase and uppercase together with a practice case selector
   const w = mountApp();
   await flushPromises();
   expect(w.find('.segments').exists()).toBe(false);
-  expect(w.findAll('.study-card [aria-label^="手写范字"]').map((g) => g.attributes('aria-label')))
-    .toEqual(['手写范字 Α', '手写范字 α']);
+  expect(
+    w.findAll('.study-card [aria-label^="手写范字"]').map((g) => g.attributes('aria-label')),
+  ).toEqual(['手写范字 Α', '手写范字 α']);
   await button(w, '继续学习').trigger('click');
   expect(w.get('.print-glyph').text()).toBe('α');
   expect(w.find('[aria-label="书写大小写"]').exists()).toBe(true);
@@ -383,7 +392,12 @@ it.each([
     const grade = async (score: number) => {
       const retry = w.findAll('button').find((b) => b.text() === '再写一次');
       if (retry) await retry.trigger('click');
-      vi.mocked(assess).mockReturnValue({ score, correct: true, status: 'match', feedback: '字形匹配' });
+      vi.mocked(assess).mockReturnValue({
+        score,
+        correct: true,
+        status: 'match',
+        feedback: '字形匹配',
+      });
       await w.get('.stub-write').trigger('click');
       await new Promise((r) => setTimeout(r, 40));
       await flushPromises();
@@ -442,7 +456,6 @@ it('returns home after both forms of the last letter pass', async () => {
   expect(vi.mocked(saveProgress).mock.lastCall![0].cursors['ja:mixed']).toBeUndefined();
   w.unmount();
 });
-
 
 it('locks study writing during and after scoring until retry, ignoring late ink', async () => {
   const w = mountApp();

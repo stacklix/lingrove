@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { demo } from '../src/demo';
 import { parseEntry, partialEntry, validateInput } from '../src/model';
-vi.mock('@lingrove/host-sdk', () => ({ llm: { complete: vi.fn() } }));
+vi.mock('@lingrove/host-sdk', () => ({
+  llm: { complete: vi.fn() },
+  getAppLanguage: vi.fn().mockResolvedValue('en'),
+}));
 import { llm } from '@lingrove/host-sdk';
 import { lookup } from '../src/api';
 describe('query validation and response boundaries', () => {

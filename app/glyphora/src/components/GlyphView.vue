@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAppI18n } from '@lingrove/host-sdk/vue';
+const { t } = useAppI18n();
 import { computed, ref, watch } from 'vue';
 import { fontFor, type Glyph } from '../curriculum';
 const props = defineProps<{ glyph: Glyph; animate?: boolean }>();
@@ -16,7 +18,7 @@ const label = computed(() => `手写范字 ${props.glyph.text}`);
     viewBox="0 0 109 109"
     class="glyph-svg"
     role="img"
-    :aria-label="label"
+    :aria-label="t(label)"
   >
     <path
       v-for="(path, i) in glyph.paths"
@@ -32,7 +34,7 @@ const label = computed(() => `手写范字 ${props.glyph.text}`);
       :style="{ '--delay': `${i * 0.8}s` }"
     />
   </svg>
-  <span v-else class="handwritten" :style="{ fontFamily: fontFor(glyph) }" :aria-label="label">{{
+  <span v-else class="handwritten" :style="{ fontFamily: fontFor(glyph) }" :aria-label="t(label)">{{
     glyph.text
   }}</span>
 </template>

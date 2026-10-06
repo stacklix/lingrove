@@ -1,6 +1,16 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { createID, isNative, ready, setRootPage, moduleStorage } from '@lingrove/host-sdk';
+import { useAppI18n } from '@lingrove/host-sdk/vue';
+const { t, locale } = useAppI18n();
+import { formatLLMStatus, type LLMStatus } from '@lingrove/host-sdk';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import {
+  createID,
+  isNative,
+  ready,
+  setRootPage,
+  moduleStorage,
+  installFocusMode,
+} from '@lingrove/host-sdk';
 import {
   actions,
   defaults,
@@ -63,6 +73,7 @@ const tabs = reactive(
         text: '',
         result: null as Result | null,
         progress: '',
+        requestStatus: undefined as LLMStatus | undefined,
         busy: false,
         error: '',
         controller: null as AbortController | null,
@@ -74,6 +85,7 @@ const tabs = reactive(
       text: string;
       result: Result | null;
       progress: string;
+      requestStatus?: LLMStatus;
       busy: boolean;
       error: string;
       controller: AbortController | null;
@@ -114,10 +126,13 @@ function persistHistory() {
   writeQueue = next;
   return next;
 }
+let removeFocusMode: (() => void) | undefined;
+onUnmounted(() => removeFocusMode?.());
 onMounted(async () => {
+  removeFocusMode = installFocusMode();
   try {
     const prefs = await storage.get<Partial<Settings>>('preferences');
-    for (const key of ['translationLanguage', 'explanationLanguage', 'level'] as const) {
+    for (const key of ['translationLanguage', 'level'] as const) {
       if (typeof prefs?.[key] === 'string') settings[key] = prefs[key];
     }
     if (!languages.includes(settings.translationLanguage)) settings.translationLanguage = '英语';
@@ -185,20 +200,30 @@ async function run() {
   current.busy = true;
   current.error = '';
   current.progress = '';
+  current.requestStatus = undefined;
   current.result = null;
   const controller = new AbortController();
   current.controller = controller;
   try {
-    const result = await analyze(action, text, config, controller.signal, (value) => {
-      current.progress = value;
-    });
+    const result = await analyze(
+      action,
+      text,
+      config,
+      controller.signal,
+      (value) => {
+        current.progress = value;
+      },
+      (status) => {
+        if (!controller.signal.aborted) current.requestStatus = status;
+      },
+    );
     if (controller.signal.aborted) return;
     current.result = result;
     history.value.unshift({
       id: createID(),
       text,
       translationLanguage: config.translationLanguage,
-      explanationLanguage: config.explanationLanguage,
+      explanationLanguage: result.language ?? locale.value,
       level: config.level,
       createdAt: result.createdAt,
       results: [result],
@@ -255,7 +280,7 @@ async function removeSentence(s: Sentence) {
 </script>
 <template>
   <div class="shell" :class="{ 'native-host': isNative() }">
-    <nav class="top-actions" aria-label="页面工具">
+    <nav class="top-actions" :aria-label="t('页面工具')">
       <button
         data-action="history"
         :aria-current="panel === 'history' ? 'page' : undefined"
@@ -265,7 +290,7 @@ async function removeSentence(s: Sentence) {
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 5h16v15H4zM8 3v4M16 3v4M8 11h8M8 15h5" />
         </svg>
-        <span>记录</span>
+        <span>{{ t('记录') }}</span>
       </button>
       <button
         data-action="settings"
@@ -274,15 +299,15 @@ async function removeSentence(s: Sentence) {
         @click="openSettings"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6" /></svg>
-        <span>设置</span>
+        <span>{{ t('设置') }}</span>
       </button>
     </nav>
     <div ref="pageScroll" class="page-scroll">
       <div v-if="notice && panel === 'learn'" class="notice" role="status">
-        {{ notice }}
+        {{ t(notice) }}
         <button v-if="notice.includes('保存失败')" class="text-button" @click="retrySave">
-          重试保存</button
-        ><button aria-label="关闭提示" @click="notice = ''">×</button>
+          {{ t('重试保存') }}</button
+        ><button :aria-label="t('关闭提示')" @click="notice = ''">×</button>
       </div>
       <Transition name="page-switch" mode="out-in">
         <main :key="active" class="workspace">
@@ -290,7 +315,7 @@ async function removeSentence(s: Sentence) {
             <div class="section-label">YOUR DAILY LANGUAGE SPACE</div>
             <div class="editor">
               <div class="card-top">
-                <label for="sentence">你的句子</label
+                <label for="sentence">{{ t('你的句子') }}</label
                 ><CopyButton :text="tab.text" :disabled="!tab.text" />
               </div>
               <textarea
@@ -299,7 +324,7 @@ async function removeSentence(s: Sentence) {
                 v-model="tab.text"
                 :disabled="tab.busy"
                 maxlength="4000"
-                placeholder="输入想理解或表达的一句话…"
+                :placeholder="t('输入想理解或表达的一句话…')"
                 enterkeyhint="done"
                 @compositionstart="composing = true"
                 @compositionend="composing = false"
@@ -317,50 +342,51 @@ async function removeSentence(s: Sentence) {
                     tab.error = '';
                   "
                 >
-                  清空
+                  {{ t('清空') }}
                 </button>
               </div>
             </div>
             <div class="controls">
               <label v-if="active === 'translate'" class="translation-language"
-                >翻译为
+                >{{ t('翻译为') }}
                 <span class="language-select">
                   <select v-model="translationLanguage" :disabled="tab.busy">
-                    <option v-for="l in languages" :key="l">{{ l }}</option>
+                    <option :value="l" v-for="l in languages" :key="l">{{ t(l) }}</option>
                   </select>
                   <svg viewBox="0 0 16 16" aria-hidden="true">
                     <path d="m4 6 4 4 4-4" />
                   </svg> </span></label
-              ><span v-else class="muted">直接分析原句，保留原文语言</span
+              ><span v-else class="muted">{{ t('直接分析原句，保留原文语言') }}</span
               ><button v-if="tab.busy" class="primary stop" @click="tab.controller?.abort()">
-                停止生成</button
+                {{ t('停止生成') }}</button
               ><button
                 v-else
                 class="primary"
                 :disabled="!tab.text.trim() || !loaded || !historyWritable"
                 @click="run"
               >
-                {{ actionLabels[active][tab.result ? 1 : 0] }} <span>↗</span>
+                {{ t(actionLabels[active][tab.result ? 1 : 0]) }} <span>↗</span>
               </button>
             </div>
             <div class="quiet-note">
               <span class="dot"></span
-              >{{ isNative() ? '记录保存在这台设备' : '记录保存在当前浏览器' }}
-              <p>每天一句，让语言慢慢成为你的习惯。</p>
+              >{{ t(isNative() ? '记录保存在这台设备' : '记录保存在当前浏览器') }}
+              <p>{{ t('每天一句，让语言慢慢成为你的习惯。') }}</p>
             </div>
           </section>
-          <section class="output-column" aria-label="学习结果" aria-live="polite">
+          <section class="output-column" :aria-label="t('学习结果')" aria-live="polite">
             <div class="card-top output-heading">
-              <span class="section-label">学习笔记</span
+              <span class="section-label">{{ t('学习笔记') }}</span
               ><span v-if="tab.busy" class="generating"
-                >● {{ tab.progress ? '正在生成' : '正在连接' }}</span
+                >● {{ t(tab.progress ? '正在生成' : '正在连接') }} ·
+                {{ t(formatLLMStatus(tab.requestStatus)) }}</span
               ><CopyButton
                 v-else-if="tab.result"
                 :text="JSON.stringify(tab.result.data, null, 2)"
-                label="复制完整结果"
+                :label="t('复制完整结果')"
               />
             </div>
-            <div v-if="tab.error" class="error" role="alert">{{ tab.error }}</div>
+            <div v-if="tab.error" class="error" role="alert">{{ t(tab.error) }}</div>
             <ResultView
               v-if="preview && Object.keys(preview).length"
               :action="active"
@@ -368,12 +394,14 @@ async function removeSentence(s: Sentence) {
             />
             <div v-else class="empty">
               <div class="empty-art">Aa<span>あ</span></div>
-              <h2>{{ tab.busy ? '正在琢磨这句话…' : '好表达，从一句话开始' }}</h2>
+              <h2>{{ t(tab.busy ? '正在琢磨这句话…' : '好表达，从一句话开始') }}</h2>
               <p>
                 {{
-                  tab.busy
-                    ? '结果会逐步出现在这里。'
-                    : '写下一个句子，探索它的意思、结构和更多可能。'
+                  t(
+                    tab.busy
+                      ? '结果会逐步出现在这里。'
+                      : '写下一个句子，探索它的意思、结构和更多可能。',
+                  )
                 }}
               </p>
               <div class="empty-line"></div>
@@ -381,9 +409,11 @@ async function removeSentence(s: Sentence) {
           </section>
         </main>
       </Transition>
-      <footer>SENTRA <span>把世界，读成自己的语言。</span></footer>
+      <footer>
+        SENTRA <span>{{ t('把世界，读成自己的语言。') }}</span>
+      </footer>
     </div>
-    <nav class="bottom-nav" aria-label="主导航">
+    <nav class="bottom-nav" :aria-label="t('主导航')">
       <button
         v-for="a in actions"
         :key="a.id"
@@ -396,69 +426,69 @@ async function removeSentence(s: Sentence) {
         "
       >
         <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="navIcons[a.id]" /></svg>
-        <span>{{ a.label }}</span>
+        <span>{{ t(a.label) }}</span>
       </button>
     </nav>
     <Sheet
       :open="panel !== 'learn'"
-      :title="sheetPanel === 'history' ? '记录' : '设置'"
+      :title="t(sheetPanel === 'history' ? '记录' : '设置')"
       :save-form="sheetPanel === 'settings' ? 'connection-settings' : undefined"
       :saving="saving"
       @close="panel = 'learn'"
     >
       <div v-if="notice" class="notice" role="status">
-        {{ notice }}<button aria-label="关闭提示" @click="notice = ''">×</button>
+        {{ t(notice) }}<button :aria-label="t('关闭提示')" @click="notice = ''">×</button>
       </div>
       <main v-if="sheetPanel === 'history'" key="history" class="page">
         <div class="page-heading">
           <div>
             <span class="section-label">YOUR COLLECTION</span>
-            <h1>学过的每一句，都在这里。</h1>
+            <h1>{{ t('学过的每一句，都在这里。') }}</h1>
           </div>
         </div>
         <input
           v-model="search"
           class="search"
-          aria-label="搜索记录"
-          placeholder="搜索句子或学习笔记…"
+          :aria-label="t('搜索记录')"
+          :placeholder="t('搜索句子或学习笔记…')"
         />
         <div v-if="!filtered.length" class="empty">
-          <h2>{{ search ? '没有找到相关记录' : '你的第一句，值得留下' }}</h2>
-          <p>完成一次学习，结果会自动保存在这里。</p>
+          <h2>{{ t(search ? '没有找到相关记录' : '你的第一句，值得留下') }}</h2>
+          <p>{{ t('完成一次学习，结果会自动保存在这里。') }}</p>
         </div>
         <article v-for="s in filtered" :key="s.id" class="history-card">
           <button class="history-open" @click="openSentence(s)">
             <span class="eyebrow"
-              >{{ actions.find((a) => a.id === s.results[0]?.action)?.label }} ·
-              {{ new Date(s.createdAt).toLocaleDateString() }}</span
+              >{{ t(actions.find((a) => a.id === s.results[0]?.action)?.label) }} ·
+              {{ t(new Date(s.createdAt).toLocaleDateString(locale)) }}</span
             >
             <p>{{ s.text }}</p></button
-          ><button class="text-button danger" aria-label="删除记录" @click="removeSentence(s)">
-            删除
+          ><button
+            class="text-button danger"
+            :aria-label="t('删除记录')"
+            @click="removeSentence(s)"
+          >
+            {{ t('删除') }}
           </button>
         </article>
       </main>
       <main v-else key="settings" class="page settings">
         <span class="section-label">MAKE IT YOURS</span>
-        <h1>学习偏好</h1>
+        <h1>{{ t('学习偏好') }}</h1>
         <form id="connection-settings" @submit.prevent="saveSettings">
           <fieldset>
-            <legend>学习偏好</legend>
+            <legend>{{ t('学习偏好') }}</legend>
             <label
-              >解释语言<select v-model="draftSettings.explanationLanguage">
-                <option>简体中文</option>
-                <option>英语</option>
-                <option>日语</option>
+              >{{ t('学习水平')
+              }}<select v-model="draftSettings.level">
+                <option :value="'初级'">{{ t('初级') }}</option>
+                <option :value="'中级'">{{ t('中级') }}</option>
+                <option :value="'高级'">{{ t('高级') }}</option>
               </select></label
             ><label
-              >学习水平<select v-model="draftSettings.level">
-                <option>初级</option>
-                <option>中级</option>
-                <option>高级</option>
-              </select></label
-            ><label
-              >默认翻译语言<select v-model="draftSettings.translationLanguage">
-                <option v-for="l in languages" :key="l">{{ l }}</option>
+              >{{ t('默认翻译语言')
+              }}<select v-model="draftSettings.translationLanguage">
+                <option :value="l" v-for="l in languages" :key="l">{{ t(l) }}</option>
               </select></label
             >
           </fieldset>

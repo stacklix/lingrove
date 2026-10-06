@@ -1,0 +1,110 @@
+/* Child-app UI contract: docs/child-app-ui.md. Import after application styles.
+   Apps provide --accent, --muted, --soft, --line, --nav-bg and --toolbar-bg. */
+.lingrove-bottom-tabs {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 45;
+  display: flex;
+  width: min(100%, 660px);
+  padding: 9px 10px calc(9px + env(safe-area-inset-bottom, 0px));
+  background: var(--nav-bg);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -4px 24px #293e3608;
+}
+.lingrove-bottom-tabs button {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 2px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+}
+.lingrove-bottom-tabs button[aria-current='page'] {
+  color: var(--accent);
+  background: var(--soft);
+  font-weight: 600;
+}
+.lingrove-bottom-tabs svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (max-width: 760px) {
+  .lingrove-bottom-tabs {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}
+/* The native Home overlay occupies x=16..60, y=8..52 in WebView coordinates.
+   A root toolbar has no title/brand on its left. Content begins below it. */
+.lingrove-root-actions {
+  min-height: 60px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding-top: 8px;
+  padding-left: 64px;
+}
+.lingrove-secondary-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: 60px;
+  background: var(--toolbar-bg);
+  backdrop-filter: blur(18px);
+}
+.lingrove-secondary-toolbar > button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* WebKit can match :focus-visible on dialog autofocus even after a touch.
+   Gate rings on real keyboard navigation; do not blur or break dialog focus. */
+:root[data-focus-mode='managed']:not([data-keyboard-focus='true']) :focus {
+  outline: none;
+}
+:root[data-focus-mode='managed'][data-keyboard-focus='true'] :focus-visible {
+  outline: 3px solid var(--focus, var(--focus-0, var(--accent)));
+  outline-offset: 3px;
+}
+
+/* All child-app sheet dismiss icons match the text-import sheet. */
+button.lingrove-sheet-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--soft, var(--soft-3));
+  color: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  box-shadow: none;
+  appearance: none;
+}

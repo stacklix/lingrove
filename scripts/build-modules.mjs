@@ -1,3 +1,4 @@
+import './sync-localizations.mjs';
 import { readFile, rm } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';

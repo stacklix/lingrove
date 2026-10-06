@@ -7,12 +7,10 @@ export const actions: { id: Action; label: string }[] = [
 export const languages = ['英语', '日语', '俄语', '希腊语'];
 export interface Settings {
   translationLanguage: string;
-  explanationLanguage: string;
   level: string;
 }
 export const defaults: Settings = {
   translationLanguage: '英语',
-  explanationLanguage: '简体中文',
   level: '中级',
 };
 export interface Result {
@@ -21,6 +19,7 @@ export interface Result {
   model: string;
   createdAt: string;
   schemaVersion: number;
+  language?: string;
 }
 export interface Sentence {
   id: string;

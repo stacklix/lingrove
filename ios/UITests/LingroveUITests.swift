@@ -1,5 +1,24 @@
 import XCTest
 final class LingroveUITests: XCTestCase {
+    func testLLMUsageSettingsEntry() {
+        let app = XCUIApplication()
+        app.launchArguments += ["-debug.enabled", "NO"]
+        app.launch()
+        let settings = app.buttons["应用设置"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 20))
+        settings.tap()
+        let usage = app.buttons["大模型使用统计"]
+        for _ in 0..<5 {
+            if usage.exists && usage.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(usage.exists)
+        usage.tap()
+        XCTAssertTrue(app.staticTexts["累计用量"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["发送 Token"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["接收 Token"].firstMatch.exists)
+    }
+
     func testNativeEdgeExitWorksWithHomeHiddenAndChildDialogOpen() throws {
         let app = XCUIApplication()
         // Use bundled resources so this recovery test never needs a debug server.

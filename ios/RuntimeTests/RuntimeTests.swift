@@ -325,6 +325,91 @@ final class RuntimeTests: XCTestCase {
         XCTAssertThrowsError(try config.validate())
     }
 
+    func testLLMUsageStreamSnapshotsAndMissingUsage() {
+        var openAI = LLMUsageCollector(protocolName: "openAi")
+        for line in ["data: {\"usage\":null}\n", "\n", "data: {\"usage\":{\"prompt_tokens\":42,\"completion_tokens\":12}}\n", "\n", "data: {\"usage\":{\"prompt_tokens\":42,\"completion_tokens\":12}}\n", "\n", "data: [DONE]\n", "\n"] {
+            openAI.consumeLine(line)
+        }
+        XCTAssertEqual(openAI.inputTokens, 42)
+        XCTAssertEqual(openAI.outputTokens, 12)
+        var anthropic = LLMUsageCollector(protocolName: "anthropic")
+        anthropic.consumeJSON(Data(#"{"type":"message_start","message":{"usage":{"input_tokens":10,"output_tokens":1,"cache_read_input_tokens":20,"cache_creation_input_tokens":5}}}"#.utf8))
+        anthropic.consumeJSON(Data(#"{"type":"message_delta","usage":{"output_tokens":8}}"#.utf8))
+        XCTAssertEqual(anthropic.inputTokens, 35)
+        XCTAssertEqual(anthropic.outputTokens, 8)
+        var missing = LLMUsageCollector(protocolName: "openAi")
+        missing.consumeJSON(Data(#"{"choices":[]}"#.utf8))
+        XCTAssertNil(missing.inputTokens)
+        XCTAssertNil(missing.outputTokens)
+    }
+
+    @MainActor func testLLMUsageAttributionAndPersistence() throws {
+        let suite = "usage-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = LLMUsageStore(defaults: defaults)
+        var usage = LLMUsageCollector(protocolName: "openAi")
+        usage.consumeJSON(Data(#"{"usage":{"prompt_tokens":30,"completion_tokens":7}}"#.utf8))
+        store.begin(appID: "a", appName: "A", provider: "one.example")
+        store.begin(appID: "a", appName: "A", provider: "two.example")
+        store.begin(appID: "b", appName: "B", provider: "one.example")
+        store.finish(appID: "a", provider: "one.example", usage: usage)
+        store.finish(appID: "b", provider: "one.example", usage: usage)
+        let restored = LLMUsageStore(defaults: defaults)
+        XCTAssertEqual(restored.total.requests, 3)
+        XCTAssertEqual(restored.total.inputTokens, 60)
+        XCTAssertEqual(restored.total.outputTokens, 14)
+        XCTAssertEqual(restored.total.reportedRequests, 2)
+        XCTAssertEqual(restored.groups(byProvider: true).first?.totals.requests, 2)
+        XCTAssertEqual(restored.groups(byProvider: false).first?.totals.requests, 2)
+        XCTAssertEqual(restored.groups(byProvider: false, provider: "two.example").count, 1)
+        XCTAssertEqual(LLMUsageStore.providerID(URL(string: "https://API.example:443/v1/messages")!), "api.example")
+        XCTAssertEqual(LLMUsageStore.providerID(URL(string: "https://api.example:8443/v1")!), "api.example:8443")
+    }
+
+    @MainActor func testDailyTokenUsageAcrossDatesProvidersAndReload() throws {
+        let suite = "daily-usage-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        // Undated cumulative counters remain intact and are never assigned to today.
+        let historical = LLMUsageRecord(appID: "a", appName: "A", provider: "one", totals: LLMUsageTotals(inputTokens: 100))
+        defaults.set(try JSONEncoder().encode([historical]), forKey: "host.llm.usage")
+        let store = LLMUsageStore(defaults: defaults)
+        XCTAssertTrue(store.dailyRecords.isEmpty)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 8 * 3600)!
+        let day = calendar.date(from: DateComponents(year: 2026, month: 10, day: 6))!
+        var usage = LLMUsageCollector(protocolName: "openAi")
+        usage.consumeJSON(Data(#"{"usage":{"prompt_tokens":30,"completion_tokens":7}}"#.utf8))
+        for provider in ["one", "two"] {
+            store.begin(appID: "a", appName: "A", provider: provider)
+            store.finish(appID: "a", provider: provider, usage: usage, date: day.addingTimeInterval(86399), calendar: calendar)
+        }
+        store.begin(appID: "b", appName: "B", provider: "one")
+        store.finish(appID: "b", provider: "one", usage: usage, date: day, calendar: calendar)
+        store.begin(appID: "a", appName: "A", provider: "one")
+        store.finish(appID: "a", provider: "one", usage: usage, date: day.addingTimeInterval(86400), calendar: calendar)
+        store.begin(appID: "b", appName: "B", provider: "one")
+        store.finish(appID: "b", provider: "one", usage: LLMUsageCollector(protocolName: "openAi"), date: day, calendar: calendar)
+        let restored = LLMUsageStore(defaults: defaults)
+        XCTAssertEqual(restored.dailyRecords.count, 3)
+        XCTAssertEqual(restored.dailyRecords.first { $0.appID == "a" && $0.day == day }?.tokens, 74)
+        XCTAssertEqual(restored.dailyRecords.reduce(0) { $0 + $1.tokens }, 148)
+        XCTAssertEqual(restored.total.tokens, 248)
+        XCTAssertEqual(restored.groups(byProvider: false).reduce(0) { $0 + $1.totals.tokens }, 248)
+        XCTAssertEqual(restored.groups(byProvider: true).reduce(0) { $0 + $1.totals.tokens }, 248)
+    }
+
+    func testLLMRequestTimeout() throws {
+        let config = LLMConfiguration(provider: "openAi", baseURL: "https://model.example/v1/", model: "test", token: "test-secret")
+        var params: [String: Any] = ["system": "", "messages": [["role": "user", "content": "hello"]], "maxTokens": 512, "timeoutSeconds": 600.0]
+        XCTAssertEqual(try config.request(params).timeoutInterval, 600)
+        for invalid: Any in [0.0, 601.0, -1.0, "600"] {
+            params["timeoutSeconds"] = invalid
+            XCTAssertThrowsError(try config.request(params))
+        }
+    }
+
     func testLLMRequestValidationAndProviderHeaders() throws {
         var config = LLMConfiguration(provider: "openAi", baseURL: "https://model.example/v1/", model: "test", token: "test-secret")
         let params: [String: Any] = ["system": "system prompt", "messages": [["role": "user", "content": "hello"]], "maxTokens": 512]
@@ -333,6 +418,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-secret")
         var body = try XCTUnwrap(JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any])
         XCTAssertEqual((body["messages"] as? [[String: String]])?.first?["role"], "system")
+        XCTAssertEqual((body["stream_options"] as? [String: Bool])?["include_usage"], true)
         config.provider = "anthropic"; config.baseURL = "https://model.example"
         let anthropic = try config.request(params)
         XCTAssertEqual(anthropic.url?.path, "/v1/messages")
@@ -340,6 +426,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(anthropic.value(forHTTPHeaderField: "Authorization"))
         body = try XCTUnwrap(JSONSerialization.jsonObject(with: anthropic.httpBody!) as? [String: Any])
         XCTAssertEqual(body["system"] as? String, "system prompt")
+        XCTAssertNil(body["stream_options"])
         XCTAssertEqual((body["messages"] as? [[String: String]])?.count, 1)
         for base in ["http://model.example", "https://user:pass@model.example", "https://model.example?token=x", "https://model.example/#fragment", "https://model.example/chat/completions"] {
             config.baseURL = base

@@ -566,6 +566,8 @@ del {
   color: var(--danger-0);
 }
 .generating {
+  text-align: right;
+  line-height: 1.6;
   color: var(--success-0);
   font-size: 11px;
   animation: pulse 1.5s infinite;
@@ -981,6 +983,9 @@ select {
   padding: 26px 24px 14px;
   border-bottom: 1px solid var(--border-1);
 }
+.sheet-header:not(.sheet-header-actions) h2 {
+  padding-right: 42px;
+}
 .sheet-header h2 {
   margin: 0;
   font-size: 18px;
@@ -1025,17 +1030,8 @@ select {
 }
 .sheet-close {
   position: absolute;
-  right: 12px;
-  top: 15px;
-  width: 44px;
-  height: 44px;
-  font-size: 26px;
-  color: var(--muted-0);
-}
-/* Keep keyboard focus visible through color without drawing a ring around ×. */
-.sheet-close:focus-visible {
-  outline: none;
-  color: var(--accent-0);
+  right: 14px;
+  top: 20px;
 }
 .sheet-content {
   overflow-y: auto;

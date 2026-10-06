@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAppI18n } from '@lingrove/host-sdk/vue';
+const { t } = useAppI18n();
 import { onBeforeUnmount, ref, watch } from 'vue';
 const props = defineProps<{ open: boolean; title: string; saveForm?: string; saving?: boolean }>();
 const emit = defineEmits<{ close: [] }>();
@@ -75,7 +77,7 @@ function backdrop(event: MouseEvent) {
   <dialog
     ref="dialog"
     class="sheet"
-    :aria-label="title"
+    :aria-label="t(title)"
     @cancel.prevent="dismiss"
     @click="backdrop"
   >
@@ -89,18 +91,18 @@ function backdrop(event: MouseEvent) {
         :disabled="saving"
         @click="dismiss"
       >
-        取消
+        {{ t('取消') }}
       </button>
-      <h2>{{ title }}</h2>
+      <h2>{{ t(title) }}</h2>
       <button v-if="saveForm" type="submit" class="sheet-save" :form="saveForm" :disabled="saving">
-        {{ saving ? '保存中…' : '保存' }}
+        {{ t(saving ? '保存中…' : '保存') }}
       </button>
       <button
         v-else
         autofocus
         type="button"
-        class="sheet-close"
-        aria-label="关闭面板"
+        class="sheet-close lingrove-sheet-close"
+        :aria-label="t('关闭面板')"
         @click="dismiss"
       >
         ×

@@ -32,6 +32,10 @@ npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的
 
 支持 USB 和已在 Xcode 配对的无线连接；安装时设备须在线。多台已配对设备时需要明确指定目标。脚本从任意目录通过 `node /项目路径/scripts/install-ios.mjs` 运行也可。构建会自动更新并校验所有内置子应用，成功后才安装到设备；签名或构建失败会停止。Debug 产物保留在 `build/ios-device/Build/Products/Debug-iphoneos/Lingrove.app`，安装后在手机上打开 Lingrove。
 
+## 子应用界面规范
+
+所有子应用遵守 [子应用 UI 规范](docs/child-app-ui.md)：统一底部导航、完整浅色/暗黑模式、宿主 Home 避让和二级页返回。新应用复用 `@lingrove/host-sdk/ui.css`，具体实施要求见根目录 `AGENTS.md`。
+
 ## 仓库布局
 
 - `ios/Lingrove/`：原生首页、模块更新、安装器、WebView、网络桥、本地存储。

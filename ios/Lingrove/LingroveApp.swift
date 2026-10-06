@@ -28,10 +28,12 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 
 @main struct LingroveApp: App {
     @StateObject private var store = ModuleStore()
+    @AppStorage(AppLanguage.preferenceKey) private var language = "system"
     @AppStorage(AppAppearance.preferenceKey) private var appearance = AppAppearance.system.rawValue
     var body: some Scene {
         WindowGroup {
             HomeView(store: store)
+                .environment(\.locale, Locale(identifier: AppLanguage.resolve(language == "system" ? (Locale.preferredLanguages.first ?? "en") : language)))
                 .preferredColorScheme((AppAppearance(rawValue: appearance) ?? .system).colorScheme)
         }
     }
@@ -77,7 +79,7 @@ struct HomeView: View {
                                     VStack(alignment: .leading, spacing: 4) { Text(module.name).font(.title2.weight(.semibold)); Text("语言学习 · v\(module.version)").font(.caption).foregroundStyle(.secondary) }
                                     Spacer(); Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
                                 }
-                                Text(module.description ?? "独立学习子应用").font(.subheadline).foregroundStyle(.secondary)
+                                Text(AppLanguage.text(module.description ?? "独立学习子应用")).font(.subheadline).foregroundStyle(.secondary)
                                 if store.blocked.contains(module.id) {
                                     Label("暂时无法打开", systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.secondary)
                                 }
@@ -107,7 +109,7 @@ struct HomeView: View {
                                 Button(action: testDebugConnection) {
                                     HStack {
                                         if connectionTest != nil { ProgressView() }
-                                        Text(connectionTest == nil ? "测试连接" : "正在测试…")
+                                        Text(LocalizedStringKey(connectionTest == nil ? "测试连接" : "正在测试…"))
                                     }
                                 }
                                 .disabled(connectionTest != nil || debugAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -128,23 +130,23 @@ struct HomeView: View {
                         Section("外观") {
                             Picker("主题", selection: $draftAppearance) {
                                 ForEach(AppAppearance.allCases) { appearance in
-                                    Text(appearance.title).tag(appearance)
+                                    Text(LocalizedStringKey(appearance.title)).tag(appearance)
                                 }
                             }.accessibilityIdentifier("appearance-picker")
                         }
-                        Section("句子成分翻译语言") {
-                            Picker("翻译语言", selection: $draftAppLanguage) {
+                        Section("App 语言") {
+                            Picker("App 语言", selection: $draftAppLanguage) {
                                 Text("跟随系统").tag("system")
-                                Text("简体中文").tag("zh-Hans")
-                                Text("繁體中文").tag("zh-Hant")
+                                Text(verbatim: "简体中文").tag("zh-Hans")
                                 Text("English").tag("en")
                                 Text("日本語").tag("ja")
-                                Text("Русский").tag("ru")
-                                Text("Ελληνικά").tag("el")
                             }
-                            Text("用于子应用的句子成分翻译，修改后下次分析生效。").font(.footnote)
+                            Text("用于应用界面和新生成的讲解，已有学习记录保留原语言。").font(.footnote)
                         }
-                        Section("模型服务") { NavigationLink("大模型配置") { LLMSettingsView().onDisappear { networkSummaryRevision += 1 } } }
+                        Section("模型服务") {
+                            NavigationLink("大模型配置") { LLMSettingsView().onDisappear { networkSummaryRevision += 1 } }
+                            NavigationLink("大模型使用统计") { LLMUsageView() }
+                        }
                         Section("子应用") {
                             NavigationLink("版本与更新") { ModuleUpdatesView(store: store) }
                         }
@@ -161,7 +163,7 @@ struct HomeView: View {
                 }
             }
             .task { guard !didCheck else { return }; didCheck = true; do { _ = try LLMStore.load() } catch { modelError = error.localizedDescription }; await store.checkForUpdates() }
-            .alert("模型配置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(modelError) }
+            .alert("模型配置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(AppLanguage.text(modelError)) }
         }.tint(Color(uiColor: LingroveTheme.accent))
         .onChange(of: store.modules) { _, modules in pages.reconcile(modules: modules, blocked: store.blocked) }
         .onChange(of: store.blocked) { _, blocked in pages.reconcile(modules: store.modules, blocked: blocked) }
@@ -208,6 +210,7 @@ struct HomeView: View {
                 let needsReload = previousAddress != address || debugEnabled != draftDebugEnabled
                 UserDefaults.standard.set(address, forKey: DebugServer.preferenceKey)
                 UserDefaults.standard.set(draftAppLanguage, forKey: AppLanguage.preferenceKey)
+                pages.updateLanguage()
                 UserDefaults.standard.set(draftAppearance.rawValue, forKey: AppAppearance.preferenceKey)
                 debugAddress = address
                 debugEnabled = draftDebugEnabled
@@ -217,6 +220,7 @@ struct HomeView: View {
             } catch { debugError = error.localizedDescription }
         } else {
             UserDefaults.standard.set(draftAppLanguage, forKey: AppLanguage.preferenceKey)
+                pages.updateLanguage()
             UserDefaults.standard.set(draftAppearance.rawValue, forKey: AppAppearance.preferenceKey)
             showingSettings = false
         }
@@ -237,7 +241,7 @@ struct ModuleUpdatesView: View {
                 } label: {
                     HStack {
                         if store.checking { ProgressView() }
-                        Text(store.checking ? "正在检查更新…" : "检查更新")
+                        Text(LocalizedStringKey(store.checking ? "正在检查更新…" : "检查更新"))
                     }
                 }.disabled(store.checking)
                 if !store.notice.isEmpty {

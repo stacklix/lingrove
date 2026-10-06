@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAppI18n } from '@lingrove/host-sdk/vue';
+const { t } = useAppI18n();
 import { onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import { isNative, invoke, createID, streams } from '@lingrove/host-sdk';
 import { eraseAt, copyStrokes } from '../ink';
@@ -247,7 +249,7 @@ defineExpose({ clear });
         ref="canvas"
         width="256"
         height="256"
-        aria-label="手写练习区域"
+        :aria-label="t('手写练习区域')"
         @pointerdown.prevent="down"
         @pointermove.prevent="move"
         @pointerup.prevent="up"
@@ -266,14 +268,14 @@ defineExpose({ clear });
         @click="undo"
         :disabled="disabled || nativeFailed || (native ? !nativeUndo : !undoStack.length)"
       >
-        撤销
+        {{ t('撤销') }}
       </button>
       <button
         v-if="!inlineActions"
         @click="clear"
         :disabled="disabled || nativeFailed || !strokes.length"
       >
-        清空
+        {{ t('清空') }}
       </button>
       <button
         v-if="!compactTools"
@@ -282,35 +284,35 @@ defineExpose({ clear });
         @click="eraser = !eraser"
         :disabled="disabled || nativeFailed"
       >
-        {{ eraser ? '切换为笔' : '橡皮' }}
+        {{ t(eraser ? '切换为笔' : '橡皮') }}
       </button>
       <label
-        ><input
-          type="checkbox"
-          v-model="finger"
-          :disabled="disabled || nativeFailed"
-        />允许手指</label
+        ><input type="checkbox" v-model="finger" :disabled="disabled || nativeFailed" />{{
+          t('允许手指')
+        }}</label
       >
     </div>
     <div v-if="inlineActions" class="pad-actions">
-      <button @click="clear" :disabled="disabled || nativeFailed || !strokes.length">清空</button>
+      <button @click="clear" :disabled="disabled || nativeFailed || !strokes.length">
+        {{ t('清空') }}
+      </button>
       <button
         class="primary"
         :disabled="disabled || nativeFailed || !strokes.length"
         @click="emit('submit', copyStrokes(strokes))"
       >
-        评分 <span>→</span>
+        {{ t('评分') }} <span>→</span>
       </button>
     </div>
-    <p class="pad-hint">直接用 Apple Pencil 在格内书写；可在画板外滑动页面。</p>
-    <p v-if="error" role="alert" class="error">{{ error }}</p>
+    <p class="pad-hint">{{ t('直接用 Apple Pencil 在格内书写；可在画板外滑动页面。') }}</p>
+    <p v-if="error" role="alert" class="error">{{ t(error) }}</p>
     <button
       v-if="!inlineActions"
       class="primary wide"
       :disabled="disabled || nativeFailed || !strokes.length"
       @click="emit('submit', copyStrokes(strokes))"
     >
-      评分 <span>→</span>
+      {{ t('评分') }} <span>→</span>
     </button>
   </div>
 </template>

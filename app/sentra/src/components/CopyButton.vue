@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAppI18n } from '@lingrove/host-sdk/vue';
+const { t } = useAppI18n();
 import { onBeforeUnmount, ref } from 'vue';
 import { copyText } from '@lingrove/host-sdk';
 const props = withDefaults(defineProps<{ text: string; label?: string; disabled?: boolean }>(), {
@@ -36,13 +38,15 @@ async function copy() {
     @click="copy"
   >
     <span aria-live="polite">{{
-      state === 'done'
-        ? '✓ 已复制'
-        : state === 'error'
-          ? '复制失败，重试'
-          : state === 'busy'
-            ? '复制中…'
-            : label
+      t(
+        state === 'done'
+          ? '✓ 已复制'
+          : state === 'error'
+            ? '复制失败，重试'
+            : state === 'busy'
+              ? '复制中…'
+              : label,
+      )
     }}</span>
   </button>
 </template>

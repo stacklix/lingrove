@@ -1,1 +1,11 @@
-{"name":"@lingrove/host-sdk","version":"1.0.0","private":true,"type":"module","exports":"./src/index.ts"}
+{
+  "name": "@lingrove/host-sdk",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ui.css": "./src/ui.css",
+    "./vue": "./src/vue.ts"
+  }
+}

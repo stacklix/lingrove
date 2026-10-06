@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA1800000000000000000001 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = AA1800000000000000000002 /* Localizable.xcstrings */; };
 		141489A826CF22B06D03ED1D /* LingroveApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3141EA1A801FFACD7914DE9 /* LingroveApp.swift */; };
 		2F0589B18B6221B63FA1AA49 /* HostConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 575CB22ADB6835BA1E24AF00 /* HostConfig.json */; };
 		3575B0D523597E73F5E655DF /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72874FE63881988C31D2214A /* RuntimeTests.swift */; };
@@ -41,6 +42,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AA1800000000000000000002 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		172EA4DEE36E904A1A1CA822 /* StoredZIP.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoredZIP.swift; path = Core/StoredZIP.swift; sourceTree = "<group>"; };
 		424092A96CD971389484FF48 /* Module.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Module.swift; path = Core/Module.swift; sourceTree = "<group>"; };
 		4F059FCEF8A8330C554E95DB /* LingroveUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LingroveUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -159,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				575CB22ADB6835BA1E24AF00 /* HostConfig.json */,
+				AA1800000000000000000002 /* Localizable.xcstrings */,
 				82B966B1BABD7DE353B2D837 /* BuiltinModules */,
 				933F35217DDE8A6A251E6580 /* Assets.xcassets */,
 			);
@@ -272,6 +275,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F0589B18B6221B63FA1AA49 /* HostConfig.json in Resources */,
+				AA1800000000000000000001 /* Localizable.xcstrings in Resources */,
 				9BDCF3F994E758EB69D23EE1 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
