@@ -1,0 +1,11 @@
+{
+  "id": "glyphora",
+  "name": "Glyphora",
+  "description": "认识字母，循序渐进。学习日语假名、俄语与希腊语字母，结合书写练习与小测验巩固记忆。",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "minHostVersion": "1.3.0",
+  "bridgeVersion": 1,
+  "stateSchemaVersion": 1,
+  "allowedOrigins": []
+}
