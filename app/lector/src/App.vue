@@ -48,6 +48,7 @@ const narration = useNarration(
   () => result.value?.language,
   tts,
   () => active.value?.speechVoice,
+  () => active.value?.title,
 );
 const {
   position: speechPosition,

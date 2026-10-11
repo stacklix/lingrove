@@ -51,7 +51,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             // A newly installed host may bundle a newer module than its persisted registry.
             var adoptedBuiltin = false
             for (id, builtin) in builtins {
-                if let installed = registry[id], Version(builtin.version)! > Version(installed.active.version)! {
+                if let installed = registry[id], !installed.active.isSnapshot && Version(builtin.version)! > Version(installed.active.version)! {
                     var replacement = Installed(active: builtin, healthy: true)
                     replacement.minimumAllowedVersion = installed.minimumAllowedVersion
                     registry[id] = replacement
@@ -61,7 +61,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             if adoptedBuiltin && registryReadable { try persist() }
             rejectedVersions = (try? JSONDecoder().decode([String: String].self, from: Data(contentsOf: self.root.appendingPathComponent("rejected.json")))) ?? [:]
             refresh()
-            for install in registry.values where !install.healthy && UserDefaults.standard.bool(forKey: "launching.\(install.active.id).\(install.active.version)") { rollback(install.active) }
+            for install in registry.values where !install.healthy && UserDefaults.standard.bool(forKey: "launching.\(install.active.id).\(install.active.resourceIdentity)") { rollback(install.active) }
         } catch { notice = "本地模块读取失败：\(error.localizedDescription)"; refresh() }
     }
     private func refresh() {
@@ -85,30 +85,34 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         refresh()
     }
     private func persist() throws { try JSONEncoder().encode(registry).write(to: registryURL, options: .atomic); refresh() }
+    func isDownloaded(_ module: Module) -> Bool {
+        let manifest = root.appendingPathComponent("Modules/\(module.id)/\(module.resourceIdentity)/manifest.json")
+        return FileManager.default.fileExists(atPath: manifest.path)
+    }
     func directory(for module: Module) -> URL {
-        let downloaded = root.appendingPathComponent("Modules/\(module.id)/\(module.version)")
-        if FileManager.default.fileExists(atPath: downloaded.appendingPathComponent("manifest.json").path) { return downloaded }
+        let downloaded = root.appendingPathComponent("Modules/\(module.id)/\(module.resourceIdentity)")
+        if isDownloaded(module) { return downloaded }
         return builtinRoot!.appendingPathComponent(module.id)
     }
-    func begin(_ module: Module, trackingStartup: Bool = true) { activeSessions.insert(module.id); if trackingStartup && registry[module.id]?.healthy == false { UserDefaults.standard.set(true, forKey: "launching.\(module.id).\(module.version)") } }
+    func begin(_ module: Module, trackingStartup: Bool = true) { activeSessions.insert(module.id); if trackingStartup && registry[module.id]?.healthy == false { UserDefaults.standard.set(true, forKey: "launching.\(module.id).\(module.resourceIdentity)") } }
     func end(_ module: Module) { activeSessions.remove(module.id) }
     func clearLaunchMarker(_ module: Module) {
-        UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.version)")
+        UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.resourceIdentity)")
     }
     func markHealthy(_ module: Module) {
-        guard registry[module.id]?.active.version == module.version else { return }
+        guard registry[module.id]?.active.resourceIdentity == module.resourceIdentity else { return }
         registry[module.id]?.healthy = true
-        UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.version)")
+        UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.resourceIdentity)")
         do { try persist() } catch { notice = "模块状态保存失败" }
     }
     func rollback(_ module: Module) {
-        guard let install = registry[module.id], install.active.version == module.version, !install.healthy else { return }
+        guard let install = registry[module.id], install.active.resourceIdentity == module.resourceIdentity, !install.healthy else { return }
         clearLaunchMarker(module)
-        rejectedVersions[module.id] = module.version
+        rejectedVersions[module.id] = module.resourceIdentity
         do {
             try JSONEncoder().encode(rejectedVersions).write(to: root.appendingPathComponent("rejected.json"), options: .atomic)
             let fallback = install.previous ?? builtins[module.id]
-            if let fallback, fallback.version != module.version, rejectedVersions[module.id] != fallback.version, install.minimumAllowedVersion.flatMap(Version.init).map({ Version(fallback.version)! >= $0 }) ?? true {
+            if let fallback, fallback.resourceIdentity != module.resourceIdentity, rejectedVersions[module.id] != fallback.resourceIdentity, install.minimumAllowedVersion.flatMap(Version.init).map({ Version(fallback.version)! >= $0 }) ?? true {
                 registry[module.id] = Installed(active: fallback, previous: nil, healthy: true, minimumAllowedVersion: install.minimumAllowedVersion)
                 try persist(); statuses[module.id] = "启动失败，已回退至 \(fallback.version)"
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
@@ -126,10 +130,13 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func checkForUpdates() async {
         guard !checking, registryReadable else { return }; checking = true; defer { checking = false }
         statuses.removeAll()
-        guard !config.catalogURL.isEmpty, let url = URL(string: config.catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
+        let catalogURL = config.updateCatalogURL(defaults: defaults)
+        guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
             let catalog = try JSONDecoder().decode(Catalog.self, from: await fetch(url, limit: 1024 * 1024))
             try catalog.validate()
+            // A settings change during a request must not install the previous channel.
+            guard catalogURL == config.updateCatalogURL(defaults: defaults) else { return }
             notice = ""
             for remote in catalog.modules {
                 if let current = modules.first(where: { $0.id == remote.id }) {
@@ -138,25 +145,27 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     try persist()
                 }
                 guard Version(remote.minHostVersion)! <= Version(HostConfiguration.currentVersion)! else { statuses[remote.id] = "请更新 Lingrove 后使用新版"; continue }
-                if let current = modules.first(where: { $0.id == remote.id }), Version(current.version)! >= Version(remote.version)! { statuses[remote.id] = "已是最新版本"; continue }
-                guard rejectedVersions[remote.id] != remote.version else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
+                if let current = modules.first(where: { $0.id == remote.id }), current.isSnapshot == remote.isSnapshot && (remote.isSnapshot
+                    ? current.sha256 == remote.sha256
+                    : Version(current.version)! >= Version(remote.version)!) { statuses[remote.id] = "已是最新版本"; continue }
+                guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
                 statuses[remote.id] = "正在下载 \(remote.version)…"
                 do {
-                    let installed = try await install(remote)
+                    let installed = try await install(remote, catalogURL: catalogURL)
                     statuses[remote.id] = installed ? "已更新至 \(remote.version)" : "发现更新，退出模块后再检查"
                 }
                 catch { statuses[remote.id] = "更新失败，保留本地版本：\(error.localizedDescription)" }
             }
         } catch { notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)" }
     }
-    private func install(_ module: Module) async throws -> Bool {
+    private func install(_ module: Module, catalogURL: String) async throws -> Bool {
         guard let rawURL = module.downloadUrl, let url = URL(string: rawURL), let expectedHash = module.sha256, expectedHash.count == 64,
               let expectedSize = module.size, expectedSize > 0, expectedSize <= 50 * 1024 * 1024 else { throw ModuleError.invalid("下载元数据无效") }
         let data = try await fetch(url, limit: expectedSize)
         guard data.count == expectedSize, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == expectedHash else { throw ModuleError.invalid("安装包哈希不匹配") }
         // A module may have been opened while its package was downloading.
-        guard !activeSessions.contains(module.id) else { return false }
+        guard !activeSessions.contains(module.id), catalogURL == config.updateCatalogURL(defaults: defaults) else { return false }
         let stage = root.appendingPathComponent("staging-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: stage, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: stage) }
@@ -166,7 +175,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         guard manifest.id == module.id, manifest.version == module.version, manifest.entry == module.entry,
               manifest.allowedOrigins == module.allowedOrigins, manifest.minHostVersion == module.minHostVersion,
               FileManager.default.fileExists(atPath: stage.appendingPathComponent(module.entry).path) else { throw ModuleError.invalid("包内清单与目录不一致") }
-        let destination = root.appendingPathComponent("Modules/\(module.id)/\(module.version)")
+        let destination = root.appendingPathComponent("Modules/\(module.id)/\(module.resourceIdentity)")
         try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         if FileManager.default.fileExists(atPath: destination.path) { try FileManager.default.removeItem(at: destination) }
         try FileManager.default.moveItem(at: stage, to: destination)
@@ -175,7 +184,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         registry[module.id] = Installed(active: module, previous: previous, healthy: false, minimumAllowedVersion: module.minimumAllowedVersion)
         do { try persist() } catch { registry = oldRegistry; refresh(); throw error }
         // Keep at most the active and rollback versions; never remove state files.
-        let retained = Set([module.version, previous?.version].compactMap { $0 })
+        let retained = Set([module.resourceIdentity, previous?.resourceIdentity].compactMap { $0 })
         if let versions = try? FileManager.default.contentsOfDirectory(at: destination.deletingLastPathComponent(), includingPropertiesForKeys: nil) {
             for version in versions where !retained.contains(version.lastPathComponent) { try? FileManager.default.removeItem(at: version) }
         }

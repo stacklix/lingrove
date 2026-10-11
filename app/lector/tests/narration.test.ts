@@ -28,6 +28,8 @@ function setup(texts = ['第一句。', '第二句。', '第三句。']) {
       () => texts,
       () => 'zh-CN',
       { ...tts, play },
+      () => undefined,
+      () => '测试文章标题',
     ),
     calls,
     play,
@@ -37,7 +39,8 @@ describe('article narration seeking', () => {
   it('jumps to an ungenerated sentence and ignores stale completion and states', async () => {
     const { narration: n, calls, play } = setup();
     const first = n.seek(0);
-    expect(play.mock.calls[0][1].nextText).toBe('第二句。');
+    expect(play.mock.calls[0][1].title).toBe('测试文章标题');
+    expect(play.mock.calls[0][1].queue).toEqual(['第一句。', '第二句。', '第三句。']);
     expect(n.speakingSentence.value).toBeNull();
     calls[0].emit('playing');
     expect(n.speakingSentence.value).toBe(0);
@@ -54,15 +57,12 @@ describe('article narration seeking', () => {
     expect(n.state.value).toBe('buffering');
     calls[1].emit('playing');
     expect(n.speakingSentence.value).toBe(1);
-    calls[1].emit('ended');
-    expect(n.state.value).toBe('playing');
-    calls[1].resolve();
-    await Promise.resolve();
-    expect(play.mock.calls[2][0].text).toBe('第三句。');
-    expect(play.mock.calls[2][1].nextText).toBeUndefined();
-    calls[2].emit('playing');
+    play.mock.calls[1][1].onChunk(1);
+    calls[1].emit('buffering');
+    calls[1].emit('playing');
     expect(n.speakingSentence.value).toBe(2);
-    calls[2].resolve();
+    expect(play).toHaveBeenCalledTimes(2);
+    calls[1].resolve();
     await second;
     expect(n.position.value).toBe(100);
     expect(n.speakingSentence.value).toBeNull();
@@ -98,14 +98,13 @@ it('seeks to a sentence exactly and keeps pause active between chunks', async ()
   expect(play.mock.calls[0][0].text).toBe(' A longer second sentence.');
   expect(n.requestedSentence.value).toBe(1);
   await n.pause();
-  calls[0].resolve();
-  await Promise.resolve();
-  await Promise.resolve();
+  play.mock.calls[0][1].onChunk(1);
   expect(play).toHaveBeenCalledTimes(1);
   expect(n.state.value).toBe('paused');
   await n.resume();
-  expect(play.mock.calls[1][0].text).toBe('Three.');
-  calls[1].resolve();
+  expect(n.speakingSentence.value).toBe(2);
+  expect(play).toHaveBeenCalledOnce();
+  calls[0].resolve();
   await run;
   expect(n.state.value).toBe('ended');
 });

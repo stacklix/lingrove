@@ -82,16 +82,22 @@ it('streams state before completion and exposes controls for the same native ses
     return true;
   });
   const states: string[] = [];
+  const chunks: number[] = [];
   const playback = tts.play(
     { text: 'こんにちは', language: 'ja' },
-    { onState: (state) => states.push(state) },
+    { title: '読書の時間', queue: ['こんにちは', '次の文'], onChunk: (index) => chunks.push(index), onState: (state) => states.push(state) },
   );
   expect(post.mock.calls[0][0].params.language).toBe('ja');
+  expect(post.mock.calls[0][0].params.title).toBe('読書の時間');
+  expect(post.mock.calls[0][0].params.queue).toEqual(['こんにちは', '次の文']);
   const id = post.mock.calls[0][0].params.id;
   let finished = false;
   void playback.finished.then(() => {
     finished = true;
   });
+  window.__lingroveChunk!(id, JSON.stringify({ chunkIndex: 0 }));
+  expect(chunks).toEqual([0]);
+  expect(states).toEqual([]);
   window.__lingroveChunk!(id, JSON.stringify({ state: 'playing' }));
   expect(states).toEqual(['playing']);
   expect(finished).toBe(false);

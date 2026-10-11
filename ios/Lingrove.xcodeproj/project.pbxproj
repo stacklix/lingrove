@@ -506,6 +506,7 @@
 				DEVELOPMENT_TEAM = A23G28RL2L;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Lingrove/Resources/ReleaseInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Lingrove;
 				INFOPLIST_KEY_CFBundleName = Lingrove;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

@@ -143,6 +143,61 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(brokenStore.modules.first?.version == "1.0.0", "corrupt registry still exposes bundled module")
         await brokenStore.checkForUpdates()
         check(try! String(contentsOf: brokenRoot.appendingPathComponent("registry.json"), encoding: .utf8) == "broken", "corrupt registry preserved without overwrite")
+        let channelDefaults = UserDefaults(suiteName: "channel-tests-\(UUID().uuidString)")!
+        channelDefaults.set(true, forKey: HostConfiguration.snapshotPreferenceKey)
+        let channelConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/catalog.snapshot.json")
+        #if DEBUG
+        check(channelConfig.updateCatalogURL(defaults: channelDefaults).hasSuffix("catalog.snapshot.json"), "Debug selects Snapshot catalog")
+        let channelStore = ModuleStore(root: fixtures.appendingPathComponent("channels"), config: channelConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
+        var snapshot = module
+        snapshot.version = "1.1.0"; snapshot.minHostVersion = bundledModule.minHostVersion; snapshot.minimumAllowedVersion = nil
+        snapshot.downloadUrl = "https://updates.test/module-snapshot.zip"
+        func offerSnapshot(_ fixture: String) throws {
+            let bytes = try Data(contentsOf: fixtures.appendingPathComponent(fixture))
+            snapshot.size = bytes.count
+            snapshot.sha256 = SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined()
+            MockProtocol.responses["/catalog.snapshot.json"] = (200, try catalog(snapshot))
+            MockProtocol.responses["/module-snapshot.zip"] = (200, bytes)
+        }
+        try offerSnapshot("snapshot.zip")
+        await channelStore.checkForUpdates()
+        check(channelStore.modules.first?.resourceIdentity == snapshot.resourceIdentity, "Snapshot installs")
+        let firstSnapshot = snapshot
+        channelStore.markHealthy(snapshot)
+        try offerSnapshot("snapshot-next.zip")
+        await channelStore.checkForUpdates()
+        check(channelStore.modules.first?.resourceIdentity == snapshot.resourceIdentity, "same-version Snapshot updates by hash")
+        check(channelStore.directory(for: firstSnapshot) != channelStore.directory(for: snapshot), "same-version resources remain separate for rollback")
+        channelStore.rollback(snapshot)
+        check(channelStore.modules.first?.resourceIdentity == firstSnapshot.resourceIdentity, "same-version Snapshot startup failure rolls back")
+        await channelStore.checkForUpdates()
+        check(channelStore.modules.first?.resourceIdentity == firstSnapshot.resourceIdentity, "failed Snapshot hash is not reinstalled")
+        var release = firstSnapshot
+        release.downloadUrl = "https://updates.test/module.zip"
+        release.size = archive.count
+        release.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
+        MockProtocol.responses["/catalog.json"] = (200, try catalog(release))
+        MockProtocol.responses["/module.zip"] = (200, archive)
+        channelDefaults.set(false, forKey: HostConfiguration.snapshotPreferenceKey)
+        await channelStore.checkForUpdates()
+        check(channelStore.modules.first?.resourceIdentity == release.resourceIdentity, "disabling Snapshot installs same-version release")
+        channelStore.markHealthy(release)
+        channelDefaults.set(true, forKey: HostConfiguration.snapshotPreferenceKey)
+        try offerSnapshot("snapshot.zip")
+        await channelStore.checkForUpdates()
+        check(channelStore.modules.first?.isSnapshot == true, "reenabling Snapshot returns to Snapshot channel")
+        channelStore.markHealthy(snapshot)
+        snapshot.version = "1.2.0"
+        try offerSnapshot("newer.zip")
+        await channelStore.checkForUpdates()
+        check(channelStore.modules.first?.version == "1.2.0", "newer Snapshot installs")
+        channelStore.markHealthy(snapshot)
+        channelDefaults.set(false, forKey: HostConfiguration.snapshotPreferenceKey)
+        await channelStore.checkForUpdates()
+        check(channelStore.modules.first?.resourceIdentity == release.resourceIdentity, "channel switch allows lower release version")
+        #else
+        check(channelConfig.updateCatalogURL(defaults: channelDefaults).hasSuffix("/catalog.json"), "Release ignores saved Snapshot preference")
+        #endif
         print("All native core checks passed")
     }
 }

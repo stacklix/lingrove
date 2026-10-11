@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
 import UIKit
+import SwiftUI
+import MediaPlayer
 
 // Both adapters request mono, signed 16-bit little-endian PCM at 24 kHz.
 // Keep an odd trailing byte across transport chunks, never across requests.
@@ -87,14 +89,14 @@ struct MiniMaxPCMStream {
 }
 
 extension TTSService {
-    static func preparePCM(_ params: [String: Any], configuration: TTSConfiguration, session: URLSession? = nil) async throws -> Data {
+    static func preparePCM(_ params: [String: Any], configuration: TTSConfiguration, session: URLSession? = nil, usageContext: TTSUsageContext = .preview) async throws -> Data {
         var audio = Data()
-        try await streamPCM(params, configuration: configuration, session: session) { audio.append($0) }
+        try await streamPCM(params, configuration: configuration, session: session, usageContext: usageContext) { audio.append($0) }
         return audio
     }
 
     static func streamPCM(_ params: [String: Any], configuration: TTSConfiguration, session: URLSession? = nil,
-                          receive: @escaping (Data) async throws -> Void) async throws {
+                          usageContext: TTSUsageContext = .preview, receive: @escaping (Data) async throws -> Void) async throws {
         try Task.checkCancellation()
         let request = try configuration.request(params, streaming: true)
         let settings = session?.configuration ?? URLSessionConfiguration.ephemeral
@@ -103,6 +105,7 @@ extension TTSService {
         settings.httpCookieStorage = nil; settings.httpShouldSetCookies = false; settings.urlCache = nil
         let connection = URLSession(configuration: settings, delegate: NoRedirect(), delegateQueue: nil)
         defer { connection.invalidateAndCancel() }
+        await TTSUsageStore.shared.record(context: usageContext, request: request)
         let (bytes, response) = try await connection.bytes(for: request)
         guard let http = response as? HTTPURLResponse else { throw ModuleError.invalid("语音服务响应无效") }
         guard (200..<300).contains(http.statusCode) else { throw ModuleError.invalid("朗读失败，请检查「语音合成」中的设置和可用额度。") }
@@ -158,12 +161,14 @@ enum TTSPlaybackState: String { case buffering, playing, paused, ended, stopped,
 
 @MainActor final class TTSPlayback {
     private static weak var active: TTSPlayback?
+    var onChunk: ((Int) -> Void)?
     private let engine = AVAudioEngine()
     private let node = AVAudioPlayerNode()
     private let format = AVAudioFormat(standardFormatWithSampleRate: 24000, channels: 1)!
     private let onState: (TTSPlaybackState) async -> Void
     private var events: Task<Void, Never>?
     private var worker: Task<Void, Error>?
+    private var queuedAudio: Task<Data, Error>?
     private var drain: CheckedContinuation<Void, Error>?
     private var observers: [NSObjectProtocol] = []
     private var started = false
@@ -186,42 +191,64 @@ enum TTSPlaybackState: String { case buffering, playing, paused, ended, stopped,
         engine.connect(node, to: engine.mainMixerNode, format: format)
     }
 
-    func run(_ params: [String: Any], configuration: TTSConfiguration, session: URLSession? = nil, prepared: Task<Data, Error>? = nil) async throws {
+    func run(_ params: [String: Any], configuration: TTSConfiguration, session: URLSession? = nil, prepared: Task<Data, Error>? = nil, artwork: UIImage? = nil, usageContext: TTSUsageContext = .preview) async throws {
         defer { prepared?.cancel() }
         try Task.checkCancellation()
         guard !stopped else { throw CancellationError() }
         Self.active?.stop()
         Self.active = self
+        let contentTitle = (params["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        HostPlayback.shared.attach(self, title: contentTitle.isEmpty ? usageContext.appName : String(contentTitle.prefix(512)), image: artwork)
         report(paused ? .paused : .buffering)
         observeInterruptions()
         defer { dispose() }
         do {
             try await withTaskCancellationHandler {
-                let task = Task {
-                    if let prepared {
-                        try await withTaskCancellationHandler {
-                            let data = try await prepared.value
-                            try Task.checkCancellation()
-                            try self.enqueue(data)
-                        } onCancel: { prepared.cancel() }
-                    } else {
-                        try await TTSService.streamPCM(params, configuration: configuration, session: session) { data in
-                            try self.enqueue(data)
+                let texts = params["queue"] as? [String] ?? [params["text"] as? String ?? ""]
+                var readyAudio = prepared
+                defer { queuedAudio?.cancel(); queuedAudio = nil }
+                for (index, text) in texts.enumerated() {
+                    try Task.checkCancellation()
+                    guard !stopped else { throw CancellationError() }
+                    onChunk?(index)
+                    var current = params
+                    current["text"] = text
+                    let currentParams = current
+                    inputEnded = false
+                    report(paused ? .paused : .buffering)
+                    let preparedChunk = readyAudio
+                    if index + 1 < texts.count {
+                        var next = params; next["text"] = texts[index + 1]
+                        let nextParams = next
+                        queuedAudio = Task { try await TTSService.preparePCM(nextParams, configuration: configuration, session: session, usageContext: usageContext) }
+                    } else { queuedAudio = nil }
+                    readyAudio = queuedAudio
+                    let task = Task {
+                        if let prepared = preparedChunk {
+                            try await withTaskCancellationHandler {
+                                let data = try await prepared.value
+                                try Task.checkCancellation()
+                                try self.enqueue(data)
+                            } onCancel: { prepared.cancel() }
+                        } else {
+                            try await TTSService.streamPCM(currentParams, configuration: configuration, session: session, usageContext: usageContext) { data in
+                                try self.enqueue(data)
+                            }
                         }
                     }
+                    worker = task
+                    try await task.value
+                    worker = nil
+                    try Task.checkCancellation()
+                    guard !stopped else { throw CancellationError() }
+                    inputEnded = true
+                    startWhenBuffered()
+                    if queuedFrames > 0 {
+                        try await withCheckedThrowingContinuation { drain = $0 }
+                    }
+                    try Task.checkCancellation()
+                    guard !stopped else { throw CancellationError() }
                 }
-                worker = task
-                try await task.value
-                worker = nil
-                try Task.checkCancellation()
-                guard !stopped else { throw CancellationError() }
-                inputEnded = true
-                startWhenBuffered()
-                if queuedFrames > 0 {
-                    try await withCheckedThrowingContinuation { drain = $0 }
-                }
-                try Task.checkCancellation()
-                guard !stopped else { throw CancellationError() }
             } onCancel: {
                 Task { @MainActor in self.stop() }
             }
@@ -252,6 +279,7 @@ enum TTSPlaybackState: String { case buffering, playing, paused, ended, stopped,
         guard !stopped, state != .ended, state != .error else { return }
         stopped = true
         worker?.cancel()
+        queuedAudio?.cancel()
         generation = UUID()
         node.stop(); engine.stop()
         deactivateAudio()
@@ -318,11 +346,12 @@ enum TTSPlaybackState: String { case buffering, playing, paused, ended, stopped,
         // Emit the initial buffering state too; all later transitions are deduplicated.
         guard value != state || events == nil else { return }
         state = value
+        HostPlayback.shared.update(self)
         let previous = events, sink = onState
         events = Task { await previous?.value; await sink(value) }
     }
     private func observeInterruptions() {
-        for name in [AVAudioSession.interruptionNotification, UIApplication.didEnterBackgroundNotification] {
+        for name in [AVAudioSession.interruptionNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 Task { @MainActor in self?.stop() }
             })
@@ -347,5 +376,109 @@ enum TTSPlaybackState: String { case buffering, playing, paused, ended, stopped,
         node.stop(); engine.stop()
         deactivateAudio()
         if Self.active === self { Self.active = nil }
+    }
+}
+
+/// One shared control surface for native playback, independent of the visible WebView.
+@MainActor final class HostPlayback: ObservableObject {
+    static let shared = HostPlayback()
+    @Published private(set) var player: TTSPlayback?
+    @Published private(set) var title = ""
+    @Published private(set) var cover: UIImage?
+    private var artwork: MPMediaItemArtwork?
+    @Published private(set) var state: TTSPlaybackState = .stopped
+    private init() {
+        let commands = MPRemoteCommandCenter.shared()
+        commands.playCommand.addTarget { _ in
+            Task { @MainActor in Self.shared.player?.resume() }; return .success
+        }
+        commands.pauseCommand.addTarget { _ in
+            Task { @MainActor in Self.shared.player?.pause() }; return .success
+        }
+        commands.togglePlayPauseCommand.addTarget { _ in
+            Task { @MainActor in Self.shared.toggle() }; return .success
+        }
+        setCommands(false)
+    }
+    private func setCommands(_ enabled: Bool) {
+        let commands = MPRemoteCommandCenter.shared()
+        for command in [commands.playCommand, commands.pauseCommand, commands.togglePlayPauseCommand] {
+            command.isEnabled = enabled
+        }
+        // The system transport offers pause/resume; explicit stop lives in the app.
+        commands.stopCommand.isEnabled = false
+    }
+    func attach(_ player: TTSPlayback, title: String, image: UIImage? = nil) {
+        self.player = player; self.title = title
+        let image = image ?? Self.defaultCover()
+        cover = image
+        artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        setCommands(true)
+        update(player)
+    }
+    func update(_ player: TTSPlayback) {
+        guard self.player === player else { return }
+        state = player.state
+        if [.ended, .stopped, .error].contains(state) {
+            self.player = nil
+            setCommands(false)
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        } else {
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = [
+                MPMediaItemPropertyArtwork: artwork as Any,
+                MPMediaItemPropertyTitle: title,
+                MPMediaItemPropertyArtist: "Lingrove",
+                // Buffering retains playback intent so the system still offers pause.
+                MPNowPlayingInfoPropertyPlaybackRate: state == .paused ? 0.0 : 1.0,
+                MPNowPlayingInfoPropertyIsLiveStream: false
+            ]
+        }
+    }
+    private static func defaultCover() -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: 512, height: 512)).image { _ in
+            UIColor(red: 0.20, green: 0.32, blue: 0.25, alpha: 1).setFill()
+            UIBezierPath(rect: CGRect(x: 0, y: 0, width: 512, height: 512)).fill()
+            UIImage(systemName: "waveform", withConfiguration: UIImage.SymbolConfiguration(pointSize: 240, weight: .medium))?
+                .withTintColor(.white, renderingMode: .alwaysOriginal)
+                .draw(in: CGRect(x: 112, y: 136, width: 288, height: 240))
+        }
+    }
+    func toggle() {
+        if state == .paused { player?.resume() } else { player?.pause() }
+    }
+}
+
+struct HostPlaybackControls: View {
+    @ObservedObject private var playback = HostPlayback.shared
+    var body: some View {
+        if playback.player != nil {
+            HStack(spacing: 16) {
+                if let cover = playback.cover {
+                    Image(uiImage: cover).resizable().scaledToFill()
+                        .frame(width: 40, height: 40).clipShape(RoundedRectangle(cornerRadius: 10))
+                        .accessibilityHidden(true)
+                }
+                if playback.state == .buffering { ProgressView().tint(Color(uiColor: LingroveTheme.accent)) }
+                Text(playback.title).font(.subheadline).lineLimit(1)
+                Spacer(minLength: 0)
+                Button { playback.toggle() } label: {
+                    Image(systemName: playback.state == .paused ? "play.fill" : "pause.fill").frame(width: 44, height: 44)
+                        .foregroundStyle(Color(uiColor: LingroveTheme.onAccent))
+                        .background(Color(uiColor: LingroveTheme.accent), in: Circle())
+                }.buttonStyle(.plain).accessibilityLabel(playback.state == .paused ? "继续播放" : "暂停播放")
+                    .accessibilityIdentifier("host-playback-toggle")
+                Button { playback.player?.stop() } label: {
+                    Image(systemName: "stop.fill").frame(width: 44, height: 44)
+                        .foregroundStyle(Color(uiColor: .label))
+                        .background(Color(uiColor: .tertiarySystemFill), in: Circle())
+                }.buttonStyle(.plain).accessibilityLabel("停止朗读").accessibilityIdentifier("host-playback-stop")
+            }
+            .padding(.horizontal, 16).padding(.vertical, 6)
+            .background(Color(uiColor: LingroveTheme.surface))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color(uiColor: .separator), lineWidth: 1))
+            .padding(.horizontal)
+            .accessibilityIdentifier("host-playback-controls")
+        }
     }
 }

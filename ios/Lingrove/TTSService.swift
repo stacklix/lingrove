@@ -518,7 +518,8 @@ enum TTSService {
     static let maximumAudioBytes = 8 * 1024 * 1024
     static let maximumResponseBytes = maximumAudioBytes * 2 + 1024 * 1024
 
-    static func synthesize(_ params: [String: Any], configuration: TTSConfiguration, session: URLSession? = nil) async throws -> TTSAudio {
+    static func synthesize(_ params: [String: Any], configuration: TTSConfiguration, session: URLSession? = nil, usageContext: TTSUsageContext = .preview) async throws -> TTSAudio {
+        try Task.checkCancellation()
         let request = try configuration.request(params)
         let settings = session?.configuration ?? URLSessionConfiguration.ephemeral
         settings.timeoutIntervalForRequest = 120
@@ -528,6 +529,7 @@ enum TTSService {
         settings.urlCache = nil
         let connection = URLSession(configuration: settings, delegate: NoRedirect(), delegateQueue: nil)
         defer { connection.invalidateAndCancel() }
+        await TTSUsageStore.shared.record(context: usageContext, request: request)
         let (bytes, response) = try await connection.bytes(for: request)
         guard let http = response as? HTTPURLResponse else { throw ModuleError.invalid("语音服务响应无效") }
         guard (200..<300).contains(http.statusCode) else { throw ModuleError.invalid("朗读失败，请检查「语音合成」中的设置和可用额度。") }

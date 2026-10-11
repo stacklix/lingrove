@@ -1784,7 +1784,7 @@
     "ja": "· 原文の位置"
   },
   "字符": {
-    "en": "characters",
+    "en": "Characters",
     "ja": "文字"
   },
   "段落完成率": {
@@ -5047,10 +5047,6 @@
     "en": "Speech synthesis",
     "ja": "音声合成"
   },
-  "通用模型使用统计": {
-    "en": "General-purpose model usage",
-    "ja": "汎用モデルの利用状況"
-  },
   "通用模型设置读取失败": {
     "en": "Could not load general-purpose model settings",
     "ja": "汎用モデル設定を読み込めませんでした"
@@ -5342,5 +5338,145 @@
   "回到当前句": {
     "en": "Back to current sentence",
     "ja": "再生中の文に戻る"
+  },
+  "模型使用统计": {
+    "en": "Model usage",
+    "ja": "モデルの利用状況"
+  },
+  "模型类型": {
+    "en": "Model type",
+    "ja": "モデルの種類"
+  },
+  "语音模型": {
+    "en": "Speech models",
+    "ja": "音声モデル"
+  },
+  "语音试听": {
+    "en": "Voice preview",
+    "ja": "音声プレビュー"
+  },
+  "提交字符数": {
+    "en": "Submitted characters",
+    "ja": "送信文字数"
+  },
+  "暂无语音使用记录，使用语音合成后将自动统计。": {
+    "en": "No speech usage yet. Usage is recorded automatically when you synthesize speech.",
+    "ja": "音声の利用記録はまだありません。音声合成を使用すると自動的に記録されます。"
+  },
+  "语音统计从启用后开始累计。请求数包含失败、取消、预加载和设置页试听；复用音频不重复计数。提交字符数按实际发送文本的字符数量记录，不代表服务商计费字符或 Token。": {
+    "en": "Speech usage accumulates from when tracking is enabled. Requests include failures, cancellations, preloads, and voice previews in settings. Reusing audio is not counted again. Submitted characters count characters in the text sent, not provider-billed characters or tokens.",
+    "ja": "音声の利用状況は統計の有効化後から累計されます。リクエスト数には失敗、キャンセル、先読み、設定画面での試聴が含まれます。音声の再利用は重複計上されません。送信文字数は実際に送信したテキストの文字数であり、サービスの課金文字数やトークン数ではありません。"
+  },
+  "累计字符": {
+    "en": "Total characters",
+    "ja": "累計文字数"
+  },
+  "字符占比": {
+    "en": "Character share",
+    "ja": "文字数の割合"
+  },
+  "每日字符用量": {
+    "en": "Daily character usage",
+    "ja": "日別文字数"
+  },
+  "暂无每日字符用量，新的语音请求将自动记录。": {
+    "en": "No daily character usage yet. New speech requests are recorded automatically.",
+    "ja": "日別文字数はまだありません。新しい音声リクエストから自動的に記録されます。"
+  },
+  "按语音请求发起时的本地日期归集提交字符数。左右滑动可查看其他日期；此前未记录日期的累计用量不计入每日图表。": {
+    "en": "Submitted characters are grouped by the local date when a speech request starts. Swipe to view other dates. Earlier usage without a recorded date is excluded from the daily chart.",
+    "ja": "音声リクエスト開始時の現地日付で送信文字数を集計します。左右にスワイプして他の日付を表示できます。日付が記録されていない過去の累計は日別グラフに含まれません。"
+  },
+  "%@ 字符": {
+    "en": "%@ characters",
+    "ja": "%@ 文字"
+  },
+  "开发模式": {
+    "en": "Development mode",
+    "ja": "開発モード"
+  },
+  "Snapshot": {
+    "en": "Snapshot",
+    "ja": "Snapshot"
+  },
+  "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。开发模式的服务器资源优先加载。": {
+    "en": "Enable Snapshot updates from master; disable to use releases from the latest tag. Development server resources take priority.",
+    "ja": "オンにすると master の Snapshot、オフにすると最新タグの正式版を取得します。開発サーバーのリソースが優先されます。"
+  },
+  "编辑": {
+    "en": "Edit",
+    "ja": "編集"
+  },
+  "点击应用查看来源、版本和文件信息。": {
+    "en": "Tap an app to view its source, version, and files.",
+    "ja": "アプリをタップして提供元、バージョン、ファイル情報を確認します。"
+  },
+  "当前加载资源": {
+    "en": "Currently loaded resources",
+    "ja": "現在の読み込み元"
+  },
+  "来源": {
+    "en": "Source",
+    "ja": "提供元"
+  },
+  "开发服务器": {
+    "en": "Development server",
+    "ja": "開発サーバー"
+  },
+  "地址": {
+    "en": "Address",
+    "ja": "アドレス"
+  },
+  "文件名": {
+    "en": "Filename",
+    "ja": "ファイル名"
+  },
+  "开发模式正在使用服务器资源，以下为本机安装包的信息。": {
+    "en": "Development mode is using server resources. Local installation details are shown below.",
+    "ja": "開発モードではサーバーのリソースを使用しています。以下はローカルにインストールされたアプリの情報です。"
+  },
+  "本机应用": {
+    "en": "Local installation",
+    "ja": "ローカルアプリ"
+  },
+  "Snapshot 下载": {
+    "en": "Snapshot download",
+    "ja": "Snapshot ダウンロード"
+  },
+  "Release 下载": {
+    "en": "Release download",
+    "ja": "Release ダウンロード"
+  },
+  "宿主内置": {
+    "en": "Bundled with host",
+    "ja": "ホスト内蔵"
+  },
+  "版本": {
+    "en": "Version",
+    "ja": "バージョン"
+  },
+  "下载地址": {
+    "en": "Download URL",
+    "ja": "ダウンロード URL"
+  },
+  "内置应用随宿主安装，未使用 ZIP 下载包。": {
+    "en": "Bundled apps are installed with the host without a downloaded ZIP package.",
+    "ja": "内蔵アプリはホストとともにインストールされ、ZIP のダウンロードパッケージは使用しません。"
+  },
+  "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。调试模式的服务器资源优先加载。": {
+    "en": "Enable Snapshot updates from master; disable to use releases from the latest tag. Debug server resources take priority.",
+    "ja": "オンにすると master の Snapshot、オフにすると最新タグの正式版を取得します。デバッグサーバーのリソースが優先されます。"
+  },
+  "开启前验证服务器连接，连接成功后使用服务器资源。修改地址后需重新开启调试模式。": {
+    "en": "The server connection is checked before enabling debug mode. Re-enable debug mode after changing the address.",
+    "ja": "有効にする前にサーバー接続を確認します。アドレスを変更した後はデバッグモードを再度有効にしてください。"
+  },
+  "填写服务器根地址，子应用从 /子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。": {
+    "en": "Enter the server root URL. Apps load from /app-ID/index.html. Debug mode requires a reachable address.",
+    "ja": "サーバーのルート URL を入力してください。アプリは /アプリID/index.html から読み込まれます。デバッグモードには接続可能なアドレスが必要です。"
+  },
+  "调试模式正在使用服务器资源，以下为本机安装包的信息。": {
+    "en": "Debug mode is using server resources. Local installation details are shown below.",
+    "ja": "デバッグモードではサーバーのリソースを使用しています。以下はローカルアプリの情報です。"
   }
 }

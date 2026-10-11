@@ -1,4 +1,5 @@
 """Validate the exact catalog, ZIP packages and browser files before publishing."""
+import argparse
 import hashlib
 import json
 from pathlib import Path
@@ -7,9 +8,14 @@ from urllib.parse import urlparse
 import zipfile
 
 root = Path(__file__).resolve().parent.parent
-output = root / 'dist'
+parser = argparse.ArgumentParser()
+parser.add_argument('--output', type=Path, default=root / 'dist')
+parser.add_argument('--snapshot', action='store_true')
+args = parser.parse_args()
+output = args.output
+suffix = '-snapshot' if args.snapshot else ''
 expected = json.loads((root / 'modules.json').read_text())
-catalog = json.loads((output / 'catalog.json').read_text())
+catalog = json.loads((output / ('catalog.snapshot.json' if args.snapshot else 'catalog.json')).read_text())
 assert set(catalog) == {'modules'}, 'Catalog must be plain JSON with modules'
 assert [module['id'] for module in catalog['modules']] == expected, 'Catalog does not match modules.json'
 assert (output / 'index.html').is_file() and (output / '.nojekyll').is_file()
@@ -22,8 +28,8 @@ for module in catalog['modules']:
     assert web_url.scheme == zip_url.scheme == 'https'
     assert web_url.netloc == zip_url.netloc
     assert web_url.path.endswith(f'/{name}/')
-    assert zip_url.path.endswith(f'/packages/{name}-{module["version"]}.zip')
-    package = output / 'packages' / f'{name}-{module["version"]}.zip'
+    assert zip_url.path.endswith(f'/packages/{name}-{module["version"]}{suffix}.zip')
+    package = output / 'packages' / f'{name}-{module["version"]}{suffix}.zip'
     data = package.read_bytes()
     assert len(data) == module['size'], f'{name}: size mismatch'
     assert hashlib.sha256(data).hexdigest() == module['sha256'], f'{name}: hash mismatch'

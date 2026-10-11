@@ -6,6 +6,7 @@ export function useNarration(
   language: () => string | undefined,
   player = tts,
   voice: () => string | undefined = () => undefined,
+  title: () => string | undefined = () => undefined,
 ) {
   const position = ref(0);
   const state = ref('idle');
@@ -13,7 +14,6 @@ export function useNarration(
   const speakingSentence = ref<number | null>(null);
   let generation = 0;
   let paused = false;
-  let resumeWaiting: (() => void) | undefined;
   const requestedSentence = ref<number | null>(null);
   let playback: TTSPlayback | undefined;
   const stop = () => {
@@ -24,8 +24,6 @@ export function useNarration(
     speakingSentence.value = null;
     requestedSentence.value = null;
     paused = false;
-    resumeWaiting?.();
-    resumeWaiting = undefined;
     void old?.stop().catch(() => {});
   };
   const playFrom = async (percent: number, exactSentence?: number) => {
@@ -63,31 +61,30 @@ export function useNarration(
           offset += text.length;
         }
       }
-      for (let i = 0; i < chunks.length; i++) {
-        const { text: chunk, sentence: sentenceIndex, offset: chunkOffset } = chunks[i];
-        if (paused && ticket === generation)
-          await new Promise<void>((resolve) => {
-            resumeWaiting = resolve;
-          });
-        if (ticket !== generation) return;
-        requestedSentence.value = sentenceIndex;
-        position.value = total ? (chunkOffset / total) * 100 : 0;
-        if (chunk.trim()) {
-          state.value = 'buffering';
-          playback = player.play(
-            { text: chunk, language: spokenLanguage, ...(voice() ? { voice: voice() } : {}) },
-            {
-              nextText: chunks[i + 1]?.text,
-              onState: (value) => {
-                if (ticket !== generation || value === 'ended') return;
-                state.value = paused && ['playing', 'buffering'].includes(value) ? 'paused' : value;
-                if (value === 'playing') speakingSentence.value = sentenceIndex;
-              },
-            },
-          );
-          await playback.finished;
-        }
-      }
+      if (!chunks.length) return;
+      let currentChunk = 0;
+      state.value = 'buffering';
+      playback = player.play(
+        { text: chunks[0].text, language: spokenLanguage, ...(voice() ? { voice: voice() } : {}) },
+        {
+          title: title(),
+          queue: chunks.map((chunk) => chunk.text),
+          onChunk: (index) => {
+            if (ticket !== generation || !chunks[index]) return;
+            currentChunk = index;
+            requestedSentence.value = chunks[index].sentence;
+            position.value = total ? (chunks[index].offset / total) * 100 : 0;
+          },
+          onState: (value) => {
+            if (ticket !== generation || value === 'ended') return;
+            paused = value === 'paused';
+            state.value = value;
+            if (value === 'playing') speakingSentence.value = chunks[currentChunk].sentence;
+          },
+        },
+      );
+      position.value = total ? (chunks[0].offset / total) * 100 : 0;
+      await playback.finished;
       if (ticket === generation) {
         playback = undefined;
         position.value = 100;
@@ -129,8 +126,6 @@ export function useNarration(
     const ticket = generation;
     paused = false;
     state.value = 'buffering';
-    resumeWaiting?.();
-    resumeWaiting = undefined;
     try {
       await playback?.resume();
     } catch (e) {

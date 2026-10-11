@@ -46,7 +46,7 @@ npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的
 
 ## 唯一的宿主后端接口
 
-原生冷启动通过 HTTPS 请求 `HostConfig.json` 中的 `catalogURL`。目录可以是 CDN 上的静态 `catalog.json`，无需动态业务服务器、登录鉴权或发布密钥。接口返回 HTTP 200 和普通 JSON：
+原生冷启动通过 HTTPS 请求 `HostConfig.json` 中的 `catalogURL`（Debug 中启用 Snapshot 时使用 `snapshotCatalogURL`）。目录可以是 CDN 上的静态 `catalog.json`，无需动态业务服务器、登录鉴权或发布密钥。接口返回 HTTP 200 和普通 JSON：
 
 ```json
 {"modules": []}
@@ -70,16 +70,16 @@ MODULE_BASE_URL=https://your-domain.example npm run build:release
 3. 在 `ios/Lingrove/Resources/HostConfig.json` 填入唯一配置：
 
 ```json
-{"catalogURL":"https://your-domain.example/catalog.json"}
+{"catalogURL":"https://your-domain.example/catalog.json","snapshotCatalogURL":"https://your-domain.example/catalog.snapshot.json"}
 ```
 
 4. 构建原生 App。以后修改子应用并提升对应 `app/<子应用ID>/manifest.json` 中的版本，再构建发布，即可在下一次冷启动自动更新。
 
-发布顺序：先上传不可变版本 ZIP，再替换目录。`catalog.json` 建议 `Cache-Control: no-cache`；版本包可设 immutable。GitHub Actions 直接构建并发布普通 JSON 目录，不需要配置发布密钥 Secret。
+发布顺序：先上传不可变版本 ZIP，再替换目录。`catalog.json`、`catalog.snapshot.json` 建议 `Cache-Control: no-cache`；Snapshot ZIP 同版本会更新，不应设置 immutable。GitHub Actions 直接构建并发布普通 JSON 目录，不需要配置发布密钥 Secret。
 
 ## GitHub Actions 发布
 
-`.github/workflows/build-gh-pages.yml` 在推送 `master` 时自动执行，也可从 Actions 手动触发（选择 `master`）。流程安装锁定依赖、检查 TypeScript、运行测试，再构建并校验发布产物；校验通过才将 `dist/` 发布到 `gh-pages` 分支根目录。无需额外发布密钥 Secret。
+`.github/workflows/build-gh-pages.yml` 在推送 `master` 或 tag 时自动执行，也可从 Actions 手动触发（选择 `master`）。始终检出最新 `master`，生成带 `-snapshot.zip` 后缀的 Debug 包与 `catalog.snapshot.json`。有 tag 时按 Git `creatordate` 降序选择最新 tag（附注 tag 使用创建时间，轻量 tag 使用提交时间），在隔离目录用该 tag 的源码和锁定依赖构建 production 正式包，ZIP 不带后缀，目录为 `catalog.json`；没有 tag 则不生成正式包及正式目录。流程先检查 TypeScript、运行测试，再构建并校验两类产物；校验通过才将 `dist/` 发布到 `gh-pages` 分支根目录。无需额外发布密钥 Secret。
 
 发布后的分支结构：
 
@@ -88,10 +88,12 @@ gh-pages/
 ├── .nojekyll
 ├── CNAME
 ├── index.html
-├── catalog.json                  # App 启动拉取的包信息
+├── catalog.snapshot.json         # master Snapshot 目录
+├── catalog.json                  # 最新 tag 正式目录（有 tag 时）
+├── release/                      # 最新 tag 网页与 packages/*.zip（有 tag 时）
 ├── packages/
-│   ├── sentra-1.1.1.zip           # 每个子应用独立版本包
-│   └── glyphora-1.0.0.zip
+│   ├── sentra-1.1.1-snapshot.zip  # master 快照包
+│   └── glyphora-1.0.0-snapshot.zip
 ├── glyphora/                     # 子应用网页及资源
 └── sentra/
     ├── index.html                # 浏览器可直接访问
@@ -101,20 +103,25 @@ gh-pages/
 
 沿用仓库的域名 `lingrove.stackli.me`，对应地址为：
 
-- App 更新目录：`https://lingrove.stackli.me/catalog.json`
-- Sentra ZIP：`https://lingrove.stackli.me/packages/sentra-1.1.1.zip`（版本变化后文件名相应变化）
+- Snapshot 更新目录：`https://lingrove.stackli.me/catalog.snapshot.json`
+- 正式版更新目录：`https://lingrove.stackli.me/catalog.json`
+- Sentra ZIP：`https://lingrove.stackli.me/release/packages/sentra-1.1.1.zip`（版本变化后文件名相应变化）
 - Sentra 网页：`https://lingrove.stackli.me/sentra/`
 - Glyphora 网页：`https://lingrove.stackli.me/glyphora/`
 
 目录为普通 `{ "modules": [...] }` JSON；模块记录包含 `webUrl`、`downloadUrl`、版本、包大小和 SHA-256。原生根据 `downloadUrl` 下载；`webUrl` 供浏览器访问。`npm run verify:release` 验证目录与所有包一一对应、哈希及大小正确、ZIP 与网页目录一致、HTML 引用的资源存在。
 
-每次运行还保存一份 `lingrove-release` Actions artifact，保留 14 天。发布保留既有的单提交策略：只替换 `gh-pages` 产物分支，`master` 源码历史不变。仓库规则须允许 Actions 的 `GITHUB_TOKEN` 写入及强推 `gh-pages`；工作流同时申请 `pages: write` 以请求 Pages 构建。
+每次运行还保存一份 `lingrove-channels` Actions artifact，保留 14 天。发布保留既有的单提交策略：只替换 `gh-pages` 产物分支，`master` 源码历史不变。仓库规则须允许 Actions 的 `GITHUB_TOKEN` 写入及强推 `gh-pages`；工作流同时申请 `pages: write` 以请求 Pages 构建。
 
 仓库现有 GitHub Pages 配置为 `gh-pages` 分支根目录、自定义域名 `lingrove.stackli.me`。因为 `GITHUB_TOKEN` 推送不会自动触发分支式 Pages 构建，工作流推送后通过 [GitHub Pages 构建 API](https://docs.github.com/en/rest/pages/pages#request-a-github-pages-build) 显式触发构建，并等待本次产物提交构建成功；失败或超时会使工作流失败。无需切换 Pages 发布源，也不会修改 DNS 设置。
 
 新增子应用时，在 `app/<子应用ID>/` 下创建项目；根 `package.json` 已通过 `app/*` 自动识别工作区。在 `modules.json` 中加入子应用 ID（不带 `app/` 前缀），提供 `package.json` 中的 `build` 命令和 `manifest.json`，并将 Vite 的 `outDir` 设置为 `../../dist/<子应用ID>`；manifest 的 `id` 与子目录名保持一致。添加工作区后运行 `npm install` 更新锁文件。统一构建脚本会依次构建清单中的所有子应用并生成相应 ZIP、网页目录和原生内置资源。
 
 ## 更新行为
+
+Debug 宿主设置中提供独立的 Snapshot 开关，默认关闭；切换后关闭设置页即检查所选渠道。“开发模式”分区内的“调试模式”开关控制本地服务器资源，开启前必须验证地址及所有子应用入口可访问；失败显示错误且保持关闭，修改地址会关闭调试模式并要求重新验证。Snapshot 或调试模式任一开启即显示刷新按钮；仅开启 Snapshot 时刷新先检查更新，再重新加载子应用。调试服务器资源优先于已下载资源。Release 宿主始终使用正式目录。
+
+Snapshot 使用 SHA-256 识别同版本的新构建；切回正式渠道允许安装同版本或较低版本的 release。下载资源按版本、渠道和哈希分开存放，保留上一构建以支持失败回退，不改动学习数据。发布前无 tag 时正式目录不可用，App 保留现有可用资源。
 
 - 首页立即展示；冷启动检查完成前暂不进入模块。
 - 检查目录中的所有模块，逐个下载兼容的新版本；目录中新模块也会安装。
@@ -241,10 +248,10 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 ## 调试模式与服务器资源
 
-默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release；宿主设置中显示“调试模式”，开关默认开启。关闭后隐藏宿主与子应用的刷新按钮，并使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；调整后自动保存，左上角“返回”关闭设置；调试资源变更会在关闭设置时重新加载。Release 构建不提供服务器加载能力。
+默认 `npm run build` 输出不压缩的 JS/CSS 和 source map，同时保留离线内置包。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release；宿主设置的“开发模式”分区中提供 Snapshot 和调试模式开关，均默认关闭。任一开启时显示刷新按钮；调试模式关闭后使用本地资源，服务器地址仍可编辑，并可点击“测试连接”验证；调整后自动保存，左上角“返回”关闭设置；调试资源变更会在关闭设置时重新加载。Release 构建不提供服务器加载能力。
 
 1. 执行 `npm run build`，然后 `npm run debug:serve`（默认端口 8000，可用 `npm run debug:serve -- --port 8080` 修改）。启动时会打印可用的局域网 IP 地址，按 Ctrl+C 可正常退出。
-2. 在宿主“设置 → 调试模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，地址输入后自动保存，可点击“测试连接”检查连通性；启用调试模式后使用服务器资源，点击左上角“返回”关闭设置。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
+2. 在宿主“设置 → 开发模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，地址输入后自动保存，可点击“测试连接”检查连通性；启用调试模式时先自动检查所有子应用入口，连接成功才使用服务器资源，点击左上角“返回”关闭设置。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
 3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。每个子应用直接请求 `<根地址>/<子应用ID>/index.html` 及其 JS/CSS（例如 `/sentra/index.html`），不下载或解压 ZIP。新增子应用并运行 `npm run build` 后，同一个服务地址即可访问，无需为每个子应用单独启动服务。
 4. 修改源码后重新运行 `npm run build`，返回宿主点击设置旁的“重新加载子应用”，刷新全部已安装子应用（包括尚未打开的子应用）。子应用页面 Home 按钮右侧也提供原生刷新按钮，用于刷新当前子应用；Debug 模式下会显示刷新成功或失败的提示。
 

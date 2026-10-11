@@ -468,59 +468,70 @@ struct LLMUsageAppRows: View {
 struct LLMUsageView: View {
     @ObservedObject private var store = LLMUsageStore.shared
     @State private var showingNotes = false
+    @State private var speech = false
     private var apps: [LLMUsageGroup] { store.groups(byProvider: false) }
     private var providers: [LLMUsageGroup] { store.groups(byProvider: true) }
 
     var body: some View {
         List {
-            if let error = store.storageError { Section { Text(AppLanguage.text(error)).foregroundStyle(.red) } }
-            Section("用量总览") {
-                LLMUsageSummary(totals: store.total)
-                if !store.records.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("每日 Token 用量").font(.subheadline.weight(.semibold))
-                        LLMDailyUsageChart(records: store.dailyRecords, groups: apps)
-                    }.padding(.vertical, 8)
-                }
+            Section {
+                Picker("模型类型", selection: $speech) {
+                    Text("通用模型").tag(false)
+                    Text("语音模型").tag(true)
+                }.pickerStyle(.segmented)
             }
-            if store.records.isEmpty {
-                Section { Text("暂无使用记录，使用 AI 功能后将自动统计。").foregroundStyle(.secondary) }
+            if speech {
+                TTSUsageSections()
             } else {
-                Section {
-                    LLMUsageAppRows(groups: apps)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Token 占比").font(.subheadline.weight(.semibold))
-                        LLMUsagePieChart(groups: apps)
-                    }.padding(.vertical, 8)
-                } header: { Text("按应用") }
-
-                Section {
-                    ForEach(providers.sorted { $0.totals.tokens == $1.totals.tokens ? $0.id < $1.id : $0.totals.tokens > $1.totals.tokens }) { group in
-                        NavigationLink {
-                            List {
-                                Section("服务商累计") { LLMUsageSummary(totals: group.totals) }
-                                Section("各应用用量") {
-                                    LLMUsageAppRows(groups: store.groups(byProvider: false, provider: group.id))
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Token 占比").font(.subheadline.weight(.semibold))
-                                        LLMUsagePieChart(groups: store.groups(byProvider: false, provider: group.id))
-                                    }.padding(.vertical, 8)
-                                }
-                            }.listStyle(.insetGrouped)
-                                .navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
-                        } label: {
-                            LLMUsageGroupRow(group: group, groups: providers)
-                        }
+                if let error = store.storageError { Section { Text(AppLanguage.text(error)).foregroundStyle(.red) } }
+                Section("用量总览") {
+                    LLMUsageSummary(totals: store.total)
+                    if !store.records.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("每日 Token 用量").font(.subheadline.weight(.semibold))
+                            LLMDailyUsageChart(records: store.dailyRecords, groups: apps)
+                        }.padding(.vertical, 8)
                     }
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Token 占比").font(.subheadline.weight(.semibold))
-                        LLMUsagePieChart(groups: providers)
-                    }.padding(.vertical, 8)
-                } header: { Text("按服务提供商") }
+                }
+                if store.records.isEmpty {
+                    Section { Text("暂无使用记录，使用 AI 功能后将自动统计。").foregroundStyle(.secondary) }
+                } else {
+                    Section {
+                        LLMUsageAppRows(groups: apps)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Token 占比").font(.subheadline.weight(.semibold))
+                            LLMUsagePieChart(groups: apps)
+                        }.padding(.vertical, 8)
+                    } header: { Text("按应用") }
+
+                    Section {
+                        ForEach(providers.sorted { $0.totals.tokens == $1.totals.tokens ? $0.id < $1.id : $0.totals.tokens > $1.totals.tokens }) { group in
+                            NavigationLink {
+                                List {
+                                    Section("服务商累计") { LLMUsageSummary(totals: group.totals) }
+                                    Section("各应用用量") {
+                                        LLMUsageAppRows(groups: store.groups(byProvider: false, provider: group.id))
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Token 占比").font(.subheadline.weight(.semibold))
+                                            LLMUsagePieChart(groups: store.groups(byProvider: false, provider: group.id))
+                                        }.padding(.vertical, 8)
+                                    }
+                                }.listStyle(.insetGrouped)
+                                    .navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
+                            } label: {
+                                LLMUsageGroupRow(group: group, groups: providers)
+                            }
+                        }
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Token 占比").font(.subheadline.weight(.semibold))
+                            LLMUsagePieChart(groups: providers)
+                        }.padding(.vertical, 8)
+                    } header: { Text("按服务提供商") }
+                }
             }
         }
         .listStyle(.insetGrouped)
-        .navigationTitle("通用模型使用统计").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("模型使用统计").navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingNotes = true } label: { Image(systemName: "info.circle") }
@@ -530,8 +541,14 @@ struct LLMUsageView: View {
         .sheet(isPresented: $showingNotes) {
             NavigationStack {
                 List {
+                    Section("语音模型") {
+                        Text("语音统计从启用后开始累计。请求数包含失败、取消、预加载和设置页试听；复用音频不重复计数。提交字符数按实际发送文本的字符数量记录，不代表服务商计费字符或 Token。")
+                    }
                     Section("累计用量") {
                         Text("从启用统计后开始累计，仅记录此设备的 AI 使用情况。请求数包含失败和取消；Token 用量以服务商返回为准，包含缓存输入与推理用量，未提供的部分不估算。")
+                    }
+                    Section("每日字符用量") {
+                        Text("按语音请求发起时的本地日期归集提交字符数。左右滑动可查看其他日期；此前未记录日期的累计用量不计入每日图表。")
                     }
                     Section("每日 Token 用量") {
                         Text("按请求结束时的本地日期归集发送与接收 Token。左右滑动可查看其他日期。")
@@ -543,5 +560,242 @@ struct LLMUsageView: View {
                     .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { showingNotes = false } } }
             }
         }
+    }
+}
+
+
+struct TTSUsageContext {
+    let appID: String
+    let appName: String
+    static let preview = Self(appID: "host.tts.preview", appName: "语音试听")
+}
+
+struct TTSUsageRecord: Codable {
+    let appID: String
+    var appName: String
+    let provider: String
+    let model: String
+    var requests: Int
+    var characters: Int
+}
+
+struct TTSUsageGroup: Identifiable {
+    let id: String
+    let name: String
+    let requests: Int
+    let characters: Int
+}
+
+struct TTSDailyUsage: Codable, Identifiable {
+    let day: Date
+    let appID: String
+    var characters: Int
+    var id: String { "\(day.timeIntervalSince1970):\(appID)" }
+}
+
+@MainActor final class TTSUsageStore: ObservableObject {
+    static let shared = TTSUsageStore()
+    @Published private(set) var records: [TTSUsageRecord] = []
+    @Published private(set) var dailyRecords: [TTSDailyUsage] = []
+    @Published private(set) var storageError: String?
+    private let defaults: UserDefaults
+    private let key = "host.tts.usage"
+    private let dailyKey = "host.tts.usage.daily"
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        if let data = defaults.data(forKey: dailyKey) {
+            do { dailyRecords = try JSONDecoder().decode([TTSDailyUsage].self, from: data) }
+            catch { storageError = "无法读取已保存的用量统计，未覆盖原数据。" }
+        }
+        if let data = defaults.data(forKey: key) {
+            do { records = try JSONDecoder().decode([TTSUsageRecord].self, from: data) }
+            catch { storageError = "无法读取已保存的用量统计，未覆盖原数据。" }
+        }
+    }
+
+    func record(context: TTSUsageContext, request: URLRequest, date: Date = Date(), calendar: Calendar = .current) {
+        guard storageError == nil, let url = request.url, let body = request.httpBody,
+              let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any],
+              let text = (json["text"] ?? json["input"]) as? String,
+              let model = json["model"] as? String else { return }
+        let provider = LLMUsageStore.providerID(url)
+        if let index = records.firstIndex(where: { $0.appID == context.appID && $0.provider == provider && $0.model == model }) {
+            records[index].appName = context.appName
+            records[index].requests += 1
+            records[index].characters += text.count
+        } else {
+            records.append(TTSUsageRecord(appID: context.appID, appName: context.appName, provider: provider,
+                                          model: model, requests: 1, characters: text.count))
+        }
+        let day = calendar.startOfDay(for: date)
+        if let index = dailyRecords.firstIndex(where: { $0.day == day && $0.appID == context.appID }) {
+            dailyRecords[index].characters += text.count
+        } else {
+            dailyRecords.append(TTSDailyUsage(day: day, appID: context.appID, characters: text.count))
+        }
+        do {
+            let data = try JSONEncoder().encode(records)
+            let dailyData = try JSONEncoder().encode(dailyRecords)
+            defaults.set(data, forKey: key)
+            defaults.set(dailyData, forKey: dailyKey)
+        }
+        catch { storageError = "无法保存用量统计。" }
+    }
+
+    enum Dimension { case app, provider }
+    func groups(by dimension: Dimension, provider: String? = nil) -> [TTSUsageGroup] {
+        let rows = records.filter { provider == nil || $0.provider == provider }
+        return Dictionary(grouping: rows, by: { row in
+            switch dimension {
+            case .app: return row.appID
+            case .provider: return row.provider
+            }
+        }).map { id, rows in
+            TTSUsageGroup(id: id, name: dimension == .app ? rows.last!.appName : id,
+                          requests: rows.reduce(0) { $0 + $1.requests }, characters: rows.reduce(0) { $0 + $1.characters })
+        }.sorted { $0.characters == $1.characters ? $0.id < $1.id : $0.characters > $1.characters }
+    }
+}
+
+private enum TTSUsageColors {
+    static func color(_ id: String, in groups: [TTSUsageGroup]) -> Color {
+        let index = groups.map(\.id).sorted().firstIndex(of: id) ?? 0
+        return LLMUsageColors.palette[index % LLMUsageColors.palette.count]
+    }
+}
+
+struct TTSUsagePieChart: View {
+    let groups: [TTSUsageGroup]
+    private var total: Int { groups.reduce(0) { $0 + $1.characters } }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("字符占比").font(.subheadline.weight(.semibold))
+            if total > 0 {
+                Chart(groups.filter { $0.characters > 0 }) { group in
+                    SectorMark(angle: .value("字符", group.characters), angularInset: 1)
+                        .foregroundStyle(TTSUsageColors.color(group.id, in: groups))
+                        .accessibilityLabel(AppLanguage.text(group.name))
+                        .accessibilityValue("\(group.characters.formatted()) 字符")
+                }.frame(height: 220)
+            }
+            ForEach(groups) { group in
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Circle().fill(TTSUsageColors.color(group.id, in: groups)).frame(width: 8, height: 8)
+                    Text(AppLanguage.text(group.name)).frame(maxWidth: .infinity, alignment: .leading)
+                    Text((total > 0 ? Double(group.characters) / Double(total) : 0).formatted(.percent.precision(.fractionLength(1))))
+                        .monospacedDigit().foregroundStyle(.secondary)
+                }.font(.subheadline)
+            }
+        }.padding(.vertical, 8)
+    }
+}
+
+struct TTSDailyUsageChart: View {
+    let records: [TTSDailyUsage]
+    let groups: [TTSUsageGroup]
+    private var today: Date { Calendar.current.startOfDay(for: Date()) }
+    private var start: Date {
+        min(records.map(\.day).min() ?? today, Calendar.current.date(byAdding: .day, value: -13, to: today)!)
+    }
+    private var end: Date { Calendar.current.date(byAdding: .day, value: 1, to: today)! }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("每日字符用量").font(.subheadline.weight(.semibold))
+            if records.isEmpty {
+                Text("暂无每日字符用量，新的语音请求将自动记录。").foregroundStyle(.secondary)
+            } else {
+                Chart(records.sorted { $0.day == $1.day ? $0.appID < $1.appID : $0.day < $1.day }) { record in
+                    BarMark(x: .value("Date", record.day, unit: .day), y: .value("字符", record.characters))
+                        .foregroundStyle(TTSUsageColors.color(record.appID, in: groups))
+                        .accessibilityLabel("\(record.day.formatted(date: .abbreviated, time: .omitted)), \(AppLanguage.text(groups.first { $0.id == record.appID }?.name ?? record.appID))")
+                        .accessibilityValue("\(record.characters.formatted()) 字符")
+                }
+                .chartXScale(domain: start...end)
+                .chartScrollableAxes(.horizontal)
+                .chartXVisibleDomain(length: 14 * 24 * 60 * 60)
+                .chartScrollPosition(initialX: Calendar.current.date(byAdding: .day, value: -13, to: today)!)
+                .chartXAxis { AxisMarks(values: .stride(by: .day, count: 2)) { _ in
+                    AxisGridLine()
+                    AxisTick()
+                    AxisValueLabel(format: .dateTime.month(.defaultDigits).day())
+                } }
+                .chartYAxis { AxisMarks(position: .leading) }
+                .frame(height: 240)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), alignment: .leading)], alignment: .leading, spacing: 8) {
+                    ForEach(groups.sorted { $0.id < $1.id }) { group in
+                        Label { Text(AppLanguage.text(group.name)) } icon: {
+                            Circle().fill(TTSUsageColors.color(group.id, in: groups)).frame(width: 8, height: 8)
+                        }.font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }.padding(.vertical, 8)
+    }
+}
+
+struct TTSUsageSections: View {
+    @ObservedObject private var store = TTSUsageStore.shared
+    private var apps: [TTSUsageGroup] { store.groups(by: .app) }
+    private var providers: [TTSUsageGroup] { store.groups(by: .provider) }
+    var body: some View {
+        if let error = store.storageError { Section { Text(AppLanguage.text(error)).foregroundStyle(.red) } }
+        Section("用量总览") {
+            summary(requests: store.records.reduce(0) { $0 + $1.requests }, characters: store.records.reduce(0) { $0 + $1.characters })
+            TTSDailyUsageChart(records: store.dailyRecords, groups: apps)
+        }
+        if store.records.isEmpty {
+            Section { Text("暂无语音使用记录，使用语音合成后将自动统计。").foregroundStyle(.secondary) }
+        } else {
+            Section("按应用") {
+                ForEach(apps) { group in row(group, groups: apps) }
+                TTSUsagePieChart(groups: apps)
+            }
+            Section("按服务提供商") {
+                ForEach(providers) { group in
+                    NavigationLink {
+                        List {
+                            Section("服务商累计") { summary(requests: group.requests, characters: group.characters) }
+                            Section("各应用用量") {
+                                let providerApps = store.groups(by: .app, provider: group.id)
+                                ForEach(providerApps) { app in row(app, groups: providerApps) }
+                                TTSUsagePieChart(groups: providerApps)
+                            }
+                        }.navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
+                    } label: { groupLabel(group, groups: providers) }
+                }
+                TTSUsagePieChart(groups: providers)
+            }
+        }
+    }
+    private func summary(requests: Int, characters: Int) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("累计字符").font(.subheadline).foregroundStyle(.secondary)
+                Text(characters.formatted()).font(.system(.largeTitle, design: .rounded, weight: .semibold)).monospacedDigit()
+            }
+            metrics(requests: requests, characters: characters).font(.subheadline)
+        }.padding(.vertical, 8)
+    }
+    private func metrics(requests: Int, characters: Int) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            LabeledContent("请求数", value: requests.formatted())
+            LabeledContent("提交字符数", value: characters.formatted())
+        }.monospacedDigit().padding(.vertical, 4)
+    }
+    private func groupLabel(_ group: TTSUsageGroup, groups: [TTSUsageGroup]) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Circle().fill(TTSUsageColors.color(group.id, in: groups)).frame(width: 8, height: 8)
+            Text(AppLanguage.text(group.name)).font(.subheadline.weight(.medium)).frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(group.characters.formatted()).font(.subheadline.weight(.semibold)).monospacedDigit()
+                Text("字符").font(.caption2).foregroundStyle(.secondary)
+            }
+        }.padding(.vertical, 4)
+    }
+    private func row(_ group: TTSUsageGroup, groups: [TTSUsageGroup]) -> some View {
+        DisclosureGroup {
+            metrics(requests: group.requests, characters: group.characters)
+        } label: { groupLabel(group, groups: groups) }
     }
 }

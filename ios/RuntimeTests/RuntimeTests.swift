@@ -3,6 +3,7 @@ import WebKit
 import Security
 import Network
 import Combine
+import MediaPlayer
 @testable import Lingrove
 
 final class StubNetwork: URLProtocol, @unchecked Sendable {
@@ -199,7 +200,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertTrue(runtime.accepts(entry))
         XCTAssertFalse(runtime.accepts(URL(string: "lingrove://remote-test/index.html")!))
     }
-    func testDebugModeSwitchDefaultsOnAndDisablesRemoteResources() throws {
+    func testDebugModeSwitchDefaultsOffAndDisablesRemoteResources() throws {
         try XCTSkipUnless(DebugServer.available)
         let defaults = UserDefaults.standard
         let originalEnabled = defaults.object(forKey: DebugServer.enabledPreferenceKey)
@@ -211,8 +212,8 @@ final class RuntimeTests: XCTestCase {
         defaults.removeObject(forKey: DebugServer.enabledPreferenceKey)
         defaults.set("http://localhost:8000", forKey: DebugServer.preferenceKey)
         let module = Module(id: "switch-test", name: "Switch", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
-        XCTAssertTrue(DebugServer.enabled)
-        XCTAssertNotNil(DebugServer.entryURL(for: module))
+        XCTAssertFalse(DebugServer.enabled)
+        XCTAssertNil(DebugServer.entryURL(for: module))
         defaults.set(false, forKey: DebugServer.enabledPreferenceKey)
         XCTAssertTrue(DebugServer.available)
         XCTAssertFalse(DebugServer.enabled)
@@ -378,6 +379,60 @@ final class RuntimeTests: XCTestCase {
         missing.consumeJSON(Data(#"{"choices":[]}"#.utf8))
         XCTAssertNil(missing.inputTokens)
         XCTAssertNil(missing.outputTokens)
+    }
+
+    @MainActor func testSpeechUsageAttributionAndPersistence() throws {
+        let suite = "speech-usage-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let store = TTSUsageStore(defaults: defaults)
+        var request = URLRequest(url: URL(string: "https://speech.example/v1/audio/speech")!)
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": "voice-a", "input": "你好🙂"])
+        store.record(context: .init(appID: "a", appName: "A"), request: request)
+        store.record(context: .init(appID: "a", appName: "Renamed A"), request: request)
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": "voice-b", "text": "test"])
+        store.record(context: .init(appID: "b", appName: "B"), request: request)
+        let restored = TTSUsageStore(defaults: defaults)
+        XCTAssertEqual(restored.records.count, 2)
+        XCTAssertEqual(restored.groups(by: .provider).first?.requests, 3)
+        XCTAssertEqual(restored.groups(by: .provider).first?.characters, 10)
+        XCTAssertEqual(restored.groups(by: .app).first?.name, "Renamed A")
+        XCTAssertEqual(restored.groups(by: .app, provider: "speech.example").count, 2)
+        XCTAssertTrue(restored.groups(by: .app, provider: "other.example").isEmpty)
+        let raw = String(data: defaults.data(forKey: "host.tts.usage")!, encoding: .utf8)!
+        XCTAssertFalse(raw.contains("你好"))
+        defaults.set(Data("invalid".utf8), forKey: "host.tts.usage")
+        let damaged = TTSUsageStore(defaults: defaults)
+        damaged.record(context: .preview, request: request)
+        XCTAssertNotNil(damaged.storageError)
+        XCTAssertEqual(defaults.data(forKey: "host.tts.usage"), Data("invalid".utf8))
+    }
+
+    @MainActor func testSpeechDailyUsagePreservesHistoryAndGroupsDates() throws {
+        let suite = "speech-daily-test." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let historical = TTSUsageRecord(appID: "a", appName: "A", provider: "speech.example", model: "voice", requests: 2, characters: 100)
+        defaults.set(try JSONEncoder().encode([historical]), forKey: "host.tts.usage")
+        let store = TTSUsageStore(defaults: defaults)
+        XCTAssertTrue(store.dailyRecords.isEmpty)
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 8 * 3600)!
+        let day = calendar.date(from: DateComponents(year: 2026, month: 10, day: 7))!
+        var request = URLRequest(url: URL(string: "https://speech.example/v1/audio/speech")!)
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["model": "voice", "input": "你好🙂"])
+        for offset in [0.0, 86399.0, 86400.0] {
+            store.record(context: .init(appID: "a", appName: "A"), request: request, date: day.addingTimeInterval(offset), calendar: calendar)
+        }
+        request.url = URL(string: "https://other.example/v1/audio/speech")!
+        store.record(context: .init(appID: "a", appName: "A"), request: request, date: day, calendar: calendar)
+        store.record(context: .init(appID: "b", appName: "B"), request: request, date: day, calendar: calendar)
+        let restored = TTSUsageStore(defaults: defaults)
+        XCTAssertEqual(restored.dailyRecords.count, 3)
+        XCTAssertEqual(restored.dailyRecords.first { $0.day == day && $0.appID == "a" }?.characters, 9)
+        XCTAssertEqual(restored.dailyRecords.reduce(0) { $0 + $1.characters }, 15)
+        XCTAssertEqual(restored.groups(by: .app).reduce(0) { $0 + $1.characters }, 115)
+        XCTAssertEqual(restored.groups(by: .provider).reduce(0) { $0 + $1.characters }, 115)
     }
 
     @MainActor func testLLMUsageAttributionAndPersistence() throws {
@@ -958,5 +1013,41 @@ extension TTSTests {
         player.stop()
         await fulfillment(of: [cancelled], timeout: 3)
         do { try await run.value; XCTFail("Stopped playback must fail") } catch { XCTAssertTrue(error is CancellationError) }
+    }
+}
+
+
+extension TTSTests {
+    @MainActor func testNativeQueueContinuesAfterBackgroundNotificationAndHostControlsStopIt() async throws {
+        let session = streamingSession(); defer { session.invalidateAndCancel() }
+        let second = expectation(description: "Native queue advances without WebKit")
+        let player = TTSPlayback()
+        player.onChunk = { index in
+            if index == 0 { NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil) }
+            if index == 1 { second.fulfill() }
+        }
+        let run = Task { try await player.run(["text": "first", "queue": ["first", "second"], "title": "当前文章标题"], configuration: streamConfig("fast"), session: session) }
+        await fulfillment(of: [second], timeout: 5)
+        XCTAssertTrue(HostPlayback.shared.player === player)
+        XCTAssertEqual(HostPlayback.shared.title, "当前文章标题")
+        XCTAssertEqual(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPMediaItemPropertyTitle] as? String, "当前文章标题")
+        let cover = try XCTUnwrap(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPMediaItemPropertyArtwork] as? MPMediaItemArtwork)
+        XCTAssertNotNil(cover.image(at: CGSize(width: 128, height: 128)))
+        let commands = MPRemoteCommandCenter.shared()
+        XCTAssertTrue(commands.pauseCommand.isEnabled)
+        XCTAssertTrue(commands.playCommand.isEnabled)
+        XCTAssertTrue(commands.togglePlayPauseCommand.isEnabled)
+        XCTAssertFalse(commands.stopCommand.isEnabled)
+        XCTAssertEqual(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyIsLiveStream] as? Bool, false)
+        XCTAssertEqual(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] as? Double, 1)
+        HostPlayback.shared.toggle()
+        XCTAssertEqual(player.state, .paused)
+        XCTAssertEqual(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] as? Double, 0)
+        HostPlayback.shared.toggle()
+        XCTAssertNotEqual(player.state, .paused)
+        XCTAssertEqual(MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] as? Double, 1)
+        HostPlayback.shared.player?.stop()
+        do { try await run.value; XCTFail("Host stop must cancel the entire queue") } catch { XCTAssertTrue(error is CancellationError) }
+        XCTAssertNil(HostPlayback.shared.player)
     }
 }

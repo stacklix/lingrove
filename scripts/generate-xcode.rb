@@ -24,6 +24,7 @@ target.build_configurations.each do |config|
     'ASSETCATALOG_COMPILER_APPICON_NAME' => 'AppIcon',
     'ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME' => 'AccentColor',
     'INFOPLIST_KEY_CFBundleDisplayName' => 'Lingrove', 'INFOPLIST_KEY_CFBundleName' => 'Lingrove',
+    'INFOPLIST_FILE' => 'Lingrove/Resources/ReleaseInfo.plist',
     'GENERATE_INFOPLIST_FILE' => 'YES', 'INFOPLIST_KEY_UILaunchScreen_Generation' => 'YES',
     'INFOPLIST_KEY_UIApplicationSceneManifest_Generation' => 'YES',
     'INFOPLIST_KEY_UISupportedInterfaceOrientations' => 'UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight',

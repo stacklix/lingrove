@@ -3,6 +3,7 @@ name: Build and publish gh-pages branch
 on:
   push:
     branches: [master]
+    tags: ['**']
   workflow_dispatch:
 
 permissions:
@@ -14,7 +15,6 @@ concurrency:
 
 jobs:
   build-and-publish:
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -23,6 +23,9 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -35,18 +38,18 @@ jobs:
           npm ci
           npm run typecheck
           npm test
+          python3 scripts/tests/test-build-channels.py
 
       - name: Build applications
         env:
           MODULE_BASE_URL: https://lingrove.stackli.me
         run: |
-          npm run build
-          npm run verify:release
+          node scripts/build-channels.mjs
 
       - name: Save release files
         uses: actions/upload-artifact@v4
         with:
-          name: lingrove-release
+          name: lingrove-channels
           path: dist/
           include-hidden-files: true
           retention-days: 14
@@ -60,7 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s dist/index.html
-          test -s dist/catalog.json
+          test -s dist/catalog.snapshot.json
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -75,7 +78,7 @@ jobs:
           cd "$GIT_WORK_TREE"
           git add --all -- .
           tree=$(git write-tree)
-          commit=$(git commit-tree "$tree" -m "Build from $SOURCE_SHA")
+          commit=$(git commit-tree "$tree" -m "Build master Snapshot and latest tag (trigger $SOURCE_SHA)")
           git push --force origin "$commit:refs/heads/gh-pages"
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
 
@@ -94,7 +97,7 @@ jobs:
             status=$(jq -r '.status' <<< "$build")
             commit=$(jq -r '.commit' <<< "$build")
             if [ "$commit" = "$RELEASE_COMMIT" ] && [ "$status" = "built" ]; then
-              echo "Published catalog.json, ZIP packages and browser applications." >> "$GITHUB_STEP_SUMMARY"
+              echo "Published Snapshot and available release catalogs, ZIP packages and browser applications." >> "$GITHUB_STEP_SUMMARY"
               exit 0
             fi
             if [ "$commit" = "$RELEASE_COMMIT" ] && [ "$status" = "errored" ]; then

@@ -61,12 +61,12 @@ enum AppLanguage {
     func reloadAll(store: ModuleStore) {
         reloadMessages.removeAll()
         reconcile(modules: store.modules, blocked: store.blocked)
-        if DebugServer.enabled && store.modules.isEmpty {
+        if DebugServer.canRefresh && store.modules.isEmpty {
             reloadMessages["empty"] = "暂无已安装的应用。"
         }
         for module in store.modules {
             guard !store.blocked.contains(module.id) else {
-                if DebugServer.enabled { reloadMessages[module.id] = "\(module.name)：刷新失败，当前版本已被停用，请更新后重试。" }
+                if DebugServer.canRefresh { reloadMessages[module.id] = "\(module.name)：刷新失败，当前版本已被停用，请更新后重试。" }
                 continue
             }
             _ = page(for: module, store: store, refreshing: true)
@@ -99,7 +99,7 @@ enum AppLanguage {
     private let onReloadResult: (String) -> Void
 
     private func reportReload(_ message: String) {
-        guard DebugServer.enabled else { return }
+        guard DebugServer.canRefresh else { return }
         reloadMessage = message
         onReloadResult(message)
     }
@@ -226,13 +226,12 @@ enum AppLanguage {
     }
 
     func matches(_ candidate: Module) -> Bool {
-        module.id == candidate.id && module.version == candidate.version && module.entry == candidate.entry
+        module.id == candidate.id && module.resourceIdentity == candidate.resourceIdentity && module.entry == candidate.entry
             && module.allowedOrigins == candidate.allowedOrigins && module.stateSchemaVersion == candidate.stateSchemaVersion
     }
     func detach() {
         offset = webView.scrollView.contentOffset
         webView.endEditing(true)
-        runtime.stopTTSPlayback()
         // Keep the DOM, JavaScript state, open sheet and in-flight requests alive.
     }
     func restorePosition() {
@@ -254,7 +253,8 @@ struct ModuleScreen: View {
     let module: Module
     @ObservedObject var store: ModuleStore
     @StateObject private var page: ModulePage
-    @AppStorage(DebugServer.enabledPreferenceKey) private var debugEnabled = true
+    @AppStorage(DebugServer.enabledPreferenceKey) private var debugEnabled = false
+    @AppStorage(HostConfiguration.snapshotPreferenceKey) private var snapshotEnabled = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -266,7 +266,7 @@ struct ModuleScreen: View {
     var body: some View {
         Group {
             if let failure = page.failure {
-                ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && debugEnabled { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
+                ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && (debugEnabled || snapshotEnabled) { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
             } else {
                 ZStack {
                     ModuleWebView(page: page).id(page.generation)
@@ -312,7 +312,7 @@ struct ModuleScreen: View {
             .padding(.top, 8)
         }
         .overlay(alignment: .bottom) {
-            if DebugServer.available && debugEnabled, let message = page.reloadMessage {
+            if DebugServer.available && (debugEnabled || snapshotEnabled), let message = page.reloadMessage {
                 ReloadFeedbackView(message: message, autoDismiss: !page.isReloading) { page.reloadMessage = nil }
                     .padding(.horizontal, 16).padding(.bottom, 80)
             }
@@ -616,6 +616,14 @@ struct ModuleWebView: UIViewRepresentable {
             guard let id = params["id"] as? String, !id.isEmpty, id.count <= 80, networkTasks[id] == nil, networkTasks.count < 6 else { throw ModuleError.invalid("请求数量或标识无效") }
             let config = try ttsConfiguration()
             guard (try? config.validate()) != nil else { throw ModuleError.invalid("请先前往「应用设置 → 语音合成」完成设置。") }
+            if let queue = params["queue"] {
+                guard let texts = queue as? [String], !texts.isEmpty, texts.count <= 10000,
+                      texts.reduce(0, { $0 + $1.utf16.count }) <= 1000000 else { throw ModuleError.invalid("朗读文本无效") }
+                for text in texts {
+                    var item = params; item["text"] = text
+                    _ = try config.request(item, streaming: true)
+                }
+            }
             let currentRequest = try config.request(params, streaming: true)
             var nextParams: [String: Any]?
             var nextRequest: URLRequest?
@@ -637,16 +645,20 @@ struct ModuleWebView: UIViewRepresentable {
                 if state == .playing, self.ttsPlayers[id]?.state == .playing, !prefetched, let nextParams, let nextRequest {
                     prefetched = true
                     self.ttsPreload?.audio.cancel()
-                    let audio = Task { try await TTSService.preparePCM(nextParams, configuration: config, session: self.session) }
+                    let audio = Task { try await TTSService.preparePCM(nextParams, configuration: config, session: self.session, usageContext: TTSUsageContext(appID: self.module.id, appName: self.module.name)) }
                     self.ttsPreload = (id, TTSRequestIdentity(nextRequest), audio)
                 }
                 guard let data = try? JSONSerialization.data(withJSONObject: ["state": state.rawValue]),
                       let chunk = String(data: data, encoding: .utf8) else { return }
-                try? await self.emit(id, chunk)
+                Task { try? await self.emit(id, chunk) }
+            }
+            player.onChunk = { [weak self] index in
+                guard let self else { return }
+                Task { try? await self.emit(id, "{\"chunkIndex\":\(index)}") }
             }
             ttsPlayers[id] = player
             let task = Task<Any, Error> {
-                try await player.run(params, configuration: config, session: self.session, prepared: prepared)
+                try await player.run(params, configuration: config, session: self.session, prepared: prepared, artwork: UIImage(contentsOfFile: self.directory.appendingPathComponent("logo.png").path), usageContext: TTSUsageContext(appID: self.module.id, appName: self.module.name))
                 return ["model": config.model, "provider": config.provider.rawValue]
             }
             networkTasks[id] = task
@@ -664,7 +676,7 @@ struct ModuleWebView: UIViewRepresentable {
             let config = try ttsConfiguration()
             guard (try? config.validate()) != nil else { throw ModuleError.invalid("请先前往「应用设置 → 语音合成」完成设置。") }
             let task = Task<Any, Error> {
-                let audio = try await TTSService.synthesize(params, configuration: config, session: self.session)
+                let audio = try await TTSService.synthesize(params, configuration: config, session: self.session, usageContext: TTSUsageContext(appID: self.module.id, appName: self.module.name))
                 try Task.checkCancellation()
                 return audio.bridgeResult
             }

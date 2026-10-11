@@ -14,11 +14,14 @@ struct Module: Codable, Identifiable, Equatable {
     var size: Int?
     var sha256: String?
     var minimumAllowedVersion: String?
+    var isSnapshot: Bool { downloadUrl?.hasSuffix("-snapshot.zip") == true }
+    var resourceIdentity: String { "\(version)-\(isSnapshot ? "snapshot" : "release")-\(sha256 ?? "builtin")" }
     func validate() throws {
         guard id.range(of: "^[a-z0-9][a-z0-9-]{0,63}$", options: .regularExpression) != nil,
               Version(version) != nil, Version(minHostVersion) != nil,
               entry == "index.html", bridgeVersion == 1, stateSchemaVersion == 1,
               allowedOrigins.count <= 30 else { throw ModuleError.invalid("模块信息无效或协议不兼容") }
+        if let sha256, sha256.range(of: "^[a-f0-9]{64}$", options: .regularExpression) == nil { throw ModuleError.invalid("安装包哈希无效") }
         if let minimumAllowedVersion, Version(minimumAllowedVersion) == nil { throw ModuleError.invalid("最低版本无效") }
         for origin in allowedOrigins { guard NetworkPolicy.origin(origin) == origin else { throw ModuleError.invalid("域名配置无效") } }
     }
@@ -46,6 +49,14 @@ struct Catalog: Codable {
 struct HostConfiguration: Codable {
     static let currentVersion = "1.3.0"
     var catalogURL: String
+    var snapshotCatalogURL: String = ""
+    func updateCatalogURL(defaults: UserDefaults = .standard) -> String {
+        Self.usesSnapshot(defaults: defaults) ? snapshotCatalogURL : catalogURL
+    }
+    static let snapshotPreferenceKey = "updates.snapshot"
+    static func usesSnapshot(defaults: UserDefaults = .standard) -> Bool {
+        DebugServer.available && defaults.bool(forKey: snapshotPreferenceKey)
+    }
     static var bundled: Self {
         guard let url = Bundle.main.url(forResource: "HostConfig", withExtension: "json"), let data = try? Data(contentsOf: url), let config = try? JSONDecoder().decode(Self.self, from: data) else { return .init(catalogURL: "") }
         return config
@@ -109,8 +120,9 @@ enum DebugServer {
     static let preferenceKey = "debug.serverURL"
     static let enabledPreferenceKey = "debug.enabled"
     static var enabled: Bool {
-        available && (UserDefaults.standard.object(forKey: enabledPreferenceKey) as? Bool ?? true)
+        available && (UserDefaults.standard.object(forKey: enabledPreferenceKey) as? Bool ?? false)
     }
+    static var canRefresh: Bool { available && (enabled || HostConfiguration.usesSnapshot()) }
     static var available: Bool {
         #if DEBUG
         return true

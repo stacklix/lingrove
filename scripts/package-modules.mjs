@@ -7,6 +7,7 @@ const base = (process.env.MODULE_BASE_URL || 'https://lingrove.stackli.me').repl
 if (new URL(base).protocol !== 'https:') throw new Error('MODULE_BASE_URL must use HTTPS');
 const names = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));
 const modules = [];
+const snapshot = process.env.MODULE_CHANNEL === 'snapshot';
 await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
   recursive: true,
   force: true,
@@ -19,7 +20,7 @@ for (const name of names) {
   if (manifest.id !== name) throw new Error('Module ID must match its directory name');
   const output = path.join(root, 'dist', name);
   await writeFile(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
-  const archive = `${manifest.id}-${manifest.version}.zip`;
+  const archive = `${manifest.id}-${manifest.version}${snapshot ? '-snapshot' : ''}.zip`;
   const zipPath = path.join(root, 'dist/packages', archive);
   const result = spawnSync('python3', [path.join(root, 'scripts/stored-zip.py'), output, zipPath], {
     stdio: 'inherit',
@@ -38,7 +39,7 @@ for (const name of names) {
   await mkdir(path.dirname(builtin), { recursive: true });
   await cp(output, builtin, { recursive: true });
 }
-await writeFile(path.join(root, 'dist/catalog.json'), JSON.stringify({ modules }, null, 2));
+await writeFile(path.join(root, snapshot ? 'dist/catalog.snapshot.json' : 'dist/catalog.json'), JSON.stringify({ modules }, null, 2));
 // Remove obsolete generated artifacts from builds using the old catalog format.
 await rm(path.join(root, 'dist/public-key.txt'), { force: true });
 await rm(path.join(root, 'dist/catalog.preview.json'), { force: true });

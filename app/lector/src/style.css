@@ -879,7 +879,7 @@ progress::-webkit-progress-value {
   border-radius: 26px;
   border: 1px solid var(--line);
   background: var(--paper);
-  color: var(--muted);
+  color: var(--text);
   box-shadow: 0 4px 16px var(--shadow);
 }
 .speech-progress input {

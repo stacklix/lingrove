@@ -31,8 +31,13 @@ export interface TTSOptions {
 
 export type TTSPlaybackState = 'buffering' | 'playing' | 'paused' | 'ended' | 'stopped' | 'error';
 export interface TTSPlaybackOptions extends TTSOptions {
+  /** Article or content title shown in host and system playback controls. */
+  title?: string;
   /** Prepare only the next chunk with the same language, voice and speed. */
   nextText?: string;
+  /** Complete native queue, including input.text as its first item. */
+  queue?: string[];
+  onChunk?: (index: number) => void;
   onState?: (state: TTSPlaybackState) => void;
 }
 export interface TTSPlayback {
@@ -72,9 +77,10 @@ export const tts = {
     streams.set(id, (chunk) => {
       if (settled || callbackError) return;
       try {
-        const event = JSON.parse(chunk) as { state: TTSPlaybackState };
+        const event = JSON.parse(chunk) as { state?: TTSPlaybackState; chunkIndex?: number };
         if (event.state === 'stopped') stopped = true;
-        options.onState?.(event.state);
+        if (event.chunkIndex !== undefined) options.onChunk?.(event.chunkIndex);
+        if (event.state) options.onState?.(event.state);
       } catch (error) {
         callbackError = error;
         abort();
@@ -94,6 +100,8 @@ export const tts = {
           throw new Error('语速须为 0.5–2 倍');
         const result = await invoke<{ model: string; provider: string }>('tts.play', {
           id,
+          ...(options.title === undefined ? {} : { title: options.title }),
+          ...(options.queue === undefined ? {} : { queue: options.queue }),
           text: input.text,
           ...(input.voice === undefined ? {} : { voice: input.voice }),
           ...languageParams(input.language),

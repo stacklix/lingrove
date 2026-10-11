@@ -584,7 +584,10 @@ it('floats a play button, expands progress, and stops on the second click', asyn
   const stop = vi.fn().mockResolvedValue(undefined);
   mocks.play.mockImplementation((_input, options) => {
     onState = options.onState;
-    return { finished: new Promise(() => {}), stop };
+    return { finished: new Promise(() => {}), stop,
+      pause: vi.fn(async () => options.onState('paused')),
+      resume: vi.fn(async () => options.onState('playing')),
+    };
   });
   const w = await setup();
   await w.get('.empty button').trigger('click');
@@ -912,13 +915,13 @@ it('suspends following after manual scroll, keeps highlighting, and restores it 
   const target = document.createElement('span');
   target.scrollIntoView = scrollIntoView;
   const lookup = vi.spyOn(document, 'getElementById').mockReturnValue(target);
-  const calls: { emit: (state: string) => void; finish: () => void }[] = [];
+  const calls: { emit: (state: string) => void; chunk: (index: number) => void; finish: () => void }[] = [];
   mocks.play.mockImplementation((_input, options) => {
     let finish!: () => void;
     const finished = new Promise<void>((resolve) => {
       finish = resolve;
     });
-    calls.push({ emit: options.onState, finish });
+    calls.push({ emit: options.onState, chunk: options.onChunk, finish });
     return {
       finished,
       stop: vi.fn().mockResolvedValue(undefined),
@@ -949,9 +952,8 @@ it('suspends following after manual scroll, keeps highlighting, and restores it 
     window.dispatchEvent(new Event('touchmove'));
     await flushPromises();
     expect(w.get('.speech-return').text()).toBe('回到当前句');
-    calls[0].finish();
-    await flushPromises();
-    calls[1].emit('playing');
+    calls[0].chunk(1);
+    calls[0].emit('playing');
     await flushPromises();
     expect(w.findAll('.sentence')[1].classes()).toContain('speaking');
     expect(scrollIntoView).not.toHaveBeenCalled();
@@ -960,16 +962,15 @@ it('suspends following after manual scroll, keeps highlighting, and restores it 
     expect(lookup).toHaveBeenLastCalledWith('sentence-1');
     expect(w.find('.speech-return').exists()).toBe(false);
     scrollIntoView.mockClear();
-    calls[1].finish();
-    await flushPromises();
-    calls[2].emit('playing');
+    calls[0].chunk(2);
+    calls[0].emit('playing');
     await flushPromises();
     expect(scrollIntoView).toHaveBeenCalledOnce();
     window.dispatchEvent(new Event('wheel'));
     await flushPromises();
     expect(w.find('.speech-return').exists()).toBe(true);
     await w.findAll('.sentence-trigger')[0].trigger('click');
-    calls[3].emit('playing');
+    calls[1].emit('playing');
     await flushPromises();
     expect(w.find('.speech-return').exists()).toBe(false);
     expect(lookup).toHaveBeenLastCalledWith('sentence-0');

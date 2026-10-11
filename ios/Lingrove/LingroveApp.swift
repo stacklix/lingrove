@@ -2,6 +2,10 @@ import SwiftUI
 
 // Dynamic colors shared by the native shell and the embedded page background.
 enum LingroveTheme {
+    static let onAccent = UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(red: 21/255, green: 28/255, blue: 25/255, alpha: 1)
+        : .white }
+
     static let background = UIColor { $0.userInterfaceStyle == .dark
         ? UIColor(red: 21/255, green: 28/255, blue: 25/255, alpha: 1)
         : UIColor(red: 245/255, green: 243/255, blue: 236/255, alpha: 1) }
@@ -53,14 +57,18 @@ struct HomeView: View {
     @State private var connectionFailed = false
     @State private var connectionTest: Task<Void, Never>?
     @State private var connectionTestID = UUID()
-    @AppStorage(DebugServer.enabledPreferenceKey) private var debugEnabled = true
-    @State private var draftDebugEnabled = true
+    @AppStorage(DebugServer.enabledPreferenceKey) private var debugEnabled = false
+    @AppStorage(HostConfiguration.snapshotPreferenceKey) private var snapshotEnabled = false
+    @State private var initialSnapshotEnabled = false
+    @State private var draftDebugEnabled = false
     @State private var initialDebugAddress = ""
-    @State private var initialDebugEnabled = true
+    @State private var initialDebugEnabled = false
     @State private var draftAppLanguage = "system"
     @State private var draftAppearance = AppAppearance.system
     @State private var draftModules: [Module] = []
+    @State private var moduleEditMode: EditMode = .inactive
     @State private var networkSummaryRevision = 0
+    @State private var refreshingModules = false
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -94,9 +102,10 @@ struct HomeView: View {
                     }
                 }.padding(24)
             }.background(Color(uiColor: LingroveTheme.background)).navigationTitle("Lingrove")
-            .toolbar { if DebugServer.available && debugEnabled { Button { pages.reloadAll(store: store) } label: { Image(systemName: "arrow.clockwise") }.accessibilityLabel("重新加载子应用") }; Button { resetSettingsDraft(); showingSettings = true } label: { Image(systemName: "gearshape") }.accessibilityLabel("应用设置") }
+            .toolbar { if DebugServer.available && (debugEnabled || snapshotEnabled) { Button(action: refreshModules) { Image(systemName: "arrow.clockwise") }.accessibilityLabel("重新加载子应用").disabled(refreshingModules || store.checking) }; Button { resetSettingsDraft(); showingSettings = true } label: { Image(systemName: "gearshape") }.accessibilityLabel("应用设置") }
             .safeAreaInset(edge: .bottom) {
-                if DebugServer.available && debugEnabled, let message = pages.reloadMessage {
+                HostPlaybackControls()
+                if DebugServer.available && (debugEnabled || snapshotEnabled), let message = pages.reloadMessage {
                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }.padding()
                 }
             }
@@ -104,24 +113,27 @@ struct HomeView: View {
                 NavigationStack {
                     Form {
                         if DebugServer.available {
-                            Section("调试模式") {
-                                Toggle("调试模式", isOn: $draftDebugEnabled)
+                            Section("开发模式") {
+                                Toggle("Snapshot", isOn: $snapshotEnabled)
+                                    .accessibilityIdentifier("snapshot-toggle")
+                                Text("开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。调试模式的服务器资源优先加载。").font(.footnote)
+                                Toggle("调试模式", isOn: Binding(get: { draftDebugEnabled }, set: setDebugEnabled))
                                     .accessibilityIdentifier("debug-mode-toggle")
-                                    .onChange(of: draftDebugEnabled) { _, value in
-                                        if showingSettings { debugEnabled = value }
-                                    }
-                                Text("开启后显示刷新按钮并使用配置的服务器资源；关闭后使用本地资源，仍可编辑和保存服务器地址。").font(.footnote)
+                                    .disabled(connectionTest != nil)
+                                Text("开启前验证服务器连接，连接成功后使用服务器资源。修改地址后需重新开启调试模式。").font(.footnote)
                                 TextField("http://192.168.1.10:8000", text: $debugAddress)
                                     .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                                     .accessibilityLabel("调试服务器地址")
                                     .onChange(of: debugAddress) { _, value in
                                         guard showingSettings else { return }
                                         clearConnectionTest()
+                                        draftDebugEnabled = false
+                                        debugEnabled = false
                                         UserDefaults.standard.set(value, forKey: DebugServer.preferenceKey)
                                         do { _ = try DebugServer.normalized(value); debugError = "" }
                                         catch { debugError = error.localizedDescription }
                                     }
-                                Button(action: testDebugConnection) {
+                                Button { testDebugConnection() } label: {
                                     HStack {
                                         if connectionTest != nil { ProgressView() }
                                         Text(LocalizedStringKey(connectionTest == nil ? "测试连接" : "正在测试…"))
@@ -135,7 +147,7 @@ struct HomeView: View {
                                         .foregroundStyle(connectionFailed ? Color.red : Color.secondary)
                                         .accessibilityIdentifier("debug-connection-result")
                                 }
-                                Text("填写服务器根地址，子应用从 /子应用ID/index.html 加载。留空使用内置资源。").font(.footnote)
+                                Text("填写服务器根地址，子应用从 /子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。").font(.footnote)
                                 if let message = pages.reloadMessage {
                                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }
                                 }
@@ -183,17 +195,17 @@ struct HomeView: View {
                             }.buttonStyle(.plain).accessibilityIdentifier("tts-settings-entry")
                             Button { showingLLMUsage = true } label: {
                                 HStack {
-                                    Text("通用模型使用统计")
+                                    Text("模型使用统计")
                                     Spacer()
                                     Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
                                 }.contentShape(Rectangle())
                             }.buttonStyle(.plain)
                         }
-                        ModuleManagementSection(store: store, modules: $draftModules)
+                        ModuleManagementSection(store: store, modules: $draftModules, editMode: $moduleEditMode)
                         NetworkAuthorizationSection(modules: store.modules).id(networkSummaryRevision)
                         Section("关于") { Text("Lingrove \(HostConfiguration.currentVersion)") }
                     }
-                    .environment(\.editMode, .constant(.active))
+                    .environment(\.editMode, $moduleEditMode)
                     .navigationDestination(isPresented: $showingLLMSettings) {
                         LLMSettingsView()
                             .environment(\.editMode, .constant(.inactive))
@@ -227,7 +239,28 @@ struct HomeView: View {
         connectionMessage = ""
         connectionFailed = false
     }
-    private func testDebugConnection() {
+    private func refreshModules() {
+        refreshingModules = true
+        Task { @MainActor in
+            defer { refreshingModules = false }
+            if snapshotEnabled && !debugEnabled { await store.checkForUpdates() }
+            pages.reloadAll(store: store)
+            if snapshotEnabled && !debugEnabled && !store.notice.isEmpty {
+                pages.reloadMessages["updates"] = store.notice
+            }
+        }
+    }
+    private func setDebugEnabled(_ enabled: Bool) {
+        guard showingSettings else { return }
+        if enabled {
+            testDebugConnection(enableOnSuccess: true)
+        } else {
+            clearConnectionTest()
+            draftDebugEnabled = false
+            debugEnabled = false
+        }
+    }
+    private func testDebugConnection(enableOnSuccess: Bool = false) {
         clearConnectionTest()
         let id = connectionTestID
         let address = debugAddress
@@ -237,8 +270,16 @@ struct HomeView: View {
                 let message = try await DebugServer.testConnection(address, modules: modules)
                 guard !Task.isCancelled, connectionTestID == id else { return }
                 connectionMessage = message
+                if enableOnSuccess {
+                    draftDebugEnabled = true
+                    debugEnabled = true
+                }
             } catch {
                 guard !Task.isCancelled, connectionTestID == id else { return }
+                if enableOnSuccess {
+                    draftDebugEnabled = false
+                    debugEnabled = false
+                }
                 connectionFailed = true
                 connectionMessage = "连接失败：\(error.localizedDescription)"
             }
@@ -250,14 +291,23 @@ struct HomeView: View {
         debugAddress = UserDefaults.standard.string(forKey: DebugServer.preferenceKey) ?? ""
         initialDebugAddress = debugAddress
         initialDebugEnabled = debugEnabled
+        initialSnapshotEnabled = snapshotEnabled
         draftDebugEnabled = debugEnabled
         draftAppLanguage = UserDefaults.standard.string(forKey: AppLanguage.preferenceKey) ?? "system"
         draftAppearance = AppAppearance(rawValue: UserDefaults.standard.string(forKey: AppAppearance.preferenceKey) ?? "") ?? .system
+        moduleEditMode = .inactive
         draftModules = store.modules
         debugError = ""
     }
     private func finishSettings() {
         clearConnectionTest()
+        if initialSnapshotEnabled != snapshotEnabled {
+            Task {
+                // Wait for a previous channel check to finish before checking the selected channel.
+                while store.checking { try? await Task.sleep(for: .milliseconds(100)) }
+                await store.checkForUpdates()
+            }
+        }
         if DebugServer.available,
            initialDebugAddress != debugAddress || initialDebugEnabled != debugEnabled {
             pages.reloadAll(store: store)
@@ -270,18 +320,29 @@ struct HomeView: View {
 struct ModuleManagementSection: View {
     @ObservedObject var store: ModuleStore
     @Binding var modules: [Module]
+    @Binding var editMode: EditMode
     private var uninstalledIDs: [String] {
         Set(store.statuses.keys).subtracting(store.modules.map(\.id)).sorted()
     }
     var body: some View {
         Section {
             ForEach(modules) { module in
-                moduleRow(id: module.id, module: module)
+                if editMode.isEditing {
+                    moduleRow(id: module.id, module: module)
+                } else {
+                    NavigationLink {
+                        ModuleDetailsView(store: store, moduleID: module.id)
+                            .environment(\.editMode, .constant(.inactive))
+                    } label: {
+                        moduleRow(id: module.id, module: module)
+                    }.accessibilityIdentifier("module-details-\(module.id)")
+                }
             }
             .onMove { source, destination in
                 modules.move(fromOffsets: source, toOffset: destination)
                 store.setDisplayOrder(modules.map(\.id))
             }
+            .moveDisabled(!editMode.isEditing)
             ForEach(uninstalledIDs, id: \.self) { id in
                 moduleRow(id: id, module: nil)
             }
@@ -299,9 +360,25 @@ struct ModuleManagementSection: View {
                     .accessibilityIdentifier("module-update-notice")
             }
         } header: {
-            Text("应用")
+            HStack {
+                Text("应用")
+                Spacer()
+                Button {
+                    withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                } label: {
+                    Text(LocalizedStringKey(editMode.isEditing ? "完成" : "编辑"))
+                        .font(.body).textCase(nil)
+                        .frame(minWidth: 44, minHeight: 44)
+                }
+                .disabled(modules.isEmpty)
+                .accessibilityIdentifier("module-edit-button")
+            }
         } footer: {
-            Text("拖动右侧手柄调整首页显示顺序，调整后自动保存。")
+            if editMode.isEditing {
+                Text("拖动右侧手柄调整首页显示顺序，调整后自动保存。")
+            } else {
+                Text("点击应用查看来源、版本和文件信息。")
+            }
         }
         .onAppear { refreshModules() }
         .onChange(of: store.modules) { _, _ in refreshModules() }
@@ -331,6 +408,56 @@ struct ModuleManagementSection: View {
         let draftIDs = Set(modules.map(\.id))
         modules = modules.compactMap { current[$0.id] }
             + store.modules.filter { !draftIDs.contains($0.id) }
+    }
+}
+
+struct ModuleDetailsView: View {
+    @ObservedObject var store: ModuleStore
+    let moduleID: String
+    private var module: Module? { store.modules.first { $0.id == moduleID } }
+
+    var body: some View {
+        Form {
+            if let module {
+                if let serverURL = DebugServer.entryURL(for: module) {
+                    Section("当前加载资源") {
+                        LabeledContent("来源", value: AppLanguage.text("开发服务器"))
+                        information("地址", value: serverURL.absoluteString)
+                        information("文件名", value: serverURL.lastPathComponent)
+                        Text("调试模式正在使用服务器资源，以下为本机安装包的信息。")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+                Section("本机应用") {
+                    LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
+                        ? (module.isSnapshot ? "Snapshot 下载" : "Release 下载") : "宿主内置"))
+                    information("版本", value: module.version)
+                    information("文件名", value: store.isDownloaded(module)
+                        ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
+                        : module.entry)
+                    if !store.isDownloaded(module) {
+                        Text("内置应用随宿主安装，未使用 ZIP 下载包。")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                    if store.isDownloaded(module), let address = module.downloadUrl {
+                        information("下载地址", value: address)
+                    }
+                }
+            } else {
+                Text("暂无已安装的应用").foregroundStyle(.secondary)
+            }
+        }
+        .navigationTitle(module?.name ?? moduleID)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func information(_ title: LocalizedStringKey, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.subheadline).foregroundStyle(.secondary)
+            Text(verbatim: value).textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }.padding(.vertical, 2)
     }
 }
 
@@ -404,7 +531,7 @@ struct NetworkAuthorizationSection: View {
         })
         hasCustomOrigins = custom.values.contains { !$0.isEmpty }
         domains = NetworkAccessDomain.snapshot(
-            modules: modules, customOrigins: custom, catalogURL: HostConfiguration.bundled.catalogURL,
+            modules: modules, customOrigins: custom, catalogURL: HostConfiguration.bundled.updateCatalogURL(),
             modelURL: modelURL,
             debugURL: DebugServer.enabled ? defaults.string(forKey: DebugServer.preferenceKey) : nil
         )
