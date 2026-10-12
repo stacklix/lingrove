@@ -30,7 +30,7 @@ from pathlib import Path
 import sys
 if sys.argv[1] == 'ci': sys.exit(0)
 assert sys.argv[1:3] == ['run', 'build']
-output = Path('dist/sentra')
+output = Path('dist/app/sentra')
 output.mkdir(parents=True)
 (output/'index.html').write_text(Path('source.txt').read_text())
 ''')

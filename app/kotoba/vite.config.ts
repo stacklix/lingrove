@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
     minify: mode === 'production',
     sourcemap: mode !== 'production',
     target: 'safari16',
-    outDir: '../../dist/kotoba',
+    outDir: '../../dist/app/kotoba',
     emptyOutDir: true,
   },
   test: { environment: 'jsdom' },

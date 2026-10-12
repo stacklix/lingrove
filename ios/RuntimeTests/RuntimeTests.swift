@@ -220,7 +220,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(DebugServer.entryURL(for: module))
         XCTAssertEqual(defaults.string(forKey: DebugServer.preferenceKey), "http://localhost:8000")
         defaults.set(true, forKey: DebugServer.enabledPreferenceKey)
-        XCTAssertEqual(DebugServer.entryURL(for: module)?.absoluteString, "http://localhost:8000/switch-test/index.html")
+        XCTAssertEqual(DebugServer.entryURL(for: module)?.absoluteString, "http://localhost:8000/app/switch-test/index.html")
     }
     func testDebugServerAddressAndNavigationIsolation() throws {
         XCTAssertEqual(try DebugServer.normalized("  http://192.168.1.2:8000/assets  "), "http://192.168.1.2:8000/assets/")

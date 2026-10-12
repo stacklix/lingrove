@@ -21231,24 +21231,24 @@
         }
       }
     },
-    "填写服务器根地址，子应用从 /子应用ID/index.html 加载。留空使用内置资源。": {
+    "填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。留空使用内置资源。": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "填写服务器根地址，子应用从 /子应用ID/index.html 加载。留空使用内置资源。"
+            "value": "填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。留空使用内置资源。"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enter the server root. Apps load from /app-id/index.html. Leave blank for built-in resources."
+            "value": "Enter the server root. Apps load from /app/app-id/index.html. Leave blank for built-in resources."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サーバーのルートを入力します。子アプリは /アプリID/index.html から読み込みます。空欄なら内蔵資源を使用します。"
+            "value": "サーバーのルートを入力します。子アプリは /app/アプリID/index.html から読み込みます。空欄なら内蔵資源を使用します。"
           }
         }
       }
@@ -29679,46 +29679,46 @@
         }
       }
     },
-    "Snapshot": {
+    "开发快照": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Snapshot"
+            "value": "开发快照"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Snapshot"
+            "value": "Development snapshot"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Snapshot"
+            "value": "開発スナップショット"
           }
         }
       }
     },
-    "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。开发模式的服务器资源优先加载。": {
+    "开启后获取 master 上的最新开发版本；关闭后获取最新正式版。调试服务器资源优先加载。": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。开发模式的服务器资源优先加载。"
+            "value": "开启后获取 master 上的最新开发版本；关闭后获取最新正式版。调试服务器资源优先加载。"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable Snapshot updates from master; disable to use releases from the latest tag. Development server resources take priority."
+            "value": "Enable the latest development build from master; disable to use the latest release. Debug server resources take priority."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "オンにすると master の Snapshot、オフにすると最新タグの正式版を取得します。開発サーバーのリソースが優先されます。"
+            "value": "オンにすると master の最新開発版、オフにすると最新の正式版を取得します。デバッグサーバーのリソースが優先されます。"
           }
         }
       }
@@ -29921,24 +29921,24 @@
         }
       }
     },
-    "Snapshot 下载": {
+    "开发快照下载": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Snapshot 下载"
+            "value": "开发快照下载"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Snapshot download"
+            "value": "Development snapshot download"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Snapshot ダウンロード"
+            "value": "開発スナップショットのダウンロード"
           }
         }
       }
@@ -30053,28 +30053,6 @@
         }
       }
     },
-    "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。调试模式的服务器资源优先加载。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。调试模式的服务器资源优先加载。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enable Snapshot updates from master; disable to use releases from the latest tag. Debug server resources take priority."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "オンにすると master の Snapshot、オフにすると最新タグの正式版を取得します。デバッグサーバーのリソースが優先されます。"
-          }
-        }
-      }
-    },
     "开启前验证服务器连接，连接成功后使用服务器资源。修改地址后需重新开启调试模式。": {
       "localizations": {
         "zh-Hans": {
@@ -30097,24 +30075,24 @@
         }
       }
     },
-    "填写服务器根地址，子应用从 /子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。": {
+    "填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "填写服务器根地址，子应用从 /子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。"
+            "value": "填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enter the server root URL. Apps load from /app-ID/index.html. Debug mode requires a reachable address."
+            "value": "Enter the server root URL. Apps load from /app/app-ID/index.html. Debug mode requires a reachable address."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "サーバーのルート URL を入力してください。アプリは /アプリID/index.html から読み込まれます。デバッグモードには接続可能なアドレスが必要です。"
+            "value": "サーバーのルート URL を入力してください。アプリは /app/アプリID/index.html から読み込まれます。デバッグモードには接続可能なアドレスが必要です。"
           }
         }
       }

@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
     minify: mode === 'production',
     sourcemap: mode !== 'production',
     target: 'safari16',
-    outDir: '../../dist/lector',
+    outDir: '../../dist/app/lector',
     emptyOutDir: true,
   },
   test: { environment: 'jsdom' },

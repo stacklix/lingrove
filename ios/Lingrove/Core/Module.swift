@@ -152,7 +152,7 @@ enum DebugServer {
         let session = URLSession(configuration: configuration, delegate: NoRedirect(), delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         let urls = modules.isEmpty ? [base] : modules.map {
-            base.appendingPathComponent($0.id).appendingPathComponent($0.entry)
+            base.appendingPathComponent("app").appendingPathComponent($0.id).appendingPathComponent($0.entry)
         }
         for url in urls {
             try Task.checkCancellation()
@@ -171,7 +171,7 @@ enum DebugServer {
     static func entryURL(for module: Module) -> URL? {
         guard enabled, let base = try? normalized(UserDefaults.standard.string(forKey: preferenceKey) ?? ""),
               !base.isEmpty, let url = URL(string: base) else { return nil }
-        return url.appendingPathComponent(module.id).appendingPathComponent(module.entry)
+        return url.appendingPathComponent("app").appendingPathComponent(module.id).appendingPathComponent(module.entry)
     }
     static func allows(_ url: URL, entry: URL) -> Bool {
         url.scheme == entry.scheme && url.host == entry.host && url.port == entry.port

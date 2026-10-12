@@ -18,7 +18,7 @@ for (const name of names) {
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(manifest.id) || !/^\d+\.\d+\.\d+$/.test(manifest.version))
     throw new Error('Invalid module identity');
   if (manifest.id !== name) throw new Error('Module ID must match its directory name');
-  const output = path.join(root, 'dist', name);
+  const output = path.join(root, 'dist', 'app', name);
   await writeFile(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
   const archive = `${manifest.id}-${manifest.version}${snapshot ? '-snapshot' : ''}.zip`;
   const zipPath = path.join(root, 'dist/packages', archive);
@@ -29,7 +29,7 @@ for (const name of names) {
   const data = await readFile(zipPath);
   modules.push({
     ...manifest,
-    webUrl: `${base}/${name}/`,
+    webUrl: `${base}/app/${name}/`,
     downloadUrl: `${base}/packages/${archive}`,
     size: data.length,
     sha256: createHash('sha256').update(data).digest('hex'),

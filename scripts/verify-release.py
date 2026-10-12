@@ -21,13 +21,13 @@ assert [module['id'] for module in catalog['modules']] == expected, 'Catalog doe
 assert (output / 'index.html').is_file() and (output / '.nojekyll').is_file()
 for module in catalog['modules']:
     name = module['id']
-    directory = output / name
+    directory = output / 'app' / name
     manifest = json.loads((directory / 'manifest.json').read_text())
     assert all(module[key] == value for key, value in manifest.items()), f'{name}: manifest mismatch'
     web_url, zip_url = urlparse(module['webUrl']), urlparse(module['downloadUrl'])
     assert web_url.scheme == zip_url.scheme == 'https'
     assert web_url.netloc == zip_url.netloc
-    assert web_url.path.endswith(f'/{name}/')
+    assert web_url.path.endswith(f'/app/{name}/')
     assert zip_url.path.endswith(f'/packages/{name}-{module["version"]}{suffix}.zip')
     package = output / 'packages' / f'{name}-{module["version"]}{suffix}.zip'
     data = package.read_bytes()
