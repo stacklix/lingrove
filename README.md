@@ -94,11 +94,12 @@ gh-pages/
 ├── packages/
 │   ├── sentra-1.1.1-snapshot.zip  # master 快照包
 │   └── glyphora-1.0.0-snapshot.zip
-├── glyphora/                     # 子应用网页及资源
-└── sentra/
-    ├── index.html                # 浏览器可直接访问
-    ├── manifest.json
-    └── assets/                   # 与 ZIP 内文件逐字节一致
+└── app/                          # 子应用网页及资源
+    ├── glyphora/
+    └── sentra/
+        ├── index.html            # 浏览器可直接访问
+        ├── manifest.json
+        └── assets/               # 与 ZIP 内文件逐字节一致
 ```
 
 沿用仓库的域名 `lingrove.stackli.me`，对应地址为：
@@ -106,8 +107,8 @@ gh-pages/
 - Snapshot 更新目录：`https://lingrove.stackli.me/catalog.snapshot.json`
 - 正式版更新目录：`https://lingrove.stackli.me/catalog.json`
 - Sentra ZIP：`https://lingrove.stackli.me/release/packages/sentra-1.1.1.zip`（版本变化后文件名相应变化）
-- Sentra 网页：`https://lingrove.stackli.me/sentra/`
-- Glyphora 网页：`https://lingrove.stackli.me/glyphora/`
+- Sentra 网页：`https://lingrove.stackli.me/app/sentra/`
+- Glyphora 网页：`https://lingrove.stackli.me/app/glyphora/`
 
 目录为普通 `{ "modules": [...] }` JSON；模块记录包含 `webUrl`、`downloadUrl`、版本、包大小和 SHA-256。原生根据 `downloadUrl` 下载；`webUrl` 供浏览器访问。`npm run verify:release` 验证目录与所有包一一对应、哈希及大小正确、ZIP 与网页目录一致、HTML 引用的资源存在。
 
@@ -115,7 +116,7 @@ gh-pages/
 
 仓库现有 GitHub Pages 配置为 `gh-pages` 分支根目录、自定义域名 `lingrove.stackli.me`。因为 `GITHUB_TOKEN` 推送不会自动触发分支式 Pages 构建，工作流推送后通过 [GitHub Pages 构建 API](https://docs.github.com/en/rest/pages/pages#request-a-github-pages-build) 显式触发构建，并等待本次产物提交构建成功；失败或超时会使工作流失败。无需切换 Pages 发布源，也不会修改 DNS 设置。
 
-新增子应用时，在 `app/<子应用ID>/` 下创建项目；根 `package.json` 已通过 `app/*` 自动识别工作区。在 `modules.json` 中加入子应用 ID（不带 `app/` 前缀），提供 `package.json` 中的 `build` 命令和 `manifest.json`，并将 Vite 的 `outDir` 设置为 `../../dist/<子应用ID>`；manifest 的 `id` 与子目录名保持一致。添加工作区后运行 `npm install` 更新锁文件。统一构建脚本会依次构建清单中的所有子应用并生成相应 ZIP、网页目录和原生内置资源。
+新增子应用时，在 `app/<子应用ID>/` 下创建项目；根 `package.json` 已通过 `app/*` 自动识别工作区。在 `modules.json` 中加入子应用 ID（不带 `app/` 前缀），提供 `package.json` 中的 `build` 命令和 `manifest.json`，并将 Vite 的 `outDir` 设置为 `../../dist/app/<子应用ID>`；manifest 的 `id` 与子目录名保持一致。添加工作区后运行 `npm install` 更新锁文件。统一构建脚本会依次构建清单中的所有子应用并生成相应 ZIP、网页目录和原生内置资源。
 
 ## 更新行为
 
@@ -252,7 +253,7 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 1. 执行 `npm run build`，然后 `npm run debug:serve`（默认端口 8000，可用 `npm run debug:serve -- --port 8080` 修改）。启动时会打印可用的局域网 IP 地址，按 Ctrl+C 可正常退出。
 2. 在宿主“设置 → 开发模式”输入服务器根地址，例如 `http://192.168.1.10:8000`，地址输入后自动保存，可点击“测试连接”检查连通性；启用调试模式时先自动检查所有子应用入口，连接成功才使用服务器资源，点击左上角“返回”关闭设置。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
-3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。每个子应用直接请求 `<根地址>/<子应用ID>/index.html` 及其 JS/CSS（例如 `/sentra/index.html`），不下载或解压 ZIP。新增子应用并运行 `npm run build` 后，同一个服务地址即可访问，无需为每个子应用单独启动服务。
+3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。每个子应用直接请求 `<根地址>/app/<子应用ID>/index.html` 及其 JS/CSS（例如 `/app/sentra/index.html`），不下载或解压 ZIP。新增子应用并运行 `npm run build` 后，同一个服务地址即可访问，无需为每个子应用单独启动服务。
 4. 修改源码后重新运行 `npm run build`，返回宿主点击设置旁的“重新加载子应用”，刷新全部已安装子应用（包括尚未打开的子应用）。子应用页面 Home 按钮右侧也提供原生刷新按钮，用于刷新当前子应用；Debug 模式下会显示刷新成功或失败的提示。
 
 调试服务禁用 HTTP 缓存且不压缩响应；每次重载会重建 WebView 并取消旧请求，未保存的页面状态会清空，已保存数据保留。服务器地址会持久保存；清空即可恢复本地资源。调试失败时可在错误页重新加载。Debug 支持局域网 HTTP 和 Safari Web Inspector。

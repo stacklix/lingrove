@@ -114,9 +114,9 @@ struct HomeView: View {
                     Form {
                         if DebugServer.available {
                             Section("开发模式") {
-                                Toggle("Snapshot", isOn: $snapshotEnabled)
+                                Toggle("开发快照", isOn: $snapshotEnabled)
                                     .accessibilityIdentifier("snapshot-toggle")
-                                Text("开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。调试模式的服务器资源优先加载。").font(.footnote)
+                                Text("开启后获取 master 上的最新开发版本；关闭后获取最新正式版。调试服务器资源优先加载。").font(.footnote)
                                 Toggle("调试模式", isOn: Binding(get: { draftDebugEnabled }, set: setDebugEnabled))
                                     .accessibilityIdentifier("debug-mode-toggle")
                                     .disabled(connectionTest != nil)
@@ -147,7 +147,7 @@ struct HomeView: View {
                                         .foregroundStyle(connectionFailed ? Color.red : Color.secondary)
                                         .accessibilityIdentifier("debug-connection-result")
                                 }
-                                Text("填写服务器根地址，子应用从 /子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。").font(.footnote)
+                                Text("填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。").font(.footnote)
                                 if let message = pages.reloadMessage {
                                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }
                                 }
@@ -430,7 +430,7 @@ struct ModuleDetailsView: View {
                 }
                 Section("本机应用") {
                     LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
-                        ? (module.isSnapshot ? "Snapshot 下载" : "Release 下载") : "宿主内置"))
+                        ? (module.isSnapshot ? "开发快照下载" : "Release 下载") : "宿主内置"))
                     information("版本", value: module.version)
                     information("文件名", value: store.isDownloaded(module)
                         ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)

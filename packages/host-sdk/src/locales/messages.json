@@ -3859,9 +3859,9 @@
     "en": "Testing…",
     "ja": "テスト中…"
   },
-  "填写服务器根地址，子应用从 /子应用ID/index.html 加载。留空使用内置资源。": {
-    "en": "Enter the server root. Apps load from /app-id/index.html. Leave blank for built-in resources.",
-    "ja": "サーバーのルートを入力します。子アプリは /アプリID/index.html から読み込みます。空欄なら内蔵資源を使用します。"
+  "填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。留空使用内置资源。": {
+    "en": "Enter the server root. Apps load from /app/app-id/index.html. Leave blank for built-in resources.",
+    "ja": "サーバーのルートを入力します。子アプリは /app/アプリID/index.html から読み込みます。空欄なら内蔵資源を使用します。"
   },
   "模型服务": {
     "en": "Model service",
@@ -5395,13 +5395,13 @@
     "en": "Development mode",
     "ja": "開発モード"
   },
-  "Snapshot": {
-    "en": "Snapshot",
-    "ja": "Snapshot"
+  "开发快照": {
+    "en": "Development snapshot",
+    "ja": "開発スナップショット"
   },
-  "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。开发模式的服务器资源优先加载。": {
-    "en": "Enable Snapshot updates from master; disable to use releases from the latest tag. Development server resources take priority.",
-    "ja": "オンにすると master の Snapshot、オフにすると最新タグの正式版を取得します。開発サーバーのリソースが優先されます。"
+  "开启后获取 master 上的最新开发版本；关闭后获取最新正式版。调试服务器资源优先加载。": {
+    "en": "Enable the latest development build from master; disable to use the latest release. Debug server resources take priority.",
+    "ja": "オンにすると master の最新開発版、オフにすると最新の正式版を取得します。デバッグサーバーのリソースが優先されます。"
   },
   "编辑": {
     "en": "Edit",
@@ -5439,9 +5439,9 @@
     "en": "Local installation",
     "ja": "ローカルアプリ"
   },
-  "Snapshot 下载": {
-    "en": "Snapshot download",
-    "ja": "Snapshot ダウンロード"
+  "开发快照下载": {
+    "en": "Development snapshot download",
+    "ja": "開発スナップショットのダウンロード"
   },
   "Release 下载": {
     "en": "Release download",
@@ -5463,17 +5463,13 @@
     "en": "Bundled apps are installed with the host without a downloaded ZIP package.",
     "ja": "内蔵アプリはホストとともにインストールされ、ZIP のダウンロードパッケージは使用しません。"
   },
-  "开启后从 master 获取 Snapshot 更新；关闭后从最新 tag 获取正式版本。调试模式的服务器资源优先加载。": {
-    "en": "Enable Snapshot updates from master; disable to use releases from the latest tag. Debug server resources take priority.",
-    "ja": "オンにすると master の Snapshot、オフにすると最新タグの正式版を取得します。デバッグサーバーのリソースが優先されます。"
-  },
   "开启前验证服务器连接，连接成功后使用服务器资源。修改地址后需重新开启调试模式。": {
     "en": "The server connection is checked before enabling debug mode. Re-enable debug mode after changing the address.",
     "ja": "有効にする前にサーバー接続を確認します。アドレスを変更した後はデバッグモードを再度有効にしてください。"
   },
-  "填写服务器根地址，子应用从 /子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。": {
-    "en": "Enter the server root URL. Apps load from /app-ID/index.html. Debug mode requires a reachable address.",
-    "ja": "サーバーのルート URL を入力してください。アプリは /アプリID/index.html から読み込まれます。デバッグモードには接続可能なアドレスが必要です。"
+  "填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。": {
+    "en": "Enter the server root URL. Apps load from /app/app-ID/index.html. Debug mode requires a reachable address.",
+    "ja": "サーバーのルート URL を入力してください。アプリは /app/アプリID/index.html から読み込まれます。デバッグモードには接続可能なアドレスが必要です。"
   },
   "调试模式正在使用服务器资源，以下为本机安装包的信息。": {
     "en": "Debug mode is using server resources. Local installation details are shown below.",
