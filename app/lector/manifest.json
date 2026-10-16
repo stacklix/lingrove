@@ -1,0 +1,11 @@
+{
+  "id": "lector",
+  "name": "Lector",
+  "description": "从原文到理解。注音、分词与上下文释义，让外语阅读更轻松。",
+  "version": "1.4.2",
+  "entry": "index.html",
+  "minHostVersion": "1.2.0",
+  "bridgeVersion": 1,
+  "stateSchemaVersion": 1,
+  "allowedOrigins": []
+}

@@ -1,0 +1,11 @@
+{
+  "id": "kotoba",
+  "name": "Kotoba",
+  "description": "日语单词活用手册。查看动词与形容词的各种形式，通过例句理解用法。",
+  "version": "1.0.0",
+  "entry": "index.html",
+  "minHostVersion": "1.2.0",
+  "bridgeVersion": 1,
+  "stateSchemaVersion": 1,
+  "allowedOrigins": []
+}

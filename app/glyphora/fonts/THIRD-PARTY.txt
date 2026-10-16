@@ -1,0 +1,21 @@
+Glyphora reference resources
+
+Japanese kana paths: KanjiVG, copyright Ulrich Apel and contributors.
+https://kanjivg.tagaini.net/  https://github.com/KanjiVG/kanjivg
+License: Creative Commons Attribution-ShareAlike 3.0
+https://creativecommons.org/licenses/by-sa/3.0/
+The 92 kana SVG path sets were extracted into src/kana.json; only the container format was changed. Those paths and their adapted collection remain under CC BY-SA 3.0. This license does not apply to unrelated app code.
+
+Russian handwriting reference: Bad Script, copyright 2011 The Bad Script Project Authors.
+https://github.com/google/fonts/tree/main/ofl/badscript
+https://github.com/alexeiva/badscript
+Unmodified font redistributed under SIL Open Font License 1.1. See BadScript-OFL.txt.
+Used for display, tracing and the scoring reference.
+
+Greek handwriting reference: Playpen Sans, copyright 2023 The Playpen Sans Project Authors.
+https://github.com/google/fonts/tree/main/ofl/playpensans
+https://github.com/TypeTogether/Playpen-Sans
+Unmodified variable font redistributed under SIL Open Font License 1.1. See PlaypenSans-OFL.txt.
+Used at regular weight for display, tracing and the scoring reference.
+
+These are reference styles, not an exhaustive collection of accepted personal handwriting variants.
