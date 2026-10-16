@@ -102,7 +102,7 @@ struct HomeView: View {
                     }
                 }.padding(24)
             }.background(Color(uiColor: LingroveTheme.background)).navigationTitle("Lingrove")
-            .toolbar { if DebugServer.available && (debugEnabled || snapshotEnabled) { Button(action: refreshModules) { Image(systemName: "arrow.clockwise") }.accessibilityLabel("重新加载子应用").disabled(refreshingModules || store.checking) }; Button { resetSettingsDraft(); showingSettings = true } label: { Image(systemName: "gearshape") }.accessibilityLabel("应用设置") }
+            .toolbar { if DebugServer.available && (debugEnabled || snapshotEnabled) { Button(action: refreshModules) { if refreshingModules { ProgressView() } else { Image(systemName: "arrow.clockwise") } }.accessibilityLabel("重新加载子应用").disabled(refreshingModules) }; Button { resetSettingsDraft(); showingSettings = true } label: { Image(systemName: "gearshape") }.accessibilityLabel("应用设置") }
             .safeAreaInset(edge: .bottom) {
                 HostPlaybackControls()
                 if DebugServer.available && (debugEnabled || snapshotEnabled), let message = pages.reloadMessage {
@@ -243,9 +243,9 @@ struct HomeView: View {
         refreshingModules = true
         Task { @MainActor in
             defer { refreshingModules = false }
-            if snapshotEnabled && !debugEnabled { await store.checkForUpdates() }
+            if snapshotEnabled { await store.checkForUpdates(forceSnapshot: true) }
             pages.reloadAll(store: store)
-            if snapshotEnabled && !debugEnabled && !store.notice.isEmpty {
+            if snapshotEnabled && !store.notice.isEmpty {
                 pages.reloadMessages["updates"] = store.notice
             }
         }

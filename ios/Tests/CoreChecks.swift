@@ -164,6 +164,33 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(channelStore.modules.first?.resourceIdentity == snapshot.resourceIdentity, "Snapshot installs")
         let firstSnapshot = snapshot
         channelStore.markHealthy(snapshot)
+        var forcedRequests: [URLRequest] = []
+        MockProtocol.intercept = { request in
+            forcedRequests.append(request.request)
+            return false
+        }
+        await channelStore.checkForUpdates()
+        check(forcedRequests.count == 1, "ordinary check skips identical Snapshot package")
+        forcedRequests.removeAll()
+        await channelStore.checkForUpdates(forceSnapshot: true)
+        check(forcedRequests.count == 1 && forcedRequests.first?.url?.path == "/catalog.snapshot.json", "forced Snapshot refresh fetches catalog but skips identical package")
+        check(forcedRequests.allSatisfy { $0.url?.query?.contains("_refresh=") == true && $0.value(forHTTPHeaderField: "Cache-Control") == "no-cache" }, "forced Snapshot requests bypass intermediary caches")
+        check(channelStore.modules.first?.resourceIdentity == snapshot.resourceIdentity, "forced identical Snapshot remains installed")
+        var blockedRequest = false
+        MockProtocol.intercept = { request in
+            if !blockedRequest && request.request.url?.path == "/catalog.snapshot.json" {
+                blockedRequest = true
+                return true
+            }
+            return false
+        }
+        let backgroundCheck = Task { await channelStore.checkForUpdates() }
+        while !blockedRequest { try await Task.sleep(for: .milliseconds(10)) }
+        await channelStore.checkForUpdates(forceSnapshot: true)
+        await backgroundCheck.value
+        check(!channelStore.checking && channelStore.notice.isEmpty, "forced Snapshot refresh supersedes a pending background check")
+        MockProtocol.intercept = nil
+        channelStore.markHealthy(snapshot)
         try offerSnapshot("snapshot-next.zip")
         await channelStore.checkForUpdates()
         check(channelStore.modules.first?.resourceIdentity == snapshot.resourceIdentity, "same-version Snapshot updates by hash")

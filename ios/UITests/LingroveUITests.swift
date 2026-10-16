@@ -206,6 +206,7 @@ final class LingroveUITests: XCTestCase {
         toggle("debug-mode-toggle")
         app.buttons["settings-back"].tap()
         XCTAssertTrue(app.buttons["重新加载子应用"].exists)
+        XCTAssertTrue(app.buttons["重新加载子应用"].isEnabled)
         openSettings()
         toggle("snapshot-toggle")
         app.buttons["settings-back"].tap()

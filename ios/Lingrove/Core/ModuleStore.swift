@@ -18,6 +18,8 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     private var activeSessions = Set<String>()
     private var rejectedVersions: [String: String] = [:]
     private var registryReadable = true
+    private var updateTask: Task<Void, Never>?
+    private var updateID = UUID()
     private let root: URL
     private let config: HostConfiguration
     private let session: URLSession
@@ -118,27 +120,50 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
-    private func fetch(_ url: URL, limit: Int) async throws -> Data {
+    private func fetch(_ url: URL, limit: Int, forceRefresh: Bool = false) async throws -> Data {
         guard NetworkPolicy.origin(url.absoluteString) != nil else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
-        var request = URLRequest(url: url); request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        if forceRefresh { components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "_refresh", value: UUID().uuidString)] }
+        var request = URLRequest(url: components.url!)
+        if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
+        request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
         let (bytes, response) = try await session.bytes(for: request)
         guard let response = response as? HTTPURLResponse, response.statusCode == 200, response.expectedContentLength <= limit else { throw ModuleError.invalid("下载失败或资源过大") }
         var result = Data()
         for try await byte in bytes { if result.count >= limit { throw ModuleError.invalid("资源超过大小限制") }; result.append(byte) }
         return result
     }
-    func checkForUpdates() async {
-        guard !checking, registryReadable else { return }; checking = true; defer { checking = false }
+    func checkForUpdates(forceSnapshot: Bool = false) async {
+        guard registryReadable else { return }
+        let force = forceSnapshot && HostConfiguration.usesSnapshot(defaults: defaults)
+        guard !checking || force else { return }
+        updateTask?.cancel()
+        let id = UUID()
+        updateID = id
+        checking = true
+        let task = Task { @MainActor in
+            await self.performUpdateCheck(forceSnapshot: force)
+            if self.updateID == id {
+                self.checking = false
+                self.updateTask = nil
+            }
+        }
+        updateTask = task
+        await task.value
+    }
+    private func performUpdateCheck(forceSnapshot: Bool) async {
         statuses.removeAll()
         let catalogURL = config.updateCatalogURL(defaults: defaults)
         guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
-            let catalog = try JSONDecoder().decode(Catalog.self, from: await fetch(url, limit: 1024 * 1024))
+            let catalog = try JSONDecoder().decode(Catalog.self, from: await fetch(url, limit: 1024 * 1024, forceRefresh: forceSnapshot))
+            try Task.checkCancellation()
             try catalog.validate()
             // A settings change during a request must not install the previous channel.
             guard catalogURL == config.updateCatalogURL(defaults: defaults) else { return }
             notice = ""
             for remote in catalog.modules {
+                try Task.checkCancellation()
                 if let current = modules.first(where: { $0.id == remote.id }) {
                     var installed = registry[remote.id] ?? Installed(active: current, healthy: true)
                     installed.minimumAllowedVersion = remote.minimumAllowedVersion; registry[remote.id] = installed
@@ -152,17 +177,18 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
                 statuses[remote.id] = "正在下载 \(remote.version)…"
                 do {
-                    let installed = try await install(remote, catalogURL: catalogURL)
+                    let installed = try await install(remote, catalogURL: catalogURL, forceRefresh: forceSnapshot)
                     statuses[remote.id] = installed ? "已更新至 \(remote.version)" : "发现更新，退出模块后再检查"
                 }
-                catch { statuses[remote.id] = "更新失败，保留本地版本：\(error.localizedDescription)" }
+                catch { if Task.isCancelled { return }; statuses[remote.id] = "更新失败，保留本地版本：\(error.localizedDescription)" }
             }
-        } catch { notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)" }
+        } catch { if Task.isCancelled { return }; notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)" }
     }
-    private func install(_ module: Module, catalogURL: String) async throws -> Bool {
+    private func install(_ module: Module, catalogURL: String, forceRefresh: Bool) async throws -> Bool {
         guard let rawURL = module.downloadUrl, let url = URL(string: rawURL), let expectedHash = module.sha256, expectedHash.count == 64,
               let expectedSize = module.size, expectedSize > 0, expectedSize <= 50 * 1024 * 1024 else { throw ModuleError.invalid("下载元数据无效") }
-        let data = try await fetch(url, limit: expectedSize)
+        let data = try await fetch(url, limit: expectedSize, forceRefresh: forceRefresh)
+        try Task.checkCancellation()
         guard data.count == expectedSize, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == expectedHash else { throw ModuleError.invalid("安装包哈希不匹配") }
         // A module may have been opened while its package was downloading.
         guard !activeSessions.contains(module.id), catalogURL == config.updateCatalogURL(defaults: defaults) else { return false }
@@ -180,7 +206,9 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         if FileManager.default.fileExists(atPath: destination.path) { try FileManager.default.removeItem(at: destination) }
         try FileManager.default.moveItem(at: stage, to: destination)
         var values = URLResourceValues(); values.isExcludedFromBackup = true; var moduleDirectory = destination; try moduleDirectory.setResourceValues(values)
-        let previous = modules.first { $0.id == module.id }; let oldRegistry = registry
+        let current = modules.first { $0.id == module.id }
+        let previous = current?.resourceIdentity == module.resourceIdentity ? registry[module.id]?.previous : current
+        let oldRegistry = registry
         registry[module.id] = Installed(active: module, previous: previous, healthy: false, minimumAllowedVersion: module.minimumAllowedVersion)
         do { try persist() } catch { registry = oldRegistry; refresh(); throw error }
         // Keep at most the active and rollback versions; never remove state files.
