@@ -89,6 +89,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         MockProtocol.intercept = nil
         await store.checkForUpdates()
         check(store.modules.first?.version == "1.1.0", "HTTPS plain catalog update installed and activated")
+        check(store.lastUpdatedAt(for: store.modules[0]) != nil, "successful ZIP install records its update time")
         check(FileManager.default.fileExists(atPath: store.directory(for: module).appendingPathComponent("index.html").path), "installed resources readable")
         store.markHealthy(module)
         store.rollback(module)

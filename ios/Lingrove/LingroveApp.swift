@@ -392,6 +392,16 @@ struct ModuleManagementSection: View {
                 } else if store.blocked.contains(id) {
                     Text("当前版本已停用，请检查更新。").font(.footnote).foregroundStyle(.secondary)
                 }
+                if let progress = store.downloadProgress[id] {
+                    HStack(spacing: 8) {
+                        ProgressView(value: progress)
+                        Text("\(Int(progress * 100))%")
+                            .monospacedDigit()
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("下载进度 \(Int(progress * 100))%")
+                }
             }
             Spacer(minLength: 8)
             Group {
@@ -432,6 +442,7 @@ struct ModuleDetailsView: View {
                     LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
                         ? (module.isSnapshot ? "开发快照下载" : "Release 下载") : "宿主内置"))
                     information("版本", value: module.version)
+                    information("最近更新时间", value: store.lastUpdatedAt(for: module)?.formatted(date: .abbreviated, time: .shortened) ?? "暂无记录")
                     information("文件名", value: store.isDownloaded(module)
                         ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
                         : module.entry)

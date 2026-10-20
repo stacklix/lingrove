@@ -7,10 +7,18 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
 }
 @MainActor final class ModuleStore: ObservableObject {
     static let displayOrderKey = "modules.displayOrder"
-    struct Installed: Codable { var active: Module; var previous: Module?; var healthy: Bool; var minimumAllowedVersion: String? }
+    struct Installed: Codable {
+        var active: Module
+        var previous: Module?
+        var healthy: Bool
+        var minimumAllowedVersion: String?
+        var updatedAt: Date?
+        var previousUpdatedAt: Date?
+    }
     @Published var modules: [Module] = []
     @Published var checking = false
     @Published var statuses: [String: String] = [:]
+    @Published var downloadProgress: [String: Double] = [:]
     @Published var notice = ""
     @Published var blocked = Set<String>()
     private var registry: [String: Installed] = [:]
@@ -96,6 +104,14 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         if isDownloaded(module) { return downloaded }
         return builtinRoot!.appendingPathComponent(module.id)
     }
+    func lastUpdatedAt(for module: Module) -> Date? {
+        guard isDownloaded(module),
+              let installed = registry[module.id],
+              installed.active.resourceIdentity == module.resourceIdentity else { return nil }
+        if let updatedAt = installed.updatedAt { return updatedAt }
+        let attributes = try? FileManager.default.attributesOfItem(atPath: directory(for: module).path)
+        return attributes?[.modificationDate] as? Date
+    }
     func begin(_ module: Module, trackingStartup: Bool = true) { activeSessions.insert(module.id); if trackingStartup && registry[module.id]?.healthy == false { UserDefaults.standard.set(true, forKey: "launching.\(module.id).\(module.resourceIdentity)") } }
     func end(_ module: Module) { activeSessions.remove(module.id) }
     func clearLaunchMarker(_ module: Module) {
@@ -115,12 +131,13 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             try JSONEncoder().encode(rejectedVersions).write(to: root.appendingPathComponent("rejected.json"), options: .atomic)
             let fallback = install.previous ?? builtins[module.id]
             if let fallback, fallback.resourceIdentity != module.resourceIdentity, rejectedVersions[module.id] != fallback.resourceIdentity, install.minimumAllowedVersion.flatMap(Version.init).map({ Version(fallback.version)! >= $0 }) ?? true {
-                registry[module.id] = Installed(active: fallback, previous: nil, healthy: true, minimumAllowedVersion: install.minimumAllowedVersion)
+                registry[module.id] = Installed(active: fallback, previous: nil, healthy: true, minimumAllowedVersion: install.minimumAllowedVersion,
+                                                 updatedAt: install.previousUpdatedAt, previousUpdatedAt: nil)
                 try persist(); statuses[module.id] = "启动失败，已回退至 \(fallback.version)"
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
-    private func fetch(_ url: URL, limit: Int, forceRefresh: Bool = false) async throws -> Data {
+    private func fetch(_ url: URL, limit: Int, forceRefresh: Bool = false, onProgress: ((Int) -> Void)? = nil) async throws -> Data {
         guard NetworkPolicy.origin(url.absoluteString) != nil else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         if forceRefresh { components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "_refresh", value: UUID().uuidString)] }
@@ -130,7 +147,16 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         let (bytes, response) = try await session.bytes(for: request)
         guard let response = response as? HTTPURLResponse, response.statusCode == 200, response.expectedContentLength <= limit else { throw ModuleError.invalid("下载失败或资源过大") }
         var result = Data()
-        for try await byte in bytes { if result.count >= limit { throw ModuleError.invalid("资源超过大小限制") }; result.append(byte) }
+        var lastReported = 0
+        for try await byte in bytes {
+            if result.count >= limit { throw ModuleError.invalid("资源超过大小限制") }
+            result.append(byte)
+            if result.count - lastReported >= 64 * 1024 {
+                lastReported = result.count
+                onProgress?(result.count)
+            }
+        }
+        onProgress?(result.count)
         return result
     }
     func checkForUpdates(forceSnapshot: Bool = false) async {
@@ -153,6 +179,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     }
     private func performUpdateCheck(forceSnapshot: Bool) async {
         statuses.removeAll()
+        downloadProgress.removeAll()
         let catalogURL = config.updateCatalogURL(defaults: defaults)
         guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
@@ -162,6 +189,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             // A settings change during a request must not install the previous channel.
             guard catalogURL == config.updateCatalogURL(defaults: defaults) else { return }
             notice = ""
+            var pending: [Module] = []
             for remote in catalog.modules {
                 try Task.checkCancellation()
                 if let current = modules.first(where: { $0.id == remote.id }) {
@@ -176,19 +204,70 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
                 statuses[remote.id] = "正在下载 \(remote.version)…"
-                do {
-                    let installed = try await install(remote, catalogURL: catalogURL, forceRefresh: forceSnapshot)
-                    statuses[remote.id] = installed ? "已更新至 \(remote.version)" : "发现更新，退出模块后再检查"
-                }
-                catch { if Task.isCancelled { return }; statuses[remote.id] = "更新失败，保留本地版本：\(error.localizedDescription)" }
+                downloadProgress[remote.id] = 0
+                pending.append(remote)
             }
+            await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot)
         } catch { if Task.isCancelled { return }; notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)" }
     }
-    private func install(_ module: Module, catalogURL: String, forceRefresh: Bool) async throws -> Bool {
+    private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool) async {
+        guard !modules.isEmpty else { return }
+        await withTaskGroup(of: (Module, Result<Data, Error>).self) { group in
+            var nextIndex = 0
+            func addNext() {
+                guard nextIndex < modules.count else { return }
+                let module = modules[nextIndex]
+                nextIndex += 1
+                group.addTask { [weak self] in
+                    guard let self,
+                          let urlString = module.downloadUrl,
+                          let url = URL(string: urlString),
+                          let size = module.size else {
+                        return (module, .failure(ModuleError.invalid("下载元数据无效")))
+                    }
+                    do {
+                        let data = try await self.fetch(url, limit: size, forceRefresh: forceRefresh) { received in
+                            Task { @MainActor [weak self] in
+                                guard let self, self.downloadProgress[module.id] != nil else { return }
+                                self.downloadProgress[module.id] = min(Double(received) / Double(size), 1)
+                            }
+                        }
+                        return (module, .success(data))
+                    } catch {
+                        return (module, .failure(error))
+                    }
+                }
+            }
+            for _ in 0..<min(3, modules.count) { addNext() }
+            while let (module, result) = await group.next() {
+                if Task.isCancelled {
+                    group.cancelAll()
+                    break
+                }
+                switch result {
+                case .success(let data):
+                    do {
+                        let installed = try install(module, data: data, catalogURL: catalogURL)
+                        statuses[module.id] = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
+                    } catch {
+                        if Task.isCancelled { group.cancelAll(); break }
+                        statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
+                    }
+                case .failure(let error):
+                    if Task.isCancelled { group.cancelAll(); break }
+                    statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
+                }
+                downloadProgress.removeValue(forKey: module.id)
+                addNext()
+            }
+        }
+        downloadProgress.removeAll()
+    }
+    private func install(_ module: Module, data: Data, catalogURL: String) throws -> Bool {
         guard let rawURL = module.downloadUrl, let url = URL(string: rawURL), let expectedHash = module.sha256, expectedHash.count == 64,
               let expectedSize = module.size, expectedSize > 0, expectedSize <= 50 * 1024 * 1024 else { throw ModuleError.invalid("下载元数据无效") }
-        let data = try await fetch(url, limit: expectedSize, forceRefresh: forceRefresh)
         try Task.checkCancellation()
+        guard data.count == expectedSize else { throw ModuleError.invalid("下载失败或资源过大") }
         guard data.count == expectedSize, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == expectedHash else { throw ModuleError.invalid("安装包哈希不匹配") }
         // A module may have been opened while its package was downloading.
         guard !activeSessions.contains(module.id), catalogURL == config.updateCatalogURL(defaults: defaults) else { return false }
@@ -207,9 +286,13 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         try FileManager.default.moveItem(at: stage, to: destination)
         var values = URLResourceValues(); values.isExcludedFromBackup = true; var moduleDirectory = destination; try moduleDirectory.setResourceValues(values)
         let current = modules.first { $0.id == module.id }
-        let previous = current?.resourceIdentity == module.resourceIdentity ? registry[module.id]?.previous : current
+        let existing = registry[module.id]
+        let sameIdentity = current?.resourceIdentity == module.resourceIdentity
+        let previous = sameIdentity ? existing?.previous : current
+        let previousUpdatedAt = sameIdentity ? existing?.previousUpdatedAt : existing?.updatedAt
         let oldRegistry = registry
-        registry[module.id] = Installed(active: module, previous: previous, healthy: false, minimumAllowedVersion: module.minimumAllowedVersion)
+        registry[module.id] = Installed(active: module, previous: previous, healthy: false, minimumAllowedVersion: module.minimumAllowedVersion,
+                                         updatedAt: Date(), previousUpdatedAt: previousUpdatedAt)
         do { try persist() } catch { registry = oldRegistry; refresh(); throw error }
         // Keep at most the active and rollback versions; never remove state files.
         let retained = Set([module.resourceIdentity, previous?.resourceIdentity].compactMap { $0 })
