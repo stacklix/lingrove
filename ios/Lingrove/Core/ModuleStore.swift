@@ -48,11 +48,19 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        guard let response = response as? HTTPURLResponse,
-              response.statusCode == 200,
-              (response.expectedContentLength < 0 || response.expectedContentLength <= Int64(limit)) else {
+        guard let response = response as? HTTPURLResponse else {
             completionHandler(.cancel)
-            finish(.failure(ModuleError.invalid("下载失败或资源过大")), session: session)
+            finish(.failure(ModuleError.invalid("服务器未返回有效的 HTTP 响应")), session: session)
+            return
+        }
+        guard response.statusCode == 200 else {
+            completionHandler(.cancel)
+            finish(.failure(ModuleError.invalid("服务器返回 HTTP \(response.statusCode)")), session: session)
+            return
+        }
+        guard response.expectedContentLength < 0 || response.expectedContentLength <= Int64(limit) else {
+            completionHandler(.cancel)
+            finish(.failure(ModuleError.invalid("资源超过大小限制")), session: session)
             return
         }
         completionHandler(.allow)
@@ -249,7 +257,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
         let transfer = ModuleDownloadTransfer(limit: limit, onProgress: onProgress)
-        // Clone configuration to preserve injected protocol classes while using a per-transfer chunk delegate.
+        // URLSession's delegate is session-wide, so clone settings into a dedicated per-transfer delegate session.
         let connection = URLSession(configuration: session.configuration, delegate: transfer, delegateQueue: nil)
         do {
             return try await transfer.download(using: connection, request: request)
@@ -315,7 +323,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
     private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool, id: UUID) async {
         guard !modules.isEmpty else { return }
         let session = self.session
-        defer {
+        func clearOwnedDownloads() {
             for module in modules where downloadStatusOwners[module.id] == id {
                 if statuses[module.id]?.hasPrefix("正在下载") == true {
                     statuses.removeValue(forKey: module.id)
@@ -323,6 +331,9 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                 downloadProgress.removeValue(forKey: module.id)
                 downloadStatusOwners.removeValue(forKey: module.id)
             }
+        }
+        defer {
+            clearOwnedDownloads()
         }
         await withTaskGroup(of: (Module, Result<Data, Error>).self) { group in
             var nextIndex = 0
@@ -359,6 +370,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
             while let (module, result) = await group.next() {
                 if Task.isCancelled || updateID != id {
                     group.cancelAll()
+                    clearOwnedDownloads()
                     break
                 }
                 switch result {
@@ -374,6 +386,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                 }
                 if Task.isCancelled {
                     group.cancelAll()
+                    clearOwnedDownloads()
                     break
                 }
                 downloadProgress.removeValue(forKey: module.id)
