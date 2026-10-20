@@ -5,7 +5,7 @@ import Combine
 final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }
-private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+private final class ModuleDownloadTransfer: NSObject, @unchecked Sendable {
     private static let progressUpdateInterval = 64 * 1024
     private let limit: Int
     private let onProgress: (@Sendable (Int) -> Void)?
@@ -22,7 +22,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         super.init()
     }
 
-    func download(using session: URLSession, request: URLRequest) async throws -> Data {
+    func download(using session: ModuleDownloadSession, request: URLRequest) async throws -> Data {
         try Task.checkCancellation()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data, Error>) in
@@ -33,7 +33,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                     return
                 }
                 self.continuation = continuation
-                let task = session.dataTask(with: request)
+                let task = session.makeTask(for: self, request: request)
                 self.task = task
                 lock.unlock()
                 task.resume()
@@ -93,6 +93,10 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
         let result: Result<Data, Error>
         if let error { result = .failure(error) }
         else { result = .success(data) }
@@ -114,6 +118,69 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         task = nil
         lock.unlock()
         continuation?.resume(with: result)
+    }
+}
+private final class ModuleDownloadSession: @unchecked Sendable {
+    private let dispatcher: ModuleDownloadDispatcher
+    private let session: URLSession
+
+    init(configuration: URLSessionConfiguration) {
+        let dispatcher = ModuleDownloadDispatcher()
+        self.dispatcher = dispatcher
+        session = URLSession(configuration: configuration, delegate: dispatcher, delegateQueue: nil)
+    }
+
+    deinit { session.invalidateAndCancel() }
+
+    func download(request: URLRequest, limit: Int, onProgress: (@Sendable (Int) -> Void)?) async throws -> Data {
+        try await ModuleDownloadTransfer(limit: limit, onProgress: onProgress).download(using: self, request: request)
+    }
+
+    fileprivate func makeTask(for transfer: ModuleDownloadTransfer, request: URLRequest) -> URLSessionDataTask {
+        let task = session.dataTask(with: request)
+        dispatcher.register(transfer, for: task.taskIdentifier)
+        return task
+    }
+}
+private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    private let lock = NSLock()
+    private var transfers: [Int: ModuleDownloadTransfer] = [:]
+
+    func register(_ transfer: ModuleDownloadTransfer, for taskID: Int) {
+        lock.lock(); defer { lock.unlock() }
+        transfers[taskID] = transfer
+    }
+
+    private func transfer(for taskID: Int, removing: Bool = false) -> ModuleDownloadTransfer? {
+        lock.lock(); defer { lock.unlock() }
+        if removing { return transfers.removeValue(forKey: taskID) }
+        return transfers[taskID]
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        guard let transfer = transfer(for: dataTask.taskIdentifier) else {
+            completionHandler(.cancel)
+            return
+        }
+        transfer.urlSession(session, dataTask: dataTask, didReceive: response, completionHandler: completionHandler)
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        transfer(for: dataTask.taskIdentifier)?.urlSession(session, dataTask: dataTask, didReceive: data)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        guard let transfer = transfer(for: task.taskIdentifier) else {
+            completionHandler(nil)
+            return
+        }
+        transfer.urlSession(session, task: task, willPerformHTTPRedirection: response, newRequest: request, completionHandler: completionHandler)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        transfer(for: task.taskIdentifier, removing: true)?.urlSession(session, task: task, didCompleteWithError: error)
     }
 }
 @MainActor final class ModuleStore: ObservableObject {
@@ -143,13 +210,13 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
     private var updateID = UUID()
     private let root: URL
     private let config: HostConfiguration
-    private let session: URLSession
+    private let session: ModuleDownloadSession
     private let builtinRoot: URL?
     private let defaults: UserDefaults
     private var registryURL: URL { root.appendingPathComponent("registry.json") }
     init(root: URL? = nil, config: HostConfiguration = .bundled, session: URLSession? = nil, builtinRoot: URL? = nil, defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.session = session ?? URLSession(configuration: .ephemeral, delegate: NoRedirect(), delegateQueue: nil)
+        self.session = ModuleDownloadSession(configuration: session?.configuration ?? .ephemeral)
         self.builtinRoot = builtinRoot ?? Bundle.main.resourceURL?.appendingPathComponent("BuiltinModules")
         self.config = config
         self.root = root ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lingrove")
@@ -248,7 +315,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
-    nonisolated private static func fetch(session: URLSession, url: URL, limit: Int, forceRefresh: Bool = false,
+    nonisolated private static func fetch(session: ModuleDownloadSession, url: URL, limit: Int, forceRefresh: Bool = false,
                                           onProgress: (@Sendable (Int) -> Void)? = nil) async throws -> Data {
         guard NetworkPolicy.origin(url.absoluteString) != nil else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
@@ -256,17 +323,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         var request = URLRequest(url: components.url!)
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
-        let transfer = ModuleDownloadTransfer(limit: limit, onProgress: onProgress)
-        // Delegates are session-wide; clone proxy/protocolClasses settings for a dedicated delegate that blocks redirects.
-        let connection = URLSession(configuration: session.configuration, delegate: transfer, delegateQueue: nil)
-        do {
-            let data = try await transfer.download(using: connection, request: request)
-            connection.finishTasksAndInvalidate()
-            return data
-        } catch {
-            connection.invalidateAndCancel()
-            throw error
-        }
+        return try await session.download(request: request, limit: limit, onProgress: onProgress)
     }
     func checkForUpdates(forceSnapshot: Bool = false) async {
         guard registryReadable else { return }
