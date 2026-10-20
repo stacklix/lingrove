@@ -3,10 +3,36 @@ import { useAppI18n } from '@lingrove/host-sdk/vue';
 const { t } = useAppI18n();
 import { computed, nextTick, onDeactivated, onUnmounted, ref } from 'vue';
 import { setRootPage } from '@lingrove/host-sdk';
-import { grammarTopics } from '../grammar';
+import { grammarTopics, grammarDirectory } from '../grammar';
 import SpecialVerbsSheet from './SpecialVerbsSheet.vue';
 import GrammarExample from './GrammarExample.vue';
 const selected = ref('comparison');
+const lessonSelections = ref<Record<string, string>>({});
+const page = computed(() => grammarTopics.find((item) => item.id === selected.value)!);
+const activeLesson = computed(
+  () =>
+    page.value.lessons?.find((item) => item.id === lessonSelections.value[page.value.id]) ??
+    page.value.lessons?.[0],
+);
+async function selectLesson(id: string, focus = false) {
+  lessonSelections.value[page.value.id] = id;
+  await nextTick();
+  if (focus) document.getElementById(`grammar-tab-${id}`)?.focus();
+}
+function navigateLessons(event: KeyboardEvent) {
+  if (!page.value.lessons || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key))
+    return;
+  event.preventDefault();
+  const lessons = page.value.lessons;
+  const index = lessons.findIndex((item) => item.id === activeLesson.value?.id);
+  const next =
+    event.key === 'Home'
+      ? 0
+      : event.key === 'End'
+        ? lessons.length - 1
+        : (index + (event.key === 'ArrowRight' ? 1 : -1) + lessons.length) % lessons.length;
+  void selectLesson(lessons[next].id, true);
+}
 const directory = ref<HTMLDialogElement>();
 const directoryButton = ref<HTMLButtonElement>();
 const content = ref<HTMLElement>();
@@ -41,7 +67,7 @@ async function selectTopic(id: string) {
 onDeactivated(closeDirectory);
 onUnmounted(restorePage);
 const topicIndex = computed(() => grammarTopics.findIndex((item) => item.id === selected.value));
-const topic = computed(() => grammarTopics.find((item) => item.id === selected.value)!);
+const topic = computed(() => activeLesson.value ?? page.value);
 const ruleGroups = computed(() => {
   const groups: { title: string; rules: typeof topic.value.rules }[] = [];
   for (const rule of topic.value.rules) {
@@ -75,7 +101,7 @@ const ruleGroups = computed(() => {
     <div class="intro">
       <p class="eyebrow">{{ t('从规则，理解变化') }}</p>
       <h1>{{ t('日语语法') }}</h1>
-      <p class="subtitle">{{ t('学习动词与形容词的活用，以及格助词的常用表达。') }}</p>
+      <p class="subtitle">{{ t('先认识词类和敬语，再按词类学习变化与用法。') }}</p>
     </div>
     <dialog
       id="grammar-directory"
@@ -100,194 +126,249 @@ const ruleGroups = computed(() => {
       <div class="directory-inner">
         <p class="directory-current">{{ t('正在阅读：') }}{{ t(topic.title) }}</p>
         <div class="guide-outline" :aria-label="t('学习顺序')">
-          <div
-            v-for="(stage, index) in ['文法基础', '动词活用规则', '形容词活用规则', '格助词']"
-            :key="stage"
+          <section
+            v-for="(section, index) in grammarDirectory"
+            :key="section.stage"
             class="guide-stage"
           >
-            <p class="grammar-level">
-              {{ t(String(index + 1).padStart(2, '0')) }} · {{ t(stage) }}
-            </p>
-            <div class="guide-topics" :aria-label="t(stage)">
-              <button
-                v-for="item in grammarTopics.filter((item) => item.stage === stage)"
-                :key="item.id"
-                type="button"
-                :aria-pressed="selected === item.id"
-                @click="selectTopic(item.id)"
-              >
-                {{ t(item.title) }}
-              </button>
+            <h3 class="grammar-level">
+              {{ String(index + 1).padStart(2, '0') }} · {{ t(section.stage) }}
+            </h3>
+            <div class="directory-groups">
+              <div v-for="group in section.groups" :key="group.title" class="directory-group">
+                <h4 v-if="group.title" class="directory-group-title">{{ t(group.title) }}</h4>
+                <div class="guide-topics" :aria-label="t(group.title || section.stage)">
+                  <button
+                    v-for="item in group.pages"
+                    :key="item.id"
+                    type="button"
+                    :aria-pressed="selected === item.id"
+                    @click="selectTopic(item.id)"
+                  >
+                    {{ t(item.title) }}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </dialog>
-    <article ref="content" :key="topic.id" class="guide-content" tabindex="-1">
-      <p class="grammar-level">{{ t(topic.stage) }}</p>
-      <h2>{{ t(topic.title) }}</h2>
-      <p v-if="topic.conjugations" class="grammar-level">{{ t('用途') }}</p>
-      <p class="guide-intro">{{ t(topic.intro) }}</p>
-      <section v-if="topic.mappings" class="grammar-mappings">
-        <h3 class="guide-group-title">{{ t('词类名称的对应') }}</h3>
-        <table class="grammar-mapping-table">
-          <thead>
-            <tr>
-              <th scope="col">{{ t('学校文法') }}</th>
-              <th scope="col">{{ t('教育文法') }}</th>
-              <th scope="col">{{ t('例子') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="mapping in topic.mappings" :key="mapping.school">
-              <th scope="row">{{ t(mapping.school) }}</th>
-              <td>{{ t(mapping.education) }}</td>
-              <td>{{ t(mapping.example) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-      <section
-        v-if="topic.conjugations"
-        class="conjugation-overview"
-        :aria-label="t('各类动词的变化规则')"
+    <article ref="content" :key="page.id" class="guide-content" tabindex="-1">
+      <p class="grammar-level">
+        {{ t(page.stage) }}<template v-if="page.group"> · {{ t(page.group) }}</template>
+      </p>
+      <h2>{{ t(page.title) }}</h2>
+      <p v-if="page.lessons" class="guide-intro">{{ t(page.intro) }}</p>
+      <div
+        v-if="page.selector === 'tabs'"
+        class="school-tabs grammar-tabs"
+        role="tablist"
+        :aria-label="t('动词活用形')"
+        @keydown="navigateLessons"
       >
-        <h3 class="guide-group-title">{{ t('变化规则') }}</h3>
-        <p class="conjugation-hint">{{ t('以下从辞书形出发，先看动词本身如何变化。') }}</p>
-        <div class="conjugation-rows">
-          <section v-for="form in topic.conjugations" :key="form.name" class="conjugation-row">
-            <h4>{{ t(form.name) }}</h4>
-            <dl class="classification-details">
-              <div>
-                <dt>{{ t('规则') }}</dt>
-                <dd>{{ t(form.rule) }}</dd>
-              </div>
-              <div>
-                <dt>{{ t('例子') }}</dt>
-                <dd lang="ja">{{ t(form.example) }}</dd>
-              </div>
-            </dl>
-            <GrammarExample :sentence="form.sentence" />
-          </section>
-        </div>
-      </section>
-      <section v-for="section in topic.sections" :key="section.title" class="adjective-section">
-        <h3 class="guide-group-title">{{ t(section.title) }}</h3>
-        <p class="conjugation-hint">{{ t(section.intro) }}</p>
-        <h4 class="adjective-subheading">{{ t('学校文法 · 六种活用形') }}</h4>
-        <div class="conjugation-rows">
-          <section v-for="form in section.forms" :key="form.name" class="conjugation-row">
-            <h5>{{ t(form.name) }}</h5>
-            <dl class="classification-details">
-              <div>
-                <dt>{{ t('规则') }}</dt>
-                <dd>{{ t(form.rule) }}</dd>
-              </div>
-              <div v-if="form.example !== '—'">
-                <dt>{{ t('例子') }}</dt>
-                <dd lang="ja">{{ t(form.example) }}</dd>
-              </div>
-            </dl>
-            <GrammarExample :sentence="form.sentence" />
-          </section>
-        </div>
-        <h4 class="adjective-subheading">{{ t('常用表达') }}</h4>
-        <div class="conjugation-rows">
-          <section v-for="usage in section.usages" :key="usage.name" class="conjugation-row">
-            <h5>{{ t(usage.name) }}</h5>
-            <dl class="classification-details">
-              <div>
-                <dt>{{ t('规则') }}</dt>
-                <dd>{{ t(usage.rule) }}</dd>
-              </div>
-              <div>
-                <dt>{{ t('例子') }}</dt>
-                <dd lang="ja">{{ t(usage.example) }}</dd>
-              </div>
-            </dl>
-            <GrammarExample :sentence="usage.sentence" />
-          </section>
-        </div>
-        <p class="guide-note">{{ t(section.note) }}</p>
-      </section>
-      <section v-for="group in ruleGroups" :key="group.title" class="guide-rule-group">
-        <h3 v-if="group.title" class="guide-group-title">{{ t(group.title) }}</h3>
-        <div
-          class="guide-rules"
-          :class="{
-            'classification-rules': topic.id === 'classes',
-            'school-rules': !!topic.conjugations || topic.id === 'comparison',
-          }"
+        <button
+          v-for="lesson in page.lessons"
+          :id="'grammar-tab-' + lesson.id"
+          :key="lesson.id"
+          type="button"
+          role="tab"
+          :aria-selected="topic.id === lesson.id"
+          :aria-controls="'grammar-panel-' + lesson.id"
+          :tabindex="topic.id === lesson.id ? 0 : -1"
+          @click="selectLesson(lesson.id)"
         >
-          <section v-for="rule in group.rules" :key="rule.name" class="guide-rule">
-            <template v-if="topic.id === 'classes'">
+          {{ t(lesson.title) }}
+        </button>
+      </div>
+      <div
+        v-else-if="page.selector === 'filter'"
+        class="particle-filters"
+        role="group"
+        :aria-label="t('选择格助词')"
+      >
+        <button
+          v-for="lesson in page.lessons"
+          :key="lesson.id"
+          type="button"
+          :aria-pressed="topic.id === lesson.id"
+          @click="selectLesson(lesson.id)"
+        >
+          {{ lesson.title.match(/「(.+)」/)?.[1] || t(lesson.title) }}
+        </button>
+      </div>
+      <section
+        :id="'grammar-panel-' + topic.id"
+        :key="topic.id"
+        :role="page.selector === 'tabs' ? 'tabpanel' : undefined"
+        :aria-labelledby="page.selector === 'tabs' ? 'grammar-tab-' + topic.id : undefined"
+      >
+        <h3 v-if="page.lessons" class="guide-group-title">{{ t(topic.title) }}</h3>
+        <p v-if="topic.conjugations" class="grammar-level">{{ t('用途') }}</p>
+        <p class="guide-intro">{{ t(topic.intro) }}</p>
+        <section v-if="topic.mappings" class="grammar-mappings">
+          <h3 class="guide-group-title">{{ t('词类名称的对应') }}</h3>
+          <table class="grammar-mapping-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ t('学校文法') }}</th>
+                <th scope="col">{{ t('教育文法') }}</th>
+                <th scope="col">{{ t('例子') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="mapping in topic.mappings" :key="mapping.school">
+                <th scope="row">{{ t(mapping.school) }}</th>
+                <td>{{ t(mapping.education) }}</td>
+                <td>{{ t(mapping.example) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section
+          v-if="topic.conjugations"
+          class="conjugation-overview"
+          :aria-label="t('各类动词的变化规则')"
+        >
+          <h3 class="guide-group-title">{{ t('变化规则') }}</h3>
+          <p class="conjugation-hint">{{ t('以下从辞书形出发，先看动词本身如何变化。') }}</p>
+          <div class="conjugation-rows">
+            <section v-for="form in topic.conjugations" :key="form.name" class="conjugation-row">
+              <h4>{{ t(form.name) }}</h4>
               <dl class="classification-details">
                 <div>
-                  <dt>{{ t('构成') }}</dt>
-                  <dd>{{ t(rule.rule) }}</dd>
-                </div>
-                <div>
-                  <dt>{{ t('识别') }}</dt>
-                  <dd>{{ t(rule.identification) }}</dd>
+                  <dt>{{ t('规则') }}</dt>
+                  <dd>{{ t(form.rule) }}</dd>
                 </div>
                 <div>
                   <dt>{{ t('例子') }}</dt>
-                  <dd lang="ja">{{ t(rule.example) }}</dd>
+                  <dd lang="ja">{{ t(form.example) }}</dd>
                 </div>
               </dl>
-            </template>
-            <template v-else>
-              <component :is="group.title ? 'h4' : 'h3'">{{ t(rule.name) }}</component>
-              <dl
-                v-if="topic.id === 'comparison'"
-                class="classification-details comparison-details usage-details"
-              >
+              <GrammarExample :sentence="form.sentence" />
+            </section>
+          </div>
+        </section>
+        <section v-for="section in topic.sections" :key="section.title" class="adjective-section">
+          <h3 class="guide-group-title">{{ t(section.title) }}</h3>
+          <p class="conjugation-hint">{{ t(section.intro) }}</p>
+          <h4 class="adjective-subheading">{{ t('学校文法 · 六种活用形') }}</h4>
+          <div class="conjugation-rows">
+            <section v-for="form in section.forms" :key="form.name" class="conjugation-row">
+              <h5>{{ t(form.name) }}</h5>
+              <dl class="classification-details">
                 <div>
-                  <dt>{{ t('学校文法') }}</dt>
-                  <dd>{{ t(rule.school) }}</dd>
+                  <dt>{{ t('规则') }}</dt>
+                  <dd>{{ t(form.rule) }}</dd>
                 </div>
-                <div>
-                  <dt>{{ t('教育文法') }}</dt>
-                  <dd>{{ t(rule.education) }}</dd>
-                </div>
-                <div v-if="rule.example">
+                <div v-if="form.example !== '—'">
                   <dt>{{ t('例子') }}</dt>
-                  <dd>{{ t(rule.example) }}</dd>
+                  <dd lang="ja">{{ t(form.example) }}</dd>
                 </div>
               </dl>
-              <dl v-else-if="topic.conjugations" class="classification-details usage-details">
+              <GrammarExample :sentence="form.sentence" />
+            </section>
+          </div>
+          <h4 class="adjective-subheading">{{ t('常用表达') }}</h4>
+          <div class="conjugation-rows">
+            <section v-for="usage in section.usages" :key="usage.name" class="conjugation-row">
+              <h5>{{ t(usage.name) }}</h5>
+              <dl class="classification-details">
                 <div>
-                  <dt>{{ t('用法') }}</dt>
-                  <dd>{{ t(rule.rule) }}</dd>
+                  <dt>{{ t('规则') }}</dt>
+                  <dd>{{ t(usage.rule) }}</dd>
                 </div>
                 <div>
                   <dt>{{ t('例子') }}</dt>
-                  <dd lang="ja">{{ t(rule.example) }}</dd>
+                  <dd lang="ja">{{ t(usage.example) }}</dd>
                 </div>
               </dl>
-              <template v-else>
-                <p>{{ t(rule.rule) }}</p>
-                <div v-if="rule.example" class="guide-example" lang="ja">{{ t(rule.example) }}</div>
+              <GrammarExample :sentence="usage.sentence" />
+            </section>
+          </div>
+          <p class="guide-note">{{ t(section.note) }}</p>
+        </section>
+        <section v-for="group in ruleGroups" :key="group.title" class="guide-rule-group">
+          <h3 v-if="group.title" class="guide-group-title">{{ t(group.title) }}</h3>
+          <div
+            class="guide-rules"
+            :class="{
+              'classification-rules': topic.id === 'classes',
+              'school-rules': !!topic.conjugations || topic.id === 'comparison',
+            }"
+          >
+            <section v-for="rule in group.rules" :key="rule.name" class="guide-rule">
+              <template v-if="topic.id === 'classes'">
+                <dl class="classification-details">
+                  <div>
+                    <dt>{{ t('构成') }}</dt>
+                    <dd>{{ t(rule.rule) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ t('识别') }}</dt>
+                    <dd>{{ t(rule.identification) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ t('例子') }}</dt>
+                    <dd lang="ja">{{ t(rule.example) }}</dd>
+                  </div>
+                </dl>
               </template>
-            </template>
-            <div v-if="rule.connections" class="grammar-connections">
-              <p class="connection-label">{{ t('对应关系') }}</p>
-              <ul>
-                <li v-for="connection in rule.connections" :key="connection">
-                  {{ t(connection) }}
-                </li>
-              </ul>
-              <p v-if="rule.caveat" class="connection-caveat">{{ t(rule.caveat) }}</p>
-            </div>
-            <GrammarExample :sentence="rule.sentence" />
-            <SpecialVerbsSheet
-              v-if="rule.specialWords || rule.wordExamples"
-              :kind="rule.wordExamples"
-            />
-          </section>
-        </div>
+              <template v-else>
+                <component :is="group.title ? 'h4' : 'h3'">{{ t(rule.name) }}</component>
+                <dl
+                  v-if="topic.id === 'comparison'"
+                  class="classification-details comparison-details usage-details"
+                >
+                  <div>
+                    <dt>{{ t('学校文法') }}</dt>
+                    <dd>{{ t(rule.school) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ t('教育文法') }}</dt>
+                    <dd>{{ t(rule.education) }}</dd>
+                  </div>
+                  <div v-if="rule.example">
+                    <dt>{{ t('例子') }}</dt>
+                    <dd>{{ t(rule.example) }}</dd>
+                  </div>
+                </dl>
+                <dl v-else-if="topic.conjugations" class="classification-details usage-details">
+                  <div>
+                    <dt>{{ t('用法') }}</dt>
+                    <dd>{{ t(rule.rule) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ t('例子') }}</dt>
+                    <dd lang="ja">{{ t(rule.example) }}</dd>
+                  </div>
+                </dl>
+                <template v-else>
+                  <p>{{ t(rule.rule) }}</p>
+                  <div v-if="rule.example" class="guide-example" lang="ja">
+                    {{ t(rule.example) }}
+                  </div>
+                </template>
+              </template>
+              <div v-if="rule.connections" class="grammar-connections">
+                <p class="connection-label">{{ t('对应关系') }}</p>
+                <ul>
+                  <li v-for="connection in rule.connections" :key="connection">
+                    {{ t(connection) }}
+                  </li>
+                </ul>
+                <p v-if="rule.caveat" class="connection-caveat">{{ t(rule.caveat) }}</p>
+              </div>
+              <GrammarExample :sentence="rule.sentence" />
+              <SpecialVerbsSheet
+                v-if="rule.specialWords || rule.wordExamples"
+                :kind="rule.wordExamples"
+              />
+            </section>
+          </div>
+        </section>
+        <p v-if="topic.note" class="guide-note">{{ t(topic.note) }}</p>
       </section>
-      <p class="guide-note">{{ t(topic.note) }}</p>
     </article>
     <nav class="guide-chapters" :aria-label="t('章节导航')">
       <button
@@ -311,11 +392,18 @@ const ruleGroups = computed(() => {
       <summary>{{ t('参考资料') }}</summary>
       <p>{{ t('规则与例子按学习需要整理。可继续阅读：') }}</p>
       <a
-        v-if="topic.stage === '格助词'"
+        v-if="page.id === 'case-particles'"
         href="https://www.coelang.tufs.ac.jp/mt/ja/gmod/contents/explanation/053.html"
         target="_blank"
         rel="noopener noreferrer"
         >{{ t('东京外国语大学 · 格助词') }}</a
+      >
+      <a
+        v-if="page.stage === '敬语系统' || page.id === 'keigo-intro'"
+        href="https://www.bunka.go.jp/seisaku/bunkashingikai/kokugo/kokugo/kokugo_34/pdf/siryou2.pdf"
+        target="_blank"
+        rel="noopener noreferrer"
+        >{{ t('文化厅 · 敬语的指针') }}</a
       >
       <a
         v-if="topic.id === 'comparison'"

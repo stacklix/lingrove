@@ -119,40 +119,35 @@ it('switches between query and offline grammar, preserving draft and topic', asy
   expect(wrapper.get('.guide-content').text()).toContain('不是一一对应的改名');
   expect(wrapper.findAll('.guide-stage > .grammar-level').map((item) => item.text())).toEqual([
     '01 · 文法基础',
-    '02 · 动词活用规则',
-    '03 · 形容词活用规则',
-    '04 · 格助词',
+    '02 · 词类',
+    '03 · 敬语系统',
   ]);
-  expect(wrapper.findAll('.guide-topics button').map((b) => b.text())).toEqual([
-    '学校文法与教育文法',
-    '动词分类',
-    '未然形',
-    '连用形',
-    '终止形',
-    '连体形',
-    '假定形',
-    '命令形',
-    '形容词',
-    ...['が', 'を', 'に', 'へ', 'で', 'と', 'から', 'より', 'の'].map(
-      (particle) => `格助词「${particle}」`,
-    ),
-  ]);
+  const titles = wrapper.findAll('.guide-topics button').map((button) => button.text());
+  expect(titles).toContain('日语词类总览');
+  expect(titles).toContain('敬语系统简介');
+  expect(titles).toContain('动词活用');
+  expect(titles).toContain('い形容词');
+  expect(titles).toContain('な形容词');
+  expect(titles.filter((title) => title === '格助词')).toHaveLength(1);
+  expect(titles).not.toContain('连用形');
   expect(wrapper.findAll('.bottom-tabs button')[1].attributes('aria-current')).toBe('page');
   await wrapper.get('.directory-toggle').trigger('click');
   expect(wrapper.get('dialog').attributes('open')).toBeDefined();
   expect(document.body.style.overflow).toBe('hidden');
   await wrapper
     .findAll('.guide-topics button')
-    .find((b) => b.text() === '连用形')!
+    .find((b) => b.text() === '动词活用')!
     .trigger('click');
   expect(wrapper.get('dialog').attributes('open')).toBeUndefined();
   expect(document.body.style.overflow).not.toBe('hidden');
-  expect(wrapper.get('.guide-content').text()).toContain('行って・行った');
+  await wrapper.get('[role=tablist]').findAll('button')[1].trigger('click');
+  expect(wrapper.get('[role=tabpanel]').text()).toContain('行って・行った');
   await wrapper.findAll('.bottom-tabs button')[0].trigger('click');
   expect((wrapper.get('#word').element as HTMLInputElement).value).toBe('読む');
   expect(wrapper.find('.grammar-guide').exists()).toBe(false);
   await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
-  expect(wrapper.get('.guide-content h2').text()).toBe('连用形');
+  expect(wrapper.get('.guide-content h2').text()).toBe('动词活用');
+  expect(wrapper.get('[role=tab][aria-selected=true]').text()).toBe('连用形');
   expect(vi.mocked(lookup).mock.calls.length).toBe(calls);
   wrapper.unmount();
 });
@@ -175,7 +170,11 @@ it('closes the directory with Escape and when leaving the grammar page', async (
 it('groups construction rules by verb class within a single chapter', async () => {
   const wrapper = mount(App);
   await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
-  await wrapper.get('.next-chapter').trigger('click');
+  await wrapper.get('.directory-toggle').trigger('click');
+  await wrapper
+    .findAll('.guide-topics button')
+    .find((button) => button.text() === '动词分类')!
+    .trigger('click');
   expect(wrapper.get('.guide-content h2').text()).toBe('动词分类');
   expect(wrapper.findAll('.guide-group-title').map((item) => item.text())).toEqual([
     '五段动词 · Ⅰ类',
@@ -188,7 +187,8 @@ it('groups construction rules by verb class within a single chapter', async () =
   expect(text).toContain('一段动词');
   expect(text).toContain('查词典的活用标记');
   await wrapper.get('.next-chapter').trigger('click');
-  expect(wrapper.get('.guide-content h2').text()).toBe('未然形');
+  expect(wrapper.get('.guide-content h2').text()).toBe('动词活用');
+  expect(wrapper.get('[role=tab][aria-selected=true]').text()).toBe('未然形');
   wrapper.unmount();
 });
 
@@ -200,15 +200,52 @@ it('opens case-particle lessons from the grammar directory and preserves the sel
   await wrapper.get('.directory-toggle').trigger('click');
   await wrapper
     .findAll('.guide-topics button')
-    .find((button) => button.text() === '格助词「に」')!
+    .find((button) => button.text() === '格助词')!
     .trigger('click');
-  expect(wrapper.get('.guide-content h2').text()).toBe('格助词「に」');
+  expect(wrapper.get('.guide-content h2').text()).toBe('格助词');
+  await wrapper
+    .findAll('.particle-filters button')
+    .find((button) => button.text() === 'に')!
+    .trigger('click');
   expect(wrapper.findAll('.grammar-sentence')).toHaveLength(4);
   expect(wrapper.get('.guide-content').text()).toContain('授業は九時に始まります。');
   expect(wrapper.get('.guide-content').text()).toContain('课九点开始。');
   expect(wrapper.get('dialog').attributes('open')).toBeUndefined();
   await wrapper.findAll('.bottom-tabs button')[0].trigger('click');
   await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
-  expect(wrapper.get('.guide-content h2').text()).toBe('格助词「に」');
+  expect(wrapper.get('.particle-filters button[aria-pressed=true]').text()).toBe('に');
+  wrapper.unmount();
+});
+
+it('navigates conjugation tabs by keyboard and keeps adjective pages separate', async () => {
+  const wrapper = mount(App, { attachTo: document.body });
+  await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
+  const open = async (title: string) => {
+    await wrapper.get('.directory-toggle').trigger('click');
+    await wrapper
+      .findAll('.guide-topics button')
+      .find((button) => button.text() === title)!
+      .trigger('click');
+  };
+  await open('动词活用');
+  expect(wrapper.findAll('[role=tab]')).toHaveLength(6);
+  expect(wrapper.findAll('[role=tabpanel]')).toHaveLength(1);
+  await wrapper.get('[role=tab][aria-selected=true]').trigger('keydown', { key: 'End' });
+  expect(wrapper.get('[role=tab][aria-selected=true]').text()).toBe('命令形');
+  expect((document.activeElement as HTMLElement).textContent).toBe('命令形');
+  expect(wrapper.get('[role=tabpanel]').attributes('aria-labelledby')).toBe('grammar-tab-meirei');
+  await wrapper.get('[role=tab][aria-selected=true]').trigger('keydown', { key: 'ArrowRight' });
+  expect(wrapper.get('[role=tab][aria-selected=true]').text()).toBe('未然形');
+  await open('い形容词');
+  expect(wrapper.findAll('.adjective-section')).toHaveLength(1);
+  expect(wrapper.get('.adjective-section').text()).toContain('高い');
+  expect(wrapper.get('.adjective-section').text()).not.toContain('静かだ');
+  await open('な形容词');
+  expect(wrapper.findAll('.adjective-section')).toHaveLength(1);
+  expect(wrapper.get('.adjective-section').text()).toContain('静かだ');
+  await open('敬语系统简介');
+  expect(wrapper.get('.guide-content').text()).toContain('五类敬语');
+  await open('谦让语Ⅱ（郑重语）');
+  expect(wrapper.get('.guide-content').text()).toContain('田中と申します。');
   wrapper.unmount();
 });

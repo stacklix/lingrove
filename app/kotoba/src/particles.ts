@@ -3,7 +3,7 @@ import type { GrammarTopic } from './grammar';
 export const particleTopics: GrammarTopic[] = [
   {
     id: 'particle-ga',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「が」',
     intro: '标记主语，也常与喜好、能力等表达搭配。',
     rules: [
@@ -30,7 +30,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-wo',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「を」',
     intro: '标记动作对象，也表示移动经过或离开的地方。读作「お」。',
     rules: [
@@ -66,7 +66,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-ni',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「に」',
     intro: '标记到达点、存在地点、时间点、动作对象或变化结果。',
     rules: [
@@ -111,7 +111,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-he',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「へ」',
     intro: '表示移动的方向，也可以表示目的地。读作「え」。',
     rules: [
@@ -138,7 +138,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-de',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「で」',
     intro: '表示动作发生的场所、手段、材料、原因或范围。',
     rules: [
@@ -174,7 +174,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-to',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「と」',
     intro: '表示共同参与者、相互动作的对象，以及引用的内容。',
     rules: [
@@ -201,7 +201,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-kara',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「から」',
     intro: '表示时间、地点的起点，也可以表示信息或物品的来源。',
     rules: [
@@ -228,7 +228,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-yori',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「より」',
     intro: '常用于比较，标记比较的基准。',
     rules: [
@@ -255,7 +255,7 @@ export const particleTopics: GrammarTopic[] = [
   },
   {
     id: 'particle-no',
-    stage: '格助词',
+    stage: '词类',
     title: '格助词「の」',
     intro: '连接名词表示所属、类别等关系；也可在修饰名词的从句中标记主语。',
     rules: [

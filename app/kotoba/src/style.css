@@ -1086,3 +1086,38 @@ main {
   line-height: 1.7;
   overflow-wrap: anywhere;
 }
+
+.directory-groups {
+  min-width: 0;
+}
+.directory-group-title {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 10px 0 6px;
+}
+.grammar-tabs {
+  position: static;
+  margin: 16px 0;
+}
+.grammar-tabs button,
+.particle-filters button {
+  min-height: 44px;
+}
+.particle-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0;
+}
+.particle-filters button {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 14px;
+  color: var(--muted);
+  background: var(--paper);
+}
+.particle-filters button[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--soft);
+  border-color: var(--accent);
+}

@@ -1,11 +1,11 @@
 import { expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { grammarTopics } from '../src/grammar';
+import { grammarTopics, grammarLessons } from '../src/grammar';
 import GrammarExample from '../src/components/GrammarExample.vue';
 import messages from '../../../packages/host-sdk/src/locales/messages.json';
 
 it('provides complete sentences and translated meanings for every inflection and usage', () => {
-  const entries = grammarTopics.flatMap((topic) => [
+  const entries = grammarLessons.flatMap((topic) => [
     ...(topic.conjugations ?? []),
     ...(topic.conjugations ? topic.rules : []),
     ...(topic.sections ?? []).flatMap((section) => [
@@ -21,13 +21,15 @@ it('provides complete sentences and translated meanings for every inflection and
     expect(translation.en).toBeTruthy();
     expect(translation.ja).toBe(entry.sentence!.japanese);
   }
-  for (const section of grammarTopics.find((topic) => topic.id === 'adjectives')!.sections!) {
+  for (const section of grammarTopics
+    .filter((topic) => topic.group === '形容词')
+    .flatMap((topic) => topic.sections ?? [])) {
     expect(section.forms.find((form) => form.name === '命令形')!.sentence).toBeUndefined();
   }
 });
 
 it('renders Japanese and its meaning as separate paragraphs', () => {
-  const sentence = grammarTopics.find((topic) => topic.id === 'mizen')!.rules[0].sentence!;
+  const sentence = grammarLessons.find((topic) => topic.id === 'mizen')!.rules[0].sentence!;
   const wrapper = mount(GrammarExample, { props: { sentence } });
   expect(wrapper.get('[lang="ja"]').text()).toBe(sentence.japanese);
   expect(wrapper.get('.grammar-sentence-translation').text()).toBe(sentence.translation);
@@ -35,7 +37,7 @@ it('renders Japanese and its meaning as separate paragraphs', () => {
 });
 
 it('covers nine common case particles with translated explanations and complete example sentences', () => {
-  const topics = grammarTopics.filter((topic) => topic.stage === '格助词');
+  const topics = grammarTopics.find((topic) => topic.id === 'case-particles')!.lessons!;
   expect(topics.map((topic) => topic.id)).toEqual(
     ['ga', 'wo', 'ni', 'he', 'de', 'to', 'kara', 'yori', 'no'].map((id) => 'particle-' + id),
   );
@@ -50,6 +52,41 @@ it('covers nine common case particles with translated explanations and complete 
       for (const key of [rule.name, rule.rule, rule.sentence!.translation]) {
         expect(messages[key as keyof typeof messages].en).toBeTruthy();
         expect(messages[key as keyof typeof messages].ja).toBeTruthy();
+      }
+    }
+  }
+});
+
+it('provides localized foundation, word-class and honorific lessons', () => {
+  const read = (key: string) => {
+    if (!key) return;
+    const entry = messages[key as keyof typeof messages];
+    expect(entry, key).toBeDefined();
+    expect(entry.en, key).toBeTruthy();
+    expect(entry.ja, key).toBeTruthy();
+  };
+  expect(grammarTopics.find((topic) => topic.id === 'word-classes')!.rules).toHaveLength(10);
+  expect(grammarTopics.filter((topic) => topic.stage === '敬语系统')).toHaveLength(5);
+  for (const topic of grammarTopics.filter(
+    (topic) =>
+      [
+        'word-classes',
+        'keigo-intro',
+        'nouns',
+        'adverbs',
+        'adnominals',
+        'conjunctions',
+        'interjections',
+        'auxiliaries',
+        'particles-overview',
+      ].includes(topic.id) || topic.stage === '敬语系统',
+  )) {
+    [topic.title, topic.intro, topic.note].forEach(read);
+    for (const rule of topic.rules) {
+      [rule.name, rule.rule].forEach(read);
+      if (rule.sentence) {
+        read(rule.sentence.translation);
+        expect(rule.sentence.japanese).toMatch(/。$/);
       }
     }
   }

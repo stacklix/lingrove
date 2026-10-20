@@ -1,11 +1,15 @@
 import { particleTopics } from './particles';
+import { foundationTopics, wordClassTopics, honorificTopics } from './curriculum';
 
 export interface GrammarSentence {
   japanese: string;
   translation: string;
 }
 export interface GrammarTopic {
-  stage: '文法基础' | '动词活用规则' | '形容词活用规则' | '格助词';
+  stage: '文法基础' | '词类' | '敬语系统';
+  group?: string;
+  selector?: 'tabs' | 'filter';
+  lessons?: GrammarTopic[];
   id: string;
   title: string;
   intro: string;
@@ -34,7 +38,7 @@ export interface GrammarTopic {
   }[];
   note: string;
 }
-export const grammarTopics: GrammarTopic[] = [
+const conjugationTopics: GrammarTopic[] = [
   {
     id: 'comparison',
     title: '学校文法与教育文法',
@@ -209,7 +213,7 @@ export const grammarTopics: GrammarTopic[] = [
   {
     id: 'mizen',
     title: '未然形',
-    stage: '动词活用规则',
+    stage: '词类',
     intro: '连接否定、意向、受身、使役等成分，通常不单独使用。',
     conjugations: [
       {
@@ -316,7 +320,7 @@ export const grammarTopics: GrammarTopic[] = [
   {
     id: 'renyo',
     title: '连用形',
-    stage: '动词活用规则',
+    stage: '词类',
     intro: '连接ます、て、た等成分，用于礼貌表达、动作连接和过去表达等。',
     conjugations: [
       {
@@ -453,7 +457,7 @@ export const grammarTopics: GrammarTopic[] = [
   {
     id: 'shushi',
     title: '终止形',
-    stage: '动词活用规则',
+    stage: '词类',
     intro: '用于结束句子。现代动词的终止形与辞书形相同。',
     conjugations: [
       {
@@ -530,7 +534,7 @@ export const grammarTopics: GrammarTopic[] = [
   {
     id: 'rentai',
     title: '连体形',
-    stage: '动词活用规则',
+    stage: '词类',
     intro: '放在名词前作修饰。现代动词与终止形同形，区别在句中作用。',
     conjugations: [
       {
@@ -607,7 +611,7 @@ export const grammarTopics: GrammarTopic[] = [
   {
     id: 'katei',
     title: '假定形',
-    stage: '动词活用规则',
+    stage: '词类',
     intro: '连接ば，表示某个条件成立时的结果。',
     conjugations: [
       {
@@ -684,7 +688,7 @@ export const grammarTopics: GrammarTopic[] = [
   {
     id: 'meirei',
     title: '命令形',
-    stage: '动词活用规则',
+    stage: '词类',
     intro: '直接用于命令、号令或强烈指示，可以单独结束句子。',
     conjugations: [
       {
@@ -761,7 +765,7 @@ export const grammarTopics: GrammarTopic[] = [
   {
     id: 'adjectives',
     title: '形容词',
-    stage: '形容词活用规则',
+    stage: '词类',
     intro: '按い形容词、な形容词分别学习：先看学校文法的六种活用形，再看常用表达。',
     sections: [
       {
@@ -976,5 +980,58 @@ export const grammarTopics: GrammarTopic[] = [
     rules: [],
     note: '活用形与完整表达要分开看：例如「高けれ」是假定形，「高ければ」还包含ば。名词本身不活用，「学生だった」是后续判断表达的变化。',
   },
-  ...particleTopics,
 ];
+
+export const verbForms = conjugationTopics.filter((topic) => topic.conjugations);
+const adjectives = conjugationTopics.find((topic) => topic.id === 'adjectives')!;
+export const grammarTopics: GrammarTopic[] = [
+  conjugationTopics[0],
+  ...foundationTopics,
+  { ...conjugationTopics.find((topic) => topic.id === 'classes')!, stage: '词类', group: '动词' },
+  {
+    id: 'verb-conjugations',
+    stage: '词类',
+    group: '动词',
+    title: '动词活用',
+    intro: '以下从辞书形出发，先看动词本身如何变化。',
+    selector: 'tabs',
+    lessons: verbForms,
+    rules: [],
+    note: '',
+  },
+  ...adjectives.sections!.map((section, index): GrammarTopic => ({
+    id: index === 0 ? 'i-adjectives' : 'na-adjectives',
+    stage: '词类',
+    group: '形容词',
+    title: index === 0 ? 'い形容词' : 'な形容词',
+    intro: section.intro,
+    sections: [section],
+    rules: [],
+    note: adjectives.note,
+  })),
+  {
+    id: 'case-particles',
+    stage: '词类',
+    group: '助词',
+    title: '格助词',
+    intro: '格助词接在名词后，说明它与谓语或其他名词的关系。选择一个词，查看常见用法和例句。',
+    selector: 'filter',
+    lessons: particleTopics,
+    rules: [],
+    note: '',
+  },
+  ...wordClassTopics,
+  ...honorificTopics,
+];
+export const grammarDirectory = ['文法基础', '词类', '敬语系统'].map((stage) => ({
+  stage,
+  groups: [
+    ...new Set(
+      grammarTopics.filter((topic) => topic.stage === stage).map((topic) => topic.group ?? ''),
+    ),
+  ].map((title) => ({
+    title,
+    pages: grammarTopics.filter((topic) => topic.stage === stage && (topic.group ?? '') === title),
+  })),
+}));
+export const grammarLessons = grammarTopics.flatMap((topic) => topic.lessons ?? [topic]);
