@@ -29,7 +29,6 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                 lock.lock()
                 guard !Task.isCancelled else {
                     lock.unlock()
-                    session.invalidateAndCancel()
                     continuation.resume(throwing: CancellationError())
                     return
                 }
@@ -51,17 +50,17 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
         guard let response = response as? HTTPURLResponse else {
             completionHandler(.cancel)
-            finish(.failure(ModuleError.invalid("服务器未返回有效的 HTTP 响应")), session: session)
+            finish(.failure(ModuleError.invalid("服务器未返回有效的 HTTP 响应")))
             return
         }
         guard response.statusCode == 200 else {
             completionHandler(.cancel)
-            finish(.failure(ModuleError.invalid("服务器返回 HTTP \(response.statusCode)")), session: session)
+            finish(.failure(ModuleError.invalid("服务器返回 HTTP \(response.statusCode)")))
             return
         }
         guard response.expectedContentLength < 0 || response.expectedContentLength <= Int64(limit) else {
             completionHandler(.cancel)
-            finish(.failure(ModuleError.invalid("资源超过大小限制")), session: session)
+            finish(.failure(ModuleError.invalid("资源超过大小限制")))
             return
         }
         completionHandler(.allow)
@@ -76,7 +75,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         guard incomingData.count <= limit - data.count else {
             lock.unlock()
             dataTask.cancel()
-            finish(.failure(ModuleError.invalid("资源超过大小限制")), session: session)
+            finish(.failure(ModuleError.invalid("资源超过大小限制")))
             return
         }
         data.append(incomingData)
@@ -100,10 +99,10 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         let downloadedBytes = data.count
         lock.unlock()
         if error == nil { onProgress?(downloadedBytes) }
-        finish(result, session: session)
+        finish(result)
     }
 
-    private func finish(_ result: Result<Data, Error>, session: URLSession) {
+    private func finish(_ result: Result<Data, Error>) {
         lock.lock()
         guard !finished else {
             lock.unlock()
@@ -114,7 +113,6 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         self.continuation = nil
         task = nil
         lock.unlock()
-        session.finishTasksAndInvalidate()
         continuation?.resume(with: result)
     }
 }
@@ -259,10 +257,12 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
         let transfer = ModuleDownloadTransfer(limit: limit, onProgress: onProgress)
-        // Delegates are session-wide: clone proxy/protocol settings, then use a dedicated delegate that also blocks redirects.
+        // Delegates are session-wide; clone proxy/protocolClasses settings for a dedicated delegate that blocks redirects.
         let connection = URLSession(configuration: session.configuration, delegate: transfer, delegateQueue: nil)
         do {
-            return try await transfer.download(using: connection, request: request)
+            let data = try await transfer.download(using: connection, request: request)
+            connection.finishTasksAndInvalidate()
+            return data
         } catch {
             connection.invalidateAndCancel()
             throw error
@@ -371,44 +371,36 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                     }
                 }
             }
+            func cancelRemaining() {
+                group.cancelAll()
+                clearOwnedDownloads()
+            }
+            func isSuperseded() -> Bool {
+                Task.isCancelled || updateID != id
+            }
             for _ in 0..<min(Self.maxConcurrentDownloads, modules.count) { addNext() }
             downloadLoop: while let (module, result) = await group.next() {
-                if Task.isCancelled || updateID != id {
-                    group.cancelAll()
-                    clearOwnedDownloads()
+                if isSuperseded() {
+                    cancelRemaining()
                     break downloadLoop
                 }
+                let status: String
                 switch result {
                 case .success(let data):
                     do {
                         let installed = try install(module, data: data, catalogURL: catalogURL)
-                        guard !Task.isCancelled, updateID == id else {
-                            group.cancelAll()
-                            clearOwnedDownloads()
-                            break downloadLoop
-                        }
-                        statuses[module.id] = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
+                        status = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
                     } catch {
-                        guard !Task.isCancelled, updateID == id else {
-                            group.cancelAll()
-                            clearOwnedDownloads()
-                            break downloadLoop
-                        }
-                        statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
+                        status = "更新失败，保留本地版本：\(error.localizedDescription)"
                     }
                 case .failure(let error):
-                    guard !Task.isCancelled, updateID == id else {
-                        group.cancelAll()
-                        clearOwnedDownloads()
-                        break downloadLoop
-                    }
-                    statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
+                    status = "更新失败，保留本地版本：\(error.localizedDescription)"
                 }
-                if Task.isCancelled || updateID != id {
-                    group.cancelAll()
-                    clearOwnedDownloads()
+                if isSuperseded() {
+                    cancelRemaining()
                     break downloadLoop
                 }
+                statuses[module.id] = status
                 downloadProgress.removeValue(forKey: module.id)
                 downloadStatusOwners.removeValue(forKey: module.id)
                 addNext()
