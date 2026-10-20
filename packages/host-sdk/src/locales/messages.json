@@ -5459,6 +5459,14 @@
     "en": "Download URL",
     "ja": "ダウンロード URL"
   },
+  "最近更新时间": {
+    "en": "Last updated",
+    "ja": "最終更新日時"
+  },
+  "暂无记录": {
+    "en": "No record",
+    "ja": "記録なし"
+  },
   "内置应用随宿主安装，未使用 ZIP 下载包。": {
     "en": "Bundled apps are installed with the host without a downloaded ZIP package.",
     "ja": "内蔵アプリはホストとともにインストールされ、ZIP のダウンロードパッケージは使用しません。"

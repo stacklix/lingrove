@@ -5,30 +5,218 @@ import Combine
 final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }
+private final class ModuleDownloadTransfer: NSObject, @unchecked Sendable {
+    private static let progressUpdateInterval = 64 * 1024
+    private let limit: Int
+    private let onProgress: (@Sendable (Int) -> Void)?
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Data, Error>?
+    private var task: URLSessionDataTask?
+    private var data = Data()
+    private var lastReportedBytes = 0
+    private var finished = false
+
+    init(limit: Int, onProgress: (@Sendable (Int) -> Void)?) {
+        self.limit = limit
+        self.onProgress = onProgress
+        super.init()
+    }
+
+    func download(using session: ModuleDownloadSession, request: URLRequest) async throws -> Data {
+        try Task.checkCancellation()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data, Error>) in
+                lock.lock()
+                guard !Task.isCancelled else {
+                    lock.unlock()
+                    continuation.resume(throwing: CancellationError())
+                    return
+                }
+                self.continuation = continuation
+                let task = session.makeTask(for: self, request: request)
+                self.task = task
+                lock.unlock()
+                task.resume()
+            }
+        } onCancel: {
+            lock.lock()
+            let task = self.task
+            lock.unlock()
+            task?.cancel()
+        }
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        guard let response = response as? HTTPURLResponse else {
+            completionHandler(.cancel)
+            finish(.failure(ModuleError.invalid("服务器未返回有效的 HTTP 响应")))
+            return
+        }
+        guard response.statusCode == 200 else {
+            completionHandler(.cancel)
+            finish(.failure(ModuleError.invalid("服务器返回 HTTP \(response.statusCode)")))
+            return
+        }
+        guard response.expectedContentLength < 0 || response.expectedContentLength <= Int64(limit) else {
+            completionHandler(.cancel)
+            finish(.failure(ModuleError.invalid("资源超过大小限制")))
+            return
+        }
+        completionHandler(.allow)
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive incomingData: Data) {
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
+        guard incomingData.count <= limit - data.count else {
+            lock.unlock()
+            dataTask.cancel()
+            finish(.failure(ModuleError.invalid("资源超过大小限制")))
+            return
+        }
+        data.append(incomingData)
+        let received = data.count
+        let reportProgress = received - lastReportedBytes >= Self.progressUpdateInterval
+        if reportProgress { lastReportedBytes = received }
+        lock.unlock()
+        if reportProgress { onProgress?(received) }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
+        let result: Result<Data, Error>
+        if let error { result = .failure(error) }
+        else { result = .success(data) }
+        let downloadedBytes = data.count
+        lock.unlock()
+        if error == nil { onProgress?(downloadedBytes) }
+        finish(result)
+    }
+
+    private func finish(_ result: Result<Data, Error>) {
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
+        finished = true
+        let continuation = self.continuation
+        self.continuation = nil
+        task = nil
+        lock.unlock()
+        continuation?.resume(with: result)
+    }
+}
+private final class ModuleDownloadSession: @unchecked Sendable {
+    private let dispatcher: ModuleDownloadDispatcher
+    private let session: URLSession
+
+    init(configuration: URLSessionConfiguration) {
+        let dispatcher = ModuleDownloadDispatcher()
+        self.dispatcher = dispatcher
+        session = URLSession(configuration: configuration, delegate: dispatcher, delegateQueue: nil)
+    }
+
+    deinit { session.invalidateAndCancel() }
+
+    func download(request: URLRequest, limit: Int, onProgress: (@Sendable (Int) -> Void)?) async throws -> Data {
+        try await ModuleDownloadTransfer(limit: limit, onProgress: onProgress).download(using: self, request: request)
+    }
+
+    fileprivate func makeTask(for transfer: ModuleDownloadTransfer, request: URLRequest) -> URLSessionDataTask {
+        let task = session.dataTask(with: request)
+        dispatcher.register(transfer, for: task.taskIdentifier)
+        return task
+    }
+}
+private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    private let lock = NSLock()
+    private var transfers: [Int: ModuleDownloadTransfer] = [:]
+
+    func register(_ transfer: ModuleDownloadTransfer, for taskID: Int) {
+        lock.lock(); defer { lock.unlock() }
+        transfers[taskID] = transfer
+    }
+
+    private func transfer(for taskID: Int, removing: Bool = false) -> ModuleDownloadTransfer? {
+        lock.lock(); defer { lock.unlock() }
+        if removing { return transfers.removeValue(forKey: taskID) }
+        return transfers[taskID]
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        guard let transfer = transfer(for: dataTask.taskIdentifier) else {
+            completionHandler(.cancel)
+            return
+        }
+        transfer.urlSession(session, dataTask: dataTask, didReceive: response, completionHandler: completionHandler)
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        transfer(for: dataTask.taskIdentifier)?.urlSession(session, dataTask: dataTask, didReceive: data)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        guard let transfer = transfer(for: task.taskIdentifier) else {
+            completionHandler(nil)
+            return
+        }
+        transfer.urlSession(session, task: task, willPerformHTTPRedirection: response, newRequest: request, completionHandler: completionHandler)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        transfer(for: task.taskIdentifier, removing: true)?.urlSession(session, task: task, didCompleteWithError: error)
+    }
+}
 @MainActor final class ModuleStore: ObservableObject {
     static let displayOrderKey = "modules.displayOrder"
-    struct Installed: Codable { var active: Module; var previous: Module?; var healthy: Bool; var minimumAllowedVersion: String? }
+    private static let maxConcurrentDownloads = 3
+    struct Installed: Codable {
+        var active: Module
+        var previous: Module?
+        var healthy: Bool
+        var minimumAllowedVersion: String?
+        var updatedAt: Date? = nil
+        var previousUpdatedAt: Date? = nil
+    }
     @Published var modules: [Module] = []
     @Published var checking = false
     @Published var statuses: [String: String] = [:]
+    @Published var downloadProgress: [String: Double] = [:]
     @Published var notice = ""
     @Published var blocked = Set<String>()
     private var registry: [String: Installed] = [:]
     private var builtins: [String: Module] = [:]
     private var activeSessions = Set<String>()
     private var rejectedVersions: [String: String] = [:]
+    private var downloadStatusOwners: [String: UUID] = [:]
     private var registryReadable = true
     private var updateTask: Task<Void, Never>?
     private var updateID = UUID()
     private let root: URL
     private let config: HostConfiguration
-    private let session: URLSession
+    private let session: ModuleDownloadSession
     private let builtinRoot: URL?
     private let defaults: UserDefaults
     private var registryURL: URL { root.appendingPathComponent("registry.json") }
     init(root: URL? = nil, config: HostConfiguration = .bundled, session: URLSession? = nil, builtinRoot: URL? = nil, defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.session = session ?? URLSession(configuration: .ephemeral, delegate: NoRedirect(), delegateQueue: nil)
+        self.session = ModuleDownloadSession(configuration: session?.configuration ?? .ephemeral)
         self.builtinRoot = builtinRoot ?? Bundle.main.resourceURL?.appendingPathComponent("BuiltinModules")
         self.config = config
         self.root = root ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lingrove")
@@ -96,6 +284,12 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         if isDownloaded(module) { return downloaded }
         return builtinRoot!.appendingPathComponent(module.id)
     }
+    func lastUpdatedAt(for module: Module) -> Date? {
+        guard isDownloaded(module),
+              let installed = registry[module.id],
+              installed.active.resourceIdentity == module.resourceIdentity else { return nil }
+        return installed.updatedAt
+    }
     func begin(_ module: Module, trackingStartup: Bool = true) { activeSessions.insert(module.id); if trackingStartup && registry[module.id]?.healthy == false { UserDefaults.standard.set(true, forKey: "launching.\(module.id).\(module.resourceIdentity)") } }
     func end(_ module: Module) { activeSessions.remove(module.id) }
     func clearLaunchMarker(_ module: Module) {
@@ -115,23 +309,21 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             try JSONEncoder().encode(rejectedVersions).write(to: root.appendingPathComponent("rejected.json"), options: .atomic)
             let fallback = install.previous ?? builtins[module.id]
             if let fallback, fallback.resourceIdentity != module.resourceIdentity, rejectedVersions[module.id] != fallback.resourceIdentity, install.minimumAllowedVersion.flatMap(Version.init).map({ Version(fallback.version)! >= $0 }) ?? true {
-                registry[module.id] = Installed(active: fallback, previous: nil, healthy: true, minimumAllowedVersion: install.minimumAllowedVersion)
+                registry[module.id] = Installed(active: fallback, previous: nil, healthy: true, minimumAllowedVersion: install.minimumAllowedVersion,
+                                                 updatedAt: install.previousUpdatedAt, previousUpdatedAt: nil)
                 try persist(); statuses[module.id] = "启动失败，已回退至 \(fallback.version)"
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
-    private func fetch(_ url: URL, limit: Int, forceRefresh: Bool = false) async throws -> Data {
+    nonisolated private static func fetch(session: ModuleDownloadSession, url: URL, limit: Int, forceRefresh: Bool = false,
+                                          onProgress: (@Sendable (Int) -> Void)? = nil) async throws -> Data {
         guard NetworkPolicy.origin(url.absoluteString) != nil else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         if forceRefresh { components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "_refresh", value: UUID().uuidString)] }
         var request = URLRequest(url: components.url!)
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
-        let (bytes, response) = try await session.bytes(for: request)
-        guard let response = response as? HTTPURLResponse, response.statusCode == 200, response.expectedContentLength <= limit else { throw ModuleError.invalid("下载失败或资源过大") }
-        var result = Data()
-        for try await byte in bytes { if result.count >= limit { throw ModuleError.invalid("资源超过大小限制") }; result.append(byte) }
-        return result
+        return try await session.download(request: request, limit: limit, onProgress: onProgress)
     }
     func checkForUpdates(forceSnapshot: Bool = false) async {
         guard registryReadable else { return }
@@ -142,7 +334,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         updateID = id
         checking = true
         let task = Task { @MainActor in
-            await self.performUpdateCheck(forceSnapshot: force)
+            await self.performUpdateCheck(forceSnapshot: force, id: id)
             if self.updateID == id {
                 self.checking = false
                 self.updateTask = nil
@@ -151,17 +343,21 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         updateTask = task
         await task.value
     }
-    private func performUpdateCheck(forceSnapshot: Bool) async {
+    private func performUpdateCheck(forceSnapshot: Bool, id: UUID) async {
+        guard updateID == id else { return }
         statuses.removeAll()
+        downloadProgress.removeAll()
         let catalogURL = config.updateCatalogURL(defaults: defaults)
         guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
-            let catalog = try JSONDecoder().decode(Catalog.self, from: await fetch(url, limit: 1024 * 1024, forceRefresh: forceSnapshot))
+            let catalogData = try await Self.fetch(session: session, url: url, limit: 1024 * 1024, forceRefresh: forceSnapshot)
+            let catalog = try JSONDecoder().decode(Catalog.self, from: catalogData)
             try Task.checkCancellation()
             try catalog.validate()
             // A settings change during a request must not install the previous channel.
             guard catalogURL == config.updateCatalogURL(defaults: defaults) else { return }
             notice = ""
+            var pending: [Module] = []
             for remote in catalog.modules {
                 try Task.checkCancellation()
                 if let current = modules.first(where: { $0.id == remote.id }) {
@@ -175,19 +371,102 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     : Version(current.version)! >= Version(remote.version)!) { statuses[remote.id] = "已是最新版本"; continue }
                 guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
-                statuses[remote.id] = "正在下载 \(remote.version)…"
-                do {
-                    let installed = try await install(remote, catalogURL: catalogURL, forceRefresh: forceSnapshot)
-                    statuses[remote.id] = installed ? "已更新至 \(remote.version)" : "发现更新，退出模块后再检查"
-                }
-                catch { if Task.isCancelled { return }; statuses[remote.id] = "更新失败，保留本地版本：\(error.localizedDescription)" }
+                pending.append(remote)
             }
-        } catch { if Task.isCancelled { return }; notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)" }
+            await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot, id: id)
+        } catch {
+            if Task.isCancelled || updateID != id { return }
+            notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)"
+        }
     }
-    private func install(_ module: Module, catalogURL: String, forceRefresh: Bool) async throws -> Bool {
-        guard let rawURL = module.downloadUrl, let url = URL(string: rawURL), let expectedHash = module.sha256, expectedHash.count == 64,
+    private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool, id: UUID) async {
+        guard !modules.isEmpty else { return }
+        let session = self.session
+        func clearOwnedDownloads() {
+            for module in modules where downloadStatusOwners[module.id] == id {
+                if statuses[module.id]?.hasPrefix("正在下载") == true {
+                    statuses.removeValue(forKey: module.id)
+                }
+                downloadProgress.removeValue(forKey: module.id)
+                downloadStatusOwners.removeValue(forKey: module.id)
+            }
+        }
+        defer {
+            clearOwnedDownloads()
+        }
+        await withTaskGroup(of: (Module, Result<Data, Error>).self) { group in
+            var nextIndex = 0
+            func addNext() {
+                guard nextIndex < modules.count else { return }
+                let module = modules[nextIndex]
+                nextIndex += 1
+                statuses[module.id] = "正在下载 \(module.version)…"
+                downloadProgress[module.id] = 0
+                downloadStatusOwners[module.id] = id
+                group.addTask {
+                    guard let rawURL = module.downloadUrl,
+                          let url = URL(string: rawURL),
+                          let expectedHash = module.sha256, expectedHash.count == 64,
+                          let size = module.size, size > 0, size <= 50 * 1024 * 1024 else {
+                        return (module, .failure(ModuleError.invalid("下载元数据无效")))
+                    }
+                    do {
+                        let data = try await Self.fetch(session: session, url: url, limit: size, forceRefresh: forceRefresh) { received in
+                            Task { @MainActor [weak self] in
+                                guard let self, self.updateID == id,
+                                      self.downloadStatusOwners[module.id] == id,
+                                      self.downloadProgress[module.id] != nil else { return }
+                                let progress = min(Double(received) / Double(size), 1)
+                                if progress > self.downloadProgress[module.id, default: 0] {
+                                    self.downloadProgress[module.id] = progress
+                                }
+                            }
+                        }
+                        return (module, .success(data))
+                    } catch {
+                        return (module, .failure(error))
+                    }
+                }
+            }
+            func cancelRemaining() {
+                group.cancelAll()
+                clearOwnedDownloads()
+            }
+            func isSuperseded() -> Bool {
+                Task.isCancelled || updateID != id
+            }
+            for _ in 0..<min(Self.maxConcurrentDownloads, modules.count) { addNext() }
+            downloadLoop: while let (module, result) = await group.next() {
+                if isSuperseded() {
+                    cancelRemaining()
+                    break downloadLoop
+                }
+                let status: String
+                switch result {
+                case .success(let data):
+                    do {
+                        let installed = try install(module, data: data, catalogURL: catalogURL)
+                        status = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
+                    } catch {
+                        status = "更新失败，保留本地版本：\(error.localizedDescription)"
+                    }
+                case .failure(let error):
+                    status = "更新失败，保留本地版本：\(error.localizedDescription)"
+                }
+                if isSuperseded() {
+                    cancelRemaining()
+                    break downloadLoop
+                }
+                statuses[module.id] = status
+                downloadProgress.removeValue(forKey: module.id)
+                downloadStatusOwners.removeValue(forKey: module.id)
+                addNext()
+            }
+        }
+    }
+    private func install(_ module: Module, data: Data, catalogURL: String) throws -> Bool {
+        guard let expectedHash = module.sha256, expectedHash.count == 64,
               let expectedSize = module.size, expectedSize > 0, expectedSize <= 50 * 1024 * 1024 else { throw ModuleError.invalid("下载元数据无效") }
-        let data = try await fetch(url, limit: expectedSize, forceRefresh: forceRefresh)
         try Task.checkCancellation()
         guard data.count == expectedSize, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == expectedHash else { throw ModuleError.invalid("安装包哈希不匹配") }
         // A module may have been opened while its package was downloading.
@@ -207,9 +486,13 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         try FileManager.default.moveItem(at: stage, to: destination)
         var values = URLResourceValues(); values.isExcludedFromBackup = true; var moduleDirectory = destination; try moduleDirectory.setResourceValues(values)
         let current = modules.first { $0.id == module.id }
-        let previous = current?.resourceIdentity == module.resourceIdentity ? registry[module.id]?.previous : current
+        let existing = registry[module.id]
+        let sameIdentity = current?.resourceIdentity == module.resourceIdentity
+        let previous = sameIdentity ? existing?.previous : current
+        let previousUpdatedAt = sameIdentity ? existing?.previousUpdatedAt : existing?.updatedAt
         let oldRegistry = registry
-        registry[module.id] = Installed(active: module, previous: previous, healthy: false, minimumAllowedVersion: module.minimumAllowedVersion)
+        registry[module.id] = Installed(active: module, previous: previous, healthy: false, minimumAllowedVersion: module.minimumAllowedVersion,
+                                         updatedAt: Date(), previousUpdatedAt: previousUpdatedAt)
         do { try persist() } catch { registry = oldRegistry; refresh(); throw error }
         // Keep at most the active and rollback versions; never remove state files.
         let retained = Set([module.resourceIdentity, previous?.resourceIdentity].compactMap { $0 })
