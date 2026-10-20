@@ -36872,6 +36872,138 @@
           }
         }
       }
+    },
+    "一点好奇": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一点好奇"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little curiosity"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "少しの好奇心"
+          }
+        }
+      }
+    },
+    "更新日期": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新日期"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Updated"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更新日"
+          }
+        }
+      }
+    },
+    "应用介绍": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用介绍"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About this app"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリの紹介"
+          }
+        }
+      }
+    },
+    "调试模式正在使用服务器资源，以上为本机安装包的信息。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调试模式正在使用服务器资源，以上为本机安装包的信息。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Debug mode is using server resources. The details above describe the local installation."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグモードではサーバーのリソースを使用しています。上記はローカルアプリの情報です。"
+          }
+        }
+      }
+    },
+    "点击应用查看更新日期和介绍。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点击应用查看更新日期和介绍。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap an app to view its update date and description."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリをタップして更新日と紹介を確認します。"
+          }
+        }
+      }
+    },
+    "应用安装记录格式无效或无法读取，已保留原文件；暂时使用内置应用，自动更新已暂停。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用安装记录格式无效或无法读取，已保留原文件；暂时使用内置应用，自动更新已暂停。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The app installation records have an invalid format or cannot be read. The original file has been preserved. Built-in apps are being used and automatic updates are paused."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリのインストール記録の形式が無効か、読み取れません。元のファイルは保持しています。内蔵アプリを使用し、自動更新を一時停止しています。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

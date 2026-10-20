@@ -2,6 +2,8 @@
 import { cp, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { moduleBuildVersion } from './build-version.mjs';
+process.env.MODULE_BUILD_VERSION = moduleBuildVersion();
 import { spawnSync } from 'node:child_process';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -24,7 +26,7 @@ if (tag) {
     run('git', ['archive', '--format=tar', '-o', archive, tag]);
     run('tar', ['-xf', archive, '-C', source]);
     // Use the current packaging contract with the exact tagged application sources.
-    for (const script of ['build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'sync-localizations.mjs', 'verify-release.py']) {
+    for (const script of ['build-version.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'sync-localizations.mjs', 'verify-release.py']) {
       await cp(path.join(root, 'scripts', script), path.join(source, 'scripts', script));
     }
     run('npm', ['ci'], source);

@@ -18,13 +18,27 @@ struct Module: Codable, Identifiable, Equatable {
     var resourceIdentity: String { "\(version)-\(isSnapshot ? "snapshot" : "release")-\(sha256 ?? "builtin")" }
     func validate() throws {
         guard id.range(of: "^[a-z0-9][a-z0-9-]{0,63}$", options: .regularExpression) != nil,
-              Version(version) != nil, Version(minHostVersion) != nil,
+              ModuleVersion(version) != nil, Version(minHostVersion) != nil,
               entry == "index.html", bridgeVersion == 1, stateSchemaVersion == 1,
               allowedOrigins.count <= 30 else { throw ModuleError.invalid("模块信息无效或协议不兼容") }
         if let sha256, sha256.range(of: "^[a-f0-9]{64}$", options: .regularExpression) == nil { throw ModuleError.invalid("安装包哈希无效") }
-        if let minimumAllowedVersion, Version(minimumAllowedVersion) == nil { throw ModuleError.invalid("最低版本无效") }
+        if let minimumAllowedVersion, ModuleVersion(minimumAllowedVersion) == nil { throw ModuleError.invalid("最低版本无效") }
         for origin in allowedOrigins { guard NetworkPolicy.origin(origin) == origin else { throw ModuleError.invalid("域名配置无效") } }
     }
+}
+// Child-app versions are Gregorian build dates; host versions remain semantic versions.
+struct ModuleVersion: Comparable {
+    let value: Int
+    init?(_ raw: String) {
+        guard raw.utf8.count == 8, raw.utf8.allSatisfy({ (48...57).contains($0) }), let value = Int(raw) else { return nil }
+        let year = value / 10000, month = value / 100 % 100, day = value % 100
+        guard year > 0, (1...12).contains(month) else { return nil }
+        let leap = year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)
+        let days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        guard (1...days[month - 1]).contains(day) else { return nil }
+        self.value = value
+    }
+    static func < (lhs: Self, rhs: Self) -> Bool { lhs.value < rhs.value }
 }
 struct Version: Comparable {
     let parts: [Int]

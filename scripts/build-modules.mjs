@@ -2,6 +2,8 @@ import './sync-localizations.mjs';
 import { readFile, rm } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { moduleBuildVersion } from './build-version.mjs';
+process.env.MODULE_BUILD_VERSION = moduleBuildVersion();
 const mode = process.argv.includes('--release') ? 'production' : 'debug';
 const root = path.resolve(import.meta.dirname, '..');
 const npm = process.env.npm_execpath

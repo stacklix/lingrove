@@ -2,11 +2,13 @@ import { readFile, writeFile, mkdir, cp, rm } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { moduleBuildVersion } from './build-version.mjs';
 const root = path.resolve(import.meta.dirname, '..');
 const base = (process.env.MODULE_BASE_URL || 'https://lingrove.stackli.me').replace(/\/$/, '');
 if (new URL(base).protocol !== 'https:') throw new Error('MODULE_BASE_URL must use HTTPS');
 const names = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));
 const modules = [];
+const version = moduleBuildVersion();
 const snapshot = process.env.MODULE_CHANNEL === 'snapshot';
 await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
   recursive: true,
@@ -15,7 +17,8 @@ await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
 await mkdir(path.join(root, 'dist/packages'), { recursive: true });
 for (const name of names) {
   const manifest = JSON.parse(await readFile(path.join(root, 'app', name, 'manifest.json'), 'utf8'));
-  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(manifest.id) || !/^\d+\.\d+\.\d+$/.test(manifest.version))
+  manifest.version = version;
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(manifest.id))
     throw new Error('Invalid module identity');
   if (manifest.id !== name) throw new Error('Module ID must match its directory name');
   const output = path.join(root, 'dist', 'app', name);

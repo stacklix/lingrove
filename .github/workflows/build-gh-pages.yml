@@ -38,6 +38,7 @@ jobs:
           npm ci
           npm run typecheck
           npm test
+          node --test scripts/tests/build-version.test.mjs
           python3 scripts/tests/test-build-channels.py
 
       - name: Build applications

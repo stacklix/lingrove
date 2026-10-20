@@ -1,12 +1,37 @@
 import XCTest
 import Network
 final class LingroveUITests: XCTestCase {
-    func testModuleEditingAndDetails() {
+    func testModuleEditingAndDetails() { checkModuleEditingAndDetails(appearance: "light") }
+    func testModuleDetailsDarkMode() { checkModuleEditingAndDetails(appearance: "dark") }
+    private func checkModuleEditingAndDetails(appearance: String) {
         let app = XCUIApplication()
+        app.launchArguments += ["-app.appearance", appearance]
         app.launchArguments += ["-debug.enabled", "NO", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launch()
         XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))
+        XCTAssertFalse(app.staticTexts["一点好奇"].exists)
+        XCTAssertFalse(app.staticTexts["YOUR LANGUAGE POCKET"].exists)
+        XCTAssertFalse(app.staticTexts["我的学习工具"].exists)
+        XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "语言学习 · v")).firstMatch.exists)
         app.buttons["应用设置"].tap()
+        let developerDetails = app.buttons["module-developer-details-sentra"]
+        for _ in 0..<6 {
+            if developerDetails.exists && developerDetails.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(developerDetails.isHittable)
+        developerDetails.tap()
+        XCTAssertTrue(app.navigationBars["Sentra"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["来源"].exists)
+        XCTAssertTrue(app.staticTexts["版本"].exists)
+        XCTAssertTrue(app.staticTexts["文件名"].exists)
+        XCTAssertFalse(app.staticTexts["更新日期"].exists)
+        XCTAssertFalse(app.staticTexts["应用介绍"].exists)
+        let developerScreenshot = XCTAttachment(screenshot: app.screenshot())
+        developerScreenshot.name = "Developer-module-details-\(appearance)"
+        developerScreenshot.lifetime = .keepAlways
+        add(developerScreenshot)
+        app.navigationBars["Sentra"].buttons.firstMatch.tap()
         let edit = app.buttons["module-edit-button"]
         for _ in 0..<8 {
             if edit.exists && edit.isHittable { break }
@@ -14,6 +39,7 @@ final class LingroveUITests: XCTestCase {
         }
         XCTAssertTrue(edit.isHittable)
         XCTAssertEqual(edit.label, "编辑")
+        XCTAssertFalse(app.buttons["检查更新"].exists)
         let details = app.buttons["module-details-sentra"]
         for _ in 0..<3 {
             if details.exists && details.isHittable { break }
@@ -22,24 +48,34 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(details.isHittable)
         details.tap()
         XCTAssertTrue(app.navigationBars["Sentra"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["来源"].exists)
-        XCTAssertTrue(app.staticTexts["版本"].exists)
-        XCTAssertTrue(app.staticTexts["文件名"].exists)
+        XCTAssertTrue(app.staticTexts["更新日期"].exists)
+        XCTAssertTrue(app.staticTexts["应用介绍"].exists)
+        XCTAssertFalse(app.staticTexts["开发模式"].exists)
+        XCTAssertFalse(app.staticTexts["来源"].exists)
+        XCTAssertFalse(app.staticTexts["版本"].exists)
+        XCTAssertFalse(app.staticTexts["文件名"].exists)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Module-details"
         screenshot.lifetime = .keepAlways
         add(screenshot)
         app.navigationBars["Sentra"].buttons.firstMatch.tap()
         for _ in 0..<3 {
-            if edit.isHittable { break }
+            if edit.isHittable && edit.frame.minY > app.navigationBars["设置"].frame.maxY + 8 { break }
             app.swipeDown()
         }
         edit.tap()
         XCTAssertEqual(edit.label, "完成")
-        XCTAssertFalse(details.exists)
+        let detailRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "module-details-"))
+        XCTAssertFalse(detailRows.firstMatch.exists)
         edit.tap()
         XCTAssertEqual(edit.label, "编辑")
-        XCTAssertTrue(details.exists)
+        XCTAssertTrue(detailRows.firstMatch.waitForExistence(timeout: 5))
+        app.buttons["settings-back"].tap()
+        XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 5))
+        let homeScreenshot = XCTAttachment(screenshot: app.screenshot())
+        homeScreenshot.name = "Home-list-\(appearance)"
+        homeScreenshot.lifetime = .keepAlways
+        add(homeScreenshot)
     }
 
     func testLLMUsageSettingsEntry() {

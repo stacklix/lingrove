@@ -45,7 +45,7 @@ final class RuntimeTests: XCTestCase {
         func addModule(_ id: String) throws {
             let directory = builtin.appendingPathComponent(id)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let module = Module(id: id, name: id, version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+            let module = Module(id: id, name: id, version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
             try JSONEncoder().encode(module).write(to: directory.appendingPathComponent("manifest.json"))
         }
         try addModule("beta")
@@ -77,7 +77,7 @@ final class RuntimeTests: XCTestCase {
         defaults.set("http://127.0.0.1:59999", forKey: DebugServer.preferenceKey)
         try Data("<html><head></head><body>local resource<script src='ready.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
         try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
-        let module = Module(id: "fallback-test", name: "Fallback", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "fallback-test", name: "Fallback", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let ready = expectation(description: "Local fallback bridge ready")
         var startupFailures = 0
         var failures = 0
@@ -118,7 +118,7 @@ final class RuntimeTests: XCTestCase {
         let audioSource = String(scripts[audioRange])
         try Data("<html><head></head><body><script src='ready.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
         try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
-        let module = Module(id: "audio-test", name: "Audio", version: "1.0.0", entry: "index.html", minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "audio-test", name: "Audio", version: "20260101", entry: "index.html", minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let ready = expectation(description: "audio page ready")
         let page = ModulePage(module: module, directory: directory, onReady: { ready.fulfill() }, onFailure: { XCTFail($0) })
         defer { page.close() }
@@ -142,7 +142,7 @@ final class RuntimeTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at:directory) }
         try Data("<html><body><script src='ready.js'></script></body></html>".utf8).write(to:directory.appendingPathComponent("index.html"))
         try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to:directory.appendingPathComponent("ready.js"))
-        let module = Module(id:"ink-test", name:"Ink", version:"1.0.0",entry:"index.html",minHostVersion:"1.3.0",bridgeVersion:1,stateSchemaVersion:1,allowedOrigins:[])
+        let module = Module(id:"ink-test", name:"Ink", version:"20260101",entry:"index.html",minHostVersion:"1.3.0",bridgeVersion:1,stateSchemaVersion:1,allowedOrigins:[])
         let loaded = expectation(description:"ink page ready")
         let page = ModulePage(module:module,directory:directory,onReady:{loaded.fulfill()},onFailure:{XCTFail($0)})
         defer {page.close()}
@@ -184,7 +184,7 @@ final class RuntimeTests: XCTestCase {
         await fulfillment(of: [listening], timeout: 5)
         let port = try XCTUnwrap(server.port)
         let entry = URL(string: "http://127.0.0.1:\(port.rawValue)/remote-test/index.html")!
-        let module = Module(id: "remote-test", name: "Remote", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "remote-test", name: "Remote", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let ready = expectation(description: "Remote HTTP page bridge handshake")
         let runtime = Runtime(module: module, directory: FileManager.default.temporaryDirectory, onReady: { ready.fulfill() }, onFailure: { XCTFail($0) }, debugEntryURL: entry)
         let config = WKWebViewConfiguration()
@@ -211,7 +211,7 @@ final class RuntimeTests: XCTestCase {
         }
         defaults.removeObject(forKey: DebugServer.enabledPreferenceKey)
         defaults.set("http://localhost:8000", forKey: DebugServer.preferenceKey)
-        let module = Module(id: "switch-test", name: "Switch", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "switch-test", name: "Switch", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         XCTAssertFalse(DebugServer.enabled)
         XCTAssertNil(DebugServer.entryURL(for: module))
         defaults.set(false, forKey: DebugServer.enabledPreferenceKey)
@@ -237,7 +237,7 @@ final class RuntimeTests: XCTestCase {
     }
     @MainActor func testDebugReloadReportsReadyAndFailureOnlyAfterReload() throws {
         try XCTSkipUnless(DebugServer.enabled)
-        let module = Module(id: "feedback-test", name: "Feedback", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "feedback-test", name: "Feedback", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         var messages: [String] = []
         let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in }, onReloadResult: { messages.append($0) })
         defer { page.close() }
@@ -273,7 +273,7 @@ final class RuntimeTests: XCTestCase {
         let original = UserDefaults.standard.object(forKey: DebugServer.preferenceKey)
         defer { UserDefaults.standard.set(original, forKey: DebugServer.preferenceKey) }
         UserDefaults.standard.set("http://127.0.0.1:8000", forKey: DebugServer.preferenceKey)
-        let module = Module(id: "server-feedback", name: "Server", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "server-feedback", name: "Server", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in })
         defer { page.close() }
         page.reload()
@@ -298,7 +298,7 @@ final class RuntimeTests: XCTestCase {
         for id in ["refresh-alpha", "refresh-beta"] {
             let directory = builtin.appendingPathComponent(id)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let module = Module(id: id, name: id, version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+            let module = Module(id: id, name: id, version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
             try JSONEncoder().encode(module).write(to: directory.appendingPathComponent("manifest.json"))
             try Data("<html><head></head><body><script src='ready.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
             try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
@@ -330,7 +330,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(pages.reloadMessage, "暂无已安装的应用。")
     }
     @MainActor func testReloadRecreatesWebViewAndClosesOldRuntime() throws {
-        let module = Module(id: "reload-test", name: "Reload", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "reload-test", name: "Reload", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in })
         let previous = page.webView
         let generation = page.generation
@@ -548,7 +548,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(restored.reasoningEffort, configuration.reasoningEffort)
     }
     @MainActor func testProcessTerminationDoesNotRejectVersionBeforeReady() {
-        let module = Module(id: "termination-test", name: "Test", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "termination-test", name: "Test", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         var failures = 0
         var startupFailures = 0
         let runtime = Runtime(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in failures += 1 }, onStartupFailure: { startupFailures += 1 })
@@ -560,7 +560,7 @@ final class RuntimeTests: XCTestCase {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
-        let module = Module(id: "state-test", name: "State", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let module = Module(id: "state-test", name: "State", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         try Data("<html><head></head><body><textarea id='draft'></textarea><dialog id='sheet'>Unsaved settings</dialog><script src='state.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
         try Data("window.state={tab:'grammar',result:'saved result'};window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}});".utf8).write(to: directory.appendingPathComponent("state.js"))
         let ready = expectation(description: "page ready")
@@ -581,7 +581,7 @@ final class RuntimeTests: XCTestCase {
         let directory = root.appendingPathComponent("builtin/cache-test")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
-        var module = Module(id: "cache-test", name: "Test", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        var module = Module(id: "cache-test", name: "Test", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         try JSONEncoder().encode(module).write(to: directory.appendingPathComponent("manifest.json"))
         try Data("<html><head></head><body>cache test</body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
         let store = ModuleStore(root: root.appendingPathComponent("state"), config: HostConfiguration(catalogURL: ""), builtinRoot: root.appendingPathComponent("builtin"))
@@ -596,7 +596,7 @@ final class RuntimeTests: XCTestCase {
         let retried = cache.page(for: module, store: store)
         XCTAssertFalse(retried === first)
         XCTAssertNil(retried.failure)
-        module.version = "1.1.0"
+        module.version = "20260102"
         cache.reconcile(modules: [module], blocked: [])
         let upgraded = cache.page(for: module, store: store)
         XCTAssertFalse(upgraded === first)
@@ -605,7 +605,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(upgraded.webView.navigationDelegate)
     }
     @MainActor func testWebKitBridgeStreamsAndRestrictsOrigins() async throws {
-        let module = Module(id: "runtime-test", name: "Test", version: "1.0.0", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: ["https://allowed.example", "https://model.example"])
+        let module = Module(id: "runtime-test", name: "Test", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: ["https://allowed.example", "https://model.example"])
         let suite = UUID().uuidString
         let networkDefaults = UserDefaults(suiteName: suite)!
         networkDefaults.set(["https://model.example"], forKey: "origins.runtime-test")

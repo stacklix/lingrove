@@ -6702,5 +6702,29 @@
   "格助词接在名词后，说明它与谓语或其他名词的关系。选择一个词，查看常见用法和例句。": {
     "en": "Case particles follow nouns to show their relation to predicates or other nouns. Choose one to view its uses and examples.",
     "ja": "格助詞は名詞に続き、述語や他の名詞との関係を示します。語を選んで使い方と例文を確認しましょう。"
+  },
+  "一点好奇": {
+    "en": "A little curiosity",
+    "ja": "少しの好奇心"
+  },
+  "更新日期": {
+    "en": "Updated",
+    "ja": "更新日"
+  },
+  "应用介绍": {
+    "en": "About this app",
+    "ja": "アプリの紹介"
+  },
+  "调试模式正在使用服务器资源，以上为本机安装包的信息。": {
+    "en": "Debug mode is using server resources. The details above describe the local installation.",
+    "ja": "デバッグモードではサーバーのリソースを使用しています。上記はローカルアプリの情報です。"
+  },
+  "点击应用查看更新日期和介绍。": {
+    "en": "Tap an app to view its update date and description.",
+    "ja": "アプリをタップして更新日と紹介を確認します。"
+  },
+  "应用安装记录格式无效或无法读取，已保留原文件；暂时使用内置应用，自动更新已暂停。": {
+    "en": "The app installation records have an invalid format or cannot be read. The original file has been preserved. Built-in apps are being used and automatic updates are paused.",
+    "ja": "アプリのインストール記録の形式が無効か、読み取れません。元のファイルは保持しています。内蔵アプリを使用し、自動更新を一時停止しています。"
   }
 }

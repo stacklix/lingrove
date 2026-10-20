@@ -72,37 +72,84 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 26) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("YOUR LANGUAGE POCKET").font(.caption2.weight(.semibold)).tracking(3).foregroundStyle(.secondary)
-                        Text("一点好奇，\n每天一点进步。").font(.system(size: 34, weight: .semibold, design: .serif))
-                        Text("从一句话开始，找到适合你的学习方式。").font(.subheadline).foregroundStyle(.secondary)
-                    }.padding(.top, 20)
-                    Text("我的学习工具").font(.headline)
+                VStack(spacing: 0) {
                     ForEach(store.modules) { module in
                         NavigationLink { ModuleScreen(module: module, store: store, pages: pages) } label: {
-                            VStack(alignment: .leading, spacing: 18) {
-                                HStack(spacing: 15) {
-                                    Group {
-                                        if let icon = UIImage(contentsOfFile: store.directory(for: module).appendingPathComponent("logo.png").path) {
-                                            Image(uiImage: icon).resizable().scaledToFill()
-                                        } else {
-                                            Text(String(module.name.prefix(1))).font(.system(size: 34, weight: .medium, design: .serif)).frame(maxWidth: .infinity, maxHeight: .infinity).background(Color(red: 0.20, green: 0.32, blue: 0.25)).foregroundStyle(.white)
-                                        }
-                                    }.frame(width: 60, height: 64).clipShape(RoundedRectangle(cornerRadius: 16))
-                                    VStack(alignment: .leading, spacing: 4) { Text(module.name).font(.title2.weight(.semibold)); Text("语言学习 · v\(module.version)").font(.caption).foregroundStyle(.secondary) }
-                                    Spacer(); Image(systemName: "arrow.up.right").foregroundStyle(.secondary)
+                            HStack(spacing: 16) {
+                                Group {
+                                    if let icon = UIImage(contentsOfFile: store.directory(for: module).appendingPathComponent("logo.png").path) {
+                                        Image(uiImage: icon).resizable().scaledToFill()
+                                    } else {
+                                        Text(String(module.name.prefix(1)))
+                                            .font(.system(size: 27, weight: .medium, design: .serif))
+                                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                            .background(Color(uiColor: LingroveTheme.accent).opacity(0.12))
+                                            .foregroundStyle(Color(uiColor: LingroveTheme.accent))
+                                    }
                                 }
-                                Text(AppLanguage.text(module.description ?? "学习应用")).font(.subheadline).foregroundStyle(.secondary)
-                                if store.blocked.contains(module.id) {
-                                    Label("暂时无法打开", systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(.secondary)
+                                .frame(width: 50, height: 50)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(module.name).font(.headline)
+                                    if store.blocked.contains(module.id) {
+                                        Label("暂时无法打开", systemImage: "exclamationmark.circle")
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
                                 }
-                            }.padding(22).background(Color(uiColor: LingroveTheme.surface)).clipShape(RoundedRectangle(cornerRadius: 22))
-                        }.buttonStyle(.plain).disabled(store.blocked.contains(module.id))
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .frame(maxWidth: .infinity, minHeight: 86, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(ModuleListButtonStyle())
+                        .disabled(store.blocked.contains(module.id))
+                        if module.id != store.modules.last?.id {
+                            Divider().padding(.horizontal, 16).accessibilityHidden(true)
+                        }
                     }
-                }.padding(24)
-            }.background(Color(uiColor: LingroveTheme.background)).navigationTitle("Lingrove")
-            .toolbar { if DebugServer.available && (debugEnabled || snapshotEnabled) { Button(action: refreshModules) { if refreshingModules { ProgressView() } else { Image(systemName: "arrow.clockwise") } }.accessibilityLabel("重新加载子应用").disabled(refreshingModules) }; Button { resetSettingsDraft(); showingSettings = true } label: { Image(systemName: "gearshape") }.accessibilityLabel("应用设置") }
+                }
+                .background(Color(uiColor: LingroveTheme.surface))
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 24)
+            }
+            .background(Color(uiColor: LingroveTheme.background))
+            .navigationTitle("Lingrove")
+            .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                HStack(spacing: 8) {
+                    Text("Lingrove").font(.title2.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                    Spacer(minLength: 8)
+                    if DebugServer.available && (debugEnabled || snapshotEnabled) {
+                        Button(action: refreshModules) {
+                            Group {
+                                if refreshingModules { ProgressView() }
+                                else { Image(systemName: "arrow.clockwise") }
+                            }
+                            .frame(width: 44, height: 44)
+                            .background(Color(uiColor: LingroveTheme.surface), in: Circle())
+                        }
+                        .foregroundStyle(Color(uiColor: LingroveTheme.accent))
+                        .accessibilityLabel("重新加载子应用").disabled(refreshingModules)
+                    }
+                    Button { resetSettingsDraft(); showingSettings = true } label: {
+                        Image(systemName: "gearshape")
+                            .frame(width: 44, height: 44)
+                            .background(Color(uiColor: LingroveTheme.surface), in: Circle())
+                    }
+                    .foregroundStyle(Color(uiColor: LingroveTheme.accent))
+                    .accessibilityLabel("应用设置")
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 19, weight: .medium))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 4)
+                .background(Color(uiColor: LingroveTheme.background))
+            }
             .safeAreaInset(edge: .bottom) {
                 HostPlaybackControls()
                 if DebugServer.available && (debugEnabled || snapshotEnabled), let message = pages.reloadMessage {
@@ -152,6 +199,17 @@ struct HomeView: View {
                                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }
                                 }
                                 if !debugError.isEmpty { Text(debugError).foregroundStyle(.red).accessibilityIdentifier("debug-settings-error") }
+                                #if DEBUG
+                                ForEach(draftModules) { module in
+                                    NavigationLink {
+                                        ModuleDeveloperDetailsView(store: store, moduleID: module.id)
+                                            .environment(\.editMode, .constant(.inactive))
+                                    } label: {
+                                        Text(module.name)
+                                    }
+                                    .accessibilityIdentifier("module-developer-details-\(module.id)")
+                                }
+                                #endif
                             }
                         }
                         Section("外观") {
@@ -317,6 +375,13 @@ struct HomeView: View {
 
 }
 
+private struct ModuleListButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(Color(uiColor: LingroveTheme.accent).opacity(configuration.isPressed ? 0.08 : 0))
+    }
+}
+
 struct ModuleManagementSection: View {
     @ObservedObject var store: ModuleStore
     @Binding var modules: [Module]
@@ -347,16 +412,8 @@ struct ModuleManagementSection: View {
                 moduleRow(id: id, module: nil)
             }
             if modules.isEmpty { Text("暂无已安装的应用").foregroundStyle(.secondary) }
-            Button {
-                Task { await store.checkForUpdates() }
-            } label: {
-                HStack {
-                    if store.checking { ProgressView() }
-                    Text(LocalizedStringKey(store.checking ? "正在检查更新…" : "检查更新"))
-                }
-            }.disabled(store.checking)
             if !store.notice.isEmpty {
-                Text(store.notice).font(.footnote)
+                Text(AppLanguage.text(store.notice)).font(.footnote)
                     .accessibilityIdentifier("module-update-notice")
             }
         } header: {
@@ -377,7 +434,7 @@ struct ModuleManagementSection: View {
             if editMode.isEditing {
                 Text("拖动右侧手柄调整首页显示顺序，调整后自动保存。")
             } else {
-                Text("点击应用查看来源、版本和文件信息。")
+                Text("点击应用查看更新日期和介绍。")
             }
         }
         .onAppear { refreshModules() }
@@ -403,12 +460,11 @@ struct ModuleManagementSection: View {
                 }
             }
             Spacer(minLength: 8)
-            Group {
-                if let module { Text(verbatim: "v\(module.version)") }
-                else { Text("未安装") }
+            if module == nil {
+                Text("未安装")
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: true, vertical: false)
             }
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: true, vertical: false)
 
         }
     }
@@ -428,30 +484,9 @@ struct ModuleDetailsView: View {
     var body: some View {
         Form {
             if let module {
-                if let serverURL = DebugServer.entryURL(for: module) {
-                    Section("当前加载资源") {
-                        LabeledContent("来源", value: AppLanguage.text("开发服务器"))
-                        information("地址", value: serverURL.absoluteString)
-                        information("文件名", value: serverURL.lastPathComponent)
-                        Text("调试模式正在使用服务器资源，以下为本机安装包的信息。")
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                }
-                Section("本机应用") {
-                    LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
-                        ? (module.isSnapshot ? "开发快照下载" : "Release 下载") : "宿主内置"))
-                    information("版本", value: module.version)
-                    information("最近更新时间", value: formattedDate(store.lastUpdatedAt(for: module)))
-                    information("文件名", value: store.isDownloaded(module)
-                        ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
-                        : module.entry)
-                    if !store.isDownloaded(module) {
-                        Text("内置应用随宿主安装，未使用 ZIP 下载包。")
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                    if store.isDownloaded(module), let address = module.downloadUrl {
-                        information("下载地址", value: address)
-                    }
+                Section {
+                    ModuleInformationRow(title: "更新日期", value: updateDate(for: module))
+                    ModuleInformationRow(title: "应用介绍", value: AppLanguage.text(module.description ?? "学习应用"))
                 }
             } else {
                 Text("暂无已安装的应用").foregroundStyle(.secondary)
@@ -461,20 +496,70 @@ struct ModuleDetailsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func information(_ title: LocalizedStringKey, value: String) -> some View {
+    private func updateDate(for module: Module) -> String {
+        let locale = Locale(identifier: AppLanguage.current)
+        if let installedAt = store.lastUpdatedAt(for: module) {
+            return installedAt.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).locale(locale))
+        }
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.calendar = Calendar(identifier: .gregorian)
+        parser.timeZone = TimeZone(identifier: "Asia/Shanghai")
+        parser.dateFormat = "yyyyMMdd"
+        guard let date = parser.date(from: module.version) else { return AppLanguage.text("暂无记录") }
+        var format = Date.FormatStyle(date: .abbreviated, time: .omitted).locale(locale)
+        format.timeZone = TimeZone(identifier: "Asia/Shanghai")!
+        return date.formatted(format)
+    }
+
+}
+
+#if DEBUG
+struct ModuleDeveloperDetailsView: View {
+    @ObservedObject var store: ModuleStore
+    let moduleID: String
+    private var module: Module? { store.modules.first { $0.id == moduleID } }
+
+    var body: some View {
+        Form {
+            if let module {
+                Section {
+                    LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
+                        ? (module.isSnapshot ? "开发快照下载" : "Release 下载") : "宿主内置"))
+                    ModuleInformationRow(title: "版本", value: module.version)
+                    ModuleInformationRow(title: "文件名", value: store.isDownloaded(module)
+                        ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
+                        : module.entry)
+                    if store.isDownloaded(module), let address = module.downloadUrl {
+                        ModuleInformationRow(title: "下载地址", value: address)
+                    }
+                    if let serverURL = DebugServer.entryURL(for: module) {
+                        ModuleInformationRow(title: "调试服务器地址", value: serverURL.absoluteString)
+                        Text("调试模式正在使用服务器资源，以上为本机安装包的信息。")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+            } else {
+                Text("暂无已安装的应用").foregroundStyle(.secondary)
+            }
+        }
+        .navigationTitle(module?.name ?? moduleID)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+#endif
+
+private struct ModuleInformationRow: View {
+    let title: LocalizedStringKey
+    let value: String
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.subheadline).foregroundStyle(.secondary)
             Text(verbatim: value).textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
         }.padding(.vertical, 2)
-    }
-
-    private func formattedDate(_ date: Date?) -> String {
-        guard let date else { return AppLanguage.text("暂无记录") }
-        var format = Date.FormatStyle(date: .abbreviated, time: .shortened)
-        format.locale = Locale(identifier: AppLanguage.current)
-        return date.formatted(format)
     }
 }
 

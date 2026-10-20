@@ -11,7 +11,7 @@ repository = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='lingrove-channels-') as temporary:
     root = Path(temporary)
     (root / 'scripts').mkdir()
-    for name in ['build-channels.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'sync-localizations.mjs', 'verify-release.py']:
+    for name in ['build-version.mjs', 'build-channels.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'sync-localizations.mjs', 'verify-release.py']:
         shutil.copy(repository / 'scripts' / name, root / 'scripts' / name)
     (root / 'app/sentra').mkdir(parents=True)
     (root / 'app/sentra/manifest.json').write_text((repository / 'app/sentra/manifest.json').read_text())
@@ -35,7 +35,7 @@ output.mkdir(parents=True)
 (output/'index.html').write_text(Path('source.txt').read_text())
 ''')
     npm.chmod(0o755)
-    env = {**os.environ, 'PATH': str(root / 'bin') + os.pathsep + os.environ['PATH']}
+    env = {**os.environ, 'MODULE_BUILD_VERSION': '20261020', 'PATH': str(root / 'bin') + os.pathsep + os.environ['PATH']}
     def run(*args):
         subprocess.run(args, cwd=root, env=env, check=True, stdout=subprocess.DEVNULL)
     run('git', 'init', '-b', 'master')
@@ -53,8 +53,9 @@ output.mkdir(parents=True)
     run('node', 'scripts/build-channels.mjs')
     snapshot = json.loads((root / 'dist/catalog.snapshot.json').read_text())['modules'][0]
     release = json.loads((root / 'dist/catalog.json').read_text())['modules'][0]
-    assert snapshot['downloadUrl'].endswith('-snapshot.zip')
-    assert not release['downloadUrl'].endswith('-snapshot.zip')
+    assert snapshot['version'] == release['version'] == '20261020'
+    assert snapshot['downloadUrl'].endswith('-20261020-snapshot.zip')
+    assert release['downloadUrl'].endswith('-20261020.zip')
     assert '/release/packages/' in release['downloadUrl']
     with zipfile.ZipFile(root / 'dist/packages' / snapshot['downloadUrl'].split('/')[-1]) as archive:
         assert archive.read('index.html') == b'master source'

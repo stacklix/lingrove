@@ -52,7 +52,7 @@ npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的
 {"modules": []}
 ```
 
-每个模块包含 `id`、`name`、`version`、`entry`、`minHostVersion`、`bridgeVersion`、`stateSchemaVersion`、`allowedOrigins`、`downloadUrl`、`size`、`sha256`。构建工具会自动生成完整目录。可选 `minimumAllowedVersion` 强制淘汰旧版。版本号使用三段数字（例如 `1.2.0`），目前不接受预发布标签。
+每个模块包含 `id`、`name`、`version`、`entry`、`minHostVersion`、`bridgeVersion`、`stateSchemaVersion`、`allowedOrigins`、`downloadUrl`、`size`、`sha256`。构建工具会自动生成完整目录。可选 `minimumAllowedVersion` 强制淘汰旧版。子应用 `version` 由构建工具按北京时间（Asia/Shanghai）的构建日期生成，格式为 `yyyyMMdd`，例如 `20261020`；`minimumAllowedVersion` 也使用日期格式。源 manifest 不再维护版本号。宿主版本及 `minHostVersion` 仍使用三段数字。同一天再次构建时，日期相同但哈希不同仍会更新，哈希相同则跳过。一次构建的所有模块及 Snapshot/Release 两个渠道共用同一日期。
 
 目录和 ZIP 都必须通过 HTTPS 获取，使用系统默认 TLS 证书校验，不接受重定向。下载后校验包大小和 SHA-256，确认包与目录中的元数据一致。
 
@@ -73,7 +73,7 @@ MODULE_BASE_URL=https://your-domain.example npm run build:release
 {"catalogURL":"https://your-domain.example/catalog.json","snapshotCatalogURL":"https://your-domain.example/catalog.snapshot.json"}
 ```
 
-4. 构建原生 App。以后修改子应用并提升对应 `app/<子应用ID>/manifest.json` 中的版本，再构建发布，即可在下一次冷启动自动更新。
+4. 构建原生 App。以后修改子应用后直接构建发布，即可在下一次冷启动自动更新。
 
 发布顺序：先上传不可变版本 ZIP，再替换目录。`catalog.json`、`catalog.snapshot.json` 建议 `Cache-Control: no-cache`；Snapshot ZIP 同版本会更新，不应设置 immutable。GitHub Actions 直接构建并发布普通 JSON 目录，不需要配置发布密钥 Secret。
 
@@ -92,8 +92,8 @@ gh-pages/
 ├── catalog.json                  # 最新 tag 正式目录（有 tag 时）
 ├── release/                      # 最新 tag 网页与 packages/*.zip（有 tag 时）
 ├── packages/
-│   ├── sentra-1.1.1-snapshot.zip  # master 快照包
-│   └── glyphora-1.0.0-snapshot.zip
+│   ├── sentra-20261020-snapshot.zip  # master 快照包
+│   └── glyphora-20261020-snapshot.zip
 └── app/                          # 子应用网页及资源
     ├── glyphora/
     └── sentra/
@@ -106,7 +106,7 @@ gh-pages/
 
 - Snapshot 更新目录：`https://lingrove.stackli.me/catalog.snapshot.json`
 - 正式版更新目录：`https://lingrove.stackli.me/catalog.json`
-- Sentra ZIP：`https://lingrove.stackli.me/release/packages/sentra-1.1.1.zip`（版本变化后文件名相应变化）
+- Sentra ZIP：`https://lingrove.stackli.me/release/packages/sentra-20261020.zip`（版本变化后文件名相应变化）
 - Sentra 网页：`https://lingrove.stackli.me/app/sentra/`
 - Glyphora 网页：`https://lingrove.stackli.me/app/glyphora/`
 

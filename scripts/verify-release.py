@@ -1,6 +1,7 @@
 """Validate the exact catalog, ZIP packages and browser files before publishing."""
 import argparse
 import hashlib
+from datetime import datetime
 import json
 from pathlib import Path
 import re
@@ -21,6 +22,8 @@ assert [module['id'] for module in catalog['modules']] == expected, 'Catalog doe
 assert (output / 'index.html').is_file() and (output / '.nojekyll').is_file()
 for module in catalog['modules']:
     name = module['id']
+    assert re.fullmatch(r'[0-9]{8}', module['version']), f'{name}: invalid build-date version'
+    assert datetime.strptime(module['version'], '%Y%m%d').strftime('%Y%m%d') == module['version']
     directory = output / 'app' / name
     manifest = json.loads((directory / 'manifest.json').read_text())
     assert all(module[key] == value for key, value in manifest.items()), f'{name}: manifest mismatch'

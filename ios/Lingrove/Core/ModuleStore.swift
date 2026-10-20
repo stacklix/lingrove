@@ -235,13 +235,13 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                     }
                 } catch {
                     registryReadable = false; registry = [:]
-                    notice = "模块注册表损坏，已保护原文件；暂时只使用内置模块。"
+                    notice = "应用安装记录格式无效或无法读取，已保留原文件；暂时使用内置应用，自动更新已暂停。"
                 }
             }
             // A newly installed host may bundle a newer module than its persisted registry.
             var adoptedBuiltin = false
             for (id, builtin) in builtins {
-                if let installed = registry[id], !installed.active.isSnapshot && Version(builtin.version)! > Version(installed.active.version)! {
+                if let installed = registry[id], !installed.active.isSnapshot && ModuleVersion(builtin.version)! > ModuleVersion(installed.active.version)! {
                     var replacement = Installed(active: builtin, healthy: true)
                     replacement.minimumAllowedVersion = installed.minimumAllowedVersion
                     registry[id] = replacement
@@ -264,7 +264,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
             return left == right ? $0.id < $1.id : left < right
         }
         blocked = Set(registry.compactMap { id, install in
-            guard let minimum = install.minimumAllowedVersion.flatMap(Version.init), let current = Version(install.active.version), current < minimum else { return nil }; return id
+            guard let minimum = install.minimumAllowedVersion.flatMap(ModuleVersion.init), let current = ModuleVersion(install.active.version), current < minimum else { return nil }; return id
         })
     }
     func setDisplayOrder(_ ids: [String]) {
@@ -308,7 +308,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         do {
             try JSONEncoder().encode(rejectedVersions).write(to: root.appendingPathComponent("rejected.json"), options: .atomic)
             let fallback = install.previous ?? builtins[module.id]
-            if let fallback, fallback.resourceIdentity != module.resourceIdentity, rejectedVersions[module.id] != fallback.resourceIdentity, install.minimumAllowedVersion.flatMap(Version.init).map({ Version(fallback.version)! >= $0 }) ?? true {
+            if let fallback, fallback.resourceIdentity != module.resourceIdentity, rejectedVersions[module.id] != fallback.resourceIdentity, install.minimumAllowedVersion.flatMap(ModuleVersion.init).map({ ModuleVersion(fallback.version)! >= $0 }) ?? true {
                 registry[module.id] = Installed(active: fallback, previous: nil, healthy: true, minimumAllowedVersion: install.minimumAllowedVersion,
                                                  updatedAt: install.previousUpdatedAt, previousUpdatedAt: nil)
                 try persist(); statuses[module.id] = "启动失败，已回退至 \(fallback.version)"
@@ -368,7 +368,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                 guard Version(remote.minHostVersion)! <= Version(HostConfiguration.currentVersion)! else { statuses[remote.id] = "请更新 Lingrove 后使用新版"; continue }
                 if let current = modules.first(where: { $0.id == remote.id }), current.isSnapshot == remote.isSnapshot && (remote.isSnapshot
                     ? current.sha256 == remote.sha256
-                    : Version(current.version)! >= Version(remote.version)!) { statuses[remote.id] = "已是最新版本"; continue }
+                    : (ModuleVersion(current.version)! > ModuleVersion(remote.version)! || (current.version == remote.version && current.sha256 == remote.sha256))) { statuses[remote.id] = "已是最新版本"; continue }
                 guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
                 pending.append(remote)
@@ -396,7 +396,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         }
         await withTaskGroup(of: (Module, Result<Data, Error>).self) { group in
             var nextIndex = 0
-            func addNext() {
+            @MainActor func addNext() {
                 guard nextIndex < modules.count else { return }
                 let module = modules[nextIndex]
                 nextIndex += 1
@@ -428,11 +428,11 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                     }
                 }
             }
-            func cancelRemaining() {
+            @MainActor func cancelRemaining() {
                 group.cancelAll()
                 clearOwnedDownloads()
             }
-            func isSuperseded() -> Bool {
+            @MainActor func isSuperseded() -> Bool {
                 Task.isCancelled || updateID != id
             }
             for _ in 0..<min(Self.maxConcurrentDownloads, modules.count) { addNext() }
