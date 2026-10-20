@@ -4639,22 +4639,6 @@
     "en": "Please provide Japanese text.",
     "ja": "日本語の文章を入力してください。"
   },
-  "认识字母，循序渐进。学习日语假名、俄语与希腊语字母，结合书写练习与小测验巩固记忆。": {
-    "en": "Learn Japanese kana, Russian and Greek letters step by step, with handwriting and quick tests.",
-    "ja": "日本語の仮名、ロシア語・ギリシャ語の文字を、手書きとミニテストで少しずつ学びます。"
-  },
-  "日语单词活用手册。查看动词与形容词的各种形式，通过例句理解用法。": {
-    "en": "A Japanese conjugation handbook. Explore verb and adjective forms through examples.",
-    "ja": "日本語の活用ハンドブック。動詞や形容詞の形を例文で学びます。"
-  },
-  "从原文到理解。注音、分词与上下文释义，让外语阅读更轻松。": {
-    "en": "From text to understanding. Read with pronunciation support and contextual explanations.",
-    "ja": "原文から理解へ。読みの補助と文脈に沿った解説で、読書をもっと身近に。"
-  },
-  "从一句话开始，理解另一种语言。翻译、语法与地道表达。": {
-    "en": "Understand another language, one sentence at a time. Translation, grammar and natural expression.",
-    "ja": "一文から、別の言語を理解する。翻訳、文法、自然な表現。"
-  },
   "%@ 次请求用量未完整返回": {
     "en": "Usage was incomplete for %@ requests",
     "ja": "%@ 件のリクエストで使用量が未完了"
@@ -6722,6 +6706,14 @@
   "点击应用查看更新日期和介绍。": {
     "en": "Tap an app to view its update date and description.",
     "ja": "アプリをタップして更新日と紹介を確認します。"
+  },
+  "拖动排序，自动保存。": {
+    "en": "Drag to reorder. Changes save automatically.",
+    "ja": "ドラッグして並べ替え。自動保存されます。"
+  },
+  "撤销后，再次连接需重新授权。": {
+    "en": "Reconnecting will require permission again.",
+    "ja": "取り消すと、再接続時に許可が必要です。"
   },
   "应用安装记录格式无效或无法读取，已保留原文件；暂时使用内置应用，自动更新已暂停。": {
     "en": "The app installation records have an invalid format or cannot be read. The original file has been preserved. Built-in apps are being used and automatic updates are paused.",

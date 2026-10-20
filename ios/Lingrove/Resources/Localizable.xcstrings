@@ -25521,94 +25521,6 @@
         }
       }
     },
-    "认识字母，循序渐进。学习日语假名、俄语与希腊语字母，结合书写练习与小测验巩固记忆。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "认识字母，循序渐进。学习日语假名、俄语与希腊语字母，结合书写练习与小测验巩固记忆。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Learn Japanese kana, Russian and Greek letters step by step, with handwriting and quick tests."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日本語の仮名、ロシア語・ギリシャ語の文字を、手書きとミニテストで少しずつ学びます。"
-          }
-        }
-      }
-    },
-    "日语单词活用手册。查看动词与形容词的各种形式，通过例句理解用法。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日语单词活用手册。查看动词与形容词的各种形式，通过例句理解用法。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A Japanese conjugation handbook. Explore verb and adjective forms through examples."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日本語の活用ハンドブック。動詞や形容詞の形を例文で学びます。"
-          }
-        }
-      }
-    },
-    "从原文到理解。注音、分词与上下文释义，让外语阅读更轻松。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从原文到理解。注音、分词与上下文释义，让外语阅读更轻松。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "From text to understanding. Read with pronunciation support and contextual explanations."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "原文から理解へ。読みの補助と文脈に沿った解説で、読書をもっと身近に。"
-          }
-        }
-      }
-    },
-    "从一句话开始，理解另一种语言。翻译、语法与地道表达。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从一句话开始，理解另一种语言。翻译、语法与地道表达。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Understand another language, one sentence at a time. Translation, grammar and natural expression."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一文から、別の言語を理解する。翻訳、文法、自然な表現。"
-          }
-        }
-      }
-    },
     "%@ 次请求用量未完整返回": {
       "localizations": {
         "zh-Hans": {
@@ -36979,6 +36891,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "アプリをタップして更新日と紹介を確認します。"
+          }
+        }
+      }
+    },
+    "拖动排序，自动保存。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖动排序，自动保存。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to reorder. Changes save automatically."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ドラッグして並べ替え。自動保存されます。"
+          }
+        }
+      }
+    },
+    "撤销后，再次连接需重新授权。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撤销后，再次连接需重新授权。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting will require permission again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取り消すと、再接続時に許可が必要です。"
           }
         }
       }

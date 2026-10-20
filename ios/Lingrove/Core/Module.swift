@@ -4,6 +4,7 @@ struct Module: Codable, Identifiable, Equatable {
     var id: String
     var name: String
     var description: String?
+    var localizedDescriptions: [String: String]?
     var version: String
     var entry: String
     var minHostVersion: String
@@ -16,6 +17,9 @@ struct Module: Codable, Identifiable, Equatable {
     var minimumAllowedVersion: String?
     var isSnapshot: Bool { downloadUrl?.hasSuffix("-snapshot.zip") == true }
     var resourceIdentity: String { "\(version)-\(isSnapshot ? "snapshot" : "release")-\(sha256 ?? "builtin")" }
+    func description(for language: String) -> String? {
+        localizedDescriptions?[language] ?? description
+    }
     func validate() throws {
         guard id.range(of: "^[a-z0-9][a-z0-9-]{0,63}$", options: .regularExpression) != nil,
               ModuleVersion(version) != nil, Version(minHostVersion) != nil,

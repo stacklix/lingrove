@@ -2,6 +2,10 @@
   "id": "glyphora",
   "name": "Glyphora",
   "description": "认识字母，循序渐进。学习日语假名、俄语与希腊语字母，结合书写练习与小测验巩固记忆。",
+  "localizedDescriptions": {
+    "en": "Learn Japanese kana, Russian and Greek letters step by step, with handwriting and quick tests.",
+    "ja": "日本語の仮名、ロシア語・ギリシャ語の文字を、手書きとミニテストで少しずつ学びます。"
+  },
   "entry": "index.html",
   "minHostVersion": "1.3.0",
   "bridgeVersion": 1,

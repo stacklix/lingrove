@@ -1,7 +1,11 @@
 {
   "id": "kotoba",
   "name": "Kotoba",
-  "description": "日语单词活用手册。查看动词与形容词的各种形式，通过例句理解用法。",
+  "description": "日语语法手册。按基础、词类与敬语梳理语法，通过例句理解用法。",
+  "localizedDescriptions": {
+    "en": "A Japanese grammar handbook. Explore grammar foundations, word classes and honorifics through examples.",
+    "ja": "日本語文法ハンドブック。文法の基礎、品詞、敬語を例文で学びます。"
+  },
   "entry": "index.html",
   "minHostVersion": "1.2.0",
   "bridgeVersion": 1,

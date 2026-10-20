@@ -50,6 +50,11 @@ output.mkdir(parents=True)
     print('PASS no tags publishes Snapshot only')
     run('git', '-c', 'tag.gpgsign=false', 'tag', 'v1.0.0')
     (root / 'source.txt').write_text('master source')
+    manifest_path = root / 'app/sentra/manifest.json'
+    tag_manifest = json.loads(manifest_path.read_text())
+    master_manifest = json.loads(manifest_path.read_text())
+    master_manifest['localizedDescriptions']['en'] = 'Updated introduction on master.'
+    manifest_path.write_text(json.dumps(master_manifest))
     run('node', 'scripts/build-channels.mjs')
     snapshot = json.loads((root / 'dist/catalog.snapshot.json').read_text())['modules'][0]
     release = json.loads((root / 'dist/catalog.json').read_text())['modules'][0]
@@ -57,8 +62,13 @@ output.mkdir(parents=True)
     assert snapshot['downloadUrl'].endswith('-20261020-snapshot.zip')
     assert release['downloadUrl'].endswith('-20261020.zip')
     assert '/release/packages/' in release['downloadUrl']
+    assert snapshot['localizedDescriptions'] == master_manifest['localizedDescriptions']
+    assert release['localizedDescriptions'] == tag_manifest['localizedDescriptions']
     with zipfile.ZipFile(root / 'dist/packages' / snapshot['downloadUrl'].split('/')[-1]) as archive:
         assert archive.read('index.html') == b'master source'
+        assert json.loads(archive.read('manifest.json'))['localizedDescriptions'] == snapshot['localizedDescriptions']
     with zipfile.ZipFile(root / 'dist/release/packages' / release['downloadUrl'].split('/')[-1]) as archive:
         assert archive.read('index.html') == b'tag source'
+        assert json.loads(archive.read('manifest.json'))['localizedDescriptions'] == release['localizedDescriptions']
     print('PASS tagged release uses tag source; Snapshot uses master source; both catalogs and ZIPs verified')
+    print('PASS translated introductions follow their child-app channel in catalogs and ZIPs')

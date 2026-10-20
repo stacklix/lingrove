@@ -36,6 +36,10 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
             rejects("reject ZIP \(name)") { try StoredZIP.extract(Data(contentsOf: fixtures.appendingPathComponent("\(name).zip")), to: destination) }
         }
         var module = try JSONDecoder().decode(Module.self, from: Data(contentsOf: fixtures.appendingPathComponent("builtin/sentra/manifest.json")))
+        check(module.description(for: "zh-Hans") == module.description, "Chinese introduction comes from default module metadata")
+        check(module.description(for: "en") == module.localizedDescriptions?["en"] && module.description(for: "en") != module.description, "English introduction comes from module metadata")
+        check(module.description(for: "ja") == module.localizedDescriptions?["ja"] && module.description(for: "ja") != module.description, "Japanese introduction comes from module metadata")
+        check(module.description(for: "fr") == module.description, "missing introduction language uses the module default")
         var networkModule = module
         networkModule.allowedOrigins = ["https://api.example.com", "https://api.example.com"]
         networkModule.downloadUrl = "https://updates.test/module.zip"
@@ -65,6 +69,19 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         rejects("malformed catalog rejected") { _ = try JSONDecoder().decode(Catalog.self, from: Data("{}".utf8)) }
         let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [MockProtocol.self]
         let session = URLSession(configuration: config)
+        var localizedUpdate = try JSONDecoder().decode(Module.self, from: Data(contentsOf: fixtures.appendingPathComponent("localized-update.json")))
+        let localizedArchive = try Data(contentsOf: fixtures.appendingPathComponent("localized-update.zip"))
+        localizedUpdate.downloadUrl = "https://updates.test/localized-update.zip"
+        localizedUpdate.size = localizedArchive.count
+        localizedUpdate.sha256 = SHA256.hash(data: localizedArchive).map { String(format: "%02x", $0) }.joined()
+        let localizedConfig = HostConfiguration(catalogURL: "https://updates.test/localized-catalog.json")
+        let localizedRoot = fixtures.appendingPathComponent("localized-state")
+        let localizedStore = ModuleStore(root: localizedRoot, config: localizedConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
+        MockProtocol.responses = ["/localized-catalog.json": (200, try catalog(localizedUpdate)), "/localized-update.zip": (200, localizedArchive)]
+        await localizedStore.checkForUpdates()
+        check(localizedStore.modules.first?.description(for: "en") == "Updated description delivered by the child app.", "child-app update replaces introduction without a host translation")
+        let localizedRestart = ModuleStore(root: localizedRoot, config: localizedConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
+        check(localizedRestart.modules.first?.localizedDescriptions == localizedUpdate.localizedDescriptions, "updated introductions persist across host restart")
         let hostConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json")
         let store = ModuleStore(root: root, config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         check(store.modules.first?.version == "20260101", "bundled module available offline")

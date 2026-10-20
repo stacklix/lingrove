@@ -4,6 +4,11 @@ root=Path(sys.argv[1]);root.mkdir(parents=True,exist_ok=True)
 base=json.loads(Path('app/sentra/manifest.json').read_text())
 # Keep upgrade scenarios independent of the shipping module version.
 base['version']='20260101'
+localized_update={**base,'version':'20260102','localizedDescriptions':{**base['localizedDescriptions'],'en':'Updated description delivered by the child app.'}}
+(root/'localized-update.json').write_text(json.dumps(localized_update))
+with zipfile.ZipFile(root/'localized-update.zip','w',compression=zipfile.ZIP_STORED) as archive:
+    archive.writestr('manifest.json',json.dumps(localized_update))
+    archive.writestr('index.html','localized update')
 for name,version in [('valid','20260102'),('newer','20260103'),('snapshot','20260102'),('snapshot-next','20260102')]:
     with zipfile.ZipFile(root/f'{name}.zip','w',compression=zipfile.ZIP_STORED) as archive:
         archive.writestr('manifest.json',json.dumps({**base,'version':version}))

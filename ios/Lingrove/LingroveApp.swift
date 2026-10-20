@@ -92,6 +92,9 @@ struct HomeView: View {
                                 .accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(module.name).font(.headline)
+                                    Text(moduleSummary(module))
+                                        .font(.subheadline).foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                     if store.blocked.contains(module.id) {
                                         Label("暂时无法打开", systemImage: "exclamationmark.circle")
                                             .font(.caption).foregroundStyle(.secondary)
@@ -163,11 +166,9 @@ struct HomeView: View {
                             Section("开发模式") {
                                 Toggle("开发快照", isOn: $snapshotEnabled)
                                     .accessibilityIdentifier("snapshot-toggle")
-                                Text("开启后获取 master 上的最新开发版本；关闭后获取最新正式版。调试服务器资源优先加载。").font(.footnote)
                                 Toggle("调试模式", isOn: Binding(get: { draftDebugEnabled }, set: setDebugEnabled))
                                     .accessibilityIdentifier("debug-mode-toggle")
                                     .disabled(connectionTest != nil)
-                                Text("开启前验证服务器连接，连接成功后使用服务器资源。修改地址后需重新开启调试模式。").font(.footnote)
                                 TextField("http://192.168.1.10:8000", text: $debugAddress)
                                     .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                                     .accessibilityLabel("调试服务器地址")
@@ -194,7 +195,6 @@ struct HomeView: View {
                                         .foregroundStyle(connectionFailed ? Color.red : Color.secondary)
                                         .accessibilityIdentifier("debug-connection-result")
                                 }
-                                Text("填写服务器根地址，子应用从 /app/子应用ID/index.html 加载。地址为空或无法访问时不能开启调试模式。").font(.footnote)
                                 if let message = pages.reloadMessage {
                                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }
                                 }
@@ -234,7 +234,6 @@ struct HomeView: View {
                                 UserDefaults.standard.set(value, forKey: AppLanguage.preferenceKey)
                                 pages.updateLanguage()
                             }
-                            Text("用于应用界面和新生成的讲解，已有学习记录保留原语言。").font(.footnote)
                         }
                         Section("模型服务") {
                             Button { showingLLMSettings = true } label: {
@@ -289,6 +288,15 @@ struct HomeView: View {
         }.tint(Color(uiColor: LingroveTheme.accent))
         .onChange(of: store.modules) { _, modules in pages.reconcile(modules: modules, blocked: store.blocked) }
         .onChange(of: store.blocked) { _, blocked in pages.reconcile(modules: store.modules, blocked: blocked) }
+    }
+    private func moduleSummary(_ module: Module) -> String {
+        let description = module.description(for: AppLanguage.current) ?? AppLanguage.text("学习应用")
+        var summary = description
+        description.enumerateSubstrings(in: description.startIndex..<description.endIndex, options: .bySentences) { sentence, _, _, stop in
+            if let sentence { summary = sentence.trimmingCharacters(in: .whitespacesAndNewlines) }
+            stop = true
+        }
+        return summary
     }
     private func clearConnectionTest() {
         connectionTest?.cancel()
@@ -432,9 +440,7 @@ struct ModuleManagementSection: View {
             }
         } footer: {
             if editMode.isEditing {
-                Text("拖动右侧手柄调整首页显示顺序，调整后自动保存。")
-            } else {
-                Text("点击应用查看更新日期和介绍。")
+                Text("拖动排序，自动保存。")
             }
         }
         .onAppear { refreshModules() }
@@ -486,7 +492,7 @@ struct ModuleDetailsView: View {
             if let module {
                 Section {
                     ModuleInformationRow(title: "更新日期", value: updateDate(for: module))
-                    ModuleInformationRow(title: "应用介绍", value: AppLanguage.text(module.description ?? "学习应用"))
+                    ModuleInformationRow(title: "应用介绍", value: module.description(for: AppLanguage.current) ?? AppLanguage.text("学习应用"))
                 }
             } else {
                 Text("暂无已安装的应用").foregroundStyle(.secondary)
@@ -591,7 +597,7 @@ struct NetworkAuthorizationSection: View {
         } header: {
             Text("网络授权")
         } footer: {
-            Text("公共服务包括 AI 和应用更新。其他网络地址按应用分别列出。撤销自定义授权后，再次连接时需要重新授权。")
+            Text("撤销后，再次连接需重新授权。")
         }
         .onAppear(perform: refresh)
         .onChange(of: modules) { _, _ in refresh() }

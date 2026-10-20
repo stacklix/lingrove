@@ -1,7 +1,11 @@
 {
   "id": "lector",
   "name": "Lector",
-  "description": "从原文到理解。注音、分词与上下文释义，让外语阅读更轻松。",
+  "description": "在阅读中，慢慢熟悉一门语言。注音、分词与上下文释义，让外语阅读更轻松。",
+  "localizedDescriptions": {
+    "en": "Get to know a language through reading. Pronunciation, word segmentation and contextual explanations make reading in another language easier.",
+    "ja": "読みながら、少しずつ言葉になじんでいく。読みの補助、単語の区切り、文脈に沿った解説で、外国語の文章を読みやすくします。"
+  },
   "entry": "index.html",
   "minHostVersion": "1.2.0",
   "bridgeVersion": 1,

@@ -54,6 +54,8 @@ npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的
 
 每个模块包含 `id`、`name`、`version`、`entry`、`minHostVersion`、`bridgeVersion`、`stateSchemaVersion`、`allowedOrigins`、`downloadUrl`、`size`、`sha256`。构建工具会自动生成完整目录。可选 `minimumAllowedVersion` 强制淘汰旧版。子应用 `version` 由构建工具按北京时间（Asia/Shanghai）的构建日期生成，格式为 `yyyyMMdd`，例如 `20261020`；`minimumAllowedVersion` 也使用日期格式。源 manifest 不再维护版本号。宿主版本及 `minHostVersion` 仍使用三段数字。同一天再次构建时，日期相同但哈希不同仍会更新，哈希相同则跳过。一次构建的所有模块及 Snapshot/Release 两个渠道共用同一日期。
 
+应用介绍由各子应用的 `manifest.json` 管理：`description` 是默认中文介绍，`localizedDescriptions` 保存 `en`、`ja` 等语言的介绍。宿主按当前界面语言直接读取元数据，缺少该语言时使用默认介绍；首页显示首句，应用详情显示全文。这些内容随目录、ZIP 和内置 manifest 一起打包更新，无需加入共享翻译字典。
+
 目录和 ZIP 都必须通过 HTTPS 获取，使用系统默认 TLS 证书校验，不接受重定向。下载后校验包大小和 SHA-256，确认包与目录中的元数据一致。
 
 ## 配置自动更新
