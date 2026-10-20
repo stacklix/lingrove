@@ -259,7 +259,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
         let transfer = ModuleDownloadTransfer(limit: limit, onProgress: onProgress)
-        // URLSession's delegate is session-wide, so clone settings into a dedicated per-transfer delegate session.
+        // Delegates are session-wide: clone proxy/protocol settings, then use a dedicated delegate that also blocks redirects.
         let connection = URLSession(configuration: session.configuration, delegate: transfer, delegateQueue: nil)
         do {
             return try await transfer.download(using: connection, request: request)
@@ -346,7 +346,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                 statuses[module.id] = "正在下载 \(module.version)…"
                 downloadProgress[module.id] = 0
                 downloadStatusOwners[module.id] = id
-                group.addTask { [weak self] in
+                group.addTask {
                     guard let rawURL = module.downloadUrl,
                           let url = URL(string: rawURL),
                           let expectedHash = module.sha256, expectedHash.count == 64,
@@ -359,7 +359,10 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                                 guard let self, self.updateID == id,
                                       self.downloadStatusOwners[module.id] == id,
                                       self.downloadProgress[module.id] != nil else { return }
-                                self.downloadProgress[module.id] = min(Double(received) / Double(size), 1)
+                                let progress = min(Double(received) / Double(size), 1)
+                                if progress > self.downloadProgress[module.id, default: 0] {
+                                    self.downloadProgress[module.id] = progress
+                                }
                             }
                         }
                         return (module, .success(data))
