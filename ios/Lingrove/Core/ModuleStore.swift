@@ -6,7 +6,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }
 private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @unchecked Sendable {
-    private static let progressInterval = 64 * 1024
+    private static let progressUpdateInterval = 64 * 1024
     private let limit: Int
     private let onProgress: (@Sendable (Int) -> Void)?
     private let lock = NSLock()
@@ -29,6 +29,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                 lock.lock()
                 guard !Task.isCancelled else {
                     lock.unlock()
+                    session.invalidateAndCancel()
                     continuation.resume(throwing: CancellationError())
                     return
                 }
@@ -80,7 +81,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         }
         data.append(incomingData)
         let received = data.count
-        let reportProgress = received - lastReportedBytes >= Self.progressInterval
+        let reportProgress = received - lastReportedBytes >= Self.progressUpdateInterval
         if reportProgress { lastReportedBytes = received }
         lock.unlock()
         if reportProgress { onProgress?(received) }
@@ -119,6 +120,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
 }
 @MainActor final class ModuleStore: ObservableObject {
     static let displayOrderKey = "modules.displayOrder"
+    private static let maxConcurrentDownloads = 3
     struct Installed: Codable {
         var active: Module
         var previous: Module?
@@ -366,28 +368,43 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
                     }
                 }
             }
-            for _ in 0..<min(3, modules.count) { addNext() }
-            while let (module, result) = await group.next() {
+            for _ in 0..<min(Self.maxConcurrentDownloads, modules.count) { addNext() }
+            downloadLoop: while let (module, result) = await group.next() {
                 if Task.isCancelled || updateID != id {
                     group.cancelAll()
                     clearOwnedDownloads()
-                    break
+                    break downloadLoop
                 }
                 switch result {
                 case .success(let data):
                     do {
                         let installed = try install(module, data: data, catalogURL: catalogURL)
+                        guard !Task.isCancelled, updateID == id else {
+                            group.cancelAll()
+                            clearOwnedDownloads()
+                            break downloadLoop
+                        }
                         statuses[module.id] = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
                     } catch {
+                        guard !Task.isCancelled, updateID == id else {
+                            group.cancelAll()
+                            clearOwnedDownloads()
+                            break downloadLoop
+                        }
                         statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
                     }
                 case .failure(let error):
+                    guard !Task.isCancelled, updateID == id else {
+                        group.cancelAll()
+                        clearOwnedDownloads()
+                        break downloadLoop
+                    }
                     statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
                 }
-                if Task.isCancelled {
+                if Task.isCancelled || updateID != id {
                     group.cancelAll()
                     clearOwnedDownloads()
-                    break
+                    break downloadLoop
                 }
                 downloadProgress.removeValue(forKey: module.id)
                 downloadStatusOwners.removeValue(forKey: module.id)

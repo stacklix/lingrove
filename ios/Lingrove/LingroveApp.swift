@@ -441,7 +441,7 @@ struct ModuleDetailsView: View {
                     LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
                         ? (module.isSnapshot ? "开发快照下载" : "Release 下载") : "宿主内置"))
                     information("版本", value: module.version)
-                    information("最近更新时间", value: store.lastUpdatedAt(for: module)?.formatted(date: .abbreviated, time: .shortened) ?? AppLanguage.text("暂无记录"))
+                    information("最近更新时间", value: formattedDate(store.lastUpdatedAt(for: module)))
                     information("文件名", value: store.isDownloaded(module)
                         ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
                         : module.entry)
@@ -468,6 +468,13 @@ struct ModuleDetailsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
         }.padding(.vertical, 2)
+    }
+
+    private func formattedDate(_ date: Date?) -> String {
+        guard let date else { return AppLanguage.text("暂无记录") }
+        var format = Date.FormatStyle(date: .abbreviated, time: .shortened)
+        format.locale = Locale(identifier: AppLanguage.current)
+        return date.formatted(format)
     }
 }
 
