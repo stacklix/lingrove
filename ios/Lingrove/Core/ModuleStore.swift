@@ -7,7 +7,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
 }
 @MainActor final class ModuleStore: ObservableObject {
     static let displayOrderKey = "modules.displayOrder"
-    private static let downloadProgressInterval = 64 * 1024
+    nonisolated private static let downloadProgressInterval = 64 * 1024
     struct Installed: Codable {
         var active: Module
         var previous: Module?
@@ -138,7 +138,8 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
-    private func fetch(_ url: URL, limit: Int, forceRefresh: Bool = false, onProgress: ((Int) -> Void)? = nil) async throws -> Data {
+    nonisolated private static func fetch(session: URLSession, url: URL, limit: Int, forceRefresh: Bool = false,
+                                          onProgress: (@Sendable (Int) -> Void)? = nil) async throws -> Data {
         guard NetworkPolicy.origin(url.absoluteString) != nil else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         if forceRefresh { components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "_refresh", value: UUID().uuidString)] }
@@ -152,13 +153,14 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         buffer.reserveCapacity(Self.downloadProgressInterval)
         for try await byte in bytes {
             buffer.append(byte)
-            if result.count + buffer.count > limit { throw ModuleError.invalid("资源超过大小限制") }
             if buffer.count == Self.downloadProgressInterval {
+                guard result.count <= limit - buffer.count else { throw ModuleError.invalid("资源超过大小限制") }
                 result.append(contentsOf: buffer)
                 buffer.removeAll(keepingCapacity: true)
                 onProgress?(result.count)
             }
         }
+        guard buffer.count <= limit - result.count else { throw ModuleError.invalid("资源超过大小限制") }
         result.append(contentsOf: buffer)
         onProgress?(result.count)
         return result
@@ -188,7 +190,8 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         let catalogURL = config.updateCatalogURL(defaults: defaults)
         guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
-            let catalog = try JSONDecoder().decode(Catalog.self, from: await fetch(url, limit: 1024 * 1024, forceRefresh: forceSnapshot))
+            let catalogData = try await Self.fetch(session: session, url: url, limit: 1024 * 1024, forceRefresh: forceSnapshot)
+            let catalog = try JSONDecoder().decode(Catalog.self, from: catalogData)
             try Task.checkCancellation()
             try catalog.validate()
             // A settings change during a request must not install the previous channel.
@@ -208,8 +211,6 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     : Version(current.version)! >= Version(remote.version)!) { statuses[remote.id] = "已是最新版本"; continue }
                 guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
-                statuses[remote.id] = "正在下载 \(remote.version)…"
-                downloadProgress[remote.id] = 0
                 pending.append(remote)
             }
             await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot, id: id)
@@ -220,6 +221,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     }
     private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool, id: UUID) async {
         guard !modules.isEmpty else { return }
+        let session = self.session
         defer {
             if updateID == id {
                 for module in modules where statuses[module.id]?.hasPrefix("正在下载") == true {
@@ -234,6 +236,8 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 guard nextIndex < modules.count else { return }
                 let module = modules[nextIndex]
                 nextIndex += 1
+                statuses[module.id] = "正在下载 \(module.version)…"
+                downloadProgress[module.id] = 0
                 group.addTask { [weak self] in
                     guard let self,
                           let rawURL = module.downloadUrl,
@@ -243,7 +247,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                         return (module, .failure(ModuleError.invalid("下载元数据无效")))
                     }
                     do {
-                        let data = try await self.fetch(url, limit: size, forceRefresh: forceRefresh) { received in
+                        let data = try await Self.fetch(session: session, url: url, limit: size, forceRefresh: forceRefresh) { received in
                             guard !Task.isCancelled else { return }
                             Task { @MainActor [weak self] in
                                 guard let self, self.updateID == id, self.downloadProgress[module.id] != nil else { return }
