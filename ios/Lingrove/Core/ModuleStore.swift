@@ -12,8 +12,8 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         var previous: Module?
         var healthy: Bool
         var minimumAllowedVersion: String?
-        var updatedAt: Date?
-        var previousUpdatedAt: Date?
+        var updatedAt: Date? = nil
+        var previousUpdatedAt: Date? = nil
     }
     @Published var modules: [Module] = []
     @Published var checking = false
@@ -220,9 +220,10 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 nextIndex += 1
                 group.addTask { [weak self] in
                     guard let self,
-                          let urlString = module.downloadUrl,
-                          let url = URL(string: urlString),
-                          let size = module.size else {
+                          let rawURL = module.downloadUrl,
+                          let url = URL(string: rawURL),
+                          let expectedHash = module.sha256, expectedHash.count == 64,
+                          let size = module.size, size > 0, size <= 50 * 1024 * 1024 else {
                         return (module, .failure(ModuleError.invalid("下载元数据无效")))
                     }
                     do {
@@ -257,6 +258,10 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     if Task.isCancelled { group.cancelAll(); break }
                     statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
                 }
+                if Task.isCancelled {
+                    group.cancelAll()
+                    break
+                }
                 downloadProgress.removeValue(forKey: module.id)
                 addNext()
             }
@@ -264,10 +269,9 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         downloadProgress.removeAll()
     }
     private func install(_ module: Module, data: Data, catalogURL: String) throws -> Bool {
-        guard let rawURL = module.downloadUrl, let url = URL(string: rawURL), let expectedHash = module.sha256, expectedHash.count == 64,
+        guard let expectedHash = module.sha256, expectedHash.count == 64,
               let expectedSize = module.size, expectedSize > 0, expectedSize <= 50 * 1024 * 1024 else { throw ModuleError.invalid("下载元数据无效") }
         try Task.checkCancellation()
-        guard data.count == expectedSize else { throw ModuleError.invalid("下载失败或资源过大") }
         guard data.count == expectedSize, SHA256.hash(data: data).map({ String(format: "%02x", $0) }).joined() == expectedHash else { throw ModuleError.invalid("安装包哈希不匹配") }
         // A module may have been opened while its package was downloading.
         guard !activeSessions.contains(module.id), catalogURL == config.updateCatalogURL(defaults: defaults) else { return false }
