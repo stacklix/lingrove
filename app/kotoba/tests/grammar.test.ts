@@ -33,3 +33,24 @@ it('renders Japanese and its meaning as separate paragraphs', () => {
   expect(wrapper.get('.grammar-sentence-translation').text()).toBe(sentence.translation);
   wrapper.unmount();
 });
+
+it('covers nine common case particles with translated explanations and complete example sentences', () => {
+  const topics = grammarTopics.filter((topic) => topic.stage === '格助词');
+  expect(topics.map((topic) => topic.id)).toEqual(
+    ['ga', 'wo', 'ni', 'he', 'de', 'to', 'kara', 'yori', 'no'].map((id) => 'particle-' + id),
+  );
+  for (const topic of topics) {
+    for (const key of [topic.title, topic.intro, topic.note]) {
+      expect(messages[key as keyof typeof messages].en).toBeTruthy();
+      expect(messages[key as keyof typeof messages].ja).toBeTruthy();
+    }
+    expect(topic.rules.length).toBeGreaterThanOrEqual(2);
+    for (const rule of topic.rules) {
+      expect(rule.sentence!.japanese).toMatch(/。$/);
+      for (const key of [rule.name, rule.rule, rule.sentence!.translation]) {
+        expect(messages[key as keyof typeof messages].en).toBeTruthy();
+        expect(messages[key as keyof typeof messages].ja).toBeTruthy();
+      }
+    }
+  }
+});

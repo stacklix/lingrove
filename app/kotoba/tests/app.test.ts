@@ -121,6 +121,7 @@ it('switches between query and offline grammar, preserving draft and topic', asy
     '01 · 文法基础',
     '02 · 动词活用规则',
     '03 · 形容词活用规则',
+    '04 · 格助词',
   ]);
   expect(wrapper.findAll('.guide-topics button').map((b) => b.text())).toEqual([
     '学校文法与教育文法',
@@ -132,6 +133,9 @@ it('switches between query and offline grammar, preserving draft and topic', asy
     '假定形',
     '命令形',
     '形容词',
+    ...['が', 'を', 'に', 'へ', 'で', 'と', 'から', 'より', 'の'].map(
+      (particle) => `格助词「${particle}」`,
+    ),
   ]);
   expect(wrapper.findAll('.bottom-tabs button')[1].attributes('aria-current')).toBe('page');
   await wrapper.get('.directory-toggle').trigger('click');
@@ -185,5 +189,26 @@ it('groups construction rules by verb class within a single chapter', async () =
   expect(text).toContain('查词典的活用标记');
   await wrapper.get('.next-chapter').trigger('click');
   expect(wrapper.get('.guide-content h2').text()).toBe('未然形');
+  wrapper.unmount();
+});
+
+it('opens case-particle lessons from the grammar directory and preserves the selected lesson', async () => {
+  const wrapper = mount(App);
+  const tab = wrapper.findAll('.bottom-tabs button')[1];
+  expect(tab.text()).toBe('语法');
+  await tab.trigger('click');
+  await wrapper.get('.directory-toggle').trigger('click');
+  await wrapper
+    .findAll('.guide-topics button')
+    .find((button) => button.text() === '格助词「に」')!
+    .trigger('click');
+  expect(wrapper.get('.guide-content h2').text()).toBe('格助词「に」');
+  expect(wrapper.findAll('.grammar-sentence')).toHaveLength(4);
+  expect(wrapper.get('.guide-content').text()).toContain('授業は九時に始まります。');
+  expect(wrapper.get('.guide-content').text()).toContain('课九点开始。');
+  expect(wrapper.get('dialog').attributes('open')).toBeUndefined();
+  await wrapper.findAll('.bottom-tabs button')[0].trigger('click');
+  await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
+  expect(wrapper.get('.guide-content h2').text()).toBe('格助词「に」');
   wrapper.unmount();
 });

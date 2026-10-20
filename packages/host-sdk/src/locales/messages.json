@@ -5738,5 +5738,397 @@
   "例句": {
     "en": "Example sentence",
     "ja": "例文"
+  },
+  "格助词": {
+    "en": "Case particles",
+    "ja": "格助詞"
+  },
+  "主语与新信息": {
+    "en": "Subject and new information",
+    "ja": "主語・新しい情報"
+  },
+  "说明谁做某事，或什么发生了；回答「谁／什么」时常用が。": {
+    "en": "Identifies who acts or what happens; often used to answer who or what.",
+    "ja": "誰が行うか、何が起こるかを示し、「誰・何」への答えにも使います。"
+  },
+  "猫正在院子里睡觉。": {
+    "en": "A cat is sleeping in the garden.",
+    "ja": "猫が庭で寝ています。"
+  },
+  "喜好与能力的对象": {
+    "en": "Preference and ability",
+    "ja": "好み・能力の対象"
+  },
+  "好き、上手、わかる等表达常用が标记对象，应连同谓语一起记忆。": {
+    "en": "Learn が together with predicates such as 好き, 上手 and わかる.",
+    "ja": "好き・上手・わかるなどは、対象にがを使う表現として覚えます。"
+  },
+  "我懂日语。": {
+    "en": "I understand Japanese.",
+    "ja": "私は日本語がわかります。"
+  },
+  "格助词「が」": {
+    "en": "Particle が",
+    "ja": "格助詞「が」"
+  },
+  "标记主语，也常与喜好、能力等表达搭配。": {
+    "en": "Marks the subject and occurs with expressions of preference and ability.",
+    "ja": "主語を示し、好みや能力を表す表現にも使います。"
+  },
+  "が标记主语，は提示话题或对比；不能简单理解成可以随意互换。": {
+    "en": "が marks the subject; は introduces a topic or contrast. They are not freely interchangeable.",
+    "ja": "がは主語を示し、はは話題や対比を示します。自由には置き換えられません。"
+  },
+  "动作的对象": {
+    "en": "Object of an action",
+    "ja": "動作の対象"
+  },
+  "他动词前用「名词＋を」表示动作直接作用的对象。": {
+    "en": "Use noun + を for the object of a transitive verb.",
+    "ja": "他動詞の対象を「名詞＋を」で示します。"
+  },
+  "妹妹正在写信。": {
+    "en": "My younger sister is writing a letter.",
+    "ja": "妹は手紙を書いています。"
+  },
+  "经过的路线": {
+    "en": "Route",
+    "ja": "移動の経路"
+  },
+  "歩く、渡る、通る等移动动词可用を标记经过的路线。": {
+    "en": "With motion verbs such as 歩く, 渡る and 通る, を marks the route.",
+    "ja": "歩く・渡る・通るなどでは、をで移動の経路を示します。"
+  },
+  "我每天早上都过这座桥。": {
+    "en": "I cross this bridge every morning.",
+    "ja": "毎朝、この橋を渡ります。"
+  },
+  "离开的地点": {
+    "en": "Place of departure",
+    "ja": "離れる場所"
+  },
+  "出る、降りる等动词可用を标记离开的地方或交通工具。": {
+    "en": "With 出る and 降りる, を can mark the place or vehicle one leaves.",
+    "ja": "出る・降りるなどでは、離れる場所や乗り物にをを使います。"
+  },
+  "我在下一站下电车。": {
+    "en": "I will get off the train at the next station.",
+    "ja": "次の駅で電車を降ります。"
+  },
+  "格助词「を」": {
+    "en": "Particle を",
+    "ja": "格助詞「を」"
+  },
+  "标记动作对象，也表示移动经过或离开的地方。读作「お」。": {
+    "en": "Marks an object, route or place of departure. Pronounced お.",
+    "ja": "動作の対象、移動の経路、離れる場所を示します。発音は「お」です。"
+  },
+  "「公園で歩く」侧重活动场所，「公園を歩く」侧重移动经过的区域。": {
+    "en": "公園で歩く focuses on the setting; 公園を歩く focuses on the area traversed.",
+    "ja": "「公園で歩く」は活動の場所、「公園を歩く」は移動する範囲に重点があります。"
+  },
+  "到达点与存在地点": {
+    "en": "Destination and location of existence",
+    "ja": "到着点・存在場所"
+  },
+  "行く等用に表示到达点；ある、いる等用に表示存在地点。": {
+    "en": "に marks a destination with 行く, or a location of existence with ある and いる.",
+    "ja": "行くなどでは到着点を、ある・いるなどでは存在場所を示します。"
+  },
+  "桌子下面有一只狗。": {
+    "en": "There is a dog under the desk.",
+    "ja": "机の下に犬がいます。"
+  },
+  "具体时间点": {
+    "en": "Specific time",
+    "ja": "具体的な時点"
+  },
+  "钟点、日期等具体时间常用に；今日、明日、毎日等通常不加に。": {
+    "en": "Use に with specific times and dates; usually omit it after 今日, 明日 and 毎日.",
+    "ja": "時刻や日付にはにを使い、今日・明日・毎日などには普通つけません。"
+  },
+  "课九点开始。": {
+    "en": "Class starts at nine.",
+    "ja": "授業は九時に始まります。"
+  },
+  "接收者与动作对象": {
+    "en": "Recipient and interaction partner",
+    "ja": "受け手・動作の相手"
+  },
+  "给、教、询问等动作可用に标记接收者或对象，具体搭配由动词决定。": {
+    "en": "に marks the recipient or partner of verbs such as giving, teaching and asking; learn the verb pattern.",
+    "ja": "与える・教える・尋ねるなどの相手を示します。動詞ごとの使い方を覚えます。"
+  },
+  "我向老师提了问题。": {
+    "en": "I asked the teacher a question.",
+    "ja": "先生に質問しました。"
+  },
+  "变化的结果": {
+    "en": "Result of change",
+    "ja": "変化の結果"
+  },
+  "「名词＋に＋なる」表示变成某种身份或状态。": {
+    "en": "Noun + に + なる indicates a resulting role or state.",
+    "ja": "「名詞＋に＋なる」で変化した後の身分や状態を表します。"
+  },
+  "姐姐成为了医生。": {
+    "en": "My older sister became a doctor.",
+    "ja": "姉は医者になりました。"
+  },
+  "格助词「に」": {
+    "en": "Particle に",
+    "ja": "格助詞「に」"
+  },
+  "标记到达点、存在地点、时间点、动作对象或变化结果。": {
+    "en": "Marks a destination, location of existence, time, recipient or resulting state.",
+    "ja": "到着点、存在場所、時点、相手、変化の結果などを示します。"
+  },
+  "存在地点用に，动作进行的场所常用で；「図書館にいる」与「図書館で読む」含义不同。": {
+    "en": "Use に for existence and often で for activity: 図書館にいる versus 図書館で読む.",
+    "ja": "存在場所にはに、動作をする場所には主にでを使います。「図書館にいる」と「図書館で読む」を比べましょう。"
+  },
+  "移动方向": {
+    "en": "Direction of movement",
+    "ja": "移動の方向"
+  },
+  "「地点＋へ＋移动动词」表示朝某处移动。": {
+    "en": "Place + へ + motion verb indicates movement toward a place.",
+    "ja": "「場所＋へ＋移動動詞」で、その場所に向かうことを示します。"
+  },
+  "周末我要去海边。": {
+    "en": "I am going to the seaside this weekend.",
+    "ja": "週末は海へ行きます。"
+  },
+  "与の组合修饰名词": {
+    "en": "Modifying a noun with への",
+    "ja": "へので名詞を修飾する"
+  },
+  "へ后面可以接の，用「～への＋名词」表达朝向或送往某处的事物。": {
+    "en": "へ can precede の: ～への + noun describes something directed toward a place or person.",
+    "ja": "へにのを続け、「～への＋名詞」で、ある場所や人に向かうものを表します。"
+  },
+  "这是写给母亲的信。": {
+    "en": "This is a letter to my mother.",
+    "ja": "これは母への手紙です。"
+  },
+  "格助词「へ」": {
+    "en": "Particle へ",
+    "ja": "格助詞「へ」"
+  },
+  "表示移动的方向，也可以表示目的地。读作「え」。": {
+    "en": "Marks the direction or destination of movement. Pronounced え.",
+    "ja": "移動の方向や目的地を示します。発音は「え」です。"
+  },
+  "表示目的地时に和へ常可替换，但时间点、接收者、存在地点等用法不能直接改为へ。": {
+    "en": "に and へ often alternate for destinations, but not for times, recipients or locations of existence.",
+    "ja": "目的地ではにとへを使えることが多いですが、時点・受け手・存在場所のにをへには置き換えられません。"
+  },
+  "动作发生的场所": {
+    "en": "Setting of an action",
+    "ja": "動作が行われる場所"
+  },
+  "用「地点＋で」说明在哪里进行活动；活动或事件的举办地点也可用で。": {
+    "en": "Place + で indicates where an activity or event takes place.",
+    "ja": "「場所＋で」で、活動や行事が行われる場所を示します。"
+  },
+  "我在图书馆做作业。": {
+    "en": "I do my homework at the library.",
+    "ja": "図書館で宿題をします。"
+  },
+  "手段与材料": {
+    "en": "Means and material",
+    "ja": "手段・材料"
+  },
+  "交通工具、使用的语言、工具或材料等可用で表示。": {
+    "en": "で can mark transport, language, tools or materials.",
+    "ja": "乗り物、使用言語、道具、材料などをでで示します。"
+  },
+  "我乘电车通勤。": {
+    "en": "I commute to work by train.",
+    "ja": "電車で会社に通っています。"
+  },
+  "原因与范围": {
+    "en": "Cause and scope",
+    "ja": "原因・範囲"
+  },
+  "で可表示导致结果的原因，也可限定比较、人数或数量的范围。": {
+    "en": "で can indicate a cause or delimit a comparison, group size or quantity.",
+    "ja": "結果を引き起こす原因や、比較・人数・数量の範囲を示すこともあります。"
+  },
+  "公交车因下雪晚点了。": {
+    "en": "The bus was delayed by snow.",
+    "ja": "雪でバスが遅れました。"
+  },
+  "格助词「で」": {
+    "en": "Particle で",
+    "ja": "格助詞「で」"
+  },
+  "表示动作发生的场所、手段、材料、原因或范围。": {
+    "en": "Marks the setting, means, material, cause or scope of an action.",
+    "ja": "動作の場所、手段、材料、原因、範囲などを示します。"
+  },
+  "「公園に花がある」说明存在地点；「公園で祭りがある」说明活动举办地点。": {
+    "en": "公園に花がある describes existence; 公園で祭りがある describes an event venue.",
+    "ja": "「公園に花がある」は存在場所、「公園で祭りがある」は行事の場所を表します。"
+  },
+  "共同参与者": {
+    "en": "Companion",
+    "ja": "一緒に行う相手"
+  },
+  "「人＋と」表示与谁一起做事，可搭配一緒に。": {
+    "en": "Person + と indicates who joins an action; it can be used with 一緒に.",
+    "ja": "「人＋と」で、誰と一緒に行うかを示します。一緒にを添えることもできます。"
+  },
+  "我和朋友一起看了电影。": {
+    "en": "I watched a movie with a friend.",
+    "ja": "友達と映画を見ました。"
+  },
+  "引用与思考内容": {
+    "en": "Quoted speech and thought",
+    "ja": "引用・考えの内容"
+  },
+  "と放在引用内容之后，连接言う、思う等；引用中的句末通常用普通形。": {
+    "en": "と follows quoted content before 言う or 思う; quoted sentences usually use plain forms.",
+    "ja": "引用内容の後にとを置き、言う・思うなどにつなげます。引用文の文末は普通形が基本です。"
+  },
+  "我想明天会放晴。": {
+    "en": "I think it will be sunny tomorrow.",
+    "ja": "明日は晴れると思います。"
+  },
+  "格助词「と」": {
+    "en": "Particle と",
+    "ja": "格助詞「と」"
+  },
+  "表示共同参与者、相互动作的对象，以及引用的内容。": {
+    "en": "Marks a companion, a partner in a reciprocal action, or quoted content.",
+    "ja": "一緒に行う相手、相互動作の相手、引用内容などを示します。"
+  },
+  "名词并列中的と常归为并列助词；「雨が降ると」中的と是接续助词，要按用法区分。": {
+    "en": "と joining nouns is often classified as a parallel particle; と in 雨が降ると is conjunctive. Classify it by usage.",
+    "ja": "名詞を並べるとは並立助詞、「雨が降ると」のとは接続助詞とされます。用法で区別しましょう。"
+  },
+  "时间与地点的起点": {
+    "en": "Starting point in time or space",
+    "ja": "時間・場所の起点"
+  },
+  "「～から」表示从某时或某处开始，常与表示终点的まで搭配。": {
+    "en": "～から means from a time or place; it often pairs with まで for the endpoint.",
+    "ja": "～からは、ある時点・場所から始まることを示し、終点のまでとよく使います。"
+  },
+  "我每天从家走到车站。": {
+    "en": "I walk from home to the station every day.",
+    "ja": "毎日、家から駅まで歩きます。"
+  },
+  "信息或物品的来源": {
+    "en": "Source of information or goods",
+    "ja": "情報・物の出所"
+  },
+  "もらう、聞く、借りる等动词可用から标记来源人物。": {
+    "en": "から can mark the source person with もらう, 聞く or 借りる.",
+    "ja": "もらう・聞く・借りるなどでは、からで出所となる人を示せます。"
+  },
+  "哥哥给了我一本词典。": {
+    "en": "I received a dictionary from my older brother.",
+    "ja": "兄から辞書をもらいました。"
+  },
+  "格助词「から」": {
+    "en": "Particle から",
+    "ja": "格助詞「から」"
+  },
+  "表示时间、地点的起点，也可以表示信息或物品的来源。": {
+    "en": "Marks a starting point in time or space, or a source of information or goods.",
+    "ja": "時間・場所の起点や、情報・物の出所を示します。"
+  },
+  "「寒いから帰る」中的から连接理由，是接续助词。まで常见于终点表达；学校文法通常把まで归为副助词。": {
+    "en": "から connecting a reason, as in 寒いから帰る, is conjunctive. まで marks an endpoint and is usually a副助詞 in school grammar.",
+    "ja": "「寒いから帰る」のからは理由をつなぐ接続助詞です。までは終点を示し、学校文法では通常、副助詞に分類します。"
+  },
+  "比较的基准": {
+    "en": "Standard of comparison",
+    "ja": "比較の基準"
+  },
+  "「AはBより～」表示以B为基准，说明A的性质或程度。": {
+    "en": "AはBより～ compares a property or degree of A against B.",
+    "ja": "「AはBより～」で、Bを基準としてAの性質や程度を述べます。"
+  },
+  "今天比昨天暖和。": {
+    "en": "Today is warmer than yesterday.",
+    "ja": "今日は昨日より暖かいです。"
+  },
+  "正式表达中的起点": {
+    "en": "Formal starting point",
+    "ja": "改まった表現の起点"
+  },
+  "通知、广播等正式语境中，より也可表示起点，含义接近から。": {
+    "en": "In formal notices or announcements, より can mark a starting point, similar to から.",
+    "ja": "通知や放送などの改まった場面では、よりがからに近い起点の意味で使われます。"
+  },
+  "下午两点起开始受理。": {
+    "en": "Registration opens at two in the afternoon.",
+    "ja": "午後二時より受付を開始します。"
+  },
+  "格助词「より」": {
+    "en": "Particle より",
+    "ja": "格助詞「より」"
+  },
+  "常用于比较，标记比较的基准。": {
+    "en": "Commonly marks the standard of comparison.",
+    "ja": "主に比較の基準を示します。"
+  },
+  "より本身不表示“更好”；比较的具体性质由后面的谓语决定。": {
+    "en": "より does not itself mean better; the predicate specifies what is compared.",
+    "ja": "より自体が「より良い」という意味ではありません。何を比べるかは後の述語で決まります。"
+  },
+  "名词之间的关系": {
+    "en": "Relations between nouns",
+    "ja": "名詞同士の関係"
+  },
+  "「名词A＋の＋名词B」用A说明B的所属、类别、内容等；并不都译成“的”。": {
+    "en": "In noun A + の + noun B, A specifies possession, category or content of B; it need not translate literally as of.",
+    "ja": "「名詞A＋の＋名詞B」で、AがBの所属・種類・内容などを説明します。"
+  },
+  "这是日语教科书。": {
+    "en": "This is a Japanese textbook.",
+    "ja": "これは日本語の教科書です。"
+  },
+  "修饰名词的从句中的主语": {
+    "en": "Subject in an adnominal clause",
+    "ja": "連体修飾節の主語"
+  },
+  "在修饰名词的从句中，主语的が有时可换成の；并非所有が都能替换。": {
+    "en": "In some clauses modifying a noun, subject が can be replaced by の; this does not apply to every が.",
+    "ja": "名詞を修飾する節では、主語のがをのに替えられることがあります。全てのがが対象ではありません。"
+  },
+  "我喜欢妈妈做的菜。": {
+    "en": "I like the food my mother makes.",
+    "ja": "母の作った料理が好きです。"
+  },
+  "格助词「の」": {
+    "en": "Particle の",
+    "ja": "格助詞「の」"
+  },
+  "连接名词表示所属、类别等关系；也可在修饰名词的从句中标记主语。": {
+    "en": "Links nouns to show possession or category, and can mark the subject of an adnominal clause.",
+    "ja": "名詞同士をつないで所属・種類などを示し、連体修飾節では主語を示すこともあります。"
+  },
+  "「読むのが好き」中的の把动词短语名词化，与本节连接名词、标记从句主语的用法不同。": {
+    "en": "の nominalizing a verb phrase in 読むのが好き differs from noun linking and subject marking.",
+    "ja": "「読むのが好き」ののは動詞句を名詞化するもので、名詞をつなぐ用法や節の主語を示す用法とは異なります。"
+  },
+  "语法手册": {
+    "en": "Grammar handbook",
+    "ja": "文法ガイド"
+  },
+  "日语语法": {
+    "en": "Japanese grammar",
+    "ja": "日本語文法"
+  },
+  "学习动词与形容词的活用，以及格助词的常用表达。": {
+    "en": "Learn verb and adjective conjugations and common uses of case particles.",
+    "ja": "動詞・形容詞の活用と、格助詞の基本的な使い方を学びましょう。"
+  },
+  "东京外国语大学 · 格助词": {
+    "en": "Tokyo University of Foreign Studies · Case particles",
+    "ja": "東京外国語大学 · 格助詞"
   }
 }

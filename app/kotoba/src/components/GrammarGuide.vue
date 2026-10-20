@@ -57,7 +57,7 @@ const ruleGroups = computed(() => {
 });
 </script>
 <template>
-  <section class="grammar-guide" :aria-label="t('活用语法手册')">
+  <section class="grammar-guide" :aria-label="t('语法手册')">
     <button
       ref="directoryButton"
       type="button"
@@ -74,8 +74,8 @@ const ruleGroups = computed(() => {
     </button>
     <div class="intro">
       <p class="eyebrow">{{ t('从规则，理解变化') }}</p>
-      <h1>{{ t('日语活用语法') }}</h1>
-      <p class="subtitle">{{ t('先理解两套文法与动词分类，再学习动词和形容词的活用规则。') }}</p>
+      <h1>{{ t('日语语法') }}</h1>
+      <p class="subtitle">{{ t('学习动词与形容词的活用，以及格助词的常用表达。') }}</p>
     </div>
     <dialog
       id="grammar-directory"
@@ -101,7 +101,7 @@ const ruleGroups = computed(() => {
         <p class="directory-current">{{ t('正在阅读：') }}{{ t(topic.title) }}</p>
         <div class="guide-outline" :aria-label="t('学习顺序')">
           <div
-            v-for="(stage, index) in ['文法基础', '动词活用规则', '形容词活用规则']"
+            v-for="(stage, index) in ['文法基础', '动词活用规则', '形容词活用规则', '格助词']"
             :key="stage"
             class="guide-stage"
           >
@@ -267,7 +267,7 @@ const ruleGroups = computed(() => {
               </dl>
               <template v-else>
                 <p>{{ t(rule.rule) }}</p>
-                <div class="guide-example" lang="ja">{{ t(rule.example) }}</div>
+                <div v-if="rule.example" class="guide-example" lang="ja">{{ t(rule.example) }}</div>
               </template>
             </template>
             <div v-if="rule.connections" class="grammar-connections">
@@ -310,6 +310,13 @@ const ruleGroups = computed(() => {
     <details class="guide-sources">
       <summary>{{ t('参考资料') }}</summary>
       <p>{{ t('规则与例子按学习需要整理。可继续阅读：') }}</p>
+      <a
+        v-if="topic.stage === '格助词'"
+        href="https://www.coelang.tufs.ac.jp/mt/ja/gmod/contents/explanation/053.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        >{{ t('东京外国语大学 · 格助词') }}</a
+      >
       <a
         v-if="topic.id === 'comparison'"
         href="https://www.jpf.go.jp/j/project/japanese/teach/tsushin/grammar/backnumber.html"

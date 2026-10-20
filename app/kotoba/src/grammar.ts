@@ -1,9 +1,11 @@
+import { particleTopics } from './particles';
+
 export interface GrammarSentence {
   japanese: string;
   translation: string;
 }
 export interface GrammarTopic {
-  stage: '文法基础' | '动词活用规则' | '形容词活用规则';
+  stage: '文法基础' | '动词活用规则' | '形容词活用规则' | '格助词';
   id: string;
   title: string;
   intro: string;
@@ -974,4 +976,5 @@ export const grammarTopics: GrammarTopic[] = [
     rules: [],
     note: '活用形与完整表达要分开看：例如「高けれ」是假定形，「高ければ」还包含ば。名词本身不活用，「学生だった」是后续判断表达的变化。',
   },
+  ...particleTopics,
 ];

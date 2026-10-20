@@ -351,7 +351,7 @@ async function search() {
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 5h6q2 0 2 2q0-2 2-2h6v14h-6q-2 0-2 2q0-2-2-2H4z M12 7v14" /></svg
-      ><span>{{ t('活用语法') }}</span>
+      ><span>{{ t('语法') }}</span>
     </button>
   </nav>
 </template>
