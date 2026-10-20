@@ -151,8 +151,8 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         var buffer: [UInt8] = []
         buffer.reserveCapacity(Self.downloadProgressInterval)
         for try await byte in bytes {
-            if result.count + buffer.count >= limit { throw ModuleError.invalid("资源超过大小限制") }
             buffer.append(byte)
+            if result.count + buffer.count > limit { throw ModuleError.invalid("资源超过大小限制") }
             if buffer.count == Self.downloadProgressInterval {
                 result.append(contentsOf: buffer)
                 buffer.removeAll(keepingCapacity: true)
@@ -172,7 +172,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         updateID = id
         checking = true
         let task = Task { @MainActor in
-            await self.performUpdateCheck(forceSnapshot: force)
+            await self.performUpdateCheck(forceSnapshot: force, id: id)
             if self.updateID == id {
                 self.checking = false
                 self.updateTask = nil
@@ -181,7 +181,8 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         updateTask = task
         await task.value
     }
-    private func performUpdateCheck(forceSnapshot: Bool) async {
+    private func performUpdateCheck(forceSnapshot: Bool, id: UUID) async {
+        guard updateID == id else { return }
         statuses.removeAll()
         downloadProgress.removeAll()
         let catalogURL = config.updateCatalogURL(defaults: defaults)
@@ -211,10 +212,13 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 downloadProgress[remote.id] = 0
                 pending.append(remote)
             }
-            await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot)
-        } catch { if Task.isCancelled { return }; notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)" }
+            await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot, id: id)
+        } catch {
+            if Task.isCancelled || updateID != id { return }
+            notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)"
+        }
     }
-    private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool) async {
+    private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool, id: UUID) async {
         guard !modules.isEmpty else { return }
         await withTaskGroup(of: (Module, Result<Data, Error>).self) { group in
             var nextIndex = 0
@@ -233,7 +237,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     do {
                         let data = try await self.fetch(url, limit: size, forceRefresh: forceRefresh) { received in
                             Task { @MainActor [weak self] in
-                                guard let self, self.downloadProgress[module.id] != nil else { return }
+                                guard let self, self.updateID == id, self.downloadProgress[module.id] != nil else { return }
                                 self.downloadProgress[module.id] = min(Double(received) / Double(size), 1)
                             }
                         }
@@ -245,7 +249,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
             }
             for _ in 0..<min(3, modules.count) { addNext() }
             while let (module, result) = await group.next() {
-                if Task.isCancelled {
+                if Task.isCancelled || updateID != id {
                     group.cancelAll()
                     break
                 }
@@ -267,6 +271,10 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 downloadProgress.removeValue(forKey: module.id)
                 addNext()
             }
+        }
+        guard updateID == id else { return }
+        for module in modules where statuses[module.id]?.hasPrefix("正在下载") == true {
+            statuses.removeValue(forKey: module.id)
         }
         downloadProgress.removeAll()
     }
