@@ -220,6 +220,14 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     }
     private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool, id: UUID) async {
         guard !modules.isEmpty else { return }
+        defer {
+            if updateID == id {
+                for module in modules where statuses[module.id]?.hasPrefix("正在下载") == true {
+                    statuses.removeValue(forKey: module.id)
+                }
+                downloadProgress.removeAll()
+            }
+        }
         await withTaskGroup(of: (Module, Result<Data, Error>).self) { group in
             var nextIndex = 0
             func addNext() {
@@ -236,6 +244,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     }
                     do {
                         let data = try await self.fetch(url, limit: size, forceRefresh: forceRefresh) { received in
+                            guard !Task.isCancelled else { return }
                             Task { @MainActor [weak self] in
                                 guard let self, self.updateID == id, self.downloadProgress[module.id] != nil else { return }
                                 self.downloadProgress[module.id] = min(Double(received) / Double(size), 1)
@@ -272,11 +281,6 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 addNext()
             }
         }
-        guard updateID == id else { return }
-        for module in modules where statuses[module.id]?.hasPrefix("正在下载") == true {
-            statuses.removeValue(forKey: module.id)
-        }
-        downloadProgress.removeAll()
     }
     private func install(_ module: Module, data: Data, catalogURL: String) throws -> Bool {
         guard let expectedHash = module.sha256, expectedHash.count == 64,
