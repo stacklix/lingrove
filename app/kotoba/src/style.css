@@ -965,6 +965,23 @@ main {
   line-height: 1.7;
   margin: 12px 0;
 }
+.grammar-sentence {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--soft);
+  border-radius: 0 8px 8px 0;
+  overflow-wrap: anywhere;
+}
+.grammar-sentence p {
+  margin: 0;
+  line-height: 1.8;
+}
+.grammar-sentence .grammar-sentence-label,
+.grammar-sentence .grammar-sentence-translation {
+  color: var(--muted);
+  font-size: 13px;
+}
 .conjugation-rows {
   border: 1px solid var(--border);
   border-radius: 14px;

@@ -1,3 +1,7 @@
+export interface GrammarSentence {
+  japanese: string;
+  translation: string;
+}
 export interface GrammarTopic {
   stage: '文法基础' | '动词活用规则' | '形容词活用规则';
   id: string;
@@ -7,11 +11,11 @@ export interface GrammarTopic {
   sections?: {
     title: string;
     intro: string;
-    forms: { name: string; rule: string; example: string }[];
-    usages: { name: string; rule: string; example: string }[];
+    forms: { name: string; rule: string; example: string; sentence?: GrammarSentence }[];
+    usages: { name: string; rule: string; example: string; sentence?: GrammarSentence }[];
     note: string;
   }[];
-  conjugations?: { name: string; rule: string; example: string }[];
+  conjugations?: { name: string; rule: string; example: string; sentence?: GrammarSentence }[];
   rules: {
     group?: string;
     name: string;
@@ -24,6 +28,7 @@ export interface GrammarTopic {
     specialWords?: boolean;
     wordExamples?: 'sahen' | 'kahen';
     example: string;
+    sentence?: GrammarSentence;
   }[];
   note: string;
 }
@@ -209,21 +214,37 @@ export const grammarTopics: GrammarTopic[] = [
         name: '五段动词',
         rule: '词尾う段 → あ段／お段；う结尾的あ段形式用わ。',
         example: '書く → 書か・書こ／買う → 買わ・買お',
+        sentence: {
+          japanese: '今日は手紙を書かない。',
+          translation: '今天不写信。',
+        },
       },
       {
         name: '一段动词',
         rule: '去掉末尾る。',
         example: '食べる → 食べ／見る → 見',
+        sentence: {
+          japanese: '一緒に昼ご飯を食べよう。',
+          translation: '一起吃午饭吧。',
+        },
       },
       {
         name: 'サ变 · する',
         rule: '按接续变为し、さ、せ。',
         example: 'し（ない・よう）／さ（れる・せる）／せ（ず）',
+        sentence: {
+          japanese: '明日は勉強しない。',
+          translation: '明天不学习。',
+        },
       },
       {
         name: 'カ变 · 来る',
         rule: '变为来（こ）。',
         example: '来る → 来（こ）',
+        sentence: {
+          japanese: '彼は今日は来ない。',
+          translation: '他今天不来。',
+        },
       },
     ],
     rules: [
@@ -232,36 +253,60 @@ export const grammarTopics: GrammarTopic[] = [
         name: '否定 · ない',
         rule: '五段用あ段形式、一段去る后接ない；する→しない，来る→こない。',
         example: '書かない／買わない／食べない／しない／こない',
+        sentence: {
+          japanese: '今日は手紙を書かない。',
+          translation: '今天不写信。',
+        },
       },
       {
         group: '接续与用法',
         name: '意向 · う／よう',
         rule: '五段用お段形式＋う；一段去る＋よう；する→しよう，来る→こよう。',
         example: '書こう／食べよう／しよう／こよう',
+        sentence: {
+          japanese: '一緒に昼ご飯を食べよう。',
+          translation: '一起吃午饭吧。',
+        },
       },
       {
         group: '接续与用法',
         name: '受身 · れる／られる',
         rule: '五段用あ段形式＋れる；一段去る＋られる；する→される，来る→こられる。',
         example: '呼ばれる／食べられる／される／こられる',
+        sentence: {
+          japanese: '先生に名前を呼ばれた。',
+          translation: '老师叫了我的名字。',
+        },
       },
       {
         group: '接续与用法',
         name: '使役 · せる／させる',
         rule: '五段用あ段形式＋せる；一段去る＋させる；する→させる，来る→こさせる。',
         example: '読ませる／食べさせる／させる／こさせる',
+        sentence: {
+          japanese: '母は子どもに野菜を食べさせる。',
+          translation: '妈妈让孩子吃蔬菜。',
+        },
       },
       {
         group: '特殊情况',
         name: 'ある的否定',
         rule: '普通否定用ない；礼貌否定用ありません。',
         example: 'ある → ない／あります → ありません',
+        sentence: {
+          japanese: '今日は時間がない。',
+          translation: '今天没有时间。',
+        },
       },
       {
         group: '特殊情况',
         name: '可能表达的归属',
         rule: '一段未然形可接られる表示可能；五段的可能动词另由え段＋る构成，不是原词的未然形。',
         example: '食べる → 食べられる／読む → 読める',
+        sentence: {
+          japanese: '私は納豆が食べられる。',
+          translation: '我能吃纳豆。',
+        },
       },
     ],
     note: '表中先列动词本身的活用形，再列接续后的完整表达。「未然」不等于将来时。',
@@ -276,21 +321,37 @@ export const grammarTopics: GrammarTopic[] = [
         name: '五段动词',
         rule: '词尾う段 → い段；接て、た时按下表变化。',
         example: '書く → 書き（ます）・書い（て）',
+        sentence: {
+          japanese: '毎日、日記を書きます。',
+          translation: '每天写日记。',
+        },
       },
       {
         name: '一段动词',
         rule: '去掉末尾る。',
         example: '食べる → 食べ',
+        sentence: {
+          japanese: '朝ご飯を食べて、学校へ行く。',
+          translation: '吃完早饭去学校。',
+        },
       },
       {
         name: 'サ变 · する',
         rule: 'する → し。',
         example: 'する → し',
+        sentence: {
+          japanese: '昨日、部屋を掃除した。',
+          translation: '昨天打扫了房间。',
+        },
       },
       {
         name: 'カ变 · 来る',
         rule: '来る → 来（き）。',
         example: '来る → 来（き）',
+        sentence: {
+          japanese: '友達が家に来ました。',
+          translation: '朋友来家里了。',
+        },
       },
     ],
     rules: [
@@ -299,54 +360,90 @@ export const grammarTopics: GrammarTopic[] = [
         name: '礼貌表达 · ます',
         rule: '连用形＋ます；否定用ません，过去用ました。',
         example: '読みます／食べます／します／来ます（きます）',
+        sentence: {
+          japanese: '毎晩、本を読みます。',
+          translation: '每晚看书。',
+        },
       },
       {
         group: '接续与用法',
         name: '动作连接 · て',
         rule: '一段去る＋て；する→して，来る→きて。五段按下方词尾规则变化。',
         example: '食べて／して／来て（きて）；本を読んでいます。（正在看书。）',
+        sentence: {
+          japanese: '朝ご飯を食べて、学校へ行く。',
+          translation: '吃完早饭去学校。',
+        },
       },
       {
         group: '接续与用法',
         name: '过去表达 · た',
         rule: '一段去る＋た；する→した，来る→きた。五段的て／で对应换成た／だ。',
         example: '食べた／した／来た（きた）／読んだ',
+        sentence: {
+          japanese: '昨日、映画を見た。',
+          translation: '昨天看了电影。',
+        },
       },
       {
         group: '五段的て形・た形',
         name: 'う・つ・る → って／った',
         rule: '促音便：词尾变成っ，再接て或た。',
         example: '買って・買った／待って・待った／帰って・帰った',
+        sentence: {
+          japanese: '駅で友達を待って、一緒に帰った。',
+          translation: '在车站等朋友，然后一起回家了。',
+        },
       },
       {
         group: '五段的て形・た形',
         name: 'む・ぶ・ぬ → んで／んだ',
         rule: '拨音便：词尾变成ん，后接で或だ。',
         example: '読んで・読んだ／遊んで・遊んだ／死んで・死んだ',
+        sentence: {
+          japanese: '本を読んでから、公園で遊んだ。',
+          translation: '看完书后在公园玩了。',
+        },
       },
       {
         group: '五段的て形・た形',
         name: 'く → いて／いた',
         rule: 'イ音便：く变い，后接て或た。',
         example: '書いて・書いた',
+        sentence: {
+          japanese: '名前を書いて、先生に渡した。',
+          translation: '写上名字后交给了老师。',
+        },
       },
       {
         group: '五段的て形・た形',
         name: 'ぐ → いで／いだ',
         rule: 'イ音便：ぐ变い，后接で或だ。',
         example: '泳いで・泳いだ',
+        sentence: {
+          japanese: '昨日、プールで泳いだ。',
+          translation: '昨天在游泳池游泳了。',
+        },
       },
       {
         group: '五段的て形・た形',
         name: 'す → して／した',
         rule: 'す变し，后接て或た。',
         example: '話して・話した',
+        sentence: {
+          japanese: '友達と日本語で話した。',
+          translation: '和朋友用日语交谈了。',
+        },
       },
       {
         group: '特殊情况',
         name: '行く的音便',
         rule: '行く不用「行いて／行いた」，而用促音便。',
         example: '行く → 行って・行った',
+        sentence: {
+          japanese: '日曜日に京都へ行った。',
+          translation: '星期天去了京都。',
+        },
       },
     ],
     note: 'て形、た形包含后接成分，不等于单独的连用形；た形也用于「〜たことがある」「〜たら」等表达。',
@@ -361,21 +458,37 @@ export const grammarTopics: GrammarTopic[] = [
         name: '五段动词',
         rule: '保留辞书形。',
         example: '書く／読む',
+        sentence: {
+          japanese: '妹は毎日日記を書く。',
+          translation: '妹妹每天写日记。',
+        },
       },
       {
         name: '一段动词',
         rule: '保留辞书形。',
         example: '食べる／見る',
+        sentence: {
+          japanese: '毎朝パンを食べる。',
+          translation: '每天早上吃面包。',
+        },
       },
       {
         name: 'サ变 · する',
         rule: '保留する。',
         example: 'する／勉強する',
+        sentence: {
+          japanese: '図書館で勉強する。',
+          translation: '在图书馆学习。',
+        },
       },
       {
         name: 'カ变 · 来る',
         rule: '保留来る，读くる。',
         example: '来る（くる）',
+        sentence: {
+          japanese: '明日、友達が来る。',
+          translation: '明天朋友会来。',
+        },
       },
     ],
     rules: [
@@ -384,18 +497,30 @@ export const grammarTopics: GrammarTopic[] = [
         name: '陈述动作',
         rule: '以普通体结束句子。',
         example: '手紙を書く。（写信。）',
+        sentence: {
+          japanese: '妹は毎日日記を書く。',
+          translation: '妹妹每天写日记。',
+        },
       },
       {
         group: '接续与用法',
         name: '习惯或将来',
         rule: '非过去肯定的时间含义由上下文决定。',
         example: '毎日、本を読む。（每天看书。）／明日、京都へ行く。（明天去京都。）',
+        sentence: {
+          japanese: '明日、図書館で本を読む。',
+          translation: '明天在图书馆看书。',
+        },
       },
       {
         group: '注意区分',
         name: '礼貌表达要改用连用形',
         rule: '不能在终止形后直接加ます。',
         example: '読む → 読み＋ます → 読みます',
+        sentence: {
+          japanese: '毎朝、新聞を読みます。',
+          translation: '每天早上读报纸。',
+        },
       },
     ],
     note: '読まない、読んだ包含ない、た等后续成分，应与原动词本身的终止形分开分析。',
@@ -410,21 +535,37 @@ export const grammarTopics: GrammarTopic[] = [
         name: '五段动词',
         rule: '保留辞书形，后接名词。',
         example: '読む＋人 → 読む人',
+        sentence: {
+          japanese: '本を読む人がいる。',
+          translation: '有人在看书。',
+        },
       },
       {
         name: '一段动词',
         rule: '保留辞书形，后接名词。',
         example: '食べる＋時間 → 食べる時間',
+        sentence: {
+          japanese: '昼ご飯を食べる時間がない。',
+          translation: '没有吃午饭的时间。',
+        },
       },
       {
         name: 'サ变 · する',
         rule: '用する，后接名词。',
         example: '勉強する＋場所 → 勉強する場所',
+        sentence: {
+          japanese: 'ここは学生が勉強する場所です。',
+          translation: '这里是学生学习的地方。',
+        },
       },
       {
         name: 'カ变 · 来る',
         rule: '用来る（くる），后接名词。',
         example: '来る＋人 → 来る人（くるひと）',
+        sentence: {
+          japanese: '明日来る人は三人です。',
+          translation: '明天来的人有三个。',
+        },
       },
     ],
     rules: [
@@ -433,18 +574,30 @@ export const grammarTopics: GrammarTopic[] = [
         name: '修饰名词',
         rule: '修饰内容放在名词前，中间不加「の」。',
         example: '手紙を書く人（写信的人）',
+        sentence: {
+          japanese: '手紙を書く人は兄です。',
+          translation: '写信的人是哥哥。',
+        },
       },
       {
         group: '接续与用法',
         name: '扩展修饰内容',
         rule: '动作的时间、对象等也放在被修饰名词前。',
         example: '毎朝パンを食べる人（每天早上吃面包的人）',
+        sentence: {
+          japanese: '毎朝パンを食べる人が多い。',
+          translation: '每天早上吃面包的人很多。',
+        },
       },
       {
         group: '注意区分',
         name: '否定、过去也能修饰名词',
         rule: '这时还包含ない、た等成分的连体形式，不只是原动词的变化。',
         example: '肉を食べない人（不吃肉的人）／昨日読んだ本（昨天读的书）',
+        sentence: {
+          japanese: '昨日読んだ本は面白かった。',
+          translation: '昨天读的书很有趣。',
+        },
       },
     ],
     note: '这里讲动词；形容词与形容动词另见「形容词」一章，如高い山、静かな町。',
@@ -459,21 +612,37 @@ export const grammarTopics: GrammarTopic[] = [
         name: '五段动词',
         rule: '词尾う段 → え段。',
         example: '書く → 書け／読む → 読め',
+        sentence: {
+          japanese: '毎日書けば、漢字を覚えられる。',
+          translation: '每天写就能记住汉字。',
+        },
       },
       {
         name: '一段动词',
         rule: '去る＋れ。',
         example: '食べる → 食べれ／見る → 見れ',
+        sentence: {
+          japanese: '朝ご飯を食べれば、元気が出る。',
+          translation: '吃了早饭就会有精神。',
+        },
       },
       {
         name: 'サ变 · する',
         rule: 'する → すれ。',
         example: 'する → すれ',
+        sentence: {
+          japanese: '毎日練習すれば、上手になる。',
+          translation: '每天练习就会进步。',
+        },
       },
       {
         name: 'カ变 · 来る',
         rule: '来る → 来れ（くれ）。',
         example: '来る → 来れ（くれ）',
+        sentence: {
+          japanese: '春が来れば、花が咲く。',
+          translation: '春天来了花就会开。',
+        },
       },
     ],
     rules: [
@@ -482,18 +651,30 @@ export const grammarTopics: GrammarTopic[] = [
         name: '条件 · ば',
         rule: '假定形后接ば，构成完整的条件表达。',
         example: '書けば／食べれば／すれば／来れば（くれば）',
+        sentence: {
+          japanese: '毎日練習すれば、上手になる。',
+          translation: '每天练习就会进步。',
+        },
       },
       {
         group: '接续与用法',
         name: '放进句子',
         rule: '前半句给出条件，后半句说明结果。',
         example: '毎日読めば、少しずつわかる。（每天读，就会一点点明白。）',
+        sentence: {
+          japanese: '毎日読めば、少しずつわかる。',
+          translation: '每天读就会一点点明白。',
+        },
       },
       {
         group: '注意区分',
         name: '与其他条件、可能表达区分',
         rule: 'たら、と、なら不能都归为原动词的假定形；え段＋る构成的可能动词也不是假定形。',
         example: '読め＋ば → 読めば（如果读）／読める（能够读）',
+        sentence: {
+          japanese: 'この本は一日で読める。',
+          translation: '这本书一天就能读完。',
+        },
       },
     ],
     note: '假定形是「書け」，ば形是「書けば」：后者包含接续助词ば。',
@@ -508,21 +689,37 @@ export const grammarTopics: GrammarTopic[] = [
         name: '五段动词',
         rule: '词尾う段 → え段。',
         example: '読む → 読め／書く → 書け',
+        sentence: {
+          japanese: '先生は「早く読め」と言った。',
+          translation: '老师说：“快读！”',
+        },
       },
       {
         name: '一段动词',
         rule: '去る＋ろ；书面语也可用よ。',
         example: '食べる → 食べろ・食べよ',
+        sentence: {
+          japanese: '父は「冷める前に食べろ」と言った。',
+          translation: '爸爸说：“凉之前快吃！”',
+        },
       },
       {
         name: 'サ变 · する',
         rule: 'する → しろ／せよ。',
         example: 'する → しろ・せよ',
+        sentence: {
+          japanese: '監督は「集中しろ」と叫んだ。',
+          translation: '教练喊道：“集中注意力！”',
+        },
       },
       {
         name: 'カ变 · 来る',
         rule: '来る → 来い（こい）。',
         example: '来る → 来い（こい）',
+        sentence: {
+          japanese: '兄は「こっちに来い」と言った。',
+          translation: '哥哥说：“到这边来！”',
+        },
       },
     ],
     rules: [
@@ -531,18 +728,30 @@ export const grammarTopics: GrammarTopic[] = [
         name: '直接命令',
         rule: '用命令形结束句子，语气强烈。',
         example: '早く読め。（快读！）',
+        sentence: {
+          japanese: '先生は「早く読め」と言った。',
+          translation: '老师说：“快读！”',
+        },
       },
       {
         group: '接续与用法',
         name: '礼貌请求',
         rule: '日常请求常用てください，语气与命令形不同。',
         example: '読んでください。（请读。）',
+        sentence: {
+          japanese: 'この文章を読んでください。',
+          translation: '请读这篇文章。',
+        },
       },
       {
         group: '注意区分',
         name: '禁止用辞书形＋な',
         rule: '这不是命令形加ない，也不是动词本身的命令形。',
         example: 'ここに入るな。（不准进入这里。）',
+        sentence: {
+          japanese: 'ここに入るな。',
+          translation: '不准进入这里。',
+        },
       },
     ],
     note: '五段动词的命令形与假定形同形，但接续不同：読め！是命令，読めば是条件。',
@@ -561,26 +770,46 @@ export const grammarTopics: GrammarTopic[] = [
             name: '未然形',
             rule: '去い＋かろ；后接う，表示推量。',
             example: '高かろ＋う → 高かろう',
+            sentence: {
+              japanese: '山の上は寒かろう。',
+              translation: '山顶大概很冷吧。',
+            },
           },
           {
             name: '连用形',
             rule: '去い＋く／かっ。',
             example: '高く＋ない → 高くない／高かっ＋た → 高かった',
+            sentence: {
+              japanese: '昨日は寒くなかった。',
+              translation: '昨天不冷。',
+            },
           },
           {
             name: '终止形',
             rule: '保留い，用于句末。',
             example: 'この山は高い。（这座山很高。）',
+            sentence: {
+              japanese: 'この山は高い。',
+              translation: '这座山很高。',
+            },
           },
           {
             name: '连体形',
             rule: '保留い，后接名词。',
             example: '高い山（高山）',
+            sentence: {
+              japanese: '高い山に登りたい。',
+              translation: '想爬高山。',
+            },
           },
           {
             name: '假定形',
             rule: '去い＋けれ；后接ば。',
             example: '高けれ＋ば → 高ければ',
+            sentence: {
+              japanese: '値段が高ければ、買いません。',
+              translation: '价格贵的话就不买。',
+            },
           },
           {
             name: '命令形',
@@ -593,26 +822,46 @@ export const grammarTopics: GrammarTopic[] = [
             name: '否定与过去',
             rule: '去い＋くない／かった／くなかった。',
             example: '高くない／高かった／高くなかった',
+            sentence: {
+              japanese: '昨日の映画は面白かった。',
+              translation: '昨天的电影很有趣。',
+            },
           },
           {
             name: '连接',
             rule: '去い＋くて，连接后续描述。',
             example: '安くておいしい。（便宜又好吃。）',
+            sentence: {
+              japanese: 'この店の料理は安くておいしい。',
+              translation: '这家店的菜便宜又好吃。',
+            },
           },
           {
             name: '修饰名词／动词',
             rule: '修饰名词保留い；修饰动词用く。',
             example: '高い山／早く起きる（早起）',
+            sentence: {
+              japanese: '明日は早く起きる。',
+              translation: '明天早起。',
+            },
           },
           {
             name: '条件',
             rule: '去い＋ければ。',
             example: '安ければ買います。（便宜的话就买。）',
+            sentence: {
+              japanese: '安ければ買います。',
+              translation: '便宜的话就买。',
+            },
           },
           {
             name: '礼貌表达',
             rule: '肯定用いです；过去用かったです；否定可用くないです。',
             example: '高いです／高かったです／高くないです',
+            sentence: {
+              japanese: 'このかばんは高くないです。',
+              translation: '这个包不贵。',
+            },
           },
         ],
         note: '特殊词：いい的变化通常以よい为基础：よくない、よかった、よくて、よければ。推量日常也常用「高いだろう」。',
@@ -625,26 +874,46 @@ export const grammarTopics: GrammarTopic[] = [
             name: '未然形',
             rule: 'だ → だろ；后接う，表示推量。',
             example: '静かだろ＋う → 静かだろう',
+            sentence: {
+              japanese: '夜はこの町も静かだろう。',
+              translation: '夜里这个城镇大概也很安静吧。',
+            },
           },
           {
             name: '连用形',
             rule: 'だ → だっ／で／に。',
             example: '静かだった／静かで／静かに話す',
+            sentence: {
+              japanese: '昨日の図書館は静かだった。',
+              translation: '昨天的图书馆很安静。',
+            },
           },
           {
             name: '终止形',
             rule: '用だ，用于句末。',
             example: 'この町は静かだ。（这个城镇很安静。）',
+            sentence: {
+              japanese: 'この町は静かだ。',
+              translation: '这个城镇很安静。',
+            },
           },
           {
             name: '连体形',
             rule: 'だ → な，后接名词。',
             example: '静かな町（安静的城镇）',
+            sentence: {
+              japanese: '静かな部屋で本を読む。',
+              translation: '在安静的房间里看书。',
+            },
           },
           {
             name: '假定形',
             rule: 'だ → なら；ば常省略。',
             example: '静かなら（ば）',
+            sentence: {
+              japanese: '静かなら、ここで勉強したい。',
+              translation: '安静的话，想在这里学习。',
+            },
           },
           {
             name: '命令形',
@@ -657,26 +926,46 @@ export const grammarTopics: GrammarTopic[] = [
             name: '否定与过去',
             rule: 'だ → ではない／だった／ではなかった；口语可将では换成じゃ。',
             example: '静かではない／静かだった／静かではなかった',
+            sentence: {
+              japanese: '昨日の教室は静かではなかった。',
+              translation: '昨天的教室不安静。',
+            },
           },
           {
             name: '连接',
             rule: 'だ → で，连接后续描述。',
             example: '静かできれいだ。（安静又漂亮。）',
+            sentence: {
+              japanese: 'この公園は静かできれいだ。',
+              translation: '这个公园安静又漂亮。',
+            },
           },
           {
             name: '修饰名词／动词',
             rule: '修饰名词用な；修饰动词用に。',
             example: '静かな部屋／静かに話す（轻声说话）',
+            sentence: {
+              japanese: '図書館では静かに話してください。',
+              translation: '在图书馆请轻声说话。',
+            },
           },
           {
             name: '条件',
             rule: 'だ → なら。',
             example: '静かなら勉強できます。（安静的话就能学习。）',
+            sentence: {
+              japanese: '静かなら勉強できます。',
+              translation: '安静的话就能学习。',
+            },
           },
           {
             name: '礼貌表达',
             rule: 'だ → です；过去用でした；否定可用ではありません。',
             example: '静かです／静かでした／静かではありません',
+            sentence: {
+              japanese: 'この部屋は静かです。',
+              translation: '这个房间很安静。',
+            },
           },
         ],
         note: '易混词：きれい、嫌い虽然以い结尾，仍属于な形容词。礼貌肯定用「静かです」，不用「静かだです」。',

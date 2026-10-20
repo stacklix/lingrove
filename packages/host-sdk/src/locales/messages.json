@@ -4297,7 +4297,7 @@
   },
   "每天早上吃面包。": {
     "en": "I eat bread every morning.",
-    "ja": "毎朝、パンを食べる。"
+    "ja": "毎朝パンを食べる。"
   },
   "ます形": {
     "en": "Masu form",
@@ -5474,5 +5474,261 @@
   "调试模式正在使用服务器资源，以下为本机安装包的信息。": {
     "en": "Debug mode is using server resources. Local installation details are shown below.",
     "ja": "デバッグモードではサーバーのリソースを使用しています。以下はローカルアプリの情報です。"
+  },
+  "今天不写信。": {
+    "en": "I will not write a letter today.",
+    "ja": "今日は手紙を書かない。"
+  },
+  "一起吃午饭吧。": {
+    "en": "Let's have lunch together.",
+    "ja": "一緒に昼ご飯を食べよう。"
+  },
+  "老师叫了我的名字。": {
+    "en": "The teacher called my name.",
+    "ja": "先生に名前を呼ばれた。"
+  },
+  "妈妈让孩子吃蔬菜。": {
+    "en": "The mother makes her child eat vegetables.",
+    "ja": "母は子どもに野菜を食べさせる。"
+  },
+  "今天没有时间。": {
+    "en": "I have no time today.",
+    "ja": "今日は時間がない。"
+  },
+  "每晚看书。": {
+    "en": "I read a book every evening.",
+    "ja": "毎晩、本を読みます。"
+  },
+  "吃完早饭去学校。": {
+    "en": "I eat breakfast and go to school.",
+    "ja": "朝ご飯を食べて、学校へ行く。"
+  },
+  "昨天看了电影。": {
+    "en": "I watched a movie yesterday.",
+    "ja": "昨日、映画を見た。"
+  },
+  "在车站等朋友，然后一起回家了。": {
+    "en": "I waited for a friend at the station, and we went home together.",
+    "ja": "駅で友達を待って、一緒に帰った。"
+  },
+  "看完书后在公园玩了。": {
+    "en": "After reading a book, I played in the park.",
+    "ja": "本を読んでから、公園で遊んだ。"
+  },
+  "写上名字后交给了老师。": {
+    "en": "I wrote my name and handed it to the teacher.",
+    "ja": "名前を書いて、先生に渡した。"
+  },
+  "昨天在游泳池游泳了。": {
+    "en": "I swam in the pool yesterday.",
+    "ja": "昨日、プールで泳いだ。"
+  },
+  "和朋友用日语交谈了。": {
+    "en": "I talked with a friend in Japanese.",
+    "ja": "友達と日本語で話した。"
+  },
+  "星期天去了京都。": {
+    "en": "I went to Kyoto on Sunday.",
+    "ja": "日曜日に京都へ行った。"
+  },
+  "妹妹每天写日记。": {
+    "en": "My younger sister writes in her diary every day.",
+    "ja": "妹は毎日日記を書く。"
+  },
+  "明天在图书馆看书。": {
+    "en": "I will read a book at the library tomorrow.",
+    "ja": "明日、図書館で本を読む。"
+  },
+  "每天早上读报纸。": {
+    "en": "I read the newspaper every morning.",
+    "ja": "毎朝、新聞を読みます。"
+  },
+  "写信的人是哥哥。": {
+    "en": "The person writing a letter is my older brother.",
+    "ja": "手紙を書く人は兄です。"
+  },
+  "每天早上吃面包的人很多。": {
+    "en": "Many people eat bread every morning.",
+    "ja": "毎朝パンを食べる人が多い。"
+  },
+  "昨天读的书很有趣。": {
+    "en": "The book I read yesterday was interesting.",
+    "ja": "昨日読んだ本は面白かった。"
+  },
+  "每天练习就会进步。": {
+    "en": "If you practice every day, you will improve.",
+    "ja": "毎日練習すれば、上手になる。"
+  },
+  "每天读就会一点点明白。": {
+    "en": "If you read every day, you will gradually understand.",
+    "ja": "毎日読めば、少しずつわかる。"
+  },
+  "这本书一天就能读完。": {
+    "en": "I can finish this book in one day.",
+    "ja": "この本は一日で読める。"
+  },
+  "老师说：“快读！”": {
+    "en": "The teacher said, \"Read it quickly!\"",
+    "ja": "先生は「早く読め」と言った。"
+  },
+  "请读这篇文章。": {
+    "en": "Please read this passage.",
+    "ja": "この文章を読んでください。"
+  },
+  "不准进入这里。": {
+    "en": "Do not enter here.",
+    "ja": "ここに入るな。"
+  },
+  "明天不学习。": {
+    "en": "I will not study tomorrow.",
+    "ja": "明日は勉強しない。"
+  },
+  "他今天不来。": {
+    "en": "He is not coming today.",
+    "ja": "彼は今日は来ない。"
+  },
+  "每天写日记。": {
+    "en": "I write in my diary every day.",
+    "ja": "毎日、日記を書きます。"
+  },
+  "昨天打扫了房间。": {
+    "en": "I cleaned my room yesterday.",
+    "ja": "昨日、部屋を掃除した。"
+  },
+  "朋友来家里了。": {
+    "en": "A friend came to my house.",
+    "ja": "友達が家に来ました。"
+  },
+  "在图书馆学习。": {
+    "en": "I study at the library.",
+    "ja": "図書館で勉強する。"
+  },
+  "明天朋友会来。": {
+    "en": "A friend will come tomorrow.",
+    "ja": "明日、友達が来る。"
+  },
+  "有人在看书。": {
+    "en": "There is someone reading a book.",
+    "ja": "本を読む人がいる。"
+  },
+  "没有吃午饭的时间。": {
+    "en": "I have no time to eat lunch.",
+    "ja": "昼ご飯を食べる時間がない。"
+  },
+  "这里是学生学习的地方。": {
+    "en": "This is a place where students study.",
+    "ja": "ここは学生が勉強する場所です。"
+  },
+  "明天来的人有三个。": {
+    "en": "Three people are coming tomorrow.",
+    "ja": "明日来る人は三人です。"
+  },
+  "每天写就能记住汉字。": {
+    "en": "If you write every day, you can remember kanji.",
+    "ja": "毎日書けば、漢字を覚えられる。"
+  },
+  "吃了早饭就会有精神。": {
+    "en": "If you eat breakfast, you will feel energized.",
+    "ja": "朝ご飯を食べれば、元気が出る。"
+  },
+  "春天来了花就会开。": {
+    "en": "When spring comes, flowers bloom.",
+    "ja": "春が来れば、花が咲く。"
+  },
+  "爸爸说：“凉之前快吃！”": {
+    "en": "My father said, \"Eat before it gets cold!\"",
+    "ja": "父は「冷める前に食べろ」と言った。"
+  },
+  "教练喊道：“集中注意力！”": {
+    "en": "The coach shouted, \"Focus!\"",
+    "ja": "監督は「集中しろ」と叫んだ。"
+  },
+  "哥哥说：“到这边来！”": {
+    "en": "My older brother said, \"Come here!\"",
+    "ja": "兄は「こっちに来い」と言った。"
+  },
+  "山顶大概很冷吧。": {
+    "en": "It is probably cold on the mountaintop.",
+    "ja": "山の上は寒かろう。"
+  },
+  "昨天不冷。": {
+    "en": "It was not cold yesterday.",
+    "ja": "昨日は寒くなかった。"
+  },
+  "这座山很高。": {
+    "en": "This mountain is high.",
+    "ja": "この山は高い。"
+  },
+  "想爬高山。": {
+    "en": "I want to climb a high mountain.",
+    "ja": "高い山に登りたい。"
+  },
+  "价格贵的话就不买。": {
+    "en": "If the price is high, I will not buy it.",
+    "ja": "値段が高ければ、買いません。"
+  },
+  "昨天的电影很有趣。": {
+    "en": "Yesterday's movie was interesting.",
+    "ja": "昨日の映画は面白かった。"
+  },
+  "这家店的菜便宜又好吃。": {
+    "en": "The food at this restaurant is inexpensive and delicious.",
+    "ja": "この店の料理は安くておいしい。"
+  },
+  "明天早起。": {
+    "en": "I will get up early tomorrow.",
+    "ja": "明日は早く起きる。"
+  },
+  "便宜的话就买。": {
+    "en": "If it is inexpensive, I will buy it.",
+    "ja": "安ければ買います。"
+  },
+  "这个包不贵。": {
+    "en": "This bag is not expensive.",
+    "ja": "このかばんは高くないです。"
+  },
+  "夜里这个城镇大概也很安静吧。": {
+    "en": "This town is probably quiet at night too.",
+    "ja": "夜はこの町も静かだろう。"
+  },
+  "昨天的图书馆很安静。": {
+    "en": "The library was quiet yesterday.",
+    "ja": "昨日の図書館は静かだった。"
+  },
+  "这个城镇很安静。": {
+    "en": "This town is quiet.",
+    "ja": "この町は静かだ。"
+  },
+  "在安静的房间里看书。": {
+    "en": "I read a book in a quiet room.",
+    "ja": "静かな部屋で本を読む。"
+  },
+  "安静的话，想在这里学习。": {
+    "en": "If it is quiet, I want to study here.",
+    "ja": "静かなら、ここで勉強したい。"
+  },
+  "昨天的教室不安静。": {
+    "en": "The classroom was not quiet yesterday.",
+    "ja": "昨日の教室は静かではなかった。"
+  },
+  "这个公园安静又漂亮。": {
+    "en": "This park is quiet and beautiful.",
+    "ja": "この公園は静かできれいだ。"
+  },
+  "在图书馆请轻声说话。": {
+    "en": "Please speak quietly in the library.",
+    "ja": "図書館では静かに話してください。"
+  },
+  "安静的话就能学习。": {
+    "en": "If it is quiet, I can study.",
+    "ja": "静かなら勉強できます。"
+  },
+  "这个房间很安静。": {
+    "en": "This room is quiet.",
+    "ja": "この部屋は静かです。"
+  },
+  "例句": {
+    "en": "Example sentence",
+    "ja": "例文"
   }
 }

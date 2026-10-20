@@ -5,6 +5,7 @@ import { computed, nextTick, onDeactivated, onUnmounted, ref } from 'vue';
 import { setRootPage } from '@lingrove/host-sdk';
 import { grammarTopics } from '../grammar';
 import SpecialVerbsSheet from './SpecialVerbsSheet.vue';
+import GrammarExample from './GrammarExample.vue';
 const selected = ref('comparison');
 const directory = ref<HTMLDialogElement>();
 const directoryButton = ref<HTMLButtonElement>();
@@ -166,6 +167,7 @@ const ruleGroups = computed(() => {
                 <dd lang="ja">{{ t(form.example) }}</dd>
               </div>
             </dl>
+            <GrammarExample :sentence="form.sentence" />
           </section>
         </div>
       </section>
@@ -186,6 +188,7 @@ const ruleGroups = computed(() => {
                 <dd lang="ja">{{ t(form.example) }}</dd>
               </div>
             </dl>
+            <GrammarExample :sentence="form.sentence" />
           </section>
         </div>
         <h4 class="adjective-subheading">{{ t('常用表达') }}</h4>
@@ -202,6 +205,7 @@ const ruleGroups = computed(() => {
                 <dd lang="ja">{{ t(usage.example) }}</dd>
               </div>
             </dl>
+            <GrammarExample :sentence="usage.sentence" />
           </section>
         </div>
         <p class="guide-note">{{ t(section.note) }}</p>
@@ -275,6 +279,7 @@ const ruleGroups = computed(() => {
               </ul>
               <p v-if="rule.caveat" class="connection-caveat">{{ t(rule.caveat) }}</p>
             </div>
+            <GrammarExample :sentence="rule.sentence" />
             <SpecialVerbsSheet
               v-if="rule.specialWords || rule.wordExamples"
               :kind="rule.wordExamples"
