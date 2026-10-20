@@ -5,9 +5,111 @@ import Combine
 final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }
+private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    private static let progressInterval = 64 * 1024
+    private let limit: Int
+    private let onProgress: (@Sendable (Int) -> Void)?
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Data, Error>?
+    private var task: URLSessionDataTask?
+    private var data = Data()
+    private var lastReportedBytes = 0
+    private var finished = false
+
+    init(limit: Int, onProgress: (@Sendable (Int) -> Void)?) {
+        self.limit = limit
+        self.onProgress = onProgress
+        super.init()
+    }
+
+    func download(using session: URLSession, request: URLRequest) async throws -> Data {
+        try Task.checkCancellation()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data, Error>) in
+                lock.lock()
+                guard !Task.isCancelled else {
+                    lock.unlock()
+                    continuation.resume(throwing: CancellationError())
+                    return
+                }
+                self.continuation = continuation
+                let task = session.dataTask(with: request)
+                self.task = task
+                lock.unlock()
+                task.resume()
+            }
+        } onCancel: {
+            lock.lock()
+            let task = self.task
+            lock.unlock()
+            task?.cancel()
+        }
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        guard let response = response as? HTTPURLResponse,
+              response.statusCode == 200, response.expectedContentLength <= Int64(limit) else {
+            completionHandler(.cancel)
+            finish(.failure(ModuleError.invalid("下载失败或资源过大")), session: session)
+            return
+        }
+        completionHandler(.allow)
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive incomingData: Data) {
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
+        guard incomingData.count <= limit - data.count else {
+            lock.unlock()
+            dataTask.cancel()
+            finish(.failure(ModuleError.invalid("资源超过大小限制")), session: session)
+            return
+        }
+        data.append(incomingData)
+        let received = data.count
+        let reportProgress = received - lastReportedBytes >= Self.progressInterval
+        if reportProgress { lastReportedBytes = received }
+        lock.unlock()
+        if reportProgress { onProgress?(received) }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        lock.lock()
+        let result: Result<Data, Error>
+        if let error { result = .failure(error) }
+        else { result = .success(data) }
+        let downloadedBytes = data.count
+        lock.unlock()
+        if error == nil { onProgress?(downloadedBytes) }
+        finish(result, session: session)
+    }
+
+    private func finish(_ result: Result<Data, Error>, session: URLSession) {
+        lock.lock()
+        guard !finished else {
+            lock.unlock()
+            return
+        }
+        finished = true
+        let continuation = self.continuation
+        self.continuation = nil
+        task = nil
+        lock.unlock()
+        session.finishTasksAndInvalidate()
+        continuation?.resume(with: result)
+    }
+}
 @MainActor final class ModuleStore: ObservableObject {
     static let displayOrderKey = "modules.displayOrder"
-    nonisolated private static let downloadProgressInterval = 64 * 1024
     struct Installed: Codable {
         var active: Module
         var previous: Module?
@@ -26,6 +128,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     private var builtins: [String: Module] = [:]
     private var activeSessions = Set<String>()
     private var rejectedVersions: [String: String] = [:]
+    private var downloadStatusOwners: [String: UUID] = [:]
     private var registryReadable = true
     private var updateTask: Task<Void, Never>?
     private var updateID = UUID()
@@ -146,24 +249,9 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         var request = URLRequest(url: components.url!)
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
-        let (bytes, response) = try await session.bytes(for: request)
-        guard let response = response as? HTTPURLResponse, response.statusCode == 200, response.expectedContentLength <= limit else { throw ModuleError.invalid("下载失败或资源过大") }
-        var result = Data()
-        var buffer: [UInt8] = []
-        buffer.reserveCapacity(Self.downloadProgressInterval)
-        for try await byte in bytes {
-            buffer.append(byte)
-            if buffer.count == Self.downloadProgressInterval {
-                guard result.count <= limit - buffer.count else { throw ModuleError.invalid("资源超过大小限制") }
-                result.append(contentsOf: buffer)
-                buffer.removeAll(keepingCapacity: true)
-                onProgress?(result.count)
-            }
-        }
-        guard buffer.count <= limit - result.count else { throw ModuleError.invalid("资源超过大小限制") }
-        result.append(contentsOf: buffer)
-        onProgress?(result.count)
-        return result
+        let transfer = ModuleDownloadTransfer(limit: limit, onProgress: onProgress)
+        let connection = URLSession(configuration: session.configuration, delegate: transfer, delegateQueue: nil)
+        return try await transfer.download(using: connection, request: request)
     }
     func checkForUpdates(forceSnapshot: Bool = false) async {
         guard registryReadable else { return }
@@ -187,6 +275,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         guard updateID == id else { return }
         statuses.removeAll()
         downloadProgress.removeAll()
+        downloadStatusOwners.removeAll()
         let catalogURL = config.updateCatalogURL(defaults: defaults)
         guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
@@ -223,11 +312,12 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         guard !modules.isEmpty else { return }
         let session = self.session
         defer {
-            if updateID == id {
-                for module in modules where statuses[module.id]?.hasPrefix("正在下载") == true {
+            for module in modules where downloadStatusOwners[module.id] == id {
+                if statuses[module.id]?.hasPrefix("正在下载") == true {
                     statuses.removeValue(forKey: module.id)
                 }
-                downloadProgress.removeAll()
+                downloadProgress.removeValue(forKey: module.id)
+                downloadStatusOwners.removeValue(forKey: module.id)
             }
         }
         await withTaskGroup(of: (Module, Result<Data, Error>).self) { group in
@@ -238,9 +328,9 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                 nextIndex += 1
                 statuses[module.id] = "正在下载 \(module.version)…"
                 downloadProgress[module.id] = 0
+                downloadStatusOwners[module.id] = id
                 group.addTask { [weak self] in
-                    guard let self,
-                          let rawURL = module.downloadUrl,
+                    guard let rawURL = module.downloadUrl,
                           let url = URL(string: rawURL),
                           let expectedHash = module.sha256, expectedHash.count == 64,
                           let size = module.size, size > 0, size <= 50 * 1024 * 1024 else {
@@ -248,9 +338,10 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     }
                     do {
                         let data = try await Self.fetch(session: session, url: url, limit: size, forceRefresh: forceRefresh) { received in
-                            guard !Task.isCancelled else { return }
                             Task { @MainActor [weak self] in
-                                guard let self, self.updateID == id, self.downloadProgress[module.id] != nil else { return }
+                                guard let self, self.updateID == id,
+                                      self.downloadStatusOwners[module.id] == id,
+                                      self.downloadProgress[module.id] != nil else { return }
                                 self.downloadProgress[module.id] = min(Double(received) / Double(size), 1)
                             }
                         }
@@ -282,6 +373,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                     break
                 }
                 downloadProgress.removeValue(forKey: module.id)
+                downloadStatusOwners.removeValue(forKey: module.id)
                 addNext()
             }
         }
