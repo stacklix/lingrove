@@ -49,7 +49,8 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
         guard let response = response as? HTTPURLResponse,
-              response.statusCode == 200, response.expectedContentLength <= Int64(limit) else {
+              response.statusCode == 200,
+              (response.expectedContentLength < 0 || response.expectedContentLength <= Int64(limit)) else {
             completionHandler(.cancel)
             finish(.failure(ModuleError.invalid("下载失败或资源过大")), session: session)
             return
@@ -212,9 +213,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         guard isDownloaded(module),
               let installed = registry[module.id],
               installed.active.resourceIdentity == module.resourceIdentity else { return nil }
-        if let updatedAt = installed.updatedAt { return updatedAt }
-        let attributes = try? FileManager.default.attributesOfItem(atPath: directory(for: module).path)
-        return attributes?[.modificationDate] as? Date
+        return installed.updatedAt
     }
     func begin(_ module: Module, trackingStartup: Bool = true) { activeSessions.insert(module.id); if trackingStartup && registry[module.id]?.healthy == false { UserDefaults.standard.set(true, forKey: "launching.\(module.id).\(module.resourceIdentity)") } }
     func end(_ module: Module) { activeSessions.remove(module.id) }
@@ -250,6 +249,7 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
         let transfer = ModuleDownloadTransfer(limit: limit, onProgress: onProgress)
+        // Clone configuration to preserve injected protocol classes while using a per-transfer chunk delegate.
         let connection = URLSession(configuration: session.configuration, delegate: transfer, delegateQueue: nil)
         return try await transfer.download(using: connection, request: request)
     }

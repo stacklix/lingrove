@@ -262,6 +262,56 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         channelDefaults.set(false, forKey: HostConfiguration.snapshotPreferenceKey)
         await channelStore.checkForUpdates()
         check(channelStore.modules.first?.resourceIdentity == release.resourceIdentity, "channel switch allows lower release version")
+        let cancellationSuite = "cancel-tests-\(UUID().uuidString)"
+        let cancellationDefaults = UserDefaults(suiteName: cancellationSuite)!
+        defer { cancellationDefaults.removePersistentDomain(forName: cancellationSuite) }
+        cancellationDefaults.set(false, forKey: HostConfiguration.snapshotPreferenceKey)
+        var cancellableModule = bundledModule
+        cancellableModule.version = "1.1.0"
+        cancellableModule.downloadUrl = "https://updates.test/cancel-module.zip"
+        cancellableModule.size = archive.count
+        cancellableModule.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
+        let cancellationConfig = HostConfiguration(
+            catalogURL: "https://updates.test/cancel-catalog.json",
+            snapshotCatalogURL: "https://updates.test/cancel-snapshot-catalog.json"
+        )
+        let cancellationStore = ModuleStore(
+            root: fixtures.appendingPathComponent("cancel-state"),
+            config: cancellationConfig,
+            session: session,
+            builtinRoot: fixtures.appendingPathComponent("builtin"),
+            defaults: cancellationDefaults
+        )
+        MockProtocol.responses["/cancel-catalog.json"] = (200, try catalog(cancellableModule))
+        MockProtocol.responses["/cancel-snapshot-catalog.json"] = (200, try JSONEncoder().encode(Catalog(modules: [])))
+        let cancellationLock = NSLock()
+        var cancelledTransfer: MockProtocol?
+        MockProtocol.intercept = { request in
+            guard request.request.url?.path == "/cancel-module.zip" else { return false }
+            cancellationLock.lock()
+            cancelledTransfer = request
+            cancellationLock.unlock()
+            return true
+        }
+        let pendingCheck = Task { await cancellationStore.checkForUpdates() }
+        for _ in 0..<500 {
+            cancellationLock.lock()
+            let isHeld = cancelledTransfer != nil
+            cancellationLock.unlock()
+            if isHeld { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        cancellationLock.lock()
+        let isHeld = cancelledTransfer != nil
+        cancellationLock.unlock()
+        check(isHeld && cancellationStore.downloadProgress["sentra"] == 0, "in-flight ZIP exposes progress before cancellation")
+        cancellationDefaults.set(true, forKey: HostConfiguration.snapshotPreferenceKey)
+        await cancellationStore.checkForUpdates(forceSnapshot: true)
+        await pendingCheck.value
+        MockProtocol.intercept = nil
+        check(cancellationStore.modules.first?.version == "1.0.0", "superseded ZIP download does not install")
+        check(cancellationStore.downloadProgress.isEmpty && cancellationStore.statuses["sentra"] != "正在下载 1.1.0…",
+              "cancelling a ZIP download clears progress and stale status")
         #else
         check(channelConfig.updateCatalogURL(defaults: channelDefaults).hasSuffix("/catalog.json"), "Release ignores saved Snapshot preference")
         #endif
