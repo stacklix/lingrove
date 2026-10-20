@@ -4,6 +4,9 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 const mode = process.argv.includes('--release') ? 'production' : 'debug';
 const root = path.resolve(import.meta.dirname, '..');
+const npm = process.env.npm_execpath
+  ? [process.execPath, process.env.npm_execpath]
+  : ['npm'];
 const modules = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));
 if (
   !Array.isArray(modules) ||
@@ -17,9 +20,9 @@ if (
 await rm(path.join(root, 'dist'), { recursive: true, force: true });
 for (const module of modules) {
   const result = spawnSync(
-    process.execPath,
+    npm[0],
     [
-      process.env.npm_execpath,
+      ...npm.slice(1),
       'run',
       'build',
       '--workspace',
