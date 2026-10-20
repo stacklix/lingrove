@@ -4,6 +4,7 @@ const { t } = useAppI18n();
 import { computed } from 'vue';
 import { isSentenceComponent, type Action } from '../models';
 import CopyButton from './CopyButton.vue';
+import RubySentence from './RubySentence.vue';
 const props = defineProps<{ action: Action; data: Record<string, any> }>();
 // Also filter streamed results and previously saved history.
 const structure = computed(() =>
@@ -18,15 +19,17 @@ const styleLabels: Record<string, string> = {
 <template>
   <div class="results">
     <template v-if="action === 'translate'">
+      <article v-if="data.source_text && data.source_ruby" class="result-card">
+        <span class="eyebrow">{{ t('原句读音') }}</span>
+        <RubySentence :text="data.source_text" :parts="data.source_ruby" />
+      </article>
       <article v-for="(item, index) in data.translations || []" :key="index" class="result-card">
         <div class="card-top">
           <span class="eyebrow">{{ t(index === 0 ? '01 · 直译' : '02 · 地道表达') }}</span
           ><CopyButton v-if="item.text" :text="item.text" />
         </div>
-        <p class="translation">{{ item.text }}</p>
-        <p v-if="typeof item.reading === 'string' && item.reading" class="kana-reading" lang="ja">
-          <span>假名</span>{{ item.reading }}
-        </p>
+        <RubySentence v-if="item.ruby" :text="item.text" :parts="item.ruby" />
+        <p v-else class="translation">{{ item.text }}</p>
       </article>
       <aside v-if="data.notes?.length" class="note">
         <span class="eyebrow">{{ t('表达笔记') }}</span>

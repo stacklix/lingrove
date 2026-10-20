@@ -16,10 +16,23 @@ if (
 // Build from a clean directory so retired modules/assets cannot leak into a release.
 await rm(path.join(root, 'dist'), { recursive: true, force: true });
 for (const module of modules) {
-  const result = spawnSync('npm', ['run', 'build', '--workspace', `app/${module}`, '--', '--mode', mode], {
-    cwd: root,
-    stdio: 'inherit',
-  });
+  const result = spawnSync(
+    process.execPath,
+    [
+      process.env.npm_execpath,
+      'run',
+      'build',
+      '--workspace',
+      `app/${module}`,
+      '--',
+      '--mode',
+      mode,
+    ],
+    {
+      cwd: root,
+      stdio: 'inherit',
+    },
+  );
   if (result.status !== 0) throw new Error(`Build failed: ${module}`);
 }
 await import('./package-modules.mjs');

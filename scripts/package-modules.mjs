@@ -22,7 +22,7 @@ for (const name of names) {
   await writeFile(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
   const archive = `${manifest.id}-${manifest.version}${snapshot ? '-snapshot' : ''}.zip`;
   const zipPath = path.join(root, 'dist/packages', archive);
-  const result = spawnSync('python3', [path.join(root, 'scripts/stored-zip.py'), output, zipPath], {
+  const result = spawnSync(process.env.PYTHON || 'python3', [path.join(root, 'scripts/stored-zip.py'), output, zipPath], {
     stdio: 'inherit',
   });
   if (result.status !== 0) throw new Error('ZIP packaging failed');

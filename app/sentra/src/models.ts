@@ -87,12 +87,12 @@ export function validateResult(
     objects('translations', ['text', 'type'], true);
     list(d, 'notes');
     if (
-      d.translations.length !== 2 ||
+      (d.translations.length !== 1 && d.translations.length !== 2) ||
       d.translations[0].type !== 'direct' ||
-      d.translations[1].type !== 'natural' ||
+      (d.translations.length === 2 && d.translations[1].type !== 'natural') ||
       languageCode(d.translation_language) !== languageCode(target)
     )
-      throw new Error('模型未按目标语言返回直译和地道表达');
+      throw new Error('生成结果不完整，请重试。');
   } else {
     const prefix = action === 'grammar' ? 'analysis' : 'reference';
     if (d[`${prefix}_origin`] !== 'original' || d[`${prefix}_text`]?.trim() !== text.trim())
@@ -111,6 +111,27 @@ export function validateResult(
       str(d, 'naturalness');
       objects('alternatives', ['text', 'style', 'translation', 'explanation'], true);
     }
+  }
+  const ruby = (parts: unknown, sentence: string) => {
+    if (
+      !Array.isArray(parts) ||
+      !parts.length ||
+      parts.some(
+        (part) =>
+          typeof part?.text !== 'string' ||
+          !part.text ||
+          typeof part.reading !== 'string' ||
+          (/\p{Script=Han}/u.test(part.text)
+            ? !/^[\p{Script=Hiragana}ー]+$/u.test(part.reading)
+            : part.reading !== ''),
+      ) ||
+      parts.map((part) => part.text).join('') !== sentence
+    )
+      throw new Error('模型未返回有效的日语假名，请重试');
+  };
+  if (action === 'translate' && languageCode(d.source_language) === 'ja') {
+    if (d.source_text !== text) throw new Error('模型更改了待分析原句，请重试');
+    ruby(d.source_ruby, text);
   }
   const japanese = languageCode(action === 'translate' ? target : d.source_language) === 'ja';
   if (japanese) {
@@ -133,9 +154,10 @@ export function validateResult(
       reading(d, 'analysis_reading');
       for (const item of d.corrections) reading(item, 'corrected_reading');
       for (const item of d.structure) reading(item, 'reading');
+    } else if (action === 'translate') {
+      for (const item of d.translations) ruby(item.ruby, item.text);
     } else {
-      for (const item of d[action === 'translate' ? 'translations' : 'alternatives'])
-        reading(item, 'reading');
+      for (const item of d.alternatives) reading(item, 'reading');
     }
   }
   return d;

@@ -49,8 +49,22 @@ const cases: [Action, Record<string, any>, string][] = [
       source_language: '中文',
       translation_language: '日语',
       translations: [
-        { text: '今日は。', type: 'direct', reading: 'こんにちは。' },
-        { text: '今日は。', type: 'natural', reading: 'こんにちは。' },
+        {
+          text: '今日は。',
+          type: 'direct',
+          ruby: [
+            { text: '今日', reading: 'こんにち' },
+            { text: 'は。', reading: '' },
+          ],
+        },
+        {
+          text: '今日は。',
+          type: 'natural',
+          ruby: [
+            { text: '今日', reading: 'こんにち' },
+            { text: 'は。', reading: '' },
+          ],
+        },
       ],
       notes: [],
     },
@@ -96,11 +110,14 @@ const cases: [Action, Record<string, any>, string][] = [
 it.each(cases)('validates and displays Japanese readings for %s', (action, data, input) => {
   expect(validateResult(action, JSON.stringify(data), input, '日语')).toEqual(data);
   const wrapper = mount(ResultView, { props: { action, data } });
-  expect(wrapper.findAll('.kana-reading').length).toBeGreaterThan(0);
+  expect(wrapper.findAll(action === 'translate' ? 'ruby' : '.kana-reading').length).toBeGreaterThan(
+    0,
+  );
   wrapper.unmount();
   const invalid = structuredClone(data);
   if (action === 'grammar') invalid.analysis_reading = '学校に行く';
-  else delete invalid[action === 'translate' ? 'translations' : 'alternatives'][0].reading;
+  else if (action === 'translate') delete invalid.translations[0].ruby;
+  else delete invalid.alternatives[0].reading;
   expect(() => validateResult(action, JSON.stringify(invalid), input, '日语')).toThrow();
 });
 it.each([undefined, null, '', '  '])(
@@ -193,5 +210,68 @@ it('shows component translations and tolerates older history and partial streame
   await wrapper.setProps({ data: { structure: [{ text: 'Hello' }] } });
   expect(wrapper.find('.component-translation').exists()).toBe(false);
   expect(wrapper.find('tbody th').text()).toBe('Hello');
+  wrapper.unmount();
+});
+
+it('accepts one natural direct translation and only an optional second idiomatic version', () => {
+  const data = {
+    source_language: '中文',
+    translation_language: '英语',
+    translations: [{ text: 'Hello', type: 'direct' }],
+    notes: [],
+  };
+  expect(validateResult('translate', JSON.stringify(data), '你好', '英语')).toEqual(data);
+  const wrapper = mount(ResultView, { props: { action: 'translate', data } });
+  expect(wrapper.text()).not.toContain('地道表达');
+  wrapper.unmount();
+  expect(() =>
+    validateResult(
+      'translate',
+      JSON.stringify({ ...data, translations: [{ text: 'Hello', type: 'natural' }] }),
+      '你好',
+      '英语',
+    ),
+  ).toThrow();
+});
+it('shows Japanese original once with hiragana above its kanji', () => {
+  const data = {
+    source_language: 'Japanese',
+    source_text: '学校へ行く。',
+    source_ruby: [
+      { text: '学校', reading: 'がっこう' },
+      { text: 'へ', reading: '' },
+      { text: '行', reading: 'い' },
+      { text: 'く。', reading: '' },
+    ],
+    translation_language: '英语',
+    translations: [{ text: 'Go to school.', type: 'direct' }],
+    notes: [],
+  };
+  expect(validateResult('translate', JSON.stringify(data), data.source_text, '英语')).toEqual(data);
+  const wrapper = mount(ResultView, { props: { action: 'translate', data } });
+  expect(wrapper.findAll('.ruby-sentence')).toHaveLength(1);
+  expect(wrapper.findAll('rt').map((rt) => rt.text())).toEqual(['がっこう', 'い']);
+  expect(wrapper.find('.kana-reading').exists()).toBe(false);
+  wrapper.unmount();
+  for (const source_ruby of [
+    [],
+    [{ text: '学校へ行く。', reading: 'ガッコウ' }],
+    [{ text: '学校', reading: 'がっこう' }],
+  ]) {
+    expect(() =>
+      validateResult(
+        'translate',
+        JSON.stringify({ ...data, source_ruby }),
+        data.source_text,
+        '英语',
+      ),
+    ).toThrow();
+  }
+});
+it('annotates Japanese translations inside their own sentence blocks', () => {
+  const wrapper = mount(ResultView, { props: { action: 'translate', data: cases[0][1] } });
+  expect(wrapper.findAll('.ruby-sentence')).toHaveLength(2);
+  expect(wrapper.findAll('rt').map((rt) => rt.text())).toEqual(['こんにち', 'こんにち']);
+  expect(wrapper.find('.kana-reading').exists()).toBe(false);
   wrapper.unmount();
 });
