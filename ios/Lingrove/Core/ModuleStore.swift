@@ -251,7 +251,12 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         let transfer = ModuleDownloadTransfer(limit: limit, onProgress: onProgress)
         // Clone configuration to preserve injected protocol classes while using a per-transfer chunk delegate.
         let connection = URLSession(configuration: session.configuration, delegate: transfer, delegateQueue: nil)
-        return try await transfer.download(using: connection, request: request)
+        do {
+            return try await transfer.download(using: connection, request: request)
+        } catch {
+            connection.invalidateAndCancel()
+            throw error
+        }
     }
     func checkForUpdates(forceSnapshot: Bool = false) async {
         guard registryReadable else { return }
@@ -275,7 +280,6 @@ private final class ModuleDownloadTransfer: NSObject, URLSessionDataDelegate, @u
         guard updateID == id else { return }
         statuses.removeAll()
         downloadProgress.removeAll()
-        downloadStatusOwners.removeAll()
         let catalogURL = config.updateCatalogURL(defaults: defaults)
         guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
         do {
