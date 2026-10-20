@@ -17,9 +17,8 @@ if (
 await rm(path.join(root, 'dist'), { recursive: true, force: true });
 for (const module of modules) {
   const result = spawnSync(
-    process.execPath,
+    'npm',
     [
-      process.env.npm_execpath,
       'run',
       'build',
       '--workspace',
