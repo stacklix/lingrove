@@ -7,6 +7,7 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
 }
 @MainActor final class ModuleStore: ObservableObject {
     static let displayOrderKey = "modules.displayOrder"
+    private static let downloadProgressInterval = 64 * 1024
     struct Installed: Codable {
         var active: Module
         var previous: Module?
@@ -147,15 +148,18 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
         let (bytes, response) = try await session.bytes(for: request)
         guard let response = response as? HTTPURLResponse, response.statusCode == 200, response.expectedContentLength <= limit else { throw ModuleError.invalid("下载失败或资源过大") }
         var result = Data()
-        var lastReported = 0
+        var buffer: [UInt8] = []
+        buffer.reserveCapacity(Self.downloadProgressInterval)
         for try await byte in bytes {
-            if result.count >= limit { throw ModuleError.invalid("资源超过大小限制") }
-            result.append(byte)
-            if result.count - lastReported >= 64 * 1024 {
-                lastReported = result.count
+            if result.count + buffer.count >= limit { throw ModuleError.invalid("资源超过大小限制") }
+            buffer.append(byte)
+            if buffer.count == Self.downloadProgressInterval {
+                result.append(contentsOf: buffer)
+                buffer.removeAll(keepingCapacity: true)
                 onProgress?(result.count)
             }
         }
+        result.append(contentsOf: buffer)
         onProgress?(result.count)
         return result
     }
@@ -251,11 +255,9 @@ final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
                         let installed = try install(module, data: data, catalogURL: catalogURL)
                         statuses[module.id] = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
                     } catch {
-                        if Task.isCancelled { group.cancelAll(); break }
                         statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
                     }
                 case .failure(let error):
-                    if Task.isCancelled { group.cancelAll(); break }
                     statuses[module.id] = "更新失败，保留本地版本：\(error.localizedDescription)"
                 }
                 if Task.isCancelled {
