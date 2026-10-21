@@ -155,9 +155,6 @@ struct HomeView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 HostPlaybackControls()
-                if DebugServer.available && (debugEnabled || snapshotEnabled), let message = pages.reloadMessage {
-                    ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }.padding()
-                }
             }
             .sheet(isPresented: $showingSettings, onDismiss: finishSettings) {
                 NavigationStack {

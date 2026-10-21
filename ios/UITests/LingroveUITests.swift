@@ -354,14 +354,14 @@ final class LingroveUITests: XCTestCase {
         XCTAssertFalse(app.buttons["module-reload"].exists)
     }
     func testReloadButtonReinitializesChildPage() throws {
-        let app = XCUIApplication(); app.launch()
+        let app = XCUIApplication()
+        app.launchArguments += ["-debug.enabled", "YES", "-updates.snapshot", "NO", "-debug.serverURL", "", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
         let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sentra")).firstMatch
         waitForEnabled(entry)
         app.buttons["重新加载子应用"].tap()
         let hostSuccess = app.staticTexts["Sentra：本地资源重新加载成功"]
-        XCTAssertTrue(hostSuccess.waitForExistence(timeout: 25))
-        let hostDismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: hostSuccess)
-        XCTAssertEqual(XCTWaiter.wait(for: [hostDismissed], timeout: 5), .completed)
+        XCTAssertFalse(hostSuccess.exists)
         entry.tap()
         let settings = app.webViews.buttons["设置"]
         XCTAssertTrue(settings.waitForExistence(timeout: 20))
@@ -369,8 +369,9 @@ final class LingroveUITests: XCTestCase {
         let home = app.buttons["返回 Lingrove"]
         XCTAssertFalse(app.buttons["module-reload"].exists)
         home.tap()
+        XCTAssertFalse(hostSuccess.exists)
         app.buttons["重新加载子应用"].tap()
-        XCTAssertTrue(app.staticTexts["Sentra：本地资源重新加载成功"].waitForExistence(timeout: 25))
+        XCTAssertFalse(hostSuccess.exists)
         waitForEnabled(entry); entry.tap()
         XCTAssertTrue(settings.waitForExistence(timeout: 20))
         settings.tap()
