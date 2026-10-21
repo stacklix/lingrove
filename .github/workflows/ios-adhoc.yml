@@ -1,0 +1,132 @@
+name: Build and publish iOS Ad Hoc
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Debug 保留调试功能；Release 为正式功能构建'
+        type: choice
+        options: [Debug, Release]
+        default: Debug
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-adhoc-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/master'
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Import distribution certificate and validate Ad Hoc profile
+        id: signing
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in BUILD_CERTIFICATE_BASE64 P12_PASSWORD BUILD_PROVISION_PROFILE_BASE64; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing repository secret: $name. See docs/ios-adhoc.md."
+              exit 1
+            fi
+          done
+          printf '%s' "$BUILD_CERTIFICATE_BASE64" | base64 --decode > "$RUNNER_TEMP/signing.p12"
+          printf '%s' "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode > "$RUNNER_TEMP/adhoc.mobileprovision"
+          openssl smime -verify -inform DER -in "$RUNNER_TEMP/adhoc.mobileprovision" -noverify -out "$RUNNER_TEMP/profile.plist"
+          python3 scripts/prepare-ios-signing.py "$RUNNER_TEMP/adhoc.mobileprovision" "$RUNNER_TEMP/profile.plist" "$RUNNER_TEMP/ExportOptions.plist"
+          keychain="$RUNNER_TEMP/lingrove-signing.keychain-db"
+          password=$(openssl rand -hex 32)
+          echo "::add-mask::$password"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/signing.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain"
+          security find-identity -v -p codesigning "$keychain" | grep 'Apple Distribution:'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Archive and export signed IPA
+        env:
+          CONFIGURATION: ${{ inputs.configuration }}
+          TEAM_ID: ${{ steps.signing.outputs.team }}
+          PROFILE_UUID: ${{ steps.signing.outputs.profile }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
+            -configuration "$CONFIGURATION" -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Lingrove.xcarchive" \
+            -derivedDataPath "$RUNNER_TEMP/derived-data" \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution' \
+            DEVELOPMENT_TEAM="$TEAM_ID" PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT" archive
+          python3 scripts/verify-ios-modules.py "$RUNNER_TEMP/Lingrove.xcarchive/Products/Applications/Lingrove.app"
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Lingrove.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export"
+          python3 scripts/package-ios-ota.py "$RUNNER_TEMP/export/Lingrove.ipa" build/ios-ota \
+            --base-url https://lingrove.stackli.me/ios --configuration "$CONFIGURATION"
+
+      - name: Save installation files
+        uses: actions/upload-artifact@v4
+        with:
+          name: lingrove-ios-adhoc
+          path: build/ios-ota/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove signing material
+        if: always()
+        env:
+          PROFILE_PATH: ${{ steps.signing.outputs.profile_path }}
+        shell: bash
+        run: |
+          security delete-keychain "$RUNNER_TEMP/lingrove-signing.keychain-db" 2>/dev/null || true
+          if [ -n "$PROFILE_PATH" ]; then rm -f "$PROFILE_PATH"; fi
+          rm -f "$RUNNER_TEMP/signing.p12" "$RUNNER_TEMP/adhoc.mobileprovision" "$RUNNER_TEMP/profile.plist"
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Shared with the web publisher: read the latest tree only after acquiring this lock.
+    concurrency:
+      group: publish-gh-pages
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: lingrove-ios-adhoc
+          path: build/ios-ota
+      - name: Publish installation files, preserving web applications
+        id: publish
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: bash scripts/publish-pages-tree.sh ios build/ios-ota
+      - name: Build and verify GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ steps.publish.outputs.commit }}
+        run: |
+          bash scripts/verify-pages-build.sh
+          echo 'Install with Safari: https://lingrove.stackli.me/ios/' >> "$GITHUB_STEP_SUMMARY"

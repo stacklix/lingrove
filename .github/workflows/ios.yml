@@ -16,6 +16,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci && npm run check
+      - run: python3 scripts/tests/test-ios-distribution.py
       - run: scripts/test-native.sh
       # Exercise a clean native build without pre-generated web resources.
       - run: rm -rf dist ios/Lingrove/Resources/BuiltinModules

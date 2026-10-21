@@ -56,56 +56,15 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      - name: Replace gh-pages branch with a single commit
+      - name: Publish web applications, preserving iOS installation files
         id: publish
         env:
           SOURCE_SHA: ${{ github.sha }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s dist/index.html
-          test -s dist/catalog.snapshot.json
-
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-          # A separate index stages only dist; commit-tree without -p creates
-          # a root commit, so gh-pages always has exactly one reachable commit.
-          export GIT_DIR="$PWD/.git"
-          export GIT_WORK_TREE="$PWD/dist"
-          export GIT_INDEX_FILE="$RUNNER_TEMP/gh-pages-index"
-          trap 'rm -f "$GIT_INDEX_FILE"' EXIT
-          git read-tree --empty
-          cd "$GIT_WORK_TREE"
-          git add --all -- .
-          tree=$(git write-tree)
-          commit=$(git commit-tree "$tree" -m "Build master Snapshot and latest tag (trigger $SOURCE_SHA)")
-          git push --force origin "$commit:refs/heads/gh-pages"
-          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+        run: bash scripts/publish-pages-tree.sh web dist
 
       - name: Build and verify GitHub Pages
         timeout-minutes: 6
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_COMMIT: ${{ steps.publish.outputs.commit }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          # GITHUB_TOKEN pushes do not trigger branch-based Pages builds.
-          build_url=$(gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" --jq '.url')
-          for attempt in {1..30}; do
-            build=$(gh api "$build_url")
-            status=$(jq -r '.status' <<< "$build")
-            commit=$(jq -r '.commit' <<< "$build")
-            if [ "$commit" = "$RELEASE_COMMIT" ] && [ "$status" = "built" ]; then
-              echo "Published Snapshot and available release catalogs, ZIP packages and browser applications." >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-            if [ "$commit" = "$RELEASE_COMMIT" ] && [ "$status" = "errored" ]; then
-              jq -r '.error.message' <<< "$build"
-              exit 1
-            fi
-            sleep 10
-          done
-          echo "Timed out waiting for Pages to build release $RELEASE_COMMIT"
-          exit 1
+        run: bash scripts/verify-pages-build.sh
