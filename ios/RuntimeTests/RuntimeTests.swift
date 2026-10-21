@@ -244,6 +244,9 @@ final class RuntimeTests: XCTestCase {
         }
     }
     @MainActor func testDebugReloadReportsReadyAndFailureOnlyAfterReload() throws {
+        let originalServers = UserDefaults.standard.object(forKey: DebugServer.preferenceKey)
+        UserDefaults.standard.removeObject(forKey: DebugServer.preferenceKey)
+        defer { UserDefaults.standard.set(originalServers, forKey: DebugServer.preferenceKey) }
         let originalEnabled = UserDefaults.standard.object(forKey: HostConfiguration.resourceModePreferenceKey)
         UserDefaults.standard.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         defer { UserDefaults.standard.set(originalEnabled, forKey: HostConfiguration.resourceModePreferenceKey) }
@@ -280,30 +283,78 @@ final class RuntimeTests: XCTestCase {
         page.runtime.onReady()
         XCTAssertEqual(page.reloadMessage, "本地资源重新加载成功")
     }
+    func testListRefreshStatusExpiresWithoutDiscardingHistory() {
+        let completedAt = Date(timeIntervalSince1970: 1_000)
+        for state in [ModuleReloadState.succeeded, .failed] {
+            let record = ModuleReloadRecord(state: state, message: "result", completedAt: completedAt)
+            XCTAssertEqual(record.listState(at: completedAt), state)
+            XCTAssertEqual(record.listState(at: completedAt.addingTimeInterval(4.999)), state)
+            XCTAssertNil(record.listState(at: completedAt.addingTimeInterval(5)))
+            XCTAssertNil(record.listState(at: completedAt.addingTimeInterval(60)))
+            XCTAssertEqual(record.state, state)
+            XCTAssertEqual(record.completedAt, completedAt)
+        }
+        let loading = ModuleReloadRecord(state: .loading, message: "正在刷新…", completedAt: completedAt)
+        XCTAssertEqual(loading.listState(at: completedAt.addingTimeInterval(60)), .loading)
+    }
+
     @MainActor func testDebugReloadReportsServerSuccessAndLocalFallback() throws {
-        try XCTSkipUnless(DebugServer.enabled)
+        try XCTSkipUnless(DebugServer.available)
+        let originalMode = UserDefaults.standard.object(forKey: HostConfiguration.resourceModePreferenceKey)
+        UserDefaults.standard.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        defer { UserDefaults.standard.set(originalMode, forKey: HostConfiguration.resourceModePreferenceKey) }
         let original = UserDefaults.standard.object(forKey: DebugServer.preferenceKey)
         defer { UserDefaults.standard.set(original, forKey: DebugServer.preferenceKey) }
         DebugServerSettings(addresses: [.init(id: "test", url: "http://127.0.0.1:8000")], activeID: "test").save(defaults: UserDefaults.standard)
         let module = Module(id: "server-feedback", name: "Server", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
-        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in })
+        let serverURL = try XCTUnwrap(DebugServer.entryURL(for: module))
+        var sources: [ModuleResourceSource] = []
+        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in }, onResourceSource: { sources.append($0) })
         defer { page.close() }
+        XCTAssertEqual(sources.last, .loading(serverURL))
+        page.runtime.onReady()
+        let serverSource = ModuleResourceSource.debugServer(serverURL)
+        XCTAssertEqual(sources.last, serverSource, "Initial loads also report the actual source")
         page.reload()
+        XCTAssertEqual(sources.last, .loading(serverURL))
         XCTAssertTrue(page.isReloading)
         page.runtime.onReady()
         XCTAssertEqual(page.reloadMessage, "服务器资源刷新成功")
+        XCTAssertEqual(sources.last, serverSource)
         XCTAssertFalse(page.isReloading)
         page.reload()
         UserDefaults.standard.removeObject(forKey: DebugServer.preferenceKey)
-        page.runtime.onFailure("服务器无法连接")
+        let failedServer = page.runtime!
+        failedServer.onFailure("服务器无法连接")
+        XCTAssertEqual(sources.last, .loading(nil))
+        XCTAssertFalse(try XCTUnwrap(sources.last).isLoaded)
+        failedServer.onReady()
+        XCTAssertEqual(sources.last, .loading(nil), "A stale server callback cannot overwrite the pending fallback")
         XCTAssertNil(page.failure)
         XCTAssertTrue(page.isReloading)
         page.runtime.onReady()
         XCTAssertEqual(page.reloadMessage, "服务器不可用，已加载本地资源")
+        XCTAssertEqual(sources.last, .local)
+        XCTAssertTrue(try XCTUnwrap(sources.last).isLoaded)
         XCTAssertFalse(page.isReloading)
+        page.reload()
+        XCTAssertEqual(sources.last, .loading(nil))
+        page.runtime.onFailure("本地资源损坏")
+        XCTAssertEqual(sources.last, .failed)
     }
     @MainActor func testDebugReloadAllIncludesUnopenedModulesAndReportsIndividualResults() async throws {
-        try XCTSkipUnless(DebugServer.enabled)
+        try XCTSkipUnless(DebugServer.available)
+        let originalMode = UserDefaults.standard.object(forKey: HostConfiguration.resourceModePreferenceKey)
+        let originalServers = UserDefaults.standard.object(forKey: DebugServer.preferenceKey)
+        UserDefaults.standard.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        UserDefaults.standard.removeObject(forKey: DebugServer.preferenceKey)
+        let suite = "reload-history-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer {
+            UserDefaults.standard.set(originalMode, forKey: HostConfiguration.resourceModePreferenceKey)
+            UserDefaults.standard.set(originalServers, forKey: DebugServer.preferenceKey)
+            defaults.removePersistentDomain(forName: suite)
+        }
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let builtin = root.appendingPathComponent("builtin")
         defer { try? FileManager.default.removeItem(at: root) }
@@ -316,30 +367,45 @@ final class RuntimeTests: XCTestCase {
             try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
         }
         let store = ModuleStore(root: root.appendingPathComponent("state"), config: HostConfiguration(catalogURL: ""), builtinRoot: builtin)
-        let pages = ModulePageCache()
+        let pages = ModulePageCache(defaults: defaults)
         defer { pages.reconcile(modules: [], blocked: []) }
+        XCTAssertTrue(pages.reloadRecords.isEmpty)
         pages.reloadAll(store: store)
-        XCTAssertEqual(pages.reloadMessages.count, 2)
+        XCTAssertEqual(pages.reloadRecords.count, 2)
+        XCTAssertTrue(pages.reloadRecords.values.allSatisfy { $0.state == .loading && $0.completedAt == nil })
         let loaded = expectation(description: "All unopened child apps finish loading")
-        let subscription = pages.$reloadMessages.sink { messages in
-            if messages.count == 2 && messages.values.allSatisfy({ $0.hasSuffix("本地资源重新加载成功") }) { loaded.fulfill() }
+        let subscription = pages.$reloadRecords.sink { records in
+            if records.count == 2 && records.values.allSatisfy({ $0.state == .succeeded && $0.completedAt != nil }) { loaded.fulfill() }
         }
         await fulfillment(of: [loaded], timeout: 15)
         subscription.cancel()
         let first = pages.page(for: store.modules[0], store: store)
         XCTAssertEqual(first.reloadMessage, "本地资源重新加载成功")
         XCTAssertFalse(first.isLoading)
-        XCTAssertEqual(first.webView.scrollView.pinchGestureRecognizer?.isEnabled, false)
+        XCTAssertEqual(pages.resourceSources[first.module.id], .local)
+        XCTAssertTrue(ModulePageCache(defaults: defaults).resourceSources.isEmpty, "A previous refresh is not a current loaded page")
+        XCTAssertNotEqual(first.webView.scrollView.pinchGestureRecognizer?.isEnabled, true)
+        let successRecord = try XCTUnwrap(pages.reloadRecords[store.modules[0].id])
+        XCTAssertEqual(ModulePageCache(defaults: defaults).reloadRecords, pages.reloadRecords)
         let generation = first.generation
         store.blocked = [store.modules[1].id]
         pages.reloadAll(store: store)
         XCTAssertNotEqual(first.generation, generation)
-        XCTAssertEqual(pages.reloadMessages[store.modules[1].id], "refresh-beta：刷新失败，当前版本已被停用，请更新后重试。")
+        XCTAssertEqual(pages.reloadRecords[store.modules[0].id]?.completedAt, successRecord.completedAt)
+        XCTAssertEqual(ModulePageCache(defaults: defaults).reloadRecords[store.modules[0].id], successRecord, "In-flight refresh must not replace the saved completed result")
+        XCTAssertEqual(pages.reloadRecords[store.modules[1].id]?.state, .failed)
+        XCTAssertNotNil(pages.reloadRecords[store.modules[1].id]?.completedAt)
+        XCTAssertEqual(pages.reloadRecords[store.modules[1].id]?.message, "刷新失败，当前版本已被停用，请更新后重试。")
         first.runtime.onFailure("服务器无法连接")
-        XCTAssertEqual(pages.reloadMessages[store.modules[0].id], "refresh-alpha：本地资源重新加载失败：服务器无法连接")
+        let failedRecord = try XCTUnwrap(pages.reloadRecords[store.modules[0].id])
+        XCTAssertEqual(failedRecord.message, "本地资源重新加载失败：服务器无法连接")
+        XCTAssertEqual(failedRecord.state, .failed)
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(failedRecord.completedAt), try XCTUnwrap(successRecord.completedAt))
+        XCTAssertEqual(ModulePageCache(defaults: defaults).reloadRecords[store.modules[0].id], failedRecord)
         store.modules = []
         pages.reloadAll(store: store)
-        XCTAssertEqual(pages.reloadMessage, "暂无已安装的应用。")
+        XCTAssertEqual(pages.reloadRecords["empty"]?.message, "暂无已安装的应用。")
+        XCTAssertTrue(pages.resourceSources.isEmpty)
     }
     @MainActor func testReloadRecreatesWebViewAndClosesOldRuntime() throws {
         let module = Module(id: "reload-test", name: "Reload", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])

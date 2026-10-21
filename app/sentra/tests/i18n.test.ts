@@ -37,18 +37,18 @@ describe('app language', () => {
       window.dispatchEvent(new CustomEvent('lingrove:languagechange', { detail: { language } }));
     emit('en');
     await flushPromises();
-    expect(page.get('label[for=sentence]').text()).toBe('Your sentence');
+    expect(page.get('textarea').attributes('aria-label')).toBe('Your sentence');
     expect(page.get('textarea').element.value).toBe('設定 — original user input');
     expect(page.get('select').element.value).toBe('英语');
     expect(page.get('select option').text()).toBe('English');
     expect(document.documentElement.lang).toBe('en');
     emit('ja');
     await flushPromises();
-    expect(page.get('label[for=sentence]').text()).toBe('あなたの文');
+    expect(page.get('textarea').attributes('aria-label')).toBe('あなたの文');
     expect(page.get('select').element.value).toBe('英语');
     emit('zh-Hans');
     await flushPromises();
-    expect(page.get('label[for=sentence]').text()).toBe('你的句子');
+    expect(page.get('textarea').attributes('aria-label')).toBe('你的句子');
     page.unmount();
   });
   it('localizes variable messages and keeps arbitrary input intact', () => {

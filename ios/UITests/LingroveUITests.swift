@@ -22,7 +22,7 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(developerDetails.isHittable)
         developerDetails.tap()
         XCTAssertTrue(app.navigationBars["Sentra"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["来源"].exists)
+        XCTAssertTrue(app.staticTexts["安装来源"].exists)
         XCTAssertTrue(app.staticTexts["版本"].exists)
         XCTAssertTrue(app.staticTexts["文件名"].exists)
         XCTAssertFalse(app.staticTexts["更新日期"].exists)
@@ -51,7 +51,7 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["更新日期"].exists)
         XCTAssertTrue(app.staticTexts["应用介绍"].exists)
         XCTAssertFalse(app.staticTexts["开发模式"].exists)
-        XCTAssertFalse(app.staticTexts["来源"].exists)
+        XCTAssertFalse(app.staticTexts["安装来源"].exists)
         XCTAssertFalse(app.staticTexts["版本"].exists)
         XCTAssertFalse(app.staticTexts["文件名"].exists)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
@@ -479,6 +479,105 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(settings.waitForExistence(timeout: 20))
         settings.tap()
         XCTAssertTrue(app.webViews.staticTexts["学习偏好"].firstMatch.waitForExistence(timeout: 10))
+    }
+    func testSnapshotDetailsUseDownloadLabelsLightMode() { checkSnapshotDetailsLabels(appearance: "light") }
+    func testSnapshotDetailsUseDownloadLabelsDarkMode() { checkSnapshotDetailsLabels(appearance: "dark") }
+    private func checkSnapshotDetailsLabels(appearance: String) {
+        let app = XCUIApplication()
+        app.launchArguments += ["-app.appearance", appearance,
+                                "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))
+        app.buttons["应用设置"].tap()
+        let snapshotToggle = app.switches["snapshot-toggle"]
+        if snapshotToggle.value as? String == "1" { tapSwitch(snapshotToggle) }
+        tapSwitch(snapshotToggle)
+        XCTAssertEqual(snapshotToggle.value as? String, "1")
+        app.buttons["module-developer-details-sentra"].tap()
+        XCTAssertTrue(app.staticTexts["下载状态"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["最近下载时间"].exists)
+        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.label, "待加载来源")
+        let source = app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String ?? ""
+        XCTAssertTrue(["宿主内置", "快照下载", "Release 下载"].contains(source), "Unopened local pages should show their selected package source")
+        XCTAssertFalse(app.staticTexts["当前资源地址"].exists)
+        XCTAssertFalse(app.staticTexts["刷新状态"].exists)
+        XCTAssertFalse(app.staticTexts["最近刷新时间"].exists)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Snapshot-download-details-\(appearance)"; screenshot.lifetime = .keepAlways; add(screenshot)
+        app.navigationBars["Sentra"].buttons.firstMatch.tap()
+        tapSwitch(app.switches["snapshot-toggle"])
+        app.buttons["module-developer-details-sentra"].tap()
+        XCTAssertTrue(app.staticTexts["刷新状态"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["最近刷新时间"].exists)
+        XCTAssertFalse(app.staticTexts["下载状态"].exists)
+        XCTAssertFalse(app.staticTexts["最近下载时间"].exists)
+    }
+
+    func testRefreshStatusInSettingsLightMode() throws { try checkRefreshStatusInSettings(appearance: "light", fails: false) }
+    func testRefreshStatusInSettingsDarkMode() throws { try checkRefreshStatusInSettings(appearance: "dark", fails: true) }
+    private func checkRefreshStatusInSettings(appearance: String, fails: Bool) throws {
+        let app = XCUIApplication()
+        let listener = try NWListener(using: .tcp, on: .any)
+        let ready = expectation(description: "Resource server ready")
+        listener.stateUpdateHandler = { if case .ready = $0 { ready.fulfill() } }
+        listener.newConnectionHandler = { connection in
+            connection.start(queue: .global())
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { _, _, _, _ in
+                let body = "<html><body><script>window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})</script></body></html>"
+                let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
+                connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
+            }
+        }
+        listener.start(queue: .global())
+        defer { listener.cancel() }
+        wait(for: [ready], timeout: 5)
+        let port = fails ? 1 : Int(try XCTUnwrap(listener.port).rawValue)
+        let servers = "{\"addresses\":[{\"id\":\"test\",\"url\":\"http://127.0.0.1:\(port)\"}],\"activeID\":\"test\"}"
+        // UserDefaults parses argument values as property lists; quote the JSON as a string.
+        let serverArgument = String(data: try JSONSerialization.data(withJSONObject: servers, options: .fragmentsAllowed), encoding: .utf8)!
+        app.launchArguments += ["-resources.mode", "debug", "-debug.servers", serverArgument,
+                                "-app.appearance", appearance, "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        let refresh = app.buttons["重新加载子应用"]
+        XCTAssertTrue(refresh.waitForExistence(timeout: 20))
+        refresh.tap()
+        app.buttons["应用设置"].tap()
+        let expected = fails ? "刷新失败" : "刷新成功"
+        let resultRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "module-developer-details-", expected))
+        let allFinished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 4"), object: resultRows)
+        XCTAssertEqual(XCTWaiter.wait(for: [allFinished], timeout: 25), .completed)
+        XCTAssertFalse(app.staticTexts["debug-reload-feedback"].exists)
+        let listScreenshot = XCTAttachment(screenshot: app.screenshot())
+        listScreenshot.name = "Refresh-status-list-\(appearance)"; listScreenshot.lifetime = .keepAlways; add(listScreenshot)
+        let disappeared = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 0"), object: resultRows)
+        XCTAssertEqual(XCTWaiter.wait(for: [disappeared], timeout: 7), .completed)
+        XCTAssertTrue(app.buttons["module-developer-details-sentra"].exists)
+        XCTAssertFalse(app.staticTexts["尚未刷新"].exists)
+        let expiredScreenshot = XCTAttachment(screenshot: app.screenshot())
+        expiredScreenshot.name = "Refresh-status-hidden-\(appearance)"; expiredScreenshot.lifetime = .keepAlways; add(expiredScreenshot)
+        app.buttons["module-developer-details-sentra"].tap()
+        XCTAssertTrue(app.staticTexts["最近刷新时间"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["暂无记录"].exists)
+        let message = app.staticTexts["module-refresh-result"]
+        XCTAssertEqual(message.label, fails ? "服务器不可用，已加载本地资源" : "服务器资源刷新成功")
+        XCTAssertTrue(app.descendants(matching: .any)["module-resource-source"].firstMatch.exists)
+        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String, fails ? "宿主内置" : "调试服务器")
+        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.label, "实际来源")
+        XCTAssertEqual(app.staticTexts["当前资源地址"].exists, !fails)
+        let detailScreenshot = XCTAttachment(screenshot: app.screenshot())
+        detailScreenshot.name = "Refresh-time-details-\(appearance)"; detailScreenshot.lifetime = .keepAlways; add(detailScreenshot)
+        app.terminate(); app.launch()
+        app.buttons["应用设置"].tap()
+        XCTAssertFalse(app.buttons["module-developer-details-sentra"].label.contains(expected))
+        app.buttons["module-developer-details-sentra"].tap()
+        XCTAssertTrue(app.staticTexts["最近刷新时间"].exists)
+        XCTAssertFalse(app.staticTexts["暂无记录"].exists)
+        XCTAssertEqual(message.label, fails ? "服务器不可用，已加载本地资源" : "服务器资源刷新成功")
+        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.label, "待加载来源")
+        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String, "调试服务器")
+        XCTAssertTrue(app.staticTexts["待加载地址"].exists)
+        let pendingScreenshot = XCTAttachment(screenshot: app.screenshot())
+        pendingScreenshot.name = "Pending-resource-details-\(appearance)"; pendingScreenshot.lifetime = .keepAlways; add(pendingScreenshot)
     }
     func testHostModelConfigurationPersists() throws {
         let app = XCUIApplication()

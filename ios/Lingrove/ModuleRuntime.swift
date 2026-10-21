@@ -24,15 +24,66 @@ enum AppLanguage {
     }
 }
 
-enum ModuleReloadState: Equatable { case loading, succeeded, failed }
+enum ModuleResourceSource: Equatable {
+    case loading(URL?), debugServer(URL), local, failed
+
+    var isLoaded: Bool {
+        switch self {
+        case .debugServer, .local: return true
+        case .loading, .failed: return false
+        }
+    }
+
+    var remoteURL: URL? {
+        switch self {
+        case let .loading(address): return address
+        case let .debugServer(address): return address
+        case .local, .failed: return nil
+        }
+    }
+}
+
+enum ModuleReloadState: String, Codable { case loading, succeeded, failed }
+
+struct ModuleReloadRecord: Codable, Equatable {
+    let state: ModuleReloadState
+    let message: String
+    let completedAt: Date?
+
+    func listState(at date: Date) -> ModuleReloadState? {
+        if state == .loading { return .loading }
+        guard let completedAt, date < completedAt.addingTimeInterval(5) else { return nil }
+        return state
+    }
+}
 
 @MainActor final class ModulePageCache: ObservableObject {
     private var pages: [String: ModulePage] = [:]
-    @Published var reloadMessages: [String: String] = [:]
-    @Published private(set) var reloadStates: [String: ModuleReloadState] = [:]
-    var isReloading: Bool { pages.values.contains { $0.isReloading } }
-    var reloadMessage: String? {
-        reloadMessages.isEmpty ? nil : reloadMessages.keys.sorted().compactMap { reloadMessages[$0] }.joined(separator: "\n")
+    private static let historyKey = "modules.reloadHistory"
+    private let defaults: UserDefaults
+    private var completedRecords: [String: ModuleReloadRecord]
+    @Published private(set) var resourceSources: [String: ModuleResourceSource] = [:]
+    @Published private(set) var reloadRecords: [String: ModuleReloadRecord]
+    var reloadStates: [String: ModuleReloadState] { reloadRecords.mapValues(\.state) }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        let saved = defaults.data(forKey: Self.historyKey)
+            .flatMap { try? JSONDecoder().decode([String: ModuleReloadRecord].self, from: $0) } ?? [:]
+        completedRecords = saved
+        reloadRecords = saved
+    }
+
+    private func recordReload(_ id: String, message: String, state: ModuleReloadState) {
+        let record = ModuleReloadRecord(state: state, message: message,
+                                       completedAt: state == .loading ? completedRecords[id]?.completedAt : Date())
+        reloadRecords[id] = record
+        if state != .loading {
+            completedRecords[id] = record
+            if let data = try? JSONEncoder().encode(completedRecords) {
+                defaults.set(data, forKey: Self.historyKey)
+            }
+        }
     }
 
     func page(for module: Module, store: ModuleStore, refreshing: Bool = false) -> ModulePage {
@@ -47,8 +98,10 @@ enum ModuleReloadState: Equatable { case loading, succeeded, failed }
                               onFailure: { [weak store] _ in store?.clearLaunchMarker(module) },
                               onStartupFailure: { [weak store] in store?.rollback(module) },
                               onReloadResult: { [weak self] message, state in
-                                  self?.reloadMessages[module.id] = "\(module.name)：\(message)"
-                                  self?.reloadStates[module.id] = state
+                                  self?.recordReload(module.id, message: message, state: state)
+                              },
+                              onResourceSource: { [weak self] source in
+                                  self?.resourceSources[module.id] = source
                               },
                               refreshing: refreshing)
         pages[module.id] = page
@@ -65,17 +118,14 @@ enum ModuleReloadState: Equatable { case loading, succeeded, failed }
     }
 
     func reloadAll(store: ModuleStore) {
-        reloadMessages.removeAll()
-        reloadStates = Dictionary(uniqueKeysWithValues: store.modules.map { ($0.id, .loading) })
-        if store.modules.isEmpty { reloadStates["empty"] = .failed }
         reconcile(modules: store.modules, blocked: store.blocked)
-        if DebugServer.canRefresh && store.modules.isEmpty {
-            reloadMessages["empty"] = "暂无已安装的应用。"
-        }
+        reloadRecords = Dictionary(uniqueKeysWithValues: store.modules.map {
+            ($0.id, ModuleReloadRecord(state: .loading, message: "正在刷新…", completedAt: completedRecords[$0.id]?.completedAt))
+        })
+        if store.modules.isEmpty { recordReload("empty", message: "暂无已安装的应用。", state: .failed) }
         for module in store.modules {
             guard !store.blocked.contains(module.id) else {
-                reloadStates[module.id] = .failed
-                if DebugServer.canRefresh { reloadMessages[module.id] = "\(module.name)：刷新失败，当前版本已被停用，请更新后重试。" }
+                recordReload(module.id, message: "刷新失败，当前版本已被停用，请更新后重试。", state: .failed)
                 continue
             }
             _ = page(for: module, store: store, refreshing: true)
@@ -87,7 +137,10 @@ enum ModuleReloadState: Equatable { case loading, succeeded, failed }
             guard let page = pages[id] else { continue }
             if blocked.contains(id) || !modules.contains(where: { page.matches($0) }) {
                 pages.removeValue(forKey: id)?.close()
-                if reloadStates[id] == .loading { reloadStates[id] = .failed }
+                resourceSources.removeValue(forKey: id)
+                if reloadStates[id] == .loading {
+                    recordReload(id, message: "刷新已中断，应用已更新或停用，请重新刷新。", state: .failed)
+                }
             }
         }
     }
@@ -106,6 +159,7 @@ enum ModuleReloadState: Equatable { case loading, succeeded, failed }
     @Published var reloadMessage: String?
     private var awaitingReloadResult = false
     var isReloading: Bool { awaitingReloadResult }
+    private let onResourceSource: (ModuleResourceSource) -> Void
     private let onReloadResult: (String, ModuleReloadState) -> Void
 
     private func reportReload(_ message: String, state: ModuleReloadState = .loading) {
@@ -121,7 +175,8 @@ enum ModuleReloadState: Equatable { case loading, succeeded, failed }
     private var onFailure: (String) -> Void
     private var onStartupFailure: () -> Void
 
-    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, onStartupFailure: @escaping () -> Void = {}, onReloadResult: @escaping (String, ModuleReloadState) -> Void = { _, _ in }, refreshing: Bool = false) {
+    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, onStartupFailure: @escaping () -> Void = {}, onReloadResult: @escaping (String, ModuleReloadState) -> Void = { _, _ in }, onResourceSource: @escaping (ModuleResourceSource) -> Void = { _ in }, refreshing: Bool = false) {
+        self.onResourceSource = onResourceSource
         self.onReloadResult = onReloadResult
         self.module = module
         self.directory = directory
@@ -148,10 +203,12 @@ enum ModuleReloadState: Equatable { case loading, succeeded, failed }
     private func load(usingLocalFallback: Bool = false) {
         let remote = usingLocalFallback ? nil : DebugServer.entryURL(for: module)
         let loadGeneration = generation
+        onResourceSource(.loading(remote))
         runtime = Runtime(module: module, directory: directory,
                           onReady: { [weak self] in
                               guard let self, self.generation == loadGeneration else { return }
                               self.isLoading = false
+                              self.onResourceSource(remote.map(ModuleResourceSource.debugServer) ?? .local)
                               self.finishReload(usingLocalFallback ? "服务器不可用，已加载本地资源" : (remote == nil ? "本地资源重新加载成功" : "服务器资源刷新成功"), succeeded: !usingLocalFallback)
                               if remote == nil { self.onReady() }
                           },
@@ -166,6 +223,7 @@ enum ModuleReloadState: Equatable { case loading, succeeded, failed }
                                   self.load(usingLocalFallback: true)
                                   return
                               }
+                              self.onResourceSource(.failed)
                               self.failure = message
                               self.isLoading = false
                               self.finishReload((remote == nil ? "本地资源重新加载失败：" : "服务器资源刷新失败：") + message, succeeded: false)
@@ -319,12 +377,6 @@ struct ModuleScreen: View {
             .padding(.leading, 16)
             .padding(.top, 8)
         }
-        .overlay(alignment: .bottom) {
-            if DebugServer.available && resourceMode != .bundled, let message = page.reloadMessage {
-                ReloadFeedbackView(message: message, autoDismiss: !page.isReloading) { page.reloadMessage = nil }
-                    .padding(.horizontal, 16).padding(.bottom, 80)
-            }
-        }
         // This native edge stays above WebKit, including child dialogs and loading errors.
         // It never depends on JavaScript or the child-controlled Home visibility.
         .overlay(alignment: .leading) {
@@ -380,29 +432,6 @@ private final class ModuleExitEdgeView: UIView {
         return true
     }
 }
-struct ReloadFeedbackView: View {
-    let message: String
-    var autoDismiss = true
-    let dismiss: () -> Void
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Text(message).font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityIdentifier("debug-reload-feedback")
-            Button(action: dismiss) { Image(systemName: "xmark") }
-                .accessibilityLabel("关闭刷新提示")
-        }
-        .padding(16)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-        .task(id: autoDismiss ? message : nil) {
-            guard autoDismiss else { return }
-            do { try await Task.sleep(for: .seconds(3)) }
-            catch { return }
-            guard !Task.isCancelled else { return }
-            dismiss()
-        }
-    }
-}
-
 struct ModuleWebView: UIViewRepresentable {
     let page: ModulePage
     func makeCoordinator() -> ModulePage { page }

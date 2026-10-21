@@ -6882,5 +6882,117 @@
   "已折叠": {
     "en": "Collapsed",
     "ja": "折りたたみ中"
+  },
+  "刷新成功": {
+    "en": "Refresh succeeded",
+    "ja": "更新成功"
+  },
+  "刷新失败": {
+    "en": "Refresh failed",
+    "ja": "更新失敗"
+  },
+  "尚未刷新": {
+    "en": "Not refreshed yet",
+    "ja": "未更新"
+  },
+  "刷新状态": {
+    "en": "Refresh status",
+    "ja": "更新状態"
+  },
+  "最近刷新时间": {
+    "en": "Last refresh time",
+    "ja": "最終更新日時"
+  },
+  "刷新已中断，应用已更新或停用，请重新刷新。": {
+    "en": "Refresh was interrupted because the app was updated or disabled. Refresh again.",
+    "ja": "アプリが更新または無効化されたため、更新が中断されました。もう一度更新してください。"
+  },
+  "以上为本机安装包的信息。调试资源的加载情况见刷新状态。": {
+    "en": "The information above describes the installed package. Check the refresh status for debug resource loading results.",
+    "ja": "上記はインストール済みパッケージの情報です。デバッグリソースの読み込み結果は更新状態をご確認ください。"
+  },
+  "待加载来源": {
+    "en": "Pending source",
+    "ja": "読み込み予定の取得元"
+  },
+  "实际来源": {
+    "en": "Actual source",
+    "ja": "実際の取得元"
+  },
+  "待加载地址": {
+    "en": "Pending resource URL",
+    "ja": "読み込み予定のURL"
+  },
+  "当前资源来源": {
+    "en": "Current resource source",
+    "ja": "現在のリソースの取得元"
+  },
+  "当前资源地址": {
+    "en": "Current resource URL",
+    "ja": "現在のリソースのURL"
+  },
+  "本机安装包": {
+    "en": "Installed package",
+    "ja": "インストール済みパッケージ"
+  },
+  "安装来源": {
+    "en": "Installation source",
+    "ja": "インストール元"
+  },
+  "尚未加载": {
+    "en": "Not loaded yet",
+    "ja": "未読み込み"
+  },
+  "加载失败": {
+    "en": "Loading failed",
+    "ja": "読み込み失敗"
+  },
+  "调试服务器": {
+    "en": "Debug server",
+    "ja": "デバッグサーバー"
+  },
+  "下载状态": {
+    "en": "Download status",
+    "ja": "ダウンロード状態"
+  },
+  "最近下载时间": {
+    "en": "Last download time",
+    "ja": "最終ダウンロード日時"
+  },
+  "正在下载…": {
+    "en": "Downloading…",
+    "ja": "ダウンロード中…"
+  },
+  "下载成功": {
+    "en": "Download succeeded",
+    "ja": "ダウンロード成功"
+  },
+  "下载失败": {
+    "en": "Download failed",
+    "ja": "ダウンロード失敗"
+  },
+  "暂未下载": {
+    "en": "Download deferred",
+    "ja": "ダウンロード保留"
+  },
+  "已下载": {
+    "en": "Downloaded",
+    "ja": "ダウンロード済み"
+  },
+  "尚未下载": {
+    "en": "Not downloaded yet",
+    "ja": "未ダウンロード"
+  },
+  "更新目录中暂无此应用": {
+    "en": "This app is not in the update catalog.",
+    "ja": "更新カタログにこのアプリはありません。"
+  },
+  "等待下载…": {
+    "en": "Waiting to download…",
+    "ja": "ダウンロード待ち…"
+  },
+  "已是最新版本": {
+    "en": "Already up to date",
+    "ja": "最新バージョンです"
   }
 }

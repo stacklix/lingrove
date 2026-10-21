@@ -2,6 +2,12 @@ import Foundation
 import CryptoKit
 import Combine
 
+private enum ModuleTransferTimeout {
+    static let catalog: TimeInterval = 60
+    static let package: TimeInterval = 5 * 60
+    static let resource: TimeInterval = 15 * 60
+}
+
 final class NoRedirect: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) { completionHandler(nil) }
 }
@@ -127,7 +133,10 @@ private final class ModuleDownloadSession: @unchecked Sendable {
     init(configuration: URLSessionConfiguration) {
         let dispatcher = ModuleDownloadDispatcher()
         self.dispatcher = dispatcher
-        session = URLSession(configuration: configuration, delegate: dispatcher, delegateQueue: nil)
+        let transferConfiguration = configuration.copy() as! URLSessionConfiguration
+        transferConfiguration.timeoutIntervalForRequest = ModuleTransferTimeout.package
+        transferConfiguration.timeoutIntervalForResource = ModuleTransferTimeout.resource
+        session = URLSession(configuration: transferConfiguration, delegate: dispatcher, delegateQueue: nil)
     }
 
     deinit { session.invalidateAndCancel() }
@@ -183,6 +192,22 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         transfer(for: task.taskIdentifier, removing: true)?.urlSession(session, task: task, didCompleteWithError: error)
     }
 }
+enum ModuleDownloadState: String, Codable {
+    case checking, waiting, downloading, succeeded, failed, unchanged, deferred
+
+    var isInProgress: Bool { self == .checking || self == .waiting || self == .downloading }
+}
+
+struct ModuleDownloadRecord: Codable, Equatable {
+    let state: ModuleDownloadState
+    let message: String
+    let completedAt: Date?
+
+    func isVisible(at date: Date) -> Bool {
+        state.isInProgress || completedAt.map { date < $0.addingTimeInterval(5) } == true
+    }
+}
+
 @MainActor final class ModuleStore: ObservableObject {
     static let displayOrderKey = "modules.displayOrder"
     private static let maxConcurrentDownloads = 3
@@ -197,6 +222,8 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
     @Published var modules: [Module] = []
     @Published var checking = false
     @Published var statuses: [String: String] = [:]
+    @Published private(set) var downloadRecords: [String: ModuleDownloadRecord] = [:]
+    private var completedDownloads: [String: ModuleDownloadRecord] = [:]
     @Published var downloadProgress: [String: Double] = [:]
     @Published var notice = ""
     @Published var blocked = Set<String>()
@@ -213,6 +240,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
     private let session: ModuleDownloadSession
     private let builtinRoot: URL?
     private let defaults: UserDefaults
+    private var downloadHistoryURL: URL { root.appendingPathComponent("snapshot-download-history.json") }
     private var registryURL: URL { root.appendingPathComponent("registry.json") }
     init(root: URL? = nil, config: HostConfiguration = .bundled, session: URLSession? = nil, builtinRoot: URL? = nil, defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -222,6 +250,8 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         self.root = root ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lingrove")
         do {
             try FileManager.default.createDirectory(at: self.root, withIntermediateDirectories: true)
+            completedDownloads = (try? JSONDecoder().decode([String: ModuleDownloadRecord].self, from: Data(contentsOf: downloadHistoryURL))) ?? [:]
+            downloadRecords = completedDownloads
             if let builtinRoot = self.builtinRoot, let dirs = try? FileManager.default.contentsOfDirectory(at: builtinRoot, includingPropertiesForKeys: nil) {
                 for directory in dirs { if let data = try? Data(contentsOf: directory.appendingPathComponent("manifest.json")), let module = try? JSONDecoder().decode(Module.self, from: data) { try module.validate(); builtins[module.id] = module } }
             }
@@ -280,9 +310,28 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         statuses.removeAll()
         downloadProgress.removeAll()
         downloadStatusOwners.removeAll()
+        downloadRecords = completedDownloads
         if registryReadable { notice = "" }
         refresh()
     }
+    private func recordDownload(_ moduleID: String, state: ModuleDownloadState, message: String) {
+        guard HostConfiguration.usesSnapshot(defaults: defaults) else { return }
+        let record = ModuleDownloadRecord(state: state, message: message, completedAt: state.isInProgress ? nil : Date())
+        downloadRecords[moduleID] = record
+        if !state.isInProgress {
+            completedDownloads[moduleID] = record
+            if let data = try? JSONEncoder().encode(completedDownloads) {
+                try? data.write(to: downloadHistoryURL, options: .atomic)
+            }
+        }
+    }
+
+    private func finishPendingDownloadChecks(state: ModuleDownloadState, message: String) {
+        for (moduleID, record) in downloadRecords where record.state == .checking {
+            recordDownload(moduleID, state: state, message: message)
+        }
+    }
+
     func setDisplayOrder(_ ids: [String]) {
         var seen = Set<String>()
         let available = Set(modules.map(\.id))
@@ -335,13 +384,14 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
     nonisolated private static func fetch(session: ModuleDownloadSession, url: URL, limit: Int, forceRefresh: Bool = false,
+                                          timeout: TimeInterval = ModuleTransferTimeout.catalog,
                                           onProgress: (@Sendable (Int) -> Void)? = nil) async throws -> Data {
         guard NetworkPolicy.origin(url.absoluteString) != nil else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         if forceRefresh { components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "_refresh", value: UUID().uuidString)] }
         var request = URLRequest(url: components.url!)
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
-        request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = timeout; request.cachePolicy = .reloadIgnoringLocalCacheData
         return try await session.download(request: request, limit: limit, onProgress: onProgress)
     }
     @discardableResult func checkForUpdates(forceSnapshot: Bool = false) async -> Bool {
@@ -371,8 +421,14 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         guard updateID == id else { return false }
         statuses.removeAll()
         downloadProgress.removeAll()
+        downloadRecords = completedDownloads
+        for module in modules { recordDownload(module.id, state: .checking, message: "正在检查更新…") }
         let catalogURL = config.updateCatalogURL(defaults: defaults)
-        guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return false }
+        guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else {
+            notice = "当前使用内置模块；尚未配置更新目录。"
+            finishPendingDownloadChecks(state: .failed, message: notice)
+            return false
+        }
         do {
             let catalogData = try await Self.fetch(session: session, url: url, limit: 1024 * 1024, forceRefresh: forceSnapshot)
             let catalog = try JSONDecoder().decode(Catalog.self, from: catalogData)
@@ -390,19 +446,24 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                     installed.minimumAllowedVersion = remote.minimumAllowedVersion; registry[remote.id] = installed
                     try persist()
                 }
-                guard Version(remote.minHostVersion)! <= Version(HostConfiguration.currentVersion)! else { statuses[remote.id] = "请更新 Lingrove 后使用新版"; complete = false; continue }
+                guard Version(remote.minHostVersion)! <= Version(HostConfiguration.currentVersion)! else { statuses[remote.id] = "请更新 Lingrove 后使用新版"; recordDownload(remote.id, state: .deferred, message: statuses[remote.id]!); complete = false; continue }
                 if let current = modules.first(where: { $0.id == remote.id }), current.isSnapshot == remote.isSnapshot && (remote.isSnapshot
                     ? current.sha256 == remote.sha256
-                    : (ModuleVersion(current.version)! > ModuleVersion(remote.version)! || (current.version == remote.version && current.sha256 == remote.sha256))) { statuses[remote.id] = "已是最新版本"; continue }
-                guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; complete = false; continue }
-                if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; complete = false; continue }
+                    : (ModuleVersion(current.version)! > ModuleVersion(remote.version)! || (current.version == remote.version && current.sha256 == remote.sha256))) { statuses[remote.id] = "已是最新版本"; recordDownload(remote.id, state: .unchanged, message: "已是最新版本"); continue }
+                guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; recordDownload(remote.id, state: .deferred, message: statuses[remote.id]!); complete = false; continue }
+                if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; recordDownload(remote.id, state: .deferred, message: statuses[remote.id]!); complete = false; continue }
+                recordDownload(remote.id, state: .waiting, message: "等待下载…")
                 pending.append(remote)
             }
             let installed = await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot, id: id)
+            if !Task.isCancelled && updateID == id {
+                finishPendingDownloadChecks(state: .deferred, message: "更新目录中暂无此应用")
+            }
             return complete && installed && !Task.isCancelled && updateID == id
         } catch {
             if Task.isCancelled || updateID != id { return false }
             notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)"
+            finishPendingDownloadChecks(state: .failed, message: notice)
             return false
         }
     }
@@ -429,6 +490,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                 let module = modules[nextIndex]
                 nextIndex += 1
                 statuses[module.id] = "正在下载 \(module.version)…"
+                recordDownload(module.id, state: .downloading, message: "正在下载…")
                 downloadProgress[module.id] = 0
                 downloadStatusOwners[module.id] = id
                 group.addTask {
@@ -439,7 +501,8 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                         return (module, .failure(ModuleError.invalid("下载元数据无效")))
                     }
                     do {
-                        let data = try await Self.fetch(session: session, url: url, limit: size, forceRefresh: forceRefresh) { received in
+                        let data = try await Self.fetch(session: session, url: url, limit: size, forceRefresh: forceRefresh,
+                                                        timeout: ModuleTransferTimeout.package) { received in
                             Task { @MainActor [weak self] in
                                 guard let self, self.updateID == id,
                                       self.downloadStatusOwners[module.id] == id,
@@ -471,19 +534,23 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                     break downloadLoop
                 }
                 let status: String
+                let downloadState: ModuleDownloadState
                 switch result {
                 case .success(let data):
                     do {
                         let installed = try install(module, data: data, catalogURL: catalogURL)
                         succeeded = succeeded && installed
                         status = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
+                        downloadState = installed ? .succeeded : .deferred
                     } catch {
                         succeeded = false
                         status = "更新失败，保留本地版本：\(error.localizedDescription)"
+                        downloadState = .failed
                     }
                 case .failure(let error):
                     succeeded = false
                     status = "更新失败，保留本地版本：\(error.localizedDescription)"
+                    downloadState = .failed
                 }
                 if isSuperseded() {
                     succeeded = false
@@ -491,6 +558,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                     break downloadLoop
                 }
                 statuses[module.id] = status
+                recordDownload(module.id, state: downloadState, message: downloadState == .succeeded ? "下载成功" : status)
                 downloadProgress.removeValue(forKey: module.id)
                 downloadStatusOwners.removeValue(forKey: module.id)
                 addNext()

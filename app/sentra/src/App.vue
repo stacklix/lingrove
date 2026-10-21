@@ -312,11 +312,9 @@ async function removeSentence(s: Sentence) {
       <Transition name="page-switch" mode="out-in">
         <main :key="active" class="workspace">
           <section class="input-column">
-            <div class="section-label">YOUR DAILY LANGUAGE SPACE</div>
             <div class="editor">
               <div class="card-top">
-                <label for="sentence">{{ t('你的句子') }}</label
-                ><CopyButton :text="tab.text" :disabled="!tab.text" />
+                <CopyButton :text="tab.text" :disabled="!tab.text" />
               </div>
               <textarea
                 id="sentence"
@@ -324,7 +322,7 @@ async function removeSentence(s: Sentence) {
                 v-model="tab.text"
                 :disabled="tab.busy"
                 maxlength="4000"
-                :placeholder="t('输入想理解或表达的一句话…')"
+                :aria-label="t('你的句子')"
                 enterkeyhint="done"
                 @compositionstart="composing = true"
                 @compositionend="composing = false"
@@ -365,19 +363,13 @@ async function removeSentence(s: Sentence) {
                 :disabled="!tab.text.trim() || !loaded || !historyWritable"
                 @click="run"
               >
-                {{ t(actionLabels[active][tab.result ? 1 : 0]) }} <span>↗</span>
+                {{ t(actionLabels[active][tab.result ? 1 : 0]) }}
               </button>
-            </div>
-            <div class="quiet-note">
-              <span class="dot"></span
-              >{{ t(isNative() ? '记录保存在这台设备' : '记录保存在当前浏览器') }}
-              <p>{{ t('每天一句，让语言慢慢成为你的习惯。') }}</p>
             </div>
           </section>
           <section class="output-column" :aria-label="t('学习结果')" aria-live="polite">
-            <div class="card-top output-heading">
-              <span class="section-label">{{ t('学习笔记') }}</span
-              ><span v-if="tab.busy" class="generating"
+            <div v-if="tab.busy || tab.result" class="card-top output-heading">
+              <span v-if="tab.busy" class="generating"
                 >● {{ t(tab.progress ? '正在生成' : '正在连接') }} ·
                 {{ t(formatLLMStatus(tab.requestStatus)) }}</span
               ><CopyButton

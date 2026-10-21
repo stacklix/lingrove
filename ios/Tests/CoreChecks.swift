@@ -271,10 +271,22 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
             MockProtocol.responses["/module-snapshot.zip"] = (200, bytes)
         }
         try offerSnapshot("snapshot.zip")
+        var initialDownloadRequests: [URLRequest] = []
+        MockProtocol.intercept = { request in initialDownloadRequests.append(request.request); return false }
         await channelStore.checkForUpdates()
+        MockProtocol.intercept = nil
+        check(initialDownloadRequests.first { $0.url?.path == "/catalog.snapshot.json" }?.timeoutInterval == 60, "catalog requests allow one minute without a response")
+        check(initialDownloadRequests.first { $0.url?.path == "/module-snapshot.zip" }?.timeoutInterval == 300, "package requests allow five minutes without a response")
         check(channelStore.modules.first?.resourceIdentity == snapshot.resourceIdentity, "Snapshot installs")
         let firstSnapshot = snapshot
+        let firstDownloadTime = channelStore.lastUpdatedAt(for: snapshot)
+        check(firstDownloadTime != nil && channelStore.downloadRecords[snapshot.id]?.state == .succeeded, "Snapshot records actual successful download and install time")
+        let firstDownloadRecord = channelStore.downloadRecords[snapshot.id]!
+        check(firstDownloadRecord.isVisible(at: firstDownloadRecord.completedAt!.addingTimeInterval(4.999)), "download result is visible for five seconds")
+        check(!firstDownloadRecord.isVisible(at: firstDownloadRecord.completedAt!.addingTimeInterval(5)), "download result expires after five seconds")
         channelStore.markHealthy(snapshot)
+        let restoredDownloads = ModuleStore(root: fixtures.appendingPathComponent("channels"), config: channelConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
+        check(restoredDownloads.downloadRecords[snapshot.id] == firstDownloadRecord, "download history survives restart independently of page refreshes")
         var forcedRequests: [URLRequest] = []
         MockProtocol.intercept = { request in
             forcedRequests.append(request.request)
@@ -282,6 +294,8 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         }
         await channelStore.checkForUpdates()
         check(forcedRequests.count == 1, "ordinary check skips identical Snapshot package")
+        check(channelStore.downloadRecords[snapshot.id]?.state == .unchanged, "identical Snapshot reports up to date instead of a new download")
+        check(channelStore.lastUpdatedAt(for: snapshot) == firstDownloadTime, "checking without downloading preserves the download time")
         forcedRequests.removeAll()
         await channelStore.checkForUpdates(forceSnapshot: true)
         check(forcedRequests.count == 1 && forcedRequests.first?.url?.path == "/catalog.snapshot.json", "forced Snapshot refresh fetches catalog but skips identical package")
@@ -302,6 +316,15 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(!channelStore.checking && channelStore.notice.isEmpty, "forced Snapshot refresh supersedes a pending background check")
         MockProtocol.intercept = nil
         channelStore.markHealthy(snapshot)
+        MockProtocol.responses["/catalog.snapshot.json"] = (503, Data())
+        await channelStore.checkForUpdates()
+        check(channelStore.downloadRecords[snapshot.id]?.state == .failed, "catalog failure is reported per application")
+        check(channelStore.lastUpdatedAt(for: snapshot) == firstDownloadTime, "catalog failure preserves installed download time")
+        try offerSnapshot("snapshot-next.zip")
+        MockProtocol.responses["/module-snapshot.zip"] = (503, Data())
+        await channelStore.checkForUpdates()
+        check(channelStore.downloadRecords[snapshot.id]?.state == .failed, "failed ZIP download stays failed despite available local resources")
+        check(channelStore.lastUpdatedAt(for: firstSnapshot) == firstDownloadTime, "failed ZIP download does not change installed download time")
         try offerSnapshot("snapshot-next.zip")
         await channelStore.checkForUpdates()
         check(channelStore.modules.first?.resourceIdentity == snapshot.resourceIdentity, "same-version Snapshot updates by hash")
@@ -322,6 +345,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(channelStore.modules.first?.resourceIdentity == bundledModule.resourceIdentity, "disabling Snapshot immediately selects the bundled module")
         check(channelStore.directory(for: firstSnapshot) == fixtures.appendingPathComponent("builtin/sentra"), "even a stale Snapshot reference resolves to bundled HTML when disabled")
         check(!channelStore.isDownloaded(bundledModule) && channelStore.blocked.isEmpty, "bundled mode ignores downloaded resources and remote minimum versions")
+        check(channelStore.downloadRecords.values.allSatisfy { !$0.state.isInProgress }, "mode switches do not leave downloads in progress")
         let restartedBundled = ModuleStore(root: fixtures.appendingPathComponent("channels"), config: channelConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
         check(restartedBundled.modules.first?.resourceIdentity == bundledModule.resourceIdentity, "bundled mode survives host restart with a saved Snapshot registry")
         let disabledReleaseStore = ModuleStore(root: root, config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)

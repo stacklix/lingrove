@@ -214,8 +214,8 @@ struct HomeView: View {
                                     Text("选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。")
                                         .font(.footnote).foregroundStyle(.secondary)
                                 }
-                                if let message = pages.reloadMessage {
-                                    ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }
+                                if snapshotEnabled && !store.notice.isEmpty {
+                                    Text(store.notice).font(.footnote).foregroundStyle(.secondary)
                                 }
                             }
                         }
@@ -223,11 +223,22 @@ struct HomeView: View {
                         Section {
                             ForEach(store.modules) { module in
                                 NavigationLink {
-                                    ModuleDeveloperDetailsView(store: store, moduleID: module.id)
+                                    ModuleDeveloperDetailsView(store: store, pages: pages, moduleID: module.id)
                                         .environment(\.editMode, .constant(.inactive))
                                 } label: {
-                                    Text(module.name)
+                                    HStack(spacing: 12) {
+                                        Text(module.name)
+                                        Spacer(minLength: 8)
+                                        if snapshotEnabled {
+                                            ModuleListDownloadStatusView(record: store.downloadRecords[module.id], progress: store.downloadProgress[module.id])
+                                                .accessibilityIdentifier("module-download-status-\(module.id)")
+                                        } else {
+                                            ModuleListReloadStatusView(record: pages.reloadRecords[module.id])
+                                                .accessibilityIdentifier("module-refresh-status-\(module.id)")
+                                        }
+                                    }
                                 }
+                                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
                                 .accessibilityIdentifier("module-developer-details-\(module.id)")
                             }
                         }
@@ -340,9 +351,6 @@ struct HomeView: View {
             if snapshotEnabled { updateCheckSucceeded = await store.checkForUpdates(forceSnapshot: true) }
             waitingForReloadResults = true
             pages.reloadAll(store: store)
-            if snapshotEnabled && !store.notice.isEmpty {
-                pages.reloadMessages["updates"] = store.notice
-            }
             finishRefreshIfNeeded()
         }
     }
@@ -632,28 +640,193 @@ struct ModuleDetailsView: View {
 }
 
 #if DEBUG
+struct ModuleDownloadStatusView: View {
+    let state: ModuleDownloadState?
+    var progress: Double? = nil
+    var installed = false
+
+    var body: some View {
+        HStack(spacing: 5) {
+            switch state {
+            case .checking:
+                ProgressView().controlSize(.small)
+                Text("正在检查更新…")
+            case .waiting:
+                Text("等待下载…")
+            case .downloading:
+                ProgressView().controlSize(.small)
+                Text("正在下载…")
+                if let progress { Text(progress, format: .percent.precision(.fractionLength(0))).monospacedDigit() }
+            case .succeeded:
+                Label("下载成功", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+            case .failed:
+                Label("下载失败", systemImage: "exclamationmark.circle.fill").foregroundStyle(.red)
+            case .unchanged:
+                Text("已是最新版本")
+            case .deferred:
+                Text("暂未下载")
+            case nil:
+                Text(AppLanguage.text(installed ? "已下载" : "尚未下载"))
+            }
+        }
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+struct ModuleListDownloadStatusView: View {
+    let record: ModuleDownloadRecord?
+    let progress: Double?
+    @State private var expiredRecord: ModuleDownloadRecord?
+
+    var body: some View {
+        if let record, record != expiredRecord, record.isVisible(at: Date()) {
+            ModuleDownloadStatusView(state: record.state, progress: progress)
+                .task(id: record) {
+                    guard !record.state.isInProgress, let completedAt = record.completedAt else { return }
+                    do {
+                        try await Task.sleep(for: .seconds(max(0, completedAt.timeIntervalSinceNow + 5)))
+                        guard !Task.isCancelled else { return }
+                        expiredRecord = record
+                    } catch { }
+                }
+        }
+    }
+}
+
+struct ModuleListReloadStatusView: View {
+    let record: ModuleReloadRecord?
+    @State private var expiredRecord: ModuleReloadRecord?
+
+    var body: some View {
+        Group {
+            if let record, record != expiredRecord, let state = record.listState(at: Date()) {
+                ModuleReloadStatusView(state: state)
+                    .task(id: record) {
+                        guard state != .loading, let completedAt = record.completedAt else { return }
+                        do {
+                            try await Task.sleep(for: .seconds(max(0, completedAt.timeIntervalSinceNow + 5)))
+                            guard !Task.isCancelled else { return }
+                            expiredRecord = record
+                        } catch {
+                            // A new refresh or leaving the list cancels the previous countdown.
+                        }
+                    }
+            }
+        }
+    }
+}
+
+struct ModuleReloadStatusView: View {
+    let state: ModuleReloadState?
+
+    var body: some View {
+        HStack(spacing: 5) {
+            switch state {
+            case .loading:
+                ProgressView().controlSize(.small)
+                Text("正在刷新…")
+            case .succeeded:
+                Label("刷新成功", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+            case .failed:
+                Label("刷新失败", systemImage: "exclamationmark.circle.fill").foregroundStyle(.red)
+            case nil:
+                Text("尚未刷新")
+            }
+        }
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+    }
+}
+
 struct ModuleDeveloperDetailsView: View {
     @ObservedObject var store: ModuleStore
+    @ObservedObject var pages: ModulePageCache
+    @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
     let moduleID: String
     private var module: Module? { store.modules.first { $0.id == moduleID } }
+
+    private func installedSource(_ module: Module) -> String {
+        store.isDownloaded(module) ? (module.isSnapshot ? "快照下载" : "Release 下载") : "宿主内置"
+    }
+
+    private func resourceSource(_ module: Module) -> ModuleResourceSource {
+        switch pages.resourceSources[moduleID] {
+        case nil, .failed:
+            // Use the same target as the next load; no page has finished loading.
+            return .loading(DebugServer.entryURL(for: module))
+        case let source?: return source
+        }
+    }
 
     var body: some View {
         Form {
             if let module {
+                if resourceMode == .snapshot {
+                    Section {
+                        HStack(spacing: 12) {
+                            Text("下载状态")
+                            Spacer(minLength: 8)
+                            ModuleDownloadStatusView(state: store.downloadRecords[moduleID]?.state,
+                                                     progress: store.downloadProgress[moduleID],
+                                                     installed: module.isSnapshot && store.isDownloaded(module))
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                        ModuleInformationRow(title: "最近下载时间", value: (module.isSnapshot ? store.lastUpdatedAt(for: module) : nil).map {
+                            $0.formatted(Date.FormatStyle(date: .abbreviated, time: .standard).locale(Locale(identifier: AppLanguage.current)))
+                        } ?? AppLanguage.text("暂无记录"))
+                        .accessibilityIdentifier("module-download-time")
+                        if let record = store.downloadRecords[moduleID],
+                           record.state == .failed || record.state == .deferred {
+                            Text(AppLanguage.text(record.message))
+                                .font(.footnote).foregroundStyle(.secondary)
+                                .accessibilityIdentifier("module-download-result")
+                        }
+                    }
+                } else {
+                    Section {
+                        HStack(spacing: 12) {
+                            Text("刷新状态")
+                            Spacer(minLength: 8)
+                            ModuleReloadStatusView(state: pages.reloadRecords[moduleID]?.state)
+                        }
+                        .fixedSize(horizontal: false, vertical: true)
+                        .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                        ModuleInformationRow(title: "最近刷新时间", value: pages.reloadRecords[moduleID]?.completedAt.map {
+                            $0.formatted(Date.FormatStyle(date: .abbreviated, time: .standard).locale(Locale(identifier: AppLanguage.current)))
+                        } ?? AppLanguage.text("暂无记录"))
+                        .accessibilityIdentifier("module-refresh-time")
+                        if let record = pages.reloadRecords[moduleID] {
+                            Text(AppLanguage.text(record.message))
+                                .font(.footnote).foregroundStyle(.secondary)
+                                .accessibilityIdentifier("module-refresh-result")
+                        }
+                    }
+                }
                 Section {
-                    LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
-                        ? (module.isSnapshot ? "快照下载" : "Release 下载") : "宿主内置"))
+                    let source = resourceSource(module)
+                    let title = source.isLoaded ? "实际来源" : "待加载来源"
+                    let value = source.remoteURL == nil ? installedSource(module) : "调试服务器"
+                    LabeledContent(AppLanguage.text(title), value: AppLanguage.text(value))
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(Text(verbatim: AppLanguage.text(title)))
+                        .accessibilityValue(Text(verbatim: AppLanguage.text(value)))
+                        .accessibilityIdentifier("module-resource-source")
+                    if let address = source.remoteURL {
+                        ModuleInformationRow(title: source.isLoaded ? "当前资源地址" : "待加载地址", value: address.absoluteString)
+                    }
+                }
+                Section("本机安装包") {
+                    LabeledContent("安装来源", value: AppLanguage.text(installedSource(module)))
                     ModuleInformationRow(title: "版本", value: module.version)
                     ModuleInformationRow(title: "文件名", value: store.isDownloaded(module)
                         ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
                         : module.entry)
                     if store.isDownloaded(module), let address = module.downloadUrl {
                         ModuleInformationRow(title: "下载地址", value: address)
-                    }
-                    if let serverURL = DebugServer.entryURL(for: module) {
-                        ModuleInformationRow(title: "调试服务器地址", value: serverURL.absoluteString)
-                        Text("调试模式正在使用服务器资源，以上为本机安装包的信息。")
-                            .font(.footnote).foregroundStyle(.secondary)
                     }
                 }
             } else {
