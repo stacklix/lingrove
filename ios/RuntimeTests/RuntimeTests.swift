@@ -236,10 +236,13 @@ final class RuntimeTests: XCTestCase {
         }
     }
     @MainActor func testDebugReloadReportsReadyAndFailureOnlyAfterReload() throws {
-        try XCTSkipUnless(DebugServer.enabled)
+        let originalEnabled = UserDefaults.standard.object(forKey: DebugServer.enabledPreferenceKey)
+        UserDefaults.standard.set(true, forKey: DebugServer.enabledPreferenceKey)
+        defer { UserDefaults.standard.set(originalEnabled, forKey: DebugServer.enabledPreferenceKey) }
         let module = Module(id: "feedback-test", name: "Feedback", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         var messages: [String] = []
-        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in }, onReloadResult: { messages.append($0) })
+        var states: [ModuleReloadState] = []
+        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in }, onReloadResult: { message, state in messages.append(message); states.append(state) })
         defer { page.close() }
         XCTAssertTrue(page.isLoading)
         XCTAssertNotEqual(page.webView.scrollView.pinchGestureRecognizer?.isEnabled, true)
@@ -263,6 +266,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertFalse(page.isLoading)
         XCTAssertEqual(page.reloadMessage, "本地资源重新加载失败：服务器无法连接")
         XCTAssertEqual(messages.count, 4)
+        XCTAssertEqual(states, [.loading, .succeeded, .loading, .failed])
         page.reload()
         XCTAssertEqual(page.reloadMessage, "正在刷新…")
         page.runtime.onReady()

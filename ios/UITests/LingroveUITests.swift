@@ -362,6 +362,11 @@ final class LingroveUITests: XCTestCase {
         app.buttons["重新加载子应用"].tap()
         let hostSuccess = app.staticTexts["Sentra：本地资源重新加载成功"]
         XCTAssertFalse(hostSuccess.exists)
+        let successButton = app.buttons["module-refresh-success"]
+        XCTAssertTrue(successButton.waitForExistence(timeout: 25))
+        let restored = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: successButton)
+        XCTAssertEqual(XCTWaiter.wait(for: [restored], timeout: 5), .completed)
+        XCTAssertTrue(app.buttons["module-refresh"].exists)
         entry.tap()
         let settings = app.webViews.buttons["设置"]
         XCTAssertTrue(settings.waitForExistence(timeout: 20))

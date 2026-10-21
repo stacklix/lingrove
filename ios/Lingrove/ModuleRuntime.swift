@@ -24,9 +24,12 @@ enum AppLanguage {
     }
 }
 
+enum ModuleReloadState: Equatable { case loading, succeeded, failed }
+
 @MainActor final class ModulePageCache: ObservableObject {
     private var pages: [String: ModulePage] = [:]
     @Published var reloadMessages: [String: String] = [:]
+    @Published private(set) var reloadStates: [String: ModuleReloadState] = [:]
     var isReloading: Bool { pages.values.contains { $0.isReloading } }
     var reloadMessage: String? {
         reloadMessages.isEmpty ? nil : reloadMessages.keys.sorted().compactMap { reloadMessages[$0] }.joined(separator: "\n")
@@ -43,7 +46,10 @@ enum AppLanguage {
                               onReady: { [weak store] in store?.markHealthy(module) },
                               onFailure: { [weak store] _ in store?.clearLaunchMarker(module) },
                               onStartupFailure: { [weak store] in store?.rollback(module) },
-                              onReloadResult: { [weak self] message in self?.reloadMessages[module.id] = "\(module.name)：\(message)" },
+                              onReloadResult: { [weak self] message, state in
+                                  self?.reloadMessages[module.id] = "\(module.name)：\(message)"
+                                  self?.reloadStates[module.id] = state
+                              },
                               refreshing: refreshing)
         pages[module.id] = page
         return page
@@ -60,12 +66,15 @@ enum AppLanguage {
 
     func reloadAll(store: ModuleStore) {
         reloadMessages.removeAll()
+        reloadStates = Dictionary(uniqueKeysWithValues: store.modules.map { ($0.id, .loading) })
+        if store.modules.isEmpty { reloadStates["empty"] = .failed }
         reconcile(modules: store.modules, blocked: store.blocked)
         if DebugServer.canRefresh && store.modules.isEmpty {
             reloadMessages["empty"] = "暂无已安装的应用。"
         }
         for module in store.modules {
             guard !store.blocked.contains(module.id) else {
+                reloadStates[module.id] = .failed
                 if DebugServer.canRefresh { reloadMessages[module.id] = "\(module.name)：刷新失败，当前版本已被停用，请更新后重试。" }
                 continue
             }
@@ -78,6 +87,7 @@ enum AppLanguage {
             guard let page = pages[id] else { continue }
             if blocked.contains(id) || !modules.contains(where: { page.matches($0) }) {
                 pages.removeValue(forKey: id)?.close()
+                if reloadStates[id] == .loading { reloadStates[id] = .failed }
             }
         }
     }
@@ -96,23 +106,22 @@ enum AppLanguage {
     @Published var reloadMessage: String?
     private var awaitingReloadResult = false
     var isReloading: Bool { awaitingReloadResult }
-    private let onReloadResult: (String) -> Void
+    private let onReloadResult: (String, ModuleReloadState) -> Void
 
-    private func reportReload(_ message: String) {
-        guard DebugServer.canRefresh else { return }
-        reloadMessage = message
-        onReloadResult(message)
+    private func reportReload(_ message: String, state: ModuleReloadState = .loading) {
+        if DebugServer.canRefresh { reloadMessage = message }
+        onReloadResult(message, state)
     }
-    private func finishReload(_ message: String) {
+    private func finishReload(_ message: String, succeeded: Bool) {
         guard awaitingReloadResult else { return }
         awaitingReloadResult = false
-        reportReload(message)
+        reportReload(message, state: succeeded ? .succeeded : .failed)
     }
     private var onReady: () -> Void
     private var onFailure: (String) -> Void
     private var onStartupFailure: () -> Void
 
-    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, onStartupFailure: @escaping () -> Void = {}, onReloadResult: @escaping (String) -> Void = { _ in }, refreshing: Bool = false) {
+    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, onStartupFailure: @escaping () -> Void = {}, onReloadResult: @escaping (String, ModuleReloadState) -> Void = { _, _ in }, refreshing: Bool = false) {
         self.onReloadResult = onReloadResult
         self.module = module
         self.directory = directory
@@ -143,7 +152,7 @@ enum AppLanguage {
                           onReady: { [weak self] in
                               guard let self, self.generation == loadGeneration else { return }
                               self.isLoading = false
-                              self.finishReload(usingLocalFallback ? "服务器不可用，已加载本地资源" : (remote == nil ? "本地资源重新加载成功" : "服务器资源刷新成功"))
+                              self.finishReload(usingLocalFallback ? "服务器不可用，已加载本地资源" : (remote == nil ? "本地资源重新加载成功" : "服务器资源刷新成功"), succeeded: !usingLocalFallback)
                               if remote == nil { self.onReady() }
                           },
                           onFailure: { [weak self] message in
@@ -159,7 +168,7 @@ enum AppLanguage {
                               }
                               self.failure = message
                               self.isLoading = false
-                              self.finishReload((remote == nil ? "本地资源重新加载失败：" : "服务器资源刷新失败：") + message)
+                              self.finishReload((remote == nil ? "本地资源重新加载失败：" : "服务器资源刷新失败：") + message, succeeded: false)
                               if remote == nil { self.onFailure(message) }
                           },
                           onStartupFailure: { [weak self] in if remote == nil { self?.onStartupFailure() } },

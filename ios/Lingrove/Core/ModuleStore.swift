@@ -206,7 +206,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
     private var rejectedVersions: [String: String] = [:]
     private var downloadStatusOwners: [String: UUID] = [:]
     private var registryReadable = true
-    private var updateTask: Task<Void, Never>?
+    private var updateTask: Task<Bool, Never>?
     private var updateID = UUID()
     private let root: URL
     private let config: HostConfiguration
@@ -325,39 +325,41 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         request.timeoutInterval = 30; request.cachePolicy = .reloadIgnoringLocalCacheData
         return try await session.download(request: request, limit: limit, onProgress: onProgress)
     }
-    func checkForUpdates(forceSnapshot: Bool = false) async {
-        guard registryReadable else { return }
+    @discardableResult func checkForUpdates(forceSnapshot: Bool = false) async -> Bool {
+        guard registryReadable else { return false }
         let force = forceSnapshot && HostConfiguration.usesSnapshot(defaults: defaults)
-        guard !checking || force else { return }
+        guard !checking || force else { return false }
         updateTask?.cancel()
         let id = UUID()
         updateID = id
         checking = true
         let task = Task { @MainActor in
-            await self.performUpdateCheck(forceSnapshot: force, id: id)
+            let succeeded = await self.performUpdateCheck(forceSnapshot: force, id: id)
             if self.updateID == id {
                 self.checking = false
                 self.updateTask = nil
             }
+            return succeeded
         }
         updateTask = task
-        await task.value
+        return await task.value
     }
-    private func performUpdateCheck(forceSnapshot: Bool, id: UUID) async {
-        guard updateID == id else { return }
+    private func performUpdateCheck(forceSnapshot: Bool, id: UUID) async -> Bool {
+        guard updateID == id else { return false }
         statuses.removeAll()
         downloadProgress.removeAll()
         let catalogURL = config.updateCatalogURL(defaults: defaults)
-        guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return }
+        guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else { notice = "当前使用内置模块；尚未配置更新目录。"; return false }
         do {
             let catalogData = try await Self.fetch(session: session, url: url, limit: 1024 * 1024, forceRefresh: forceSnapshot)
             let catalog = try JSONDecoder().decode(Catalog.self, from: catalogData)
             try Task.checkCancellation()
             try catalog.validate()
             // A settings change during a request must not install the previous channel.
-            guard catalogURL == config.updateCatalogURL(defaults: defaults) else { return }
+            guard catalogURL == config.updateCatalogURL(defaults: defaults) else { return false }
             notice = ""
             var pending: [Module] = []
+            var complete = true
             for remote in catalog.modules {
                 try Task.checkCancellation()
                 if let current = modules.first(where: { $0.id == remote.id }) {
@@ -365,22 +367,25 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                     installed.minimumAllowedVersion = remote.minimumAllowedVersion; registry[remote.id] = installed
                     try persist()
                 }
-                guard Version(remote.minHostVersion)! <= Version(HostConfiguration.currentVersion)! else { statuses[remote.id] = "请更新 Lingrove 后使用新版"; continue }
+                guard Version(remote.minHostVersion)! <= Version(HostConfiguration.currentVersion)! else { statuses[remote.id] = "请更新 Lingrove 后使用新版"; complete = false; continue }
                 if let current = modules.first(where: { $0.id == remote.id }), current.isSnapshot == remote.isSnapshot && (remote.isSnapshot
                     ? current.sha256 == remote.sha256
                     : (ModuleVersion(current.version)! > ModuleVersion(remote.version)! || (current.version == remote.version && current.sha256 == remote.sha256))) { statuses[remote.id] = "已是最新版本"; continue }
-                guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; continue }
-                if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; continue }
+                guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; complete = false; continue }
+                if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; complete = false; continue }
                 pending.append(remote)
             }
-            await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot, id: id)
+            let installed = await downloadAndInstall(pending, catalogURL: catalogURL, forceRefresh: forceSnapshot, id: id)
+            return complete && installed && !Task.isCancelled && updateID == id
         } catch {
-            if Task.isCancelled || updateID != id { return }
+            if Task.isCancelled || updateID != id { return false }
             notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)"
+            return false
         }
     }
-    private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool, id: UUID) async {
-        guard !modules.isEmpty else { return }
+    private func downloadAndInstall(_ modules: [Module], catalogURL: String, forceRefresh: Bool, id: UUID) async -> Bool {
+        guard !modules.isEmpty else { return true }
+        var succeeded = true
         let session = self.session
         func clearOwnedDownloads() {
             for module in modules where downloadStatusOwners[module.id] == id {
@@ -438,6 +443,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
             for _ in 0..<min(Self.maxConcurrentDownloads, modules.count) { addNext() }
             downloadLoop: while let (module, result) = await group.next() {
                 if isSuperseded() {
+                    succeeded = false
                     cancelRemaining()
                     break downloadLoop
                 }
@@ -446,14 +452,18 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                 case .success(let data):
                     do {
                         let installed = try install(module, data: data, catalogURL: catalogURL)
+                        succeeded = succeeded && installed
                         status = installed ? "已更新至 \(module.version)" : "发现更新，退出模块后再检查"
                     } catch {
+                        succeeded = false
                         status = "更新失败，保留本地版本：\(error.localizedDescription)"
                     }
                 case .failure(let error):
+                    succeeded = false
                     status = "更新失败，保留本地版本：\(error.localizedDescription)"
                 }
                 if isSuperseded() {
+                    succeeded = false
                     cancelRemaining()
                     break downloadLoop
                 }
@@ -463,6 +473,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
                 addNext()
             }
         }
+        return succeeded
     }
     private func install(_ module: Module, data: Data, catalogURL: String) throws -> Bool {
         guard let expectedHash = module.sha256, expectedHash.count == 64,

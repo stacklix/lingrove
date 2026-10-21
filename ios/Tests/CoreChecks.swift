@@ -101,12 +101,14 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
             }
             return true
         }
-        await store.checkForUpdates()
+        let deferredUpdateSucceeded = await store.checkForUpdates()
+        check(!deferredUpdateSucceeded, "deferred update must not report refresh success")
         check(store.modules.first?.version == "20260101", "opening during download preserves the running version")
         check(store.statuses[module.id] == "发现更新，退出模块后再检查", "update is deferred while module is open")
         store.end(bundledModule)
         MockProtocol.intercept = nil
-        await store.checkForUpdates()
+        let updateSucceeded = await store.checkForUpdates()
+        check(updateSucceeded, "successful update reports refresh success")
         check(store.modules.first?.version == "20260102", "HTTPS plain catalog update installed and activated")
         check(store.lastUpdatedAt(for: store.modules[0]) != nil, "successful ZIP install records its update time")
         check(FileManager.default.fileExists(atPath: store.directory(for: module).appendingPathComponent("index.html").path), "installed resources readable")
@@ -175,7 +177,8 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(store.statuses.isEmpty, "failed update check clears previous per-module results")
         module.version = "20260103"; module.sha256 = String(repeating: "0", count: 64)
         MockProtocol.responses["/catalog.json"] = (200, try catalog(module))
-        await store.checkForUpdates()
+        let badHashSucceeded = await store.checkForUpdates()
+        check(!badHashSucceeded, "failed package installation must not report refresh success")
         check(store.modules.first?.version == "20260102", "bad hash preserves old version")
         let newer = try Data(contentsOf: fixtures.appendingPathComponent("newer.zip"))
         module.size = newer.count; module.sha256 = SHA256.hash(data: newer).map { String(format: "%02x", $0) }.joined()
@@ -184,7 +187,9 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         store.rollback(module); check(store.modules.first?.version == "20260102", "failed startup rolls back to previous version")
         await store.checkForUpdates(); check(store.modules.first?.version == "20260102", "known bad version is not reinstalled")
         MockProtocol.responses["/catalog.json"] = (500, Data())
-        await store.checkForUpdates(); check(store.modules.first?.version == "20260102", "offline update failure preserves available module")
+        let offlineSucceeded = await store.checkForUpdates()
+        check(!offlineSucceeded, "offline update must not report refresh success")
+        check(store.modules.first?.version == "20260102", "offline update failure preserves available module")
         module.minimumAllowedVersion = "20260103"
         MockProtocol.responses["/catalog.json"] = (200, try catalog(module))
         await store.checkForUpdates()

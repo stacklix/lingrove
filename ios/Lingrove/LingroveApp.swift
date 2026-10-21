@@ -69,6 +69,9 @@ struct HomeView: View {
     @State private var moduleEditMode: EditMode = .inactive
     @State private var networkSummaryRevision = 0
     @State private var refreshingModules = false
+    @State private var refreshSucceeded = false
+    @State private var waitingForReloadResults = false
+    @State private var updateCheckSucceeded = true
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -131,12 +134,14 @@ struct HomeView: View {
                         Button(action: refreshModules) {
                             Group {
                                 if refreshingModules { ProgressView() }
+                                else if refreshSucceeded { Image(systemName: "checkmark") }
                                 else { Image(systemName: "arrow.clockwise") }
                             }
                             .frame(width: 44, height: 44)
                             .background(Color(uiColor: LingroveTheme.surface), in: Circle())
                         }
-                        .foregroundStyle(Color(uiColor: LingroveTheme.accent))
+                        .foregroundStyle(Color(uiColor: refreshSucceeded ? .systemGreen : LingroveTheme.accent))
+                        .accessibilityIdentifier(refreshSucceeded ? "module-refresh-success" : "module-refresh")
                         .accessibilityLabel("重新加载子应用").disabled(refreshingModules)
                     }
                     Button { resetSettingsDraft(); showingSettings = true } label: {
@@ -285,6 +290,12 @@ struct HomeView: View {
         }.tint(Color(uiColor: LingroveTheme.accent))
         .onChange(of: store.modules) { _, modules in pages.reconcile(modules: modules, blocked: store.blocked) }
         .onChange(of: store.blocked) { _, blocked in pages.reconcile(modules: store.modules, blocked: blocked) }
+        .onChange(of: pages.reloadStates) { _, _ in finishRefreshIfNeeded() }
+        .task(id: refreshSucceeded) {
+            guard refreshSucceeded else { return }
+            do { try await Task.sleep(for: .seconds(3)) } catch { return }
+            refreshSucceeded = false
+        }
     }
     private func moduleSummary(_ module: Module) -> String {
         let description = module.description(for: AppLanguage.current) ?? AppLanguage.text("学习应用")
@@ -303,15 +314,26 @@ struct HomeView: View {
         connectionFailed = false
     }
     private func refreshModules() {
+        guard !refreshingModules else { return }
+        refreshSucceeded = false
         refreshingModules = true
+        waitingForReloadResults = false
         Task { @MainActor in
-            defer { refreshingModules = false }
-            if snapshotEnabled { await store.checkForUpdates(forceSnapshot: true) }
+            updateCheckSucceeded = true
+            if snapshotEnabled { updateCheckSucceeded = await store.checkForUpdates(forceSnapshot: true) }
+            waitingForReloadResults = true
             pages.reloadAll(store: store)
             if snapshotEnabled && !store.notice.isEmpty {
                 pages.reloadMessages["updates"] = store.notice
             }
+            finishRefreshIfNeeded()
         }
+    }
+    private func finishRefreshIfNeeded() {
+        guard waitingForReloadResults, !pages.reloadStates.values.contains(.loading) else { return }
+        waitingForReloadResults = false
+        refreshingModules = false
+        refreshSucceeded = updateCheckSucceeded && !pages.reloadStates.isEmpty && pages.reloadStates.values.allSatisfy { $0 == .succeeded }
     }
     private func setDebugEnabled(_ enabled: Bool) {
         guard showingSettings else { return }
