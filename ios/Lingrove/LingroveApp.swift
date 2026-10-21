@@ -51,18 +51,17 @@ struct HomeView: View {
     @State private var showingTTSSettings = false
     @State private var showingLLMUsage = false
     @State private var modelError = ""
-    @State private var debugAddress = UserDefaults.standard.string(forKey: DebugServer.preferenceKey) ?? ""
-    @State private var debugError = ""
-    @State private var connectionMessage = ""
-    @State private var connectionFailed = false
+    @State private var debugServers = DebugServerSettings.load()
+    @State private var testingAddressID: String?
+    @State private var connectionMessages: [String: String] = [:]
+    @State private var failedAddresses: Set<String> = []
     @State private var connectionTest: Task<Void, Never>?
     @State private var connectionTestID = UUID()
-    @AppStorage(DebugServer.enabledPreferenceKey) private var debugEnabled = false
-    @AppStorage(HostConfiguration.snapshotPreferenceKey) private var snapshotEnabled = false
-    @State private var initialSnapshotEnabled = false
-    @State private var draftDebugEnabled = false
-    @State private var initialDebugAddress = ""
-    @State private var initialDebugEnabled = false
+    @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
+    private var debugEnabled: Bool { resourceMode == .debug }
+    private var snapshotEnabled: Bool { resourceMode == .snapshot }
+    @State private var initialResourceMode = ChildAppResourceMode.bundled
+    @State private var initialDebugAddress: String?
     @State private var draftAppLanguage = "system"
     @State private var draftAppearance = AppAppearance.system
     @State private var draftModules: [Module] = []
@@ -166,54 +165,50 @@ struct HomeView: View {
                     Form {
                         if DebugServer.available {
                             Section("开发模式") {
-                                Toggle("开发快照", isOn: $snapshotEnabled)
+                                Toggle("快照模式", isOn: Binding(get: { snapshotEnabled }, set: setSnapshotEnabled))
                                     .accessibilityIdentifier("snapshot-toggle")
-                                Toggle("调试模式", isOn: Binding(get: { draftDebugEnabled }, set: setDebugEnabled))
+                                Toggle("调试模式", isOn: Binding(get: { debugEnabled }, set: setDebugEnabled))
                                     .accessibilityIdentifier("debug-mode-toggle")
-                                    .disabled(connectionTest != nil)
-                                TextField("http://192.168.1.10:8000", text: $debugAddress)
-                                    .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                                    .accessibilityLabel("调试服务器地址")
-                                    .onChange(of: debugAddress) { _, value in
-                                        guard showingSettings else { return }
-                                        clearConnectionTest()
-                                        draftDebugEnabled = false
-                                        debugEnabled = false
-                                        UserDefaults.standard.set(value, forKey: DebugServer.preferenceKey)
-                                        do { _ = try DebugServer.normalized(value); debugError = "" }
-                                        catch { debugError = error.localizedDescription }
+                                if debugEnabled {
+                                    ForEach(debugServers.addresses) { server in
+                                        DebugAddressRow(
+                                            serverID: server.id,
+                                            address: Binding(
+                                                get: { debugServers.addresses.first { $0.id == server.id }?.url ?? "" },
+                                                set: { updateDebugAddress(server.id, url: $0) }
+                                            ),
+                                            enabled: debugServers.activeID == server.id || testingAddressID == server.id,
+                                            testing: testingAddressID == server.id,
+                                            message: connectionMessages[server.id],
+                                            failed: failedAddresses.contains(server.id),
+                                            onToggle: { setDebugAddressEnabled(server.id, enabled: $0) },
+                                            onDelete: { removeDebugAddress(server.id) }
+                                        )
                                     }
-                                Button { testDebugConnection() } label: {
-                                    HStack {
-                                        if connectionTest != nil { ProgressView() }
-                                        Text(LocalizedStringKey(connectionTest == nil ? "测试连接" : "正在测试…"))
+                                    Button("添加调试地址", systemImage: "plus") {
+                                        debugServers.addresses.append(DebugServerAddress())
+                                        debugServers.save()
                                     }
-                                }
-                                .disabled(connectionTest != nil || debugAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                .accessibilityIdentifier("debug-test-connection")
-                                if !connectionMessage.isEmpty {
-                                    Text(connectionMessage)
-                                        .font(.footnote)
-                                        .foregroundStyle(connectionFailed ? Color.red : Color.secondary)
-                                        .accessibilityIdentifier("debug-connection-result")
+                                    .accessibilityIdentifier("debug-add-address")
                                 }
                                 if let message = pages.reloadMessage {
                                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }
                                 }
-                                if !debugError.isEmpty { Text(debugError).foregroundStyle(.red).accessibilityIdentifier("debug-settings-error") }
-                                #if DEBUG
-                                ForEach(draftModules) { module in
-                                    NavigationLink {
-                                        ModuleDeveloperDetailsView(store: store, moduleID: module.id)
-                                            .environment(\.editMode, .constant(.inactive))
-                                    } label: {
-                                        Text(module.name)
-                                    }
-                                    .accessibilityIdentifier("module-developer-details-\(module.id)")
-                                }
-                                #endif
                             }
                         }
+                        #if DEBUG
+                        Section {
+                            ForEach(store.modules) { module in
+                                NavigationLink {
+                                    ModuleDeveloperDetailsView(store: store, moduleID: module.id)
+                                        .environment(\.editMode, .constant(.inactive))
+                                } label: {
+                                    Text(module.name)
+                                }
+                                .accessibilityIdentifier("module-developer-details-\(module.id)")
+                            }
+                        }
+                        #endif
                         Section("外观") {
                             Picker("主题", selection: $draftAppearance) {
                                 ForEach(AppAppearance.allCases) { appearance in
@@ -310,8 +305,7 @@ struct HomeView: View {
         connectionTest?.cancel()
         connectionTest = nil
         connectionTestID = UUID()
-        connectionMessage = ""
-        connectionFailed = false
+        testingAddressID = nil
     }
     private func refreshModules() {
         guard !refreshingModules else { return }
@@ -335,67 +329,94 @@ struct HomeView: View {
         refreshingModules = false
         refreshSucceeded = updateCheckSucceeded && !pages.reloadStates.isEmpty && pages.reloadStates.values.allSatisfy { $0 == .succeeded }
     }
+    private func setResourceMode(_ mode: ChildAppResourceMode) {
+        resourceMode = mode
+        store.resourceModeChanged()
+        draftModules = store.modules
+    }
+    private func setSnapshotEnabled(_ enabled: Bool) {
+        guard showingSettings else { return }
+        clearConnectionTest()
+        setResourceMode(enabled ? .snapshot : .bundled)
+    }
     private func setDebugEnabled(_ enabled: Bool) {
         guard showingSettings else { return }
+        clearConnectionTest()
+        setResourceMode(enabled ? .debug : .bundled)
         if enabled {
-            testDebugConnection(enableOnSuccess: true)
-        } else {
-            clearConnectionTest()
-            draftDebugEnabled = false
-            debugEnabled = false
+            if debugServers.addresses.isEmpty {
+                debugServers.addresses.append(DebugServerAddress())
+                debugServers.save()
+            }
+            if let activeID = debugServers.activeID { setDebugAddressEnabled(activeID, enabled: true) }
         }
     }
-    private func testDebugConnection(enableOnSuccess: Bool = false) {
+    private func updateDebugAddress(_ id: String, url: String) {
+        if testingAddressID == id { clearConnectionTest() }
+        connectionMessages[id] = nil
+        failedAddresses.remove(id)
+        debugServers.updateAddress(id: id, url: url)
+        debugServers.save()
+    }
+    private func removeDebugAddress(_ id: String) {
+        if testingAddressID == id { clearConnectionTest() }
+        debugServers.removeAddress(id: id)
+        debugServers.save()
+        connectionMessages[id] = nil
+        failedAddresses.remove(id)
+    }
+    private func setDebugAddressEnabled(_ addressID: String, enabled: Bool) {
+        guard showingSettings, debugEnabled,
+              let server = debugServers.addresses.first(where: { $0.id == addressID }) else { return }
         clearConnectionTest()
-        let id = connectionTestID
-        let address = debugAddress
+        // One active ID enforces exclusivity; unverified addresses never reach WebKit.
+        debugServers.activeID = nil
+        debugServers.save()
+        connectionMessages.removeAll()
+        failedAddresses.removeAll()
+        guard enabled else { return }
+        testingAddressID = addressID
+        let testID = connectionTestID
         let modules = store.modules
         connectionTest = Task { @MainActor in
             do {
-                let message = try await DebugServer.testConnection(address, modules: modules)
-                guard !Task.isCancelled, connectionTestID == id else { return }
-                connectionMessage = message
-                if enableOnSuccess {
-                    draftDebugEnabled = true
-                    debugEnabled = true
-                }
+                let message = try await DebugServer.testConnection(server.url, modules: modules)
+                guard !Task.isCancelled, connectionTestID == testID, debugEnabled else { return }
+                debugServers.activeID = addressID
+                debugServers.save()
+                connectionMessages[addressID] = message
             } catch {
-                guard !Task.isCancelled, connectionTestID == id else { return }
-                if enableOnSuccess {
-                    draftDebugEnabled = false
-                    debugEnabled = false
-                }
-                connectionFailed = true
-                connectionMessage = "连接失败：\(error.localizedDescription)"
+                guard !Task.isCancelled, connectionTestID == testID, debugEnabled else { return }
+                failedAddresses.insert(addressID)
+                connectionMessages[addressID] = "连接失败：\(error.localizedDescription)"
             }
             connectionTest = nil
+            testingAddressID = nil
         }
     }
     private func resetSettingsDraft() {
         clearConnectionTest()
-        debugAddress = UserDefaults.standard.string(forKey: DebugServer.preferenceKey) ?? ""
-        initialDebugAddress = debugAddress
-        initialDebugEnabled = debugEnabled
-        initialSnapshotEnabled = snapshotEnabled
-        draftDebugEnabled = debugEnabled
+        debugServers = DebugServerSettings.load()
+        initialDebugAddress = DebugServer.activeAddress
+        connectionMessages.removeAll()
+        failedAddresses.removeAll()
+        initialResourceMode = resourceMode
         draftAppLanguage = UserDefaults.standard.string(forKey: AppLanguage.preferenceKey) ?? "system"
         draftAppearance = AppAppearance(rawValue: UserDefaults.standard.string(forKey: AppAppearance.preferenceKey) ?? "") ?? .system
         moduleEditMode = .inactive
         draftModules = store.modules
-        debugError = ""
     }
     private func finishSettings() {
         clearConnectionTest()
-        if initialSnapshotEnabled != snapshotEnabled {
-            Task {
-                // Wait for a previous channel check to finish before checking the selected channel.
-                while store.checking { try? await Task.sleep(for: .milliseconds(100)) }
+        guard DebugServer.available,
+              initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress else { return }
+        pages.reloadAll(store: store)
+        if snapshotEnabled {
+            Task { @MainActor in
                 await store.checkForUpdates()
+                guard snapshotEnabled else { return }
+                pages.reloadAll(store: store)
             }
-        }
-        if DebugServer.available,
-           initialDebugAddress != debugAddress || initialDebugEnabled != debugEnabled {
-            pages.reloadAll(store: store)
         }
     }
 
@@ -406,6 +427,54 @@ private struct ModuleListButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(Color(uiColor: LingroveTheme.accent).opacity(configuration.isPressed ? 0.08 : 0))
+    }
+}
+
+private struct DebugAddressRow: View {
+    let serverID: String
+    @Binding var address: String
+    let enabled: Bool
+    let testing: Bool
+    let message: String?
+    let failed: Bool
+    let onToggle: (Bool) -> Void
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                TextField("http://192.168.1.10:8000", text: $address)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
+                    .submitLabel(.done)
+                    .accessibilityLabel("调试服务器地址")
+                    .accessibilityIdentifier("debug-address-\(serverID)")
+                Toggle("启用此地址", isOn: Binding(get: { enabled }, set: onToggle))
+                    .labelsHidden()
+                    .accessibilityIdentifier("debug-address-toggle-\(serverID)")
+            }
+            HStack(spacing: 12) {
+                Group {
+                    if testing {
+                        HStack(spacing: 6) { ProgressView(); Text("正在测试…") }
+                    } else if let message {
+                        Text(message).foregroundStyle(failed ? Color.red : Color.secondary)
+                            .accessibilityIdentifier("debug-address-result-\(serverID)")
+                    } else {
+                        Text("打开地址开关以检测连接。")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .font(.footnote)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Button(role: .destructive, action: onDelete) { Image(systemName: "trash") }
+                    .buttonStyle(.borderless)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel("删除调试地址")
+                    .accessibilityIdentifier("debug-address-delete-\(serverID)")
+            }
+        }
+        .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+        .alignmentGuide(.listRowSeparatorTrailing) { $0[.trailing] }
     }
 }
 
@@ -550,7 +619,7 @@ struct ModuleDeveloperDetailsView: View {
             if let module {
                 Section {
                     LabeledContent("来源", value: AppLanguage.text(store.isDownloaded(module)
-                        ? (module.isSnapshot ? "开发快照下载" : "Release 下载") : "宿主内置"))
+                        ? (module.isSnapshot ? "快照下载" : "Release 下载") : "宿主内置"))
                     ModuleInformationRow(title: "版本", value: module.version)
                     ModuleInformationRow(title: "文件名", value: store.isDownloaded(module)
                         ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
@@ -660,7 +729,7 @@ struct NetworkAuthorizationSection: View {
         domains = NetworkAccessDomain.snapshot(
             modules: modules, customOrigins: custom, catalogURL: HostConfiguration.bundled.updateCatalogURL(),
             modelURL: modelURL,
-            debugURL: DebugServer.enabled ? defaults.string(forKey: DebugServer.preferenceKey) : nil
+            debugURL: DebugServer.activeAddress
         )
     }
 }

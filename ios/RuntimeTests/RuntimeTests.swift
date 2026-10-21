@@ -64,17 +64,17 @@ final class RuntimeTests: XCTestCase {
     @MainActor func testUnavailableDebugServerFallsBackLocallyAndReloadRetriesServer() async throws {
         try XCTSkipUnless(DebugServer.available)
         let defaults = UserDefaults.standard
-        let originalEnabled = defaults.object(forKey: DebugServer.enabledPreferenceKey)
+        let originalEnabled = defaults.object(forKey: HostConfiguration.resourceModePreferenceKey)
         let originalAddress = defaults.object(forKey: DebugServer.preferenceKey)
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer {
-            defaults.set(originalEnabled, forKey: DebugServer.enabledPreferenceKey)
+            defaults.set(originalEnabled, forKey: HostConfiguration.resourceModePreferenceKey)
             defaults.set(originalAddress, forKey: DebugServer.preferenceKey)
             try? FileManager.default.removeItem(at: directory)
         }
-        defaults.set(true, forKey: DebugServer.enabledPreferenceKey)
-        defaults.set("http://127.0.0.1:59999", forKey: DebugServer.preferenceKey)
+        defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        DebugServerSettings(addresses: [.init(id: "test", url: "http://127.0.0.1:59999")], activeID: "test").save(defaults: defaults)
         try Data("<html><head></head><body>local resource<script src='ready.js'></script></body></html>".utf8).write(to: directory.appendingPathComponent("index.html"))
         try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8).write(to: directory.appendingPathComponent("ready.js"))
         let module = Module(id: "fallback-test", name: "Fallback", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
@@ -203,24 +203,32 @@ final class RuntimeTests: XCTestCase {
     func testDebugModeSwitchDefaultsOffAndDisablesRemoteResources() throws {
         try XCTSkipUnless(DebugServer.available)
         let defaults = UserDefaults.standard
-        let originalEnabled = defaults.object(forKey: DebugServer.enabledPreferenceKey)
+        let originalEnabled = defaults.object(forKey: HostConfiguration.resourceModePreferenceKey)
         let originalAddress = defaults.object(forKey: DebugServer.preferenceKey)
         defer {
-            defaults.set(originalEnabled, forKey: DebugServer.enabledPreferenceKey)
+            defaults.set(originalEnabled, forKey: HostConfiguration.resourceModePreferenceKey)
             defaults.set(originalAddress, forKey: DebugServer.preferenceKey)
         }
-        defaults.removeObject(forKey: DebugServer.enabledPreferenceKey)
-        defaults.set("http://localhost:8000", forKey: DebugServer.preferenceKey)
+        defaults.removeObject(forKey: HostConfiguration.resourceModePreferenceKey)
+        DebugServerSettings(addresses: [.init(id: "test", url: "http://localhost:8000")], activeID: "test").save(defaults: defaults)
         let module = Module(id: "switch-test", name: "Switch", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         XCTAssertFalse(DebugServer.enabled)
         XCTAssertNil(DebugServer.entryURL(for: module))
-        defaults.set(false, forKey: DebugServer.enabledPreferenceKey)
+        defaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         XCTAssertTrue(DebugServer.available)
         XCTAssertFalse(DebugServer.enabled)
         XCTAssertNil(DebugServer.entryURL(for: module))
-        XCTAssertEqual(defaults.string(forKey: DebugServer.preferenceKey), "http://localhost:8000")
-        defaults.set(true, forKey: DebugServer.enabledPreferenceKey)
+        XCTAssertEqual(DebugServerSettings.load(defaults: defaults).activeAddress, "http://localhost:8000")
+        defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         XCTAssertEqual(DebugServer.entryURL(for: module)?.absoluteString, "http://localhost:8000/app/switch-test/index.html")
+        XCTAssertFalse(HostConfiguration.usesSnapshot())
+        defaults.set(ChildAppResourceMode.snapshot.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        XCTAssertTrue(HostConfiguration.usesSnapshot())
+        XCTAssertFalse(DebugServer.enabled)
+        XCTAssertNil(DebugServer.entryURL(for: module))
+        defaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        XCTAssertFalse(DebugServer.canRefresh)
+        XCTAssertTrue(HostConfiguration.usesBundledResources())
     }
     func testDebugServerAddressAndNavigationIsolation() throws {
         XCTAssertEqual(try DebugServer.normalized("  http://192.168.1.2:8000/assets  "), "http://192.168.1.2:8000/assets/")
@@ -236,9 +244,9 @@ final class RuntimeTests: XCTestCase {
         }
     }
     @MainActor func testDebugReloadReportsReadyAndFailureOnlyAfterReload() throws {
-        let originalEnabled = UserDefaults.standard.object(forKey: DebugServer.enabledPreferenceKey)
-        UserDefaults.standard.set(true, forKey: DebugServer.enabledPreferenceKey)
-        defer { UserDefaults.standard.set(originalEnabled, forKey: DebugServer.enabledPreferenceKey) }
+        let originalEnabled = UserDefaults.standard.object(forKey: HostConfiguration.resourceModePreferenceKey)
+        UserDefaults.standard.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        defer { UserDefaults.standard.set(originalEnabled, forKey: HostConfiguration.resourceModePreferenceKey) }
         let module = Module(id: "feedback-test", name: "Feedback", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         var messages: [String] = []
         var states: [ModuleReloadState] = []
@@ -276,7 +284,7 @@ final class RuntimeTests: XCTestCase {
         try XCTSkipUnless(DebugServer.enabled)
         let original = UserDefaults.standard.object(forKey: DebugServer.preferenceKey)
         defer { UserDefaults.standard.set(original, forKey: DebugServer.preferenceKey) }
-        UserDefaults.standard.set("http://127.0.0.1:8000", forKey: DebugServer.preferenceKey)
+        DebugServerSettings(addresses: [.init(id: "test", url: "http://127.0.0.1:8000")], activeID: "test").save(defaults: UserDefaults.standard)
         let module = Module(id: "server-feedback", name: "Server", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in })
         defer { page.close() }

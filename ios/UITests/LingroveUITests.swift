@@ -6,7 +6,7 @@ final class LingroveUITests: XCTestCase {
     private func checkModuleEditingAndDetails(appearance: String) {
         let app = XCUIApplication()
         app.launchArguments += ["-app.appearance", appearance]
-        app.launchArguments += ["-debug.enabled", "NO", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launchArguments += ["-resources.mode", "bundled", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launch()
         XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))
         XCTAssertFalse(app.staticTexts["一点好奇"].exists)
@@ -80,7 +80,7 @@ final class LingroveUITests: XCTestCase {
 
     func testLLMUsageSettingsEntry() {
         let app = XCUIApplication()
-        app.launchArguments += ["-debug.enabled", "NO", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launchArguments += ["-resources.mode", "bundled", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launch()
         let settings = app.buttons["应用设置"]
         XCTAssertTrue(settings.waitForExistence(timeout: 20))
@@ -121,7 +121,7 @@ final class LingroveUITests: XCTestCase {
     func testNativeEdgeExitWorksWithHomeHiddenAndChildDialogOpen() throws {
         let app = XCUIApplication()
         // Use bundled resources so this recovery test never needs a debug server.
-        app.launchArguments += ["-debug.enabled", "NO"]
+        app.launchArguments += ["-resources.mode", "bundled"]
         app.launch()
         let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sentra")).firstMatch
         waitForEnabled(entry); entry.tap()
@@ -195,6 +195,50 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(letter.waitForExistence(timeout:5)); letter.tap()
         XCTAssertTrue(app.webViews.buttons["练习这个字母 →"].waitForExistence(timeout:5))
     }
+    private func tapSwitch(_ element: XCUIElement) {
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    }
+    private func debugFields(_ app: XCUIApplication) -> XCUIElementQuery {
+        app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-address-"))
+    }
+    private func addressID(_ field: XCUIElement) -> String {
+        String(field.identifier.dropFirst("debug-address-".count))
+    }
+    private func addressToggle(_ app: XCUIApplication, _ field: XCUIElement) -> XCUIElement {
+        app.switches["debug-address-toggle-\(addressID(field))"].firstMatch
+    }
+    private func addressResult(_ app: XCUIApplication, _ field: XCUIElement) -> XCUIElement {
+        app.staticTexts["debug-address-result-\(addressID(field))"]
+    }
+    private func replaceDebugAddress(_ field: XCUIElement, _ value: String) {
+        let original = field.value as? String ?? ""
+        let count = original == field.placeholderValue ? 0 : original.count
+        field.tap()
+        if count > 0 {
+            field.press(forDuration: 1.2)
+            let selectAll = XCUIApplication().menuItems.matching(NSPredicate(format: "label IN %@", ["全选", "Select All"])).firstMatch
+            XCTAssertTrue(selectAll.waitForExistence(timeout: 3))
+            selectAll.tap()
+        }
+        field.typeText(value)
+        XCTAssertEqual(field.value as? String, value)
+        field.typeText("\n")
+    }
+    private func prepareDebugSettings(_ app: XCUIApplication) {
+        XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))
+        app.buttons["应用设置"].tap()
+        let mode = app.switches["debug-mode-toggle"].firstMatch
+        XCTAssertTrue(mode.waitForExistence(timeout: 5))
+        if mode.value as? String != "1" { tapSwitch(mode) }
+        let deletes = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-address-delete-"))
+        for _ in 0..<20 {
+            guard deletes.firstMatch.exists else { break }
+            deletes.firstMatch.tap()
+        }
+        XCTAssertEqual(debugFields(app).count, 0)
+        app.buttons["debug-add-address"].tap()
+        XCTAssertEqual(debugFields(app).count, 1)
+    }
     func testDebugModeSwitchControlsHostRefreshAndPersists() throws {
         let listener = try NWListener(using: .tcp, on: .any)
         let ready = expectation(description: "Debug server ready")
@@ -208,61 +252,101 @@ final class LingroveUITests: XCTestCase {
         listener.start(queue: .global())
         defer { listener.cancel() }
         wait(for: [ready], timeout: 5)
-        let port = try XCTUnwrap(listener.port).rawValue
+        let url = "http://127.0.0.1:\(try XCTUnwrap(listener.port).rawValue)"
         let app = XCUIApplication()
-        app.launchArguments += ["-debug.serverURL", "http://127.0.0.1:\(port)", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launchArguments += ["-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launch()
-        func openSettings() {
-            XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 15))
-            app.buttons["应用设置"].tap()
-            XCTAssertTrue(app.switches["debug-mode-toggle"].firstMatch.waitForExistence(timeout: 5))
+        prepareDebugSettings(app)
+        let first = debugFields(app).element(boundBy: 0)
+        replaceDebugAddress(first, url)
+        app.buttons["debug-add-address"].tap()
+        let second = debugFields(app).element(boundBy: 1)
+        replaceDebugAddress(second, url + "/second")
+        let firstID = addressID(first), secondID = addressID(second)
+        func enable(_ field: XCUIElement) {
+            tapSwitch(addressToggle(app, field))
+            XCTAssertTrue(addressResult(app, field).waitForExistence(timeout: 15))
+            XCTAssertTrue(addressResult(app, field).label.contains("连接成功"))
+            XCTAssertEqual(addressToggle(app, field).value as? String, "1")
         }
-        func toggle(_ id: String) {
-            app.switches[id].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        }
-        openSettings()
-        for id in ["debug-mode-toggle", "snapshot-toggle"] {
-            if app.switches[id].firstMatch.value as? String == "1" { toggle(id) }
-        }
+        enable(first)
+        enable(second)
+        XCTAssertEqual(addressToggle(app, first).value as? String, "0")
+        let addressesScreenshot = XCTAttachment(screenshot: app.screenshot())
+        addressesScreenshot.name = "Multiple-debug-addresses-one-active"
+        addressesScreenshot.lifetime = .keepAlways
+        add(addressesScreenshot)
+        // Editing a selected address disables it until a fresh check passes.
+        replaceDebugAddress(second, "http://127.0.0.1:1")
+        XCTAssertEqual(addressToggle(app, second).value as? String, "0")
+        tapSwitch(addressToggle(app, second))
+        XCTAssertTrue(addressResult(app, second).waitForExistence(timeout: 15))
+        XCTAssertTrue(addressResult(app, second).label.contains("连接失败"))
+        XCTAssertEqual(addressToggle(app, second).value as? String, "0")
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        replaceDebugAddress(second, url + "/second")
+        enable(second)
         app.buttons["settings-back"].tap()
-        XCTAssertFalse(app.buttons["重新加载子应用"].exists)
-        openSettings()
-        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.label, "调试模式")
-        toggle("debug-mode-toggle")
-        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '1'"), object: app.switches["debug-mode-toggle"].firstMatch)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 15), .completed)
-        XCTAssertTrue(app.staticTexts["debug-connection-result"].label.contains("连接成功"))
-        app.buttons["settings-back"].tap()
-        XCTAssertTrue(app.buttons["重新加载子应用"].exists)
-        openSettings()
-        toggle("snapshot-toggle")
-        app.buttons["settings-back"].tap()
-        XCTAssertTrue(app.buttons["重新加载子应用"].exists)
-        openSettings()
-        toggle("debug-mode-toggle")
-        app.buttons["settings-back"].tap()
-        XCTAssertTrue(app.buttons["重新加载子应用"].exists)
-        XCTAssertTrue(app.buttons["重新加载子应用"].isEnabled)
-        openSettings()
-        toggle("snapshot-toggle")
-        app.buttons["settings-back"].tap()
-        XCTAssertFalse(app.buttons["重新加载子应用"].exists)
-    }
-    func testDebugModeRejectsUnavailableServer() {
-        let app = XCUIApplication()
-        app.launchArguments += ["-debug.enabled", "NO", "-updates.snapshot", "NO", "-debug.serverURL", "http://127.0.0.1:1", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
-        app.launch()
-        XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 15))
+        app.terminate(); app.launch()
         app.buttons["应用设置"].tap()
-        let toggle = app.switches["debug-mode-toggle"].firstMatch
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
-        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        let error = app.staticTexts["debug-connection-result"]
-        XCTAssertTrue(error.waitForExistence(timeout: 15))
-        XCTAssertTrue(error.label.contains("连接失败"))
-        XCTAssertEqual(toggle.value as? String, "0")
+        let restoredFirst = app.textFields["debug-address-\(firstID)"]
+        let restoredSecond = app.textFields["debug-address-\(secondID)"]
+        XCTAssertEqual(restoredFirst.value as? String, url)
+        XCTAssertEqual(restoredSecond.value as? String, url + "/second")
+        XCTAssertEqual(addressToggle(app, restoredFirst).value as? String, "0")
+        XCTAssertEqual(addressToggle(app, restoredSecond).value as? String, "1")
+        app.buttons["debug-address-delete-\(secondID)"].tap()
+        XCTAssertFalse(restoredSecond.exists)
+        XCTAssertEqual(addressToggle(app, restoredFirst).value as? String, "0")
+        tapSwitch(app.switches["snapshot-toggle"].firstMatch)
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
+        XCTAssertEqual(debugFields(app).count, 0)
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        XCTAssertEqual(app.switches["snapshot-toggle"].firstMatch.value as? String, "0")
+        XCTAssertTrue(restoredFirst.exists)
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         app.buttons["settings-back"].tap()
         XCTAssertFalse(app.buttons["重新加载子应用"].exists)
+        let lector = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Lector")).firstMatch
+        waitForEnabled(lector); lector.tap()
+        XCTAssertTrue(app.webViews.buttons["导入文章"].waitForExistence(timeout: 20))
+    }
+    func testDebugConnectionFormLightMode() { checkDebugConnectionForm(appearance: "light") }
+    func testDebugConnectionFormDarkMode() { checkDebugConnectionForm(appearance: "dark") }
+    private func checkDebugConnectionForm(appearance: String) {
+        let app = XCUIApplication()
+        app.launchArguments += ["-app.appearance", appearance, "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        prepareDebugSettings(app)
+        let field = debugFields(app).firstMatch
+        tapSwitch(addressToggle(app, field))
+        let result = addressResult(app, field)
+        XCTAssertTrue(result.waitForExistence(timeout: 10))
+        XCTAssertTrue(result.label.contains("请先填写"))
+        XCTAssertEqual(addressToggle(app, field).value as? String, "0")
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        XCTAssertTrue(field.isHittable, "An empty address must remain editable")
+        replaceDebugAddress(field, "http://127.0.0.1:1")
+        tapSwitch(addressToggle(app, field))
+        XCTAssertTrue(result.waitForExistence(timeout: 15))
+        XCTAssertTrue(result.label.contains("连接失败"))
+        XCTAssertEqual(addressToggle(app, field).value as? String, "0")
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        XCTAssertTrue(field.exists)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Debug-address-failure-\(appearance)"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        XCTAssertEqual(debugFields(app).count, 0)
+        for id in ["glyphora", "kotoba", "lector", "sentra"] {
+            XCTAssertTrue(app.buttons["module-developer-details-\(id)"].exists)
+        }
+        app.buttons["settings-back"].tap()
+        app.terminate(); app.launch()
+        for name in ["Glyphora", "Kotoba", "Lector", "Sentra"] {
+            waitForEnabled(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch)
+        }
     }
     func testKeyboardReturnKeyIsDoneWithoutExtraConfirmationBar() throws {
         let app = XCUIApplication(); app.launch()
@@ -305,35 +389,25 @@ final class LingroveUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += ["-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launch()
-        func openSettings() {
-            XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 15))
-            app.buttons["应用设置"].tap()
-            XCTAssertTrue(app.textFields["调试服务器地址"].waitForExistence(timeout: 5))
-        }
-        func address() -> String {
-            let field = app.textFields["调试服务器地址"]
-            let value = field.value as? String ?? ""
-            return value == field.placeholderValue ? "" : value
-        }
-        func replaceAddress(_ value: String) {
-            let field = app.textFields["调试服务器地址"]
-            let existing = address()
-            field.tap()
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count) + value)
-        }
-        openSettings()
-        let original = address()
-        XCTAssertFalse(app.navigationBars.buttons["完成"].exists)
-        XCTAssertFalse(app.navigationBars.buttons["取消"].exists)
-        XCTAssertTrue(app.buttons["settings-back"].exists)
-        replaceAddress("not-a-url")
-        XCTAssertTrue(app.staticTexts["debug-settings-error"].waitForExistence(timeout: 5))
-        app.buttons["settings-back"].tap(); openSettings()
-        XCTAssertEqual(address(), "not-a-url")
-        replaceAddress("http://127.0.0.1:1")
-        app.terminate(); app.launch(); openSettings()
-        XCTAssertEqual(address(), "http://127.0.0.1:1")
-        replaceAddress(original)
+        prepareDebugSettings(app)
+        let field = debugFields(app).firstMatch
+        let id = addressID(field)
+        replaceDebugAddress(field, "not-a-url")
+        tapSwitch(addressToggle(app, field))
+        XCTAssertTrue(addressResult(app, field).waitForExistence(timeout: 5))
+        XCTAssertEqual(addressToggle(app, field).value as? String, "0")
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        app.buttons["settings-back"].tap()
+        app.terminate(); app.launch()
+        app.buttons["应用设置"].tap()
+        let restored = app.textFields["debug-address-\(id)"]
+        XCTAssertEqual(restored.value as? String, "not-a-url")
+        XCTAssertEqual(addressToggle(app, restored).value as? String, "0")
+        app.buttons["debug-address-delete-\(id)"].tap()
+        XCTAssertEqual(debugFields(app).count, 0)
+        app.buttons["debug-add-address"].tap()
+        XCTAssertTrue(debugFields(app).firstMatch.isHittable)
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         app.buttons["settings-back"].tap()
     }
     func testChildPageDoesNotZoomWithPinch() throws {
@@ -355,7 +429,7 @@ final class LingroveUITests: XCTestCase {
     }
     func testReloadButtonReinitializesChildPage() throws {
         let app = XCUIApplication()
-        app.launchArguments += ["-debug.enabled", "YES", "-updates.snapshot", "NO", "-debug.serverURL", "", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launchArguments += ["-resources.mode", "debug", "-debug.servers", "{}", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launch()
         let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sentra")).firstMatch
         waitForEnabled(entry)
@@ -477,7 +551,7 @@ extension LingroveUITests {
     func testTTSSettingsDarkMode() { checkTTSSettings(style: "Dark") }
     private func checkTTSSettings(style: String) {
         let app = XCUIApplication()
-        app.launchArguments += ["-debug.enabled", "NO", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launchArguments += ["-resources.mode", "bundled", "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
         app.launchArguments += ["-app.appearance", style.lowercased()]
         app.launch()
         XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))

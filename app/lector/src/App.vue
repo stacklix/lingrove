@@ -6,8 +6,16 @@ import { computed, nextTick, onMounted, onUnmounted, ref, shallowReactive, watch
 import { createID, isNative, ready, setRootPage, installFocusMode } from '@lingrove/host-sdk';
 import { importArticle, readTextFile, splitArticle, type ImportDetail } from './import';
 import { analyzeSentence, type SentenceAnalysis } from './sentence-analysis';
+import {
+  prefetchTranslations,
+  translationKey,
+  validateTranslation,
+  type TranslationProgress,
+} from './sentence-translations';
 import { demo, demoSource } from './demo';
 import VoiceField from './components/VoiceField.vue';
+import GenerationSheet from './components/GenerationSheet.vue';
+import type { GeneratedArticle, GenerationPreferences } from './generation';
 import { useNarration } from './narration';
 import { paragraphSpacing, readingLayout, splitReadingSentences } from './reading-layout';
 import {
@@ -211,8 +219,20 @@ const sentenceText = computed(() =>
     ? ''
     : (result.value?.sentences[selectedSentence.value]?.tokens.map((t) => t.text).join('') ?? ''),
 );
+const sentenceTranslation = computed(() => {
+  if (!active.value || !sentenceText.value) return '';
+  const key = translationKey(sentenceText.value, active.value.reading.language, locale.value);
+  return (
+    sentenceResult.value?.translation ??
+    active.value.translations?.[key]?.translation ??
+    cachedAnalysis(sentenceText.value)?.translation ??
+    ''
+  );
+});
 const sheet = ref<HTMLDialogElement>();
 const importer = ref<HTMLDialogElement>();
+const generator = ref<InstanceType<typeof GenerationSheet>>();
+const importButton = ref<HTMLButtonElement>();
 const deleteSheet = ref<HTMLDialogElement>();
 const deleteTarget = ref<{ id: string; title: string } | null>(null);
 function requestDelete(item: { id: string; title?: string; source: string }) {
@@ -238,6 +258,10 @@ const selectedJob = ref<AnalysisJob | null>(null);
 const details = ref<
   Record<string, ImportDetail & { startedAt: number; updatedAt: number; endedAt?: number }>
 >({});
+const translationProgress = ref<Record<string, TranslationProgress>>({});
+const currentTranslationProgress = computed(() =>
+  selectedJob.value ? translationProgress.value[selectedJob.value.id] : undefined,
+);
 const now = ref(Date.now());
 let progressTimer: ReturnType<typeof setInterval> | undefined;
 const currentDetail = computed(() =>
@@ -404,7 +428,13 @@ async function persist() {
   }
 }
 watch(
-  () => [state.value.draft, state.value.draftTitle, state.value.draftOrigin, state.value.draftTags],
+  () => [
+    state.value.draft,
+    state.value.draftTitle,
+    state.value.draftOrigin,
+    state.value.draftTags,
+    state.value.draftTranslate,
+  ],
   () => {
     if (!initialized.value) return;
     clearTimeout(draftTimer);
@@ -639,7 +669,7 @@ async function inspectSentence(index: number) {
 }
 watch(locale, () => {
   stopSentenceRequest();
-  sentenceResult.value = null;
+  sentenceResult.value = cachedAnalysis(sentenceText.value) ?? null;
   sentenceError.value = '';
 });
 async function startSentenceAnalysis() {
@@ -689,6 +719,17 @@ async function startSentenceAnalysis() {
     (article.analyses ??= {})[
       JSON.stringify([analysis.analysis_text, analysis.sourceLanguage, analysis.language])
     ] = analysis;
+    if (analysis.language) {
+      const translation = validateTranslation({
+        source: analysis.analysis_text,
+        sourceLanguage: article.reading.language,
+        language: analysis.language,
+        translation: analysis.translation,
+      });
+      (article.translations ??= {})[
+        translationKey(translation.source, translation.sourceLanguage, translation.language)
+      ] = translation;
+    }
     if (isSelected()) sentenceResult.value = analysis;
     await persist();
   } catch (e) {
@@ -705,6 +746,24 @@ function beginImport() {
   menu.value = false;
   error.value = '';
 
+  importer.value?.showModal();
+}
+function beginGeneration() {
+  menu.value = false;
+  generator.value?.open();
+}
+function saveGenerationPreferences(preferences: GenerationPreferences) {
+  state.value.generationPreferences = preferences;
+  void persist();
+}
+function previewGeneratedArticle(article: GeneratedArticle) {
+  state.value.draft = article.source;
+  state.value.draftLanguage = article.language;
+  state.value.draftTags = '';
+  importTitle.value = article.title;
+  origin.value = 'AI 生成';
+  error.value = '';
+  void persist();
   importer.value?.showModal();
 }
 async function chooseFile(event: Event) {
@@ -747,6 +806,7 @@ async function start() {
     id: createID(),
     source: state.value.draft,
     language: state.value.draftLanguage,
+    ...(state.value.draftTranslate ? { translationLanguage: locale.value } : {}),
     tags: parseTags(state.value.draftTags),
     title: importTitle.value.trim() || state.value.draft.trim().slice(0, 36),
     origin: origin.value,
@@ -789,6 +849,7 @@ async function pump() {
     words: 0,
   };
   job.status = 'running';
+  delete translationProgress.value[job.id];
   job.done = 0;
   job.error = '';
   void persist();
@@ -825,6 +886,22 @@ async function pump() {
       },
       job.language,
     );
+    if (job.translationLanguage) {
+      job.translations = await prefetchTranslations(
+        reading,
+        job.translationLanguage,
+        request.signal,
+        job.translations,
+        async (cache) => {
+          if (request.signal.aborted || disposed) return;
+          job.translations = cache;
+          await persist();
+        },
+        (progress) => {
+          if (!request.signal.aborted && !disposed) translationProgress.value[job.id] = progress;
+        },
+      );
+    }
     if (request.signal.aborted || disposed || !state.value.jobs.some((j) => j.id === job.id))
       return;
     state.value.library.unshift({
@@ -835,6 +912,7 @@ async function pump() {
       tags: job.tags,
       createdAt: job.createdAt,
       reading,
+      translations: job.translations,
       sentence: 0,
     });
     job.status = 'ready';
@@ -883,6 +961,8 @@ function readCompletedJob(job: AnalysisJob) {
   }
 }
 function jobLabel(job: AnalysisJob) {
+  const progress = translationProgress.value[job.id];
+  if (job.status === 'running' && progress) return `翻译中 · ${progress.done}/${progress.total} 句`;
   return job.status === 'running'
     ? `分析中 · ${job.done}/${job.total} 段`
     : job.status === 'queued'
@@ -918,6 +998,7 @@ function duration(seconds: number) {
       <div class="home-actions lingrove-root-actions">
         <div v-if="page === 'library'" class="import-control">
           <button
+            ref="importButton"
             class="icon-button"
             :aria-label="t('导入文章')"
             :aria-expanded="menu"
@@ -947,6 +1028,7 @@ function duration(seconds: number) {
               >
                 {{ t('导入文件') }} <small>TXT / Markdown</small>
               </button>
+              <button @click="beginGeneration">{{ t('AI 生成') }}</button>
             </div></template
           >
         </div>
@@ -1258,12 +1340,28 @@ function duration(seconds: number) {
         <button class="close lingrove-sheet-close" :aria-label="t('关闭导入')" @click="closeImport">
           ×
         </button>
-        <h2 id="import-title">{{ t(origin === '文本导入' ? '导入文本' : '导入文件') }}</h2>
+        <h2 id="import-title">
+          {{
+            t(
+              origin === 'AI 生成'
+                ? '预览生成文章'
+                : origin === '文本导入'
+                  ? '导入文本'
+                  : '导入文件',
+            )
+          }}
+        </h2>
       </header>
       <div class="word-sheet-content">
         <p class="hint">
           {{
-            t(origin === '文本导入' ? '粘贴文章并选择语言；日语文章会提前生成假名注音。' : origin)
+            t(
+              origin === 'AI 生成'
+                ? '检查标题和正文，编辑后即可加入书架。'
+                : origin === '文本导入'
+                  ? '粘贴文章并选择语言；日语文章会提前生成假名注音。'
+                  : origin,
+            )
           }}
         </p>
         <form class="article-form" @submit.prevent="start">
@@ -1305,6 +1403,16 @@ function duration(seconds: number) {
             :placeholder="t('用逗号分隔多个标签')"
             :disabled="submitting"
           />
+          <label class="import-translation-option" for="import-translations">
+            <span>{{ t('提前缓存句子翻译') }}</span>
+            <input
+              id="import-translations"
+              v-model="state.draftTranslate"
+              type="checkbox"
+              role="switch"
+              :disabled="submitting"
+            />
+          </label>
           <p v-if="error" class="error" role="alert">{{ t(error) }}</p>
           <div class="editor-footer">
             <button class="primary" :disabled="submitting || !state.draft.trim()">
@@ -1445,11 +1553,19 @@ function duration(seconds: number) {
         <div class="word-sheet-content">
           <p>{{ selectedJob.title }}</p>
           <progress
-            :value="selectedJob.done"
-            :max="selectedJob.total"
+            :value="currentTranslationProgress?.done ?? selectedJob.done"
+            :max="currentTranslationProgress?.total ?? selectedJob.total"
             :aria-label="t('文章分析进度')"
           ></progress>
-          <p class="hint" role="status">
+          <p v-if="currentTranslationProgress" class="hint" role="status">
+            {{
+              t('缓存句子翻译：{0} / {1} 句', [
+                currentTranslationProgress.done,
+                currentTranslationProgress.total,
+              ])
+            }}
+          </p>
+          <p v-else class="hint" role="status">
             {{ t('已完成') }} {{ t(selectedJob.done) }} / {{ t(selectedJob.total) }} {{ t('段。')
             }}{{
               t(
@@ -1459,7 +1575,13 @@ function duration(seconds: number) {
               )
             }}
           </p>
-          <section v-if="currentDetail" class="analysis-progress-detail">
+          <p v-if="currentTranslationProgress?.requestStatus" class="hint">
+            {{ t(formatLLMStatus(currentTranslationProgress.requestStatus)) }}
+          </p>
+          <section
+            v-if="currentDetail && !currentTranslationProgress"
+            class="analysis-progress-detail"
+          >
             <p v-if="currentDetail.requestStatus" class="hint">
               {{ t('本次请求：') }}{{ t(formatLLMStatus(currentDetail.requestStatus)) }}
             </p>
@@ -1583,6 +1705,10 @@ function duration(seconds: number) {
       </header>
       <div class="word-sheet-content">
         <p class="analysis-original" :lang="active?.reading.language">{{ sentenceText }}</p>
+        <article v-if="sentenceTranslation" class="result-card sentence-translation">
+          <span class="eyebrow">{{ t('翻译') }}</span>
+          <p>{{ sentenceTranslation }}</p>
+        </article>
         <p v-if="sentenceBusy" role="status" class="notice sentence-progress">
           <span>{{ t('正在分析句子结构与语法…') }}</span>
           <span v-for="line in formatLLMStatus(sentenceStatus).split(' · ')" :key="line">{{
@@ -1594,10 +1720,6 @@ function duration(seconds: number) {
           }}<button class="text-button" @click="startSentenceAnalysis">{{ t('重试解析') }}</button>
         </div>
         <div v-else-if="sentenceResult" class="analysis-results">
-          <article class="result-card">
-            <span class="eyebrow">{{ t('翻译') }}</span>
-            <p>{{ sentenceResult.translation }}</p>
-          </article>
           <article class="result-card">
             <span class="eyebrow">{{ t('句子结构') }}</span>
             <p>{{ sentenceResult.summary }}</p>
@@ -1663,6 +1785,13 @@ function duration(seconds: number) {
         </div>
       </div>
     </dialog>
+    <GenerationSheet
+      ref="generator"
+      :preferences="state.generationPreferences"
+      @preferences-change="saveGenerationPreferences"
+      @generated="previewGeneratedArticle"
+      @closed="importButton?.focus()"
+    />
   </main>
   <nav v-if="page !== 'reader'" class="bottom-tabs lingrove-bottom-tabs" :aria-label="t('主导航')">
     <button :aria-current="page === 'library' ? 'page' : undefined" @click="navigate('library')">

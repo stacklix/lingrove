@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA2000000000000000000001 /* TTSStreaming.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000002 /* TTSStreaming.swift */; };
-		AA1900000000000000000001 /* TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1900000000000000000002 /* TTSService.swift */; };
-		AA1800000000000000000001 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = AA1800000000000000000002 /* Localizable.xcstrings */; };
 		141489A826CF22B06D03ED1D /* LingroveApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3141EA1A801FFACD7914DE9 /* LingroveApp.swift */; };
 		2F0589B18B6221B63FA1AA49 /* HostConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 575CB22ADB6835BA1E24AF00 /* HostConfig.json */; };
 		3575B0D523597E73F5E655DF /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72874FE63881988C31D2214A /* RuntimeTests.swift */; };
@@ -21,6 +18,9 @@
 		7D86C5F75A9476ADD2F0B9EA /* Handwriting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D9174378D1745DA20E1D67 /* Handwriting.swift */; };
 		9BDCF3F994E758EB69D23EE1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 933F35217DDE8A6A251E6580 /* Assets.xcassets */; };
 		A91FC322FB3ABD9B66C55E5D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBCF2ED2A0A978F71D7086D1 /* Foundation.framework */; };
+		AA1800000000000000000001 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = AA1800000000000000000002 /* Localizable.xcstrings */; };
+		AA1900000000000000000001 /* TTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA1900000000000000000002 /* TTSService.swift */; };
+		AA2000000000000000000001 /* TTSStreaming.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2000000000000000000002 /* TTSStreaming.swift */; };
 		F805393E3DC565BFE86E5C82 /* StoredZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172EA4DEE36E904A1A1CA822 /* StoredZIP.swift */; };
 		FD4E235CAC8A1C38F3760EE0 /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5106270A5CA6793A48275A4 /* LLMService.swift */; };
 		FED4BCEB50B2EE9C63A70C86 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBCF2ED2A0A978F71D7086D1 /* Foundation.framework */; };
@@ -44,9 +44,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AA2000000000000000000002 /* TTSStreaming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSStreaming.swift; sourceTree = "<group>"; };
-		AA1900000000000000000002 /* TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSService.swift; sourceTree = "<group>"; };
-		AA1800000000000000000002 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		172EA4DEE36E904A1A1CA822 /* StoredZIP.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoredZIP.swift; path = Core/StoredZIP.swift; sourceTree = "<group>"; };
 		424092A96CD971389484FF48 /* Module.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Module.swift; path = Core/Module.swift; sourceTree = "<group>"; };
 		4F059FCEF8A8330C554E95DB /* LingroveUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LingroveUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -58,6 +55,9 @@
 		860DA6FB0A6340F0C8FDE37D /* ModuleStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ModuleStore.swift; path = Core/ModuleStore.swift; sourceTree = "<group>"; };
 		933F35217DDE8A6A251E6580 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9BD054FF42657BA0E0435C62 /* LingroveUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LingroveUITests.swift; sourceTree = "<group>"; };
+		AA1800000000000000000002 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		AA1900000000000000000002 /* TTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSService.swift; sourceTree = "<group>"; };
+		AA2000000000000000000002 /* TTSStreaming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TTSStreaming.swift; sourceTree = "<group>"; };
 		D340274FA71FAD7FCF9E4048 /* LingroveRuntimeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LingroveRuntimeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E3141EA1A801FFACD7914DE9 /* LingroveApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LingroveApp.swift; sourceTree = "<group>"; };
 		E5106270A5CA6793A48275A4 /* LLMService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };

@@ -46,7 +46,7 @@ def main():
             or any(not isinstance(name, str) or not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,63}', name) for name in modules)
             or len(set(modules)) != len(modules)):
         parser.error('modules.json must contain unique module directory names')
-    missing = [name for name in modules if not (root / name / 'index.html').is_file()]
+    missing = [name for name in modules if not (root / 'app' / name / 'index.html').is_file()]
     if missing:
         parser.error(f'Missing built resources for {", ".join(missing)}. Run npm run build first')
     with ThreadingHTTPServer(('0.0.0.0', args.port), partial(DebugHandler, directory=str(root))) as server:
@@ -61,7 +61,7 @@ def main():
         else:
             print(f'未能自动获取局域网 IP，请在网络设置中查看并填写 http://<本机 IP>:{port}。', flush=True)
         for name in modules:
-            print(f'  /{name}/index.html', flush=True)
+            print(f'  /app/{name}/index.html', flush=True)
         server.serve_forever()
 
 

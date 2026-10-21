@@ -1,7 +1,13 @@
 import { splitReadingSentences } from './reading-layout';
 import type { CompletedPart } from './import';
 import { validateAnalysis, type SentenceAnalysis } from './sentence-analysis';
+import { readTranslationCache, type TranslationCache } from './sentence-translations';
 import { moduleStorage } from '@lingrove/host-sdk';
+import {
+  defaultGenerationPreferences,
+  validGenerationPreferences,
+  type GenerationPreferences,
+} from './generation';
 import {
   MAX_ARTICLE_LENGTH,
   validateReading,
@@ -11,6 +17,8 @@ import {
 } from './model';
 export interface AnalysisJob {
   language: Language;
+  translationLanguage?: string;
+  translations?: TranslationCache;
   tags?: string[];
   id: string;
   source: string;
@@ -24,8 +32,10 @@ export interface AnalysisJob {
   error: string;
 }
 export interface State {
+  generationPreferences: GenerationPreferences;
   playbackHintSeen: boolean;
   draftLanguage: Language;
+  draftTranslate: boolean;
   draftTags: string;
   draft: string;
   draftTitle: string;
@@ -36,8 +46,10 @@ export interface State {
   activeID: string;
 }
 export const freshState = (): State => ({
+  generationPreferences: defaultGenerationPreferences(),
   playbackHintSeen: false,
   draftLanguage: 'ja',
+  draftTranslate: false,
   draftTags: '',
   draft: '',
   draftTitle: '',
@@ -82,6 +94,7 @@ export async function loadState(): Promise<State> {
     return {
       ...item,
       analyses,
+      translations: readTranslationCache(item.translations, item.source),
       reading,
       title:
         typeof item.title === 'string' ? item.title.slice(0, 120) : item.source.trim().slice(0, 36),
@@ -105,9 +118,13 @@ export async function loadState(): Promise<State> {
     };
   });
   return {
+    generationPreferences: validGenerationPreferences(raw.generationPreferences)
+      ? { ...raw.generationPreferences }
+      : defaultGenerationPreferences(),
     playbackHintSeen: raw.playbackHintSeen === true,
     draftTags: typeof raw.draftTags === 'string' ? raw.draftTags : '',
     draftLanguage: isLanguage(raw.draftLanguage) ? raw.draftLanguage : 'ja',
+    draftTranslate: raw.draftTranslate === true,
     draft: typeof raw.draft === 'string' ? raw.draft.slice(0, MAX_ARTICLE_LENGTH) : '',
     draftTitle: typeof raw.draftTitle === 'string' ? raw.draftTitle.slice(0, 120) : '',
     draftOrigin: typeof raw.draftOrigin === 'string' ? raw.draftOrigin : '文本导入',
@@ -125,6 +142,8 @@ export async function loadState(): Promise<State> {
           .map((j) => ({
             id: j.id,
             language: j.language,
+            translationLanguage: j.translationLanguage,
+            translations: readTranslationCache(j.translations, j.source),
             tags: j.tags,
             parts: Array.isArray(j.parts)
               ? j.parts.filter(

@@ -262,8 +262,7 @@ struct ModuleScreen: View {
     let module: Module
     @ObservedObject var store: ModuleStore
     @StateObject private var page: ModulePage
-    @AppStorage(DebugServer.enabledPreferenceKey) private var debugEnabled = false
-    @AppStorage(HostConfiguration.snapshotPreferenceKey) private var snapshotEnabled = false
+    @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -275,7 +274,7 @@ struct ModuleScreen: View {
     var body: some View {
         Group {
             if let failure = page.failure {
-                ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && (debugEnabled || snapshotEnabled) { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
+                ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && resourceMode != .bundled { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
             } else {
                 ZStack {
                     ModuleWebView(page: page).id(page.generation)
@@ -321,7 +320,7 @@ struct ModuleScreen: View {
             .padding(.top, 8)
         }
         .overlay(alignment: .bottom) {
-            if DebugServer.available && (debugEnabled || snapshotEnabled), let message = page.reloadMessage {
+            if DebugServer.available && resourceMode != .bundled, let message = page.reloadMessage {
                 ReloadFeedbackView(message: message, autoDismiss: !page.isReloading) { page.reloadMessage = nil }
                     .padding(.horizontal, 16).padding(.bottom, 80)
             }

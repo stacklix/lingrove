@@ -64,16 +64,31 @@ struct Catalog: Codable {
         for module in modules { try module.validate() }
     }
 }
+enum ChildAppResourceMode: String {
+    case bundled, snapshot, debug
+}
 struct HostConfiguration: Codable {
     static let currentVersion = "1.3.0"
     var catalogURL: String
     var snapshotCatalogURL: String = ""
     func updateCatalogURL(defaults: UserDefaults = .standard) -> String {
-        Self.usesSnapshot(defaults: defaults) ? snapshotCatalogURL : catalogURL
+        #if DEBUG
+        return Self.usesSnapshot(defaults: defaults) ? snapshotCatalogURL : ""
+        #else
+        return catalogURL
+        #endif
     }
-    static let snapshotPreferenceKey = "updates.snapshot"
+    static let resourceModePreferenceKey = "resources.mode"
+    static func resourceMode(defaults: UserDefaults = .standard) -> ChildAppResourceMode {
+        guard DebugServer.available else { return .bundled }
+        return ChildAppResourceMode(rawValue: defaults.string(forKey: resourceModePreferenceKey) ?? "") ?? .bundled
+    }
     static func usesSnapshot(defaults: UserDefaults = .standard) -> Bool {
-        DebugServer.available && defaults.bool(forKey: snapshotPreferenceKey)
+        resourceMode(defaults: defaults) == .snapshot
+    }
+    static func usesBundledResources(defaults: UserDefaults = .standard) -> Bool {
+        // Debug has three exclusive modes. Production retains its release update channel.
+        DebugServer.available && !usesSnapshot(defaults: defaults)
     }
     static var bundled: Self {
         guard let url = Bundle.main.url(forResource: "HostConfig", withExtension: "json"), let data = try? Data(contentsOf: url), let config = try? JSONDecoder().decode(Self.self, from: data) else { return .init(catalogURL: "") }
@@ -133,12 +148,43 @@ struct NetworkAccessDomain: Identifiable, Equatable {
     }
 }
 
+struct DebugServerAddress: Codable, Equatable, Identifiable {
+    var id = UUID().uuidString
+    var url = ""
+}
+
+struct DebugServerSettings: Codable, Equatable {
+    var addresses: [DebugServerAddress] = []
+    var activeID: String?
+    var activeAddress: String? { addresses.first { $0.id == activeID }?.url }
+
+    static func load(defaults: UserDefaults = .standard) -> Self {
+        guard let json = defaults.string(forKey: DebugServer.preferenceKey),
+              let data = json.data(using: .utf8),
+              let settings = try? JSONDecoder().decode(Self.self, from: data) else { return Self() }
+        return settings
+    }
+    func save(defaults: UserDefaults = .standard) {
+        guard let data = try? JSONEncoder().encode(self), let json = String(data: data, encoding: .utf8) else { return }
+        defaults.set(json, forKey: DebugServer.preferenceKey)
+    }
+    mutating func updateAddress(id: String, url: String) {
+        guard let index = addresses.firstIndex(where: { $0.id == id }), addresses[index].url != url else { return }
+        if activeID == id { activeID = nil }
+        addresses[index].url = url
+    }
+    mutating func removeAddress(id: String) {
+        if activeID == id { activeID = nil }
+        addresses.removeAll { $0.id == id }
+    }
+}
+
 // Only Debug builds can load executable child-app resources from a server.
 enum DebugServer {
-    static let preferenceKey = "debug.serverURL"
-    static let enabledPreferenceKey = "debug.enabled"
+    static let preferenceKey = "debug.servers"
+    static var activeAddress: String? { enabled ? DebugServerSettings.load().activeAddress : nil }
     static var enabled: Bool {
-        available && (UserDefaults.standard.object(forKey: enabledPreferenceKey) as? Bool ?? false)
+        HostConfiguration.resourceMode() == .debug
     }
     static var canRefresh: Bool { available && (enabled || HostConfiguration.usesSnapshot()) }
     static var available: Bool {
@@ -187,7 +233,7 @@ enum DebugServer {
         return modules.isEmpty ? "连接成功，服务器可访问。" : "连接成功，\(modules.count) 个子应用入口均可访问。"
     }
     static func entryURL(for module: Module) -> URL? {
-        guard enabled, let base = try? normalized(UserDefaults.standard.string(forKey: preferenceKey) ?? ""),
+        guard enabled, let base = try? normalized(activeAddress ?? ""),
               !base.isEmpty, let url = URL(string: base) else { return nil }
         return url.appendingPathComponent("app").appendingPathComponent(module.id).appendingPathComponent(module.entry)
     }

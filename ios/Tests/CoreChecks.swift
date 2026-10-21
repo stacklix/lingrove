@@ -21,8 +21,25 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
     @MainActor static func main() async throws {
         let fixtures = URL(fileURLWithPath: CommandLine.arguments[1])
         let root = fixtures.appendingPathComponent("state")
+        #if DEBUG
+        let originalMode = UserDefaults.standard.object(forKey: HostConfiguration.resourceModePreferenceKey)
+        UserDefaults.standard.set(ChildAppResourceMode.snapshot.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        defer { UserDefaults.standard.set(originalMode, forKey: HostConfiguration.resourceModePreferenceKey) }
+        #endif
         func check(_ condition: @autoclosure () -> Bool, _ message: String) { precondition(condition(), message); print("PASS \(message)") }
         func rejects(_ message: String, _ operation: () throws -> Void) { do { try operation(); fatalError("Expected rejection: \(message)") } catch { print("PASS \(message)") } }
+        let debugSettingsSuite = "debug-addresses-\(UUID().uuidString)"
+        let debugSettingsDefaults = UserDefaults(suiteName: debugSettingsSuite)!
+        defer { debugSettingsDefaults.removePersistentDomain(forName: debugSettingsSuite) }
+        var debugSettings = DebugServerSettings(addresses: [.init(id: "one", url: "http://localhost:8000"), .init(id: "two", url: "http://localhost:9000")], activeID: "one")
+        debugSettings.activeID = "two"
+        debugSettings.save(defaults: debugSettingsDefaults)
+        check(DebugServerSettings.load(defaults: debugSettingsDefaults) == debugSettings && debugSettings.activeAddress == "http://localhost:9000", "multiple debug addresses persist with one active selection")
+        debugSettings.updateAddress(id: "two", url: "http://localhost:9001")
+        check(debugSettings.activeAddress == nil && debugSettings.addresses.count == 2, "editing an active debug address disables it until rechecked")
+        debugSettings.activeID = "one"
+        debugSettings.removeAddress(id: "one")
+        check(debugSettings.activeAddress == nil && debugSettings.addresses.map(\.id) == ["two"], "removing an active debug address clears its selection")
         check(Version("1.10.0")! > Version("1.2.0")!, "semantic version ordering")
         check(Version("../1") == nil && Version("1.2") == nil, "invalid versions rejected")
         check(ModuleVersion("20261231")! < ModuleVersion("20270101")!, "build-date versions sort across years")
@@ -74,7 +91,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         localizedUpdate.downloadUrl = "https://updates.test/localized-update.zip"
         localizedUpdate.size = localizedArchive.count
         localizedUpdate.sha256 = SHA256.hash(data: localizedArchive).map { String(format: "%02x", $0) }.joined()
-        let localizedConfig = HostConfiguration(catalogURL: "https://updates.test/localized-catalog.json")
+        let localizedConfig = HostConfiguration(catalogURL: "https://updates.test/localized-catalog.json", snapshotCatalogURL: "https://updates.test/localized-catalog.json")
         let localizedRoot = fixtures.appendingPathComponent("localized-state")
         let localizedStore = ModuleStore(root: localizedRoot, config: localizedConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         MockProtocol.responses = ["/localized-catalog.json": (200, try catalog(localizedUpdate)), "/localized-update.zip": (200, localizedArchive)]
@@ -82,14 +99,14 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(localizedStore.modules.first?.description(for: "en") == "Updated description delivered by the child app.", "child-app update replaces introduction without a host translation")
         let localizedRestart = ModuleStore(root: localizedRoot, config: localizedConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         check(localizedRestart.modules.first?.localizedDescriptions == localizedUpdate.localizedDescriptions, "updated introductions persist across host restart")
-        let hostConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json")
+        let hostConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/catalog.json")
         let store = ModuleStore(root: root, config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         check(store.modules.first?.version == "20260101", "bundled module available offline")
         let archive = try Data(contentsOf: fixtures.appendingPathComponent("valid.zip"))
         module.version = "20260102"; module.downloadUrl = "https://updates.test/module.zip"; module.size = archive.count
         module.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
         MockProtocol.responses = ["/catalog.json": (200, try catalog(module)), "/module.zip": (200, archive)]
-        let insecureStore = ModuleStore(root: fixtures.appendingPathComponent("http-state"), config: HostConfiguration(catalogURL: "http://updates.test/catalog.json"), session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
+        let insecureStore = ModuleStore(root: fixtures.appendingPathComponent("http-state"), config: HostConfiguration(catalogURL: "http://updates.test/catalog.json", snapshotCatalogURL: "http://updates.test/catalog.json"), session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         await insecureStore.checkForUpdates()
         check(insecureStore.modules.first?.version == "20260101" && insecureStore.notice.contains("HTTPS"), "HTTP catalog rejected before download")
         let bundledModule = store.modules[0]
@@ -122,7 +139,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         concurrentModule.downloadUrl = "https://updates.test/module.zip"
         concurrentModule.size = archive.count
         concurrentModule.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
-        let concurrentConfig = HostConfiguration(catalogURL: "https://updates.test/concurrent-catalog.json")
+        let concurrentConfig = HostConfiguration(catalogURL: "https://updates.test/concurrent-catalog.json", snapshotCatalogURL: "https://updates.test/concurrent-catalog.json")
         let concurrentStore = ModuleStore(root: fixtures.appendingPathComponent("concurrent/state"), config: concurrentConfig, session: session,
                                           builtinRoot: fixtures.appendingPathComponent("concurrent/builtin"))
         MockProtocol.responses["/concurrent-catalog.json"] = (200, try JSONEncoder().encode(Catalog(modules: [concurrentModule, parallel])))
@@ -208,6 +225,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         await brokenStore.checkForUpdates()
         check(try! String(contentsOf: brokenRoot.appendingPathComponent("registry.json"), encoding: .utf8) == "broken", "corrupt registry preserved without overwrite")
         let releaseDefaults = UserDefaults(suiteName: "release-date-tests-\(UUID().uuidString)")!
+        releaseDefaults.set(ChildAppResourceMode.snapshot.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         let releaseStore = ModuleStore(root: fixtures.appendingPathComponent("release-dates"), config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: releaseDefaults)
         var sameDayRelease = bundledModule
         sameDayRelease.version = "20260102"
@@ -226,7 +244,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         releaseStore.rollback(sameDayRelease)
         check(releaseStore.modules.first?.sha256 != sameDayRelease.sha256 && releaseStore.modules.first?.version == sameDayRelease.version, "same-day release rollback retains the previous package")
         let channelDefaults = UserDefaults(suiteName: "channel-tests-\(UUID().uuidString)")!
-        channelDefaults.set(true, forKey: HostConfiguration.snapshotPreferenceKey)
+        channelDefaults.set(ChildAppResourceMode.snapshot.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         let channelConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/catalog.snapshot.json")
         #if DEBUG
         check(channelConfig.updateCatalogURL(defaults: channelDefaults).hasSuffix("catalog.snapshot.json"), "Debug selects Snapshot catalog")
@@ -287,11 +305,17 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         release.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
         MockProtocol.responses["/catalog.json"] = (200, try catalog(release))
         MockProtocol.responses["/module.zip"] = (200, archive)
-        channelDefaults.set(false, forKey: HostConfiguration.snapshotPreferenceKey)
+        channelDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         await channelStore.checkForUpdates()
-        check(channelStore.modules.first?.resourceIdentity == release.resourceIdentity, "disabling Snapshot installs same-version release")
-        channelStore.markHealthy(release)
-        channelDefaults.set(true, forKey: HostConfiguration.snapshotPreferenceKey)
+        channelStore.resourceModeChanged()
+        check(channelStore.modules.first?.resourceIdentity == bundledModule.resourceIdentity, "disabling Snapshot immediately selects the bundled module")
+        check(channelStore.directory(for: firstSnapshot) == fixtures.appendingPathComponent("builtin/sentra"), "even a stale Snapshot reference resolves to bundled HTML when disabled")
+        check(!channelStore.isDownloaded(bundledModule) && channelStore.blocked.isEmpty, "bundled mode ignores downloaded resources and remote minimum versions")
+        let restartedBundled = ModuleStore(root: fixtures.appendingPathComponent("channels"), config: channelConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
+        check(restartedBundled.modules.first?.resourceIdentity == bundledModule.resourceIdentity, "bundled mode survives host restart with a saved Snapshot registry")
+        let disabledReleaseStore = ModuleStore(root: root, config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
+        check(disabledReleaseStore.modules.first?.resourceIdentity == bundledModule.resourceIdentity && disabledReleaseStore.blocked.isEmpty, "downloaded release packages and retirement rules cannot override bundled mode")
+        channelDefaults.set(ChildAppResourceMode.snapshot.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         try offerSnapshot("snapshot.zip")
         await channelStore.checkForUpdates()
         check(channelStore.modules.first?.isSnapshot == true, "reenabling Snapshot returns to Snapshot channel")
@@ -301,13 +325,39 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         await channelStore.checkForUpdates()
         check(channelStore.modules.first?.version == "20260103", "newer Snapshot installs")
         channelStore.markHealthy(snapshot)
-        channelDefaults.set(false, forKey: HostConfiguration.snapshotPreferenceKey)
+        channelDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         await channelStore.checkForUpdates()
-        check(channelStore.modules.first?.resourceIdentity == release.resourceIdentity, "channel switch allows lower release version")
+        check(channelStore.modules.first?.resourceIdentity == bundledModule.resourceIdentity, "newer downloaded Snapshot cannot override bundled HTML")
+        let registryBefore = try Data(contentsOf: fixtures.appendingPathComponent("channels/registry.json"))
+        var localModeRequests = 0
+        MockProtocol.intercept = { _ in localModeRequests += 1; return false }
+        await channelStore.checkForUpdates()
+        check(localModeRequests == 0 && channelConfig.updateCatalogURL(defaults: channelDefaults).isEmpty, "bundled mode does not contact either update catalog")
+        check(try! Data(contentsOf: fixtures.appendingPathComponent("channels/registry.json")) == registryBefore, "switching modes preserves the downloaded registry")
+        channelDefaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        channelStore.resourceModeChanged()
+        check(HostConfiguration.resourceMode(defaults: channelDefaults) == .debug && !HostConfiguration.usesSnapshot(defaults: channelDefaults), "debug and snapshot modes are mutually exclusive")
+        await channelStore.checkForUpdates()
+        check(localModeRequests == 0 && channelStore.modules.first?.resourceIdentity == bundledModule.resourceIdentity, "debug mode uses bundled local fallback without downloading updates")
+        channelDefaults.set(ChildAppResourceMode.snapshot.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        channelStore.resourceModeChanged()
+        check(HostConfiguration.resourceMode(defaults: channelDefaults) != .debug && channelStore.modules.first?.version == "20260103", "snapshot mode restores the retained package and turns off debugging")
+        var snapshotRequests: [String] = []
+        MockProtocol.intercept = { request in snapshotRequests.append(request.request.url!.path); return false }
+        let failedSnapshotConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/unavailable-snapshot.json")
+        let failedSnapshotStore = ModuleStore(root: fixtures.appendingPathComponent("failed-snapshot"), config: failedSnapshotConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
+        let snapshotCheckSucceeded = await failedSnapshotStore.checkForUpdates()
+        check(!snapshotCheckSucceeded && snapshotRequests == ["/unavailable-snapshot.json"], "Debug never falls back to the Release catalog when Snapshot fails")
+        snapshotRequests.removeAll()
+        let missingSnapshotConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json")
+        let missingSnapshotStore = ModuleStore(root: fixtures.appendingPathComponent("missing-snapshot"), config: missingSnapshotConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
+        await missingSnapshotStore.checkForUpdates()
+        check(snapshotRequests.isEmpty && missingSnapshotConfig.updateCatalogURL(defaults: channelDefaults).isEmpty, "Debug never uses the Release catalog when Snapshot is unconfigured")
+        MockProtocol.intercept = nil
         let cancellationSuite = "cancel-tests-\(UUID().uuidString)"
         let cancellationDefaults = UserDefaults(suiteName: cancellationSuite)!
         defer { cancellationDefaults.removePersistentDomain(forName: cancellationSuite) }
-        cancellationDefaults.set(false, forKey: HostConfiguration.snapshotPreferenceKey)
+        cancellationDefaults.set(ChildAppResourceMode.snapshot.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         var cancellableModule = bundledModule
         cancellableModule.version = "20260102"
         cancellableModule.downloadUrl = "https://updates.test/cancel-module.zip"
@@ -315,7 +365,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         cancellableModule.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
         let cancellationConfig = HostConfiguration(
             catalogURL: "https://updates.test/cancel-catalog.json",
-            snapshotCatalogURL: "https://updates.test/cancel-snapshot-catalog.json"
+            snapshotCatalogURL: "https://updates.test/cancel-catalog.json"
         )
         let cancellationStore = ModuleStore(
             root: fixtures.appendingPathComponent("cancel-state"),
@@ -347,11 +397,11 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         let isHeld = cancelledTransfer != nil
         cancellationLock.unlock()
         check(isHeld && cancellationStore.downloadProgress["sentra"] == 0, "in-flight ZIP exposes progress before cancellation")
-        cancellationDefaults.set(true, forKey: HostConfiguration.snapshotPreferenceKey)
-        await cancellationStore.checkForUpdates(forceSnapshot: true)
+        cancellationDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        cancellationStore.resourceModeChanged()
         await pendingCheck.value
         MockProtocol.intercept = nil
-        check(cancellationStore.modules.first?.version == "20260101", "superseded ZIP download does not install")
+        check(cancellationStore.modules.first?.version == "20260101", "turning off Snapshot cancels an in-flight ZIP without installing it")
         check(cancellationStore.downloadProgress.isEmpty && cancellationStore.statuses["sentra"] != "正在下载 1.1.0…",
               "cancelling a ZIP download clears progress and stale status")
         #else

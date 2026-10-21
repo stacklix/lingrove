@@ -5379,10 +5379,6 @@
     "en": "Development mode",
     "ja": "開発モード"
   },
-  "开发快照": {
-    "en": "Development snapshot",
-    "ja": "開発スナップショット"
-  },
   "开启后获取 master 上的最新开发版本；关闭后获取最新正式版。调试服务器资源优先加载。": {
     "en": "Enable the latest development build from master; disable to use the latest release. Debug server resources take priority.",
     "ja": "オンにすると master の最新開発版、オフにすると最新の正式版を取得します。デバッグサーバーのリソースが優先されます。"
@@ -5422,10 +5418,6 @@
   "本机应用": {
     "en": "Local installation",
     "ja": "ローカルアプリ"
-  },
-  "开发快照下载": {
-    "en": "Development snapshot download",
-    "ja": "開発スナップショットのダウンロード"
   },
   "Release 下载": {
     "en": "Release download",
@@ -6715,8 +6707,160 @@
     "en": "Reconnecting will require permission again.",
     "ja": "取り消すと、再接続時に許可が必要です。"
   },
+  "提前缓存句子翻译": {
+    "en": "Preload sentence translations",
+    "ja": "文の翻訳を事前に保存"
+  },
+  "缓存句子翻译：{0} / {1} 句": {
+    "en": "Saving translations: {0} / {1} sentences",
+    "ja": "翻訳を保存中：{0} / {1} 文"
+  },
+  "翻译中 · {0}/{1} 句": {
+    "en": "Translating · {0}/{1} sentences",
+    "ja": "翻訳中 · {0}/{1} 文"
+  },
+  "句子翻译不完整，请重试。": {
+    "en": "Sentence translations are incomplete. Please retry.",
+    "ja": "文の翻訳が不完全です。再試行してください。"
+  },
   "应用安装记录格式无效或无法读取，已保留原文件；暂时使用内置应用，自动更新已暂停。": {
     "en": "The app installation records have an invalid format or cannot be read. The original file has been preserved. Built-in apps are being used and automatic updates are paused.",
     "ja": "アプリのインストール記録の形式が無効か、読み取れません。元のファイルは保持しています。内蔵アプリを使用し、自動更新を一時停止しています。"
+  },
+  "AI 生成": {
+    "en": "AI generation",
+    "ja": "AI 生成"
+  },
+  "关闭 AI 生成": {
+    "en": "Close AI generation",
+    "ja": "AI 生成を閉じる"
+  },
+  "AI 生成文章": {
+    "en": "Generate an article",
+    "ja": "AI で文章を生成"
+  },
+  "按学习目标生成文章，预览并编辑后加入书架。": {
+    "en": "Generate an article for your learning goals, then preview and edit it before adding it to your library.",
+    "ja": "学習目標に合わせて文章を生成し、確認・編集してから本棚に追加します。"
+  },
+  "难度": {
+    "en": "Level",
+    "ja": "難易度"
+  },
+  "日常生活": {
+    "en": "Daily life",
+    "ja": "日常生活"
+  },
+  "旅行见闻": {
+    "en": "Travel experiences",
+    "ja": "旅の体験"
+  },
+  "饮食文化": {
+    "en": "Food and dining",
+    "ja": "食文化"
+  },
+  "工作与学习": {
+    "en": "Work and study",
+    "ja": "仕事と学習"
+  },
+  "文化与社会": {
+    "en": "Culture and society",
+    "ja": "文化と社会"
+  },
+  "科学与自然": {
+    "en": "Science and nature",
+    "ja": "科学と自然"
+  },
+  "短篇故事": {
+    "en": "Short stories",
+    "ja": "短編物語"
+  },
+  "自定义主题": {
+    "en": "Custom topic",
+    "ja": "自由テーマ"
+  },
+  "字数（字符）": {
+    "en": "Length (characters)",
+    "ja": "文字数"
+  },
+  "字数（单词）": {
+    "en": "Length (words)",
+    "ja": "単語数"
+  },
+  "范围 50–2000，生成长度可能略有浮动。": {
+    "en": "Choose 50–2000. The generated length may vary slightly.",
+    "ja": "50〜2000 で指定してください。生成される長さは多少前後します。"
+  },
+  "自定义限制（可选）": {
+    "en": "Additional requirements (optional)",
+    "ja": "追加の条件（任意）"
+  },
+  "例如：使用对话形式、包含指定词汇、避免某些内容。": {
+    "en": "For example: use dialogue, include specific vocabulary, or avoid certain content.",
+    "ja": "例：会話形式にする、特定の語彙を使う、特定の内容を避ける。"
+  },
+  "正在生成文章…": {
+    "en": "Generating your article…",
+    "ja": "文章を生成中…"
+  },
+  "正在生成…": {
+    "en": "Generating…",
+    "ja": "生成中…"
+  },
+  "生成文章": {
+    "en": "Generate article",
+    "ja": "文章を生成"
+  },
+  "预览生成文章": {
+    "en": "Preview generated article",
+    "ja": "生成した文章を確認"
+  },
+  "检查标题和正文，编辑后即可加入书架。": {
+    "en": "Review and edit the title and text, then add the article to your library.",
+    "ja": "タイトルと本文を確認・編集して、本棚に追加できます。"
+  },
+  "请选择文章语言对应的难度。": {
+    "en": "Choose a level for the selected article language.",
+    "ja": "選択した言語に合った難易度を選んでください。"
+  },
+  "请填写主题，最多 200 个字符。": {
+    "en": "Enter a topic of up to 200 characters.",
+    "ja": "テーマを 200 文字以内で入力してください。"
+  },
+  "请填写 50 到 2000 之间的整数字数。": {
+    "en": "Enter a whole number from 50 to 2000 for the length.",
+    "ja": "長さを 50〜2000 の整数で入力してください。"
+  },
+  "自定义限制最多 1000 个字符。": {
+    "en": "Additional requirements must be 1000 characters or fewer.",
+    "ja": "追加の条件は 1000 文字以内で入力してください。"
+  },
+  "未能生成完整文章，请重试。": {
+    "en": "The article could not be generated in full. Please try again.",
+    "ja": "文章を完全に生成できませんでした。もう一度お試しください。"
+  },
+  "快照模式": {
+    "en": "Snapshot mode",
+    "ja": "スナップショットモード"
+  },
+  "快照下载": {
+    "en": "Snapshot download",
+    "ja": "スナップショットのダウンロード"
+  },
+  "添加调试地址": {
+    "en": "Add debug address",
+    "ja": "デバッグアドレスを追加"
+  },
+  "删除调试地址": {
+    "en": "Delete debug address",
+    "ja": "デバッグアドレスを削除"
+  },
+  "启用此地址": {
+    "en": "Enable this address",
+    "ja": "このアドレスを有効にする"
+  },
+  "打开地址开关以检测连接。": {
+    "en": "Turn on this address to test its connection.",
+    "ja": "アドレスのスイッチをオンにすると接続をテストします。"
   }
 }

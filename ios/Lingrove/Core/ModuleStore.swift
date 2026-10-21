@@ -251,21 +251,37 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
             if adoptedBuiltin && registryReadable { try persist() }
             rejectedVersions = (try? JSONDecoder().decode([String: String].self, from: Data(contentsOf: self.root.appendingPathComponent("rejected.json")))) ?? [:]
             refresh()
-            for install in registry.values where !install.healthy && UserDefaults.standard.bool(forKey: "launching.\(install.active.id).\(install.active.resourceIdentity)") { rollback(install.active) }
+            if !HostConfiguration.usesBundledResources(defaults: defaults) {
+                for install in registry.values where !install.healthy && UserDefaults.standard.bool(forKey: "launching.\(install.active.id).\(install.active.resourceIdentity)") { rollback(install.active) }
+            }
         } catch { notice = "本地模块读取失败：\(error.localizedDescription)"; refresh() }
     }
     private func refresh() {
         var all = builtins
-        for (id, install) in registry { all[id] = install.active }
+        let bundledOnly = HostConfiguration.usesBundledResources(defaults: defaults)
+        if !bundledOnly {
+            for (id, install) in registry { all[id] = install.active }
+        }
         let order = defaults.stringArray(forKey: Self.displayOrderKey) ?? []
         modules = all.values.sorted {
             let left = order.firstIndex(of: $0.id) ?? Int.max
             let right = order.firstIndex(of: $1.id) ?? Int.max
             return left == right ? $0.id < $1.id : left < right
         }
-        blocked = Set(registry.compactMap { id, install in
+        blocked = bundledOnly ? [] : Set(registry.compactMap { id, install in
             guard let minimum = install.minimumAllowedVersion.flatMap(ModuleVersion.init), let current = ModuleVersion(install.active.version), current < minimum else { return nil }; return id
         })
+    }
+    func resourceModeChanged() {
+        updateTask?.cancel()
+        updateTask = nil
+        updateID = UUID()
+        checking = false
+        statuses.removeAll()
+        downloadProgress.removeAll()
+        downloadStatusOwners.removeAll()
+        if registryReadable { notice = "" }
+        refresh()
     }
     func setDisplayOrder(_ ids: [String]) {
         var seen = Set<String>()
@@ -276,6 +292,7 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
     }
     private func persist() throws { try JSONEncoder().encode(registry).write(to: registryURL, options: .atomic); refresh() }
     func isDownloaded(_ module: Module) -> Bool {
+        guard !HostConfiguration.usesBundledResources(defaults: defaults) else { return false }
         let manifest = root.appendingPathComponent("Modules/\(module.id)/\(module.resourceIdentity)/manifest.json")
         return FileManager.default.fileExists(atPath: manifest.path)
     }
@@ -296,12 +313,14 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.resourceIdentity)")
     }
     func markHealthy(_ module: Module) {
+        guard !HostConfiguration.usesBundledResources(defaults: defaults) else { return }
         guard registry[module.id]?.active.resourceIdentity == module.resourceIdentity else { return }
         registry[module.id]?.healthy = true
         UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.resourceIdentity)")
         do { try persist() } catch { notice = "模块状态保存失败" }
     }
     func rollback(_ module: Module) {
+        guard !HostConfiguration.usesBundledResources(defaults: defaults) else { return }
         guard let install = registry[module.id], install.active.resourceIdentity == module.resourceIdentity, !install.healthy else { return }
         clearLaunchMarker(module)
         rejectedVersions[module.id] = module.resourceIdentity
@@ -326,6 +345,10 @@ private final class ModuleDownloadDispatcher: NSObject, URLSessionDataDelegate, 
         return try await session.download(request: request, limit: limit, onProgress: onProgress)
     }
     @discardableResult func checkForUpdates(forceSnapshot: Bool = false) async -> Bool {
+        if HostConfiguration.usesBundledResources(defaults: defaults) {
+            resourceModeChanged()
+            return true
+        }
         guard registryReadable else { return false }
         let force = forceSnapshot && HostConfiguration.usesSnapshot(defaults: defaults)
         guard !checking || force else { return false }

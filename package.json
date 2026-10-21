@@ -9,13 +9,15 @@
   "scripts": {
     "dev": "npm run dev -w @lingrove/sentra",
     "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora && npm run typecheck -w @lingrove/kotoba && npm run typecheck -w @lingrove/lector",
-    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora && npm run test -w @lingrove/kotoba && npm run test -w @lingrove/lector",
+    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora && npm run test -w @lingrove/kotoba && npm run test -w @lingrove/lector && npm run test:scripts",
+    "test:scripts": "node --test scripts/tests/*.test.mjs",
     "build": "node scripts/build-modules.mjs",
+    "build:watch": "node scripts/watch-build.mjs",
     "check": "npm run typecheck && npm test && npm run build && npm run verify:release",
     "format": "prettier --write app/sentra/src app/sentra/tests packages/host-sdk/src scripts/package-modules.mjs",
     "verify:release": "python3 scripts/verify-release.py",
     "build:release": "node scripts/build-modules.mjs --release",
-    "debug:serve": "python3 scripts/serve-debug.py",
+    "debug:serve": "node scripts/watch-build.mjs --serve",
     "ios:install": "node scripts/install-ios.mjs"
   },
   "devDependencies": {

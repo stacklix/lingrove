@@ -1,5 +1,6 @@
 import { restoreSourceWhitespace } from './source-alignment';
 import type { SentenceAnalysis } from './sentence-analysis';
+import type { TranslationCache } from './sentence-translations';
 export const MAX_LENGTH = 800;
 export const MAX_ARTICLE_LENGTH = 20000;
 export const languages = [
@@ -46,6 +47,7 @@ export interface SavedReading {
   speechVoice?: string;
   tags?: string[];
   analyses?: Record<string, SentenceAnalysis>;
+  translations?: TranslationCache;
   title?: string;
   origin?: string;
   stats?: { opens: number; seconds: number; lookups: number; visited: number[]; lastRead: number };

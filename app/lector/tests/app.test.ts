@@ -4,6 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import App from '../src/App.vue';
 import { demo, demoSource } from '../src/demo';
 import { analysis } from './analysis-fixture';
+import { translationKey } from '../src/sentence-translations';
 const mocks = vi.hoisted(() => ({
   importArticle: vi.fn(),
   analyzeSentence: vi.fn(),
@@ -13,6 +14,16 @@ const mocks = vi.hoisted(() => ({
   root: vi.fn(),
   play: vi.fn(),
   ttsStatus: vi.fn(),
+  prefetchTranslations: vi.fn(),
+  generateArticle: vi.fn(),
+}));
+vi.mock('../src/generation', async (original) => ({
+  ...(await original<typeof import('../src/generation')>()),
+  generateArticle: mocks.generateArticle,
+}));
+vi.mock('../src/sentence-translations', async (original) => ({
+  ...(await original<typeof import('../src/sentence-translations')>()),
+  prefetchTranslations: mocks.prefetchTranslations,
 }));
 vi.mock('../src/sentence-analysis', async (original) => ({
   ...(await original<typeof import('../src/sentence-analysis')>()),
@@ -35,6 +46,7 @@ vi.mock('@lingrove/host-sdk', async (importOriginal) => ({
 beforeEach(() => {
   setAppLocale('zh-Hans');
   vi.clearAllMocks();
+  mocks.generateArticle.mockReset();
   mocks.get.mockResolvedValue(null);
   mocks.set.mockResolvedValue(undefined);
   mocks.root.mockResolvedValue(undefined);
@@ -42,6 +54,7 @@ beforeEach(() => {
   mocks.analyzeSentence.mockResolvedValue(structuredClone(analysis));
   mocks.readTextFile.mockResolvedValue(demoSource);
   mocks.ttsStatus.mockResolvedValue({ voices: [] });
+  mocks.prefetchTranslations.mockReset().mockResolvedValue({});
   window.scrollTo = vi.fn();
   HTMLDialogElement.prototype.showModal = function () {
     this.setAttribute('open', '');
@@ -65,6 +78,157 @@ async function submit(w: Awaited<ReturnType<typeof setup>>) {
   await w.get('form').trigger('submit');
   await flushPromises();
 }
+describe('sentence translations', () => {
+  const key = translationKey(demoSource, 'ja', 'zh-Hans');
+  const translations = {
+    [key]: {
+      source: demoSource,
+      sourceLanguage: 'ja' as const,
+      language: 'zh-Hans',
+      translation: '昨天我在图书馆读书。',
+    },
+  };
+
+  it('defaults prefetch off and hides missing translation until analysis succeeds, then persists it', async () => {
+    const w = await setup();
+    await begin(w);
+    expect((w.get('#import-translations').element as HTMLInputElement).checked).toBe(false);
+    await submit(w);
+    expect(mocks.prefetchTranslations).not.toHaveBeenCalled();
+    await w.get('.article-open').trigger('click');
+    await flushPromises();
+    await w.get('.sentence-trigger').trigger('click');
+    expect(w.find('.sentence-translation').exists()).toBe(false);
+    expect(mocks.analyzeSentence).not.toHaveBeenCalled();
+    await w.get('.analyze-sentence').trigger('click');
+    await flushPromises();
+    expect(w.get('.sentence-translation').text()).toContain(analysis.translation);
+    expect(w.findAll('.sentence-translation')).toHaveLength(1);
+    const saved = structuredClone(mocks.set.mock.calls.at(-1)![1]);
+    expect(saved.library[0].translations[key].translation).toBe(analysis.translation);
+    w.unmount();
+    mocks.get.mockResolvedValue(saved);
+    const reopened = await setup();
+    await reopened.get('.article-open').trigger('click');
+    await flushPromises();
+    await reopened.get('.sentence-trigger').trigger('click');
+    expect(reopened.get('.sentence-translation').text()).toContain(analysis.translation);
+    expect(mocks.analyzeSentence).toHaveBeenCalledTimes(1);
+    reopened.unmount();
+  });
+
+  it('shows prefetched translation immediately, retains it during analysis and replaces it with the analysis translation', async () => {
+    mocks.prefetchTranslations.mockResolvedValue(translations);
+    let finish!: (value: typeof analysis) => void;
+    mocks.analyzeSentence.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const w = await setup();
+    await begin(w);
+    await w.get('#import-translations').setValue(true);
+    await submit(w);
+    expect(mocks.prefetchTranslations.mock.calls[0][1]).toBe('zh-Hans');
+    expect(mocks.set.mock.calls.at(-1)![1].draftTranslate).toBe(true);
+    expect(mocks.set.mock.calls.at(-1)![1].library[0].translations).toEqual(translations);
+    await w.get('.article-open').trigger('click');
+    await flushPromises();
+    await w.get('.sentence-trigger').trigger('click');
+    expect(w.get('.sentence-translation').text()).toContain(translations[key].translation);
+    expect(w.find('.analysis-results').exists()).toBe(false);
+    expect(mocks.analyzeSentence).not.toHaveBeenCalled();
+    await w.get('.analyze-sentence').trigger('click');
+    expect(w.get('.sentence-translation').text()).toContain(translations[key].translation);
+    expect(w.find('.sentence-progress').exists()).toBe(true);
+    finish(analysis);
+    await flushPromises();
+    expect(w.get('.sentence-translation').text()).toContain(analysis.translation);
+    expect(w.findAll('.sentence-translation')).toHaveLength(1);
+    expect(mocks.set.mock.calls.at(-1)![1].library[0].translations[key].translation).toBe(
+      analysis.translation,
+    );
+    w.unmount();
+  });
+
+  it('does not display a translation for a different UI language and restores it when switching back', async () => {
+    mocks.prefetchTranslations.mockResolvedValue(translations);
+    const w = await setup();
+    await begin(w);
+    await w.get('#import-translations').setValue(true);
+    await submit(w);
+    await w.get('.article-open').trigger('click');
+    await flushPromises();
+    await w.get('.sentence-trigger').trigger('click');
+    expect(w.find('.sentence-translation').exists()).toBe(true);
+    setAppLocale('en');
+    await flushPromises();
+    expect(w.find('.sentence-translation').exists()).toBe(false);
+    setAppLocale('zh-Hans');
+    await flushPromises();
+    expect(w.get('.sentence-translation').text()).toContain(translations[key].translation);
+    expect(mocks.analyzeSentence).not.toHaveBeenCalled();
+    w.unmount();
+  });
+
+  it('resumes a failed translation job with saved translations and its original target language', async () => {
+    mocks.prefetchTranslations
+      .mockImplementationOnce(
+        async (_reading, _language, _signal, _cache, checkpoint, progress) => {
+          await checkpoint(translations);
+          progress({ done: 1, total: 2 });
+          throw new Error('网络中断');
+        },
+      )
+      .mockResolvedValue(translations);
+    const w = await setup();
+    await begin(w);
+    await w.get('#import-translations').setValue(true);
+    await submit(w);
+    expect(w.find('.article-card:not(.pending-card)').exists()).toBe(false);
+    const saved = structuredClone(mocks.set.mock.calls.at(-1)![1]);
+    expect(saved.jobs[0].translations).toEqual(translations);
+    w.unmount();
+    setAppLocale('en');
+    mocks.get.mockResolvedValue(saved);
+    const resumed = await setup();
+    await resumed.get('.pending-card .article-open').trigger('click');
+    await resumed.get('[aria-labelledby="job-title"] .primary').trigger('click');
+    await flushPromises();
+    expect(mocks.prefetchTranslations.mock.calls.at(-1)![1]).toBe('zh-Hans');
+    expect(mocks.prefetchTranslations.mock.calls.at(-1)![3]).toEqual(translations);
+    expect(mocks.set.mock.calls.at(-1)![1].library[0].translations).toEqual(translations);
+    expect(mocks.set.mock.calls.at(-1)![1].jobs).toHaveLength(0);
+    resumed.unmount();
+  });
+
+  it('keeps an import paused when its translation request finishes after cancellation', async () => {
+    let finish!: (value: typeof translations) => void;
+    mocks.prefetchTranslations.mockImplementation(
+      (_reading, _language, _signal, _cache, _checkpoint, progress) => {
+        progress({ done: 0, total: 1 });
+        return new Promise((resolve) => {
+          finish = resolve;
+        });
+      },
+    );
+    const w = await setup();
+    await begin(w);
+    await w.get('#import-translations').setValue(true);
+    await submit(w);
+    expect(w.get('.pending-card').text()).toContain('翻译中');
+    await w.get('.pending-card .article-open').trigger('click');
+    expect(w.get('[aria-labelledby="job-title"]').text()).toContain('缓存句子翻译：0 / 1 句');
+    await w.get('[aria-labelledby="job-title"] .secondary').trigger('click');
+    expect(mocks.prefetchTranslations.mock.calls[0][2].aborted).toBe(true);
+    finish(translations);
+    await flushPromises();
+    expect(mocks.set.mock.calls.at(-1)![1].library).toHaveLength(0);
+    expect(mocks.set.mock.calls.at(-1)![1].jobs[0].status).toBe('paused');
+    w.unmount();
+  });
+});
 describe('article-first reading', () => {
   it('starts with article list, an import menu, and exactly two bottom tabs', async () => {
     const w = await setup();
@@ -87,7 +251,7 @@ describe('article-first reading', () => {
     await w.get('.article-open').trigger('click');
     await flushPromises();
     expect(w.find('.reading-paper').exists()).toBe(true);
-    expect(w.findAll('input[type="checkbox"]')).toHaveLength(1);
+    expect(w.findAll('.reader-nav input[type="checkbox"]')).toHaveLength(1);
     expect(w.find('.phrase').exists()).toBe(false);
     expect(w.get('.sentence-text').classes()).toContain('has-ruby');
     await w.get('.sentence-trigger').trigger('click');
@@ -97,7 +261,7 @@ describe('article-first reading', () => {
     expect(mocks.importArticle).toHaveBeenCalledTimes(1);
     expect(mocks.analyzeSentence).toHaveBeenCalledTimes(1);
     await w.get('[aria-label="关闭句子解析"]').trigger('click');
-    await w.get('input[type="checkbox"]').setValue(false);
+    await w.get('.reader-nav input[type="checkbox"]').setValue(false);
     expect(w.findAll('ruby')).toHaveLength(0);
     expect(w.get('.sentence-text').classes()).not.toContain('has-ruby');
     w.unmount();
@@ -451,7 +615,7 @@ it('does not reuse another language analysis after switching the app language', 
   await w.get('.analyze-sentence').trigger('click');
   await flushPromises();
   expect(mocks.analyzeSentence).toHaveBeenCalledTimes(2);
-  expect(w.get('.analysis-results').text()).toContain('I read at the library yesterday.');
+  expect(w.get('.sentence-translation').text()).toContain('I read at the library yesterday.');
   expect(mocks.set.mock.calls.at(-1)![1].library[0].source).toBe(demoSource);
   w.unmount();
   setAppLocale('zh-Hans');
@@ -584,7 +748,9 @@ it('floats a play button, expands progress, and stops on the second click', asyn
   const stop = vi.fn().mockResolvedValue(undefined);
   mocks.play.mockImplementation((_input, options) => {
     onState = options.onState;
-    return { finished: new Promise(() => {}), stop,
+    return {
+      finished: new Promise(() => {}),
+      stop,
       pause: vi.fn(async () => options.onState('paused')),
       resume: vi.fn(async () => options.onState('playing')),
     };
@@ -915,7 +1081,11 @@ it('suspends following after manual scroll, keeps highlighting, and restores it 
   const target = document.createElement('span');
   target.scrollIntoView = scrollIntoView;
   const lookup = vi.spyOn(document, 'getElementById').mockReturnValue(target);
-  const calls: { emit: (state: string) => void; chunk: (index: number) => void; finish: () => void }[] = [];
+  const calls: {
+    emit: (state: string) => void;
+    chunk: (index: number) => void;
+    finish: () => void;
+  }[] = [];
   mocks.play.mockImplementation((_input, options) => {
     let finish!: () => void;
     const finished = new Promise<void>((resolve) => {
@@ -987,4 +1157,163 @@ it('suspends following after manual scroll, keeps highlighting, and restores it 
     w.unmount();
     lookup.mockRestore();
   }
+});
+
+describe('AI generation import', () => {
+  async function openGenerator(w: Awaited<ReturnType<typeof setup>>) {
+    await w.get('[aria-label="导入文章"]').trigger('click');
+    await w.get('.import-menu button:last-child').trigger('click');
+  }
+  it('switches level systems, retains values across UI languages, and previews before importing', async () => {
+    mocks.generateArticle.mockResolvedValue({
+      title: 'A trip',
+      source: 'We went to the park.',
+      language: 'en',
+    });
+    const w = await setup();
+    await openGenerator(w);
+    expect(w.get('.generation-sheet').attributes()).toHaveProperty('open');
+    expect(w.findAll('#generation-level option').map((o) => o.attributes('value'))).toEqual([
+      'N5',
+      'N4',
+      'N3',
+      'N2',
+      'N1',
+    ]);
+    await w.get('#generation-language').setValue('zh');
+    expect(w.findAll('#generation-level option').map((o) => o.attributes('value'))).toEqual([
+      '初级',
+      '中级',
+      '高级',
+    ]);
+    await w.get('#generation-language').setValue('en');
+    expect((w.get('#generation-level').element as HTMLSelectElement).value).toBe('A1');
+    await w.get('#generation-level').setValue('B1');
+    await w.get('#generation-language').setValue('ru');
+    expect((w.get('#generation-level').element as HTMLSelectElement).value).toBe('B1');
+    await w.get('#generation-language').setValue('en');
+    await w.get('#generation-topic').setValue('custom');
+    await w.get('#generation-custom-topic').setValue('A walk in the park');
+    await w.get('#generation-length').setValue('500');
+    await w.get('#generation-constraints').setValue('Use dialogue.');
+    setAppLocale('en');
+    await flushPromises();
+    expect(w.get('#generation-title').text()).toBe('Generate an article');
+    expect((w.get('#generation-level').element as HTMLSelectElement).value).toBe('B1');
+    expect((w.get('#generation-custom-topic').element as HTMLInputElement).value).toBe(
+      'A walk in the park',
+    );
+    setAppLocale('ja');
+    await flushPromises();
+    expect(w.get('#generation-title').text()).toBe('AI で文章を生成');
+    setAppLocale('zh-Hans');
+    await w.get('.generation-sheet form').trigger('submit');
+    await flushPromises();
+    expect(mocks.generateArticle.mock.calls[0][0]).toEqual({
+      language: 'en',
+      level: 'B1',
+      topic: 'A walk in the park',
+      length: 500,
+      constraints: 'Use dialogue.',
+    });
+    expect(w.get('.generation-sheet').attributes('open')).toBeUndefined();
+    expect(w.get('.import-sheet').attributes()).toHaveProperty('open');
+    expect(w.get('#import-title').text()).toBe('预览生成文章');
+    expect((w.get('#source').element as HTMLTextAreaElement).value).toBe('We went to the park.');
+    expect(mocks.importArticle).not.toHaveBeenCalled();
+    await w.get('#article-title').setValue('Edited title');
+    await w.get('.import-sheet form').trigger('submit');
+    await flushPromises();
+    expect(mocks.importArticle.mock.calls[0][0]).toBe('We went to the park.');
+    expect(mocks.importArticle.mock.calls[0][6]).toBe('en');
+    expect(mocks.set.mock.calls.at(-1)![1].library[0]).toMatchObject({
+      title: 'Edited title',
+      origin: 'AI 生成',
+    });
+    w.unmount();
+  });
+  it('keeps inputs and existing drafts on failure, and ignores late results after close', async () => {
+    const w = await setup();
+    await begin(w);
+    await w.get('#source').setValue('Existing draft');
+    await w.get('[aria-label="关闭导入"]').trigger('click');
+    await openGenerator(w);
+    await w.get('#generation-constraints').setValue('Only present tense.');
+    mocks.generateArticle.mockRejectedValueOnce(new Error('连接失败'));
+    await w.get('.generation-sheet form').trigger('submit');
+    await flushPromises();
+    expect(w.get('.generation-sheet .error').text()).toBe('连接失败');
+    expect((w.get('#source').element as HTMLTextAreaElement).value).toBe('Existing draft');
+    let finish!: (value: unknown) => void;
+    mocks.generateArticle.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    await w.get('.generation-sheet form').trigger('submit');
+    await w.get('.generation-sheet form').trigger('submit');
+    expect(mocks.generateArticle).toHaveBeenCalledTimes(2);
+    expect(w.get('#generation-language').attributes()).toHaveProperty('disabled');
+    const signal = mocks.generateArticle.mock.calls[1][1].signal;
+    await w.get('.generation-sheet').trigger('cancel');
+    expect(signal.aborted).toBe(true);
+    finish({ title: 'Late', source: 'Late text', language: 'ja' });
+    await flushPromises();
+    expect((w.get('#source').element as HTMLTextAreaElement).value).toBe('Existing draft');
+    expect(w.get('.import-sheet').attributes('open')).toBeUndefined();
+    await openGenerator(w);
+    expect((w.get('#generation-constraints').element as HTMLTextAreaElement).value).toBe(
+      'Only present tense.',
+    );
+    w.unmount();
+  });
+});
+
+it('remembers generation choices across closing and restarting without requiring generation', async () => {
+  let w = await setup();
+  await w.get('[aria-label="导入文章"]').trigger('click');
+  await w.get('.import-menu button:last-child').trigger('click');
+  await w.get('#generation-language').setValue('ru');
+  await w.get('#generation-level').setValue('C1');
+  await w.get('#generation-topic').setValue('custom');
+  await w.get('#generation-custom-topic').setValue('城市生活');
+  await w.get('#generation-length').setValue('650');
+  await w.get('[aria-label="关闭 AI 生成"]').trigger('click');
+  await flushPromises();
+  const saved = structuredClone(mocks.set.mock.calls.at(-1)![1]);
+  expect(saved.generationPreferences).toEqual({
+    language: 'ru',
+    level: 'C1',
+    topic: 'custom',
+    customTopic: '城市生活',
+    length: 650,
+  });
+  expect(mocks.generateArticle).not.toHaveBeenCalled();
+  w.unmount();
+  mocks.get.mockResolvedValue(saved);
+  w = await setup();
+  await w.get('[aria-label="导入文章"]').trigger('click');
+  await w.get('.import-menu button:last-child').trigger('click');
+  for (const [id, value] of Object.entries({
+    language: 'ru',
+    level: 'C1',
+    topic: 'custom',
+    'custom-topic': '城市生活',
+    length: '650',
+  })) {
+    expect((w.get(`#generation-${id}`).element as HTMLInputElement).value).toBe(value);
+  }
+  await w.get('#generation-length').setValue('');
+  await flushPromises();
+  expect(mocks.set.mock.calls.at(-1)![1].generationPreferences.length).toBe(650);
+  await w.get('#generation-language').setValue('ja');
+  await w.get('#generation-length').setValue('200');
+  await flushPromises();
+  expect(mocks.set.mock.calls.at(-1)![1].generationPreferences).toMatchObject({
+    language: 'ja',
+    level: 'N5',
+    length: 200,
+  });
+  w.unmount();
 });
