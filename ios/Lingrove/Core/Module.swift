@@ -165,12 +165,21 @@ struct DebugServerSettings: Codable, Equatable {
         return settings
     }
     func save(defaults: UserDefaults = .standard) {
-        guard let data = try? JSONEncoder().encode(self), let json = String(data: data, encoding: .utf8) else { return }
+        var saved = self
+        saved.addresses = addresses.compactMap { address in
+            let url = address.url.trimmingCharacters(in: .whitespacesAndNewlines)
+            return url.isEmpty ? nil : DebugServerAddress(id: address.id, url: url)
+        }
+        if !saved.addresses.contains(where: { $0.id == saved.activeID }) { saved.activeID = nil }
+        guard !saved.addresses.isEmpty else {
+            defaults.removeObject(forKey: DebugServer.preferenceKey)
+            return
+        }
+        guard let data = try? JSONEncoder().encode(saved), let json = String(data: data, encoding: .utf8) else { return }
         defaults.set(json, forKey: DebugServer.preferenceKey)
     }
     mutating func updateAddress(id: String, url: String) {
         guard let index = addresses.firstIndex(where: { $0.id == id }), addresses[index].url != url else { return }
-        if activeID == id { activeID = nil }
         addresses[index].url = url
     }
     mutating func removeAddress(id: String) {

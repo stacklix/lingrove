@@ -204,8 +204,8 @@ final class LingroveUITests: XCTestCase {
     private func addressID(_ field: XCUIElement) -> String {
         String(field.identifier.dropFirst("debug-address-".count))
     }
-    private func addressToggle(_ app: XCUIApplication, _ field: XCUIElement) -> XCUIElement {
-        app.switches["debug-address-toggle-\(addressID(field))"].firstMatch
+    private func addressSelection(_ app: XCUIApplication, _ field: XCUIElement) -> XCUIElement {
+        app.buttons["debug-address-select-\(addressID(field))"]
     }
     private func addressResult(_ app: XCUIApplication, _ field: XCUIElement) -> XCUIElement {
         app.staticTexts["debug-address-result-\(addressID(field))"]
@@ -227,9 +227,10 @@ final class LingroveUITests: XCTestCase {
     private func prepareDebugSettings(_ app: XCUIApplication) {
         XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))
         app.buttons["应用设置"].tap()
+        app.buttons["debug-settings-disclosure"].tap()
         let mode = app.switches["debug-mode-toggle"].firstMatch
         XCTAssertTrue(mode.waitForExistence(timeout: 5))
-        if mode.value as? String != "1" { tapSwitch(mode) }
+        if mode.value as? String == "1" { tapSwitch(mode) }
         let deletes = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-address-delete-"))
         for _ in 0..<20 {
             guard deletes.firstMatch.exists else { break }
@@ -264,44 +265,56 @@ final class LingroveUITests: XCTestCase {
         replaceDebugAddress(second, url + "/second")
         let firstID = addressID(first), secondID = addressID(second)
         func enable(_ field: XCUIElement) {
-            tapSwitch(addressToggle(app, field))
+            addressSelection(app, field).tap()
+            XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
+            tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
             XCTAssertTrue(addressResult(app, field).waitForExistence(timeout: 15))
             XCTAssertTrue(addressResult(app, field).label.contains("连接成功"))
-            XCTAssertEqual(addressToggle(app, field).value as? String, "1")
+            XCTAssertTrue(addressSelection(app, field).isSelected)
+            XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
         }
         enable(first)
+        app.buttons["debug-settings-disclosure"].tap()
+        XCTAssertEqual(debugFields(app).count, 0)
+        XCTAssertTrue(app.switches["debug-mode-toggle"].firstMatch.isHittable)
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
+        app.buttons["debug-settings-disclosure"].tap()
         enable(second)
-        XCTAssertEqual(addressToggle(app, first).value as? String, "0")
+        XCTAssertFalse(addressSelection(app, first).isSelected)
         let addressesScreenshot = XCTAttachment(screenshot: app.screenshot())
         addressesScreenshot.name = "Multiple-debug-addresses-one-active"
         addressesScreenshot.lifetime = .keepAlways
         add(addressesScreenshot)
         // Editing a selected address disables it until a fresh check passes.
         replaceDebugAddress(second, "http://127.0.0.1:1")
-        XCTAssertEqual(addressToggle(app, second).value as? String, "0")
-        tapSwitch(addressToggle(app, second))
+        XCTAssertTrue(addressSelection(app, second).isSelected)
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         XCTAssertTrue(addressResult(app, second).waitForExistence(timeout: 15))
         XCTAssertTrue(addressResult(app, second).label.contains("连接失败"))
-        XCTAssertEqual(addressToggle(app, second).value as? String, "0")
-        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        XCTAssertTrue(addressSelection(app, second).isSelected)
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         replaceDebugAddress(second, url + "/second")
         enable(second)
         app.buttons["settings-back"].tap()
         app.terminate(); app.launch()
         app.buttons["应用设置"].tap()
+        app.buttons["debug-settings-disclosure"].tap()
         let restoredFirst = app.textFields["debug-address-\(firstID)"]
         let restoredSecond = app.textFields["debug-address-\(secondID)"]
         XCTAssertEqual(restoredFirst.value as? String, url)
         XCTAssertEqual(restoredSecond.value as? String, url + "/second")
-        XCTAssertEqual(addressToggle(app, restoredFirst).value as? String, "0")
-        XCTAssertEqual(addressToggle(app, restoredSecond).value as? String, "1")
+        XCTAssertFalse(addressSelection(app, restoredFirst).isSelected)
+        XCTAssertTrue(addressSelection(app, restoredSecond).isSelected)
         app.buttons["debug-address-delete-\(secondID)"].tap()
         XCTAssertFalse(restoredSecond.exists)
-        XCTAssertEqual(addressToggle(app, restoredFirst).value as? String, "0")
+        XCTAssertFalse(addressSelection(app, restoredFirst).isSelected)
         tapSwitch(app.switches["snapshot-toggle"].firstMatch)
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
-        XCTAssertEqual(debugFields(app).count, 0)
+        XCTAssertEqual(debugFields(app).count, 1)
+        addressSelection(app, restoredFirst).tap()
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        XCTAssertTrue(addressResult(app, restoredFirst).waitForExistence(timeout: 15))
         XCTAssertEqual(app.switches["snapshot-toggle"].firstMatch.value as? String, "0")
         XCTAssertTrue(restoredFirst.exists)
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
@@ -319,25 +332,27 @@ final class LingroveUITests: XCTestCase {
         app.launch()
         prepareDebugSettings(app)
         let field = debugFields(app).firstMatch
-        tapSwitch(addressToggle(app, field))
+        XCTAssertTrue((field.placeholderValue ?? "").isEmpty)
+        XCTAssertFalse(app.switches["debug-mode-toggle"].firstMatch.isEnabled)
+        addressSelection(app, field).tap()
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         let result = addressResult(app, field)
         XCTAssertTrue(result.waitForExistence(timeout: 10))
         XCTAssertTrue(result.label.contains("请先填写"))
-        XCTAssertEqual(addressToggle(app, field).value as? String, "0")
-        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         XCTAssertTrue(field.isHittable, "An empty address must remain editable")
         replaceDebugAddress(field, "http://127.0.0.1:1")
-        tapSwitch(addressToggle(app, field))
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         XCTAssertTrue(result.waitForExistence(timeout: 15))
         XCTAssertTrue(result.label.contains("连接失败"))
-        XCTAssertEqual(addressToggle(app, field).value as? String, "0")
-        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        XCTAssertTrue(addressSelection(app, field).isSelected)
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         XCTAssertTrue(field.exists)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Debug-address-failure-\(appearance)"
         screenshot.lifetime = .keepAlways
         add(screenshot)
-        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        app.buttons["debug-settings-disclosure"].tap()
         XCTAssertEqual(debugFields(app).count, 0)
         for id in ["glyphora", "kotoba", "lector", "sentra"] {
             XCTAssertTrue(app.buttons["module-developer-details-\(id)"].exists)
@@ -393,23 +408,32 @@ final class LingroveUITests: XCTestCase {
         let field = debugFields(app).firstMatch
         let id = addressID(field)
         replaceDebugAddress(field, "not-a-url")
-        tapSwitch(addressToggle(app, field))
+        addressSelection(app, field).tap()
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         XCTAssertTrue(addressResult(app, field).waitForExistence(timeout: 5))
-        XCTAssertEqual(addressToggle(app, field).value as? String, "0")
-        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "1")
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
+        app.buttons["debug-add-address"].tap()
+        XCTAssertEqual(debugFields(app).count, 2)
         app.buttons["settings-back"].tap()
         app.terminate(); app.launch()
         app.buttons["应用设置"].tap()
+        XCTAssertEqual(debugFields(app).count, 0, "Debug settings start collapsed")
+        app.buttons["debug-settings-disclosure"].tap()
         let restored = app.textFields["debug-address-\(id)"]
         XCTAssertEqual(restored.value as? String, "not-a-url")
-        XCTAssertEqual(addressToggle(app, restored).value as? String, "0")
+        XCTAssertTrue(addressSelection(app, restored).isSelected)
+        XCTAssertEqual(debugFields(app).count, 1, "Blank rows must not persist")
         app.buttons["debug-address-delete-\(id)"].tap()
-        XCTAssertEqual(debugFields(app).count, 0)
         app.buttons["debug-add-address"].tap()
         XCTAssertTrue(debugFields(app).firstMatch.isHittable)
-        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        app.buttons["settings-back"].tap()
+        app.buttons["应用设置"].tap()
+        app.buttons["debug-settings-disclosure"].tap()
+        XCTAssertEqual(debugFields(app).count, 0, "An empty configuration must not persist")
+        XCTAssertFalse(app.switches["debug-mode-toggle"].firstMatch.isEnabled)
         app.buttons["settings-back"].tap()
     }
+
     func testChildPageDoesNotZoomWithPinch() throws {
         let app = XCUIApplication(); app.launch()
         let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Sentra")).firstMatch

@@ -52,6 +52,7 @@ struct HomeView: View {
     @State private var showingLLMUsage = false
     @State private var modelError = ""
     @State private var debugServers = DebugServerSettings.load()
+    @State private var debugSettingsExpanded = false
     @State private var testingAddressID: String?
     @State private var connectionMessages: [String: String] = [:]
     @State private var failedAddresses: Set<String> = []
@@ -167,9 +168,30 @@ struct HomeView: View {
                             Section("开发模式") {
                                 Toggle("快照模式", isOn: Binding(get: { snapshotEnabled }, set: setSnapshotEnabled))
                                     .accessibilityIdentifier("snapshot-toggle")
-                                Toggle("调试模式", isOn: Binding(get: { debugEnabled }, set: setDebugEnabled))
-                                    .accessibilityIdentifier("debug-mode-toggle")
-                                if debugEnabled {
+                                HStack(spacing: 12) {
+                                    Button {
+                                        withAnimation { debugSettingsExpanded.toggle() }
+                                    } label: {
+                                        HStack(spacing: 10) {
+                                            Image(systemName: debugSettingsExpanded ? "chevron.down" : "chevron.right")
+                                                .font(.footnote.weight(.semibold))
+                                                .frame(width: 16)
+                                                .accessibilityHidden(true)
+                                            Text("调试模式")
+                                        }
+                                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                                        .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityValue(debugSettingsExpanded ? Text("已展开") : Text("已折叠"))
+                                    .accessibilityIdentifier("debug-settings-disclosure")
+                                    if testingAddressID != nil { ProgressView().accessibilityLabel("正在测试…") }
+                                    Toggle("开启调试模式", isOn: Binding(get: { debugEnabled }, set: setDebugEnabled))
+                                        .labelsHidden()
+                                        .disabled(debugServers.activeID == nil || testingAddressID != nil)
+                                        .accessibilityIdentifier("debug-mode-toggle")
+                                }
+                                if debugSettingsExpanded {
                                     ForEach(debugServers.addresses) { server in
                                         DebugAddressRow(
                                             serverID: server.id,
@@ -177,19 +199,20 @@ struct HomeView: View {
                                                 get: { debugServers.addresses.first { $0.id == server.id }?.url ?? "" },
                                                 set: { updateDebugAddress(server.id, url: $0) }
                                             ),
-                                            enabled: debugServers.activeID == server.id || testingAddressID == server.id,
+                                            selected: debugServers.activeID == server.id,
                                             testing: testingAddressID == server.id,
                                             message: connectionMessages[server.id],
                                             failed: failedAddresses.contains(server.id),
-                                            onToggle: { setDebugAddressEnabled(server.id, enabled: $0) },
+                                            onSelect: { selectDebugAddress(server.id) },
                                             onDelete: { removeDebugAddress(server.id) }
                                         )
                                     }
                                     Button("添加调试地址", systemImage: "plus") {
                                         debugServers.addresses.append(DebugServerAddress())
-                                        debugServers.save()
                                     }
                                     .accessibilityIdentifier("debug-add-address")
+                                    Text("选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。")
+                                        .font(.footnote).foregroundStyle(.secondary)
                                 }
                                 if let message = pages.reloadMessage {
                                     ReloadFeedbackView(message: message, autoDismiss: !pages.isReloading) { pages.reloadMessages.removeAll() }
@@ -342,51 +365,28 @@ struct HomeView: View {
     private func setDebugEnabled(_ enabled: Bool) {
         guard showingSettings else { return }
         clearConnectionTest()
-        setResourceMode(enabled ? .debug : .bundled)
-        if enabled {
-            if debugServers.addresses.isEmpty {
-                debugServers.addresses.append(DebugServerAddress())
-                debugServers.save()
-            }
-            if let activeID = debugServers.activeID { setDebugAddressEnabled(activeID, enabled: true) }
-        }
-    }
-    private func updateDebugAddress(_ id: String, url: String) {
-        if testingAddressID == id { clearConnectionTest() }
-        connectionMessages[id] = nil
-        failedAddresses.remove(id)
-        debugServers.updateAddress(id: id, url: url)
-        debugServers.save()
-    }
-    private func removeDebugAddress(_ id: String) {
-        if testingAddressID == id { clearConnectionTest() }
-        debugServers.removeAddress(id: id)
-        debugServers.save()
-        connectionMessages[id] = nil
-        failedAddresses.remove(id)
-    }
-    private func setDebugAddressEnabled(_ addressID: String, enabled: Bool) {
-        guard showingSettings, debugEnabled,
-              let server = debugServers.addresses.first(where: { $0.id == addressID }) else { return }
-        clearConnectionTest()
-        // One active ID enforces exclusivity; unverified addresses never reach WebKit.
-        debugServers.activeID = nil
-        debugServers.save()
         connectionMessages.removeAll()
         failedAddresses.removeAll()
-        guard enabled else { return }
+        guard enabled else {
+            setResourceMode(.bundled)
+            return
+        }
+        guard let addressID = debugServers.activeID,
+              let server = debugServers.addresses.first(where: { $0.id == addressID }) else { return }
         testingAddressID = addressID
         let testID = connectionTestID
         let modules = store.modules
         connectionTest = Task { @MainActor in
             do {
                 let message = try await DebugServer.testConnection(server.url, modules: modules)
-                guard !Task.isCancelled, connectionTestID == testID, debugEnabled else { return }
-                debugServers.activeID = addressID
+                guard !Task.isCancelled, connectionTestID == testID, showingSettings else { return }
+                // Publish the verified address before enabling server resource loading.
                 debugServers.save()
+                setResourceMode(.debug)
                 connectionMessages[addressID] = message
             } catch {
-                guard !Task.isCancelled, connectionTestID == testID, debugEnabled else { return }
+                guard !Task.isCancelled, connectionTestID == testID, showingSettings else { return }
+                debugSettingsExpanded = true
                 failedAddresses.insert(addressID)
                 connectionMessages[addressID] = "连接失败：\(error.localizedDescription)"
             }
@@ -394,9 +394,32 @@ struct HomeView: View {
             testingAddressID = nil
         }
     }
+    private func selectDebugAddress(_ id: String) {
+        guard debugServers.activeID != id else { return }
+        clearConnectionTest()
+        if debugEnabled { setResourceMode(.bundled) }
+        debugServers.activeID = id
+        connectionMessages.removeAll()
+        failedAddresses.removeAll()
+    }
+    private func updateDebugAddress(_ id: String, url: String) {
+        if testingAddressID == id { clearConnectionTest() }
+        if debugServers.activeID == id && debugEnabled { setResourceMode(.bundled) }
+        connectionMessages[id] = nil
+        failedAddresses.remove(id)
+        debugServers.updateAddress(id: id, url: url)
+    }
+    private func removeDebugAddress(_ id: String) {
+        if testingAddressID == id { clearConnectionTest() }
+        if debugServers.activeID == id && debugEnabled { setResourceMode(.bundled) }
+        debugServers.removeAddress(id: id)
+        connectionMessages[id] = nil
+        failedAddresses.remove(id)
+    }
     private func resetSettingsDraft() {
         clearConnectionTest()
         debugServers = DebugServerSettings.load()
+        debugSettingsExpanded = false
         initialDebugAddress = DebugServer.activeAddress
         connectionMessages.removeAll()
         failedAddresses.removeAll()
@@ -408,6 +431,7 @@ struct HomeView: View {
     }
     private func finishSettings() {
         clearConnectionTest()
+        if DebugServer.available { debugServers.save() }
         guard DebugServer.available,
               initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress else { return }
         pages.reloadAll(store: store)
@@ -433,44 +457,43 @@ private struct ModuleListButtonStyle: ButtonStyle {
 private struct DebugAddressRow: View {
     let serverID: String
     @Binding var address: String
-    let enabled: Bool
+    let selected: Bool
     let testing: Bool
     let message: String?
     let failed: Bool
-    let onToggle: (Bool) -> Void
+    let onSelect: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 12) {
-                TextField("http://192.168.1.10:8000", text: $address)
+            HStack(spacing: 8) {
+                Button(action: onSelect) {
+                    Image(systemName: selected ? "largecircle.fill.circle" : "circle")
+                        .font(.system(size: 22))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("选择此地址")
+                .accessibilityAddTraits(selected ? [.isSelected] : [])
+                .accessibilityIdentifier("debug-address-select-\(serverID)")
+                TextField("", text: $address)
                     .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                     .submitLabel(.done)
                     .accessibilityLabel("调试服务器地址")
                     .accessibilityIdentifier("debug-address-\(serverID)")
-                Toggle("启用此地址", isOn: Binding(get: { enabled }, set: onToggle))
-                    .labelsHidden()
-                    .accessibilityIdentifier("debug-address-toggle-\(serverID)")
-            }
-            HStack(spacing: 12) {
-                Group {
-                    if testing {
-                        HStack(spacing: 6) { ProgressView(); Text("正在测试…") }
-                    } else if let message {
-                        Text(message).foregroundStyle(failed ? Color.red : Color.secondary)
-                            .accessibilityIdentifier("debug-address-result-\(serverID)")
-                    } else {
-                        Text("打开地址开关以检测连接。")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .font(.footnote)
-                .frame(maxWidth: .infinity, alignment: .leading)
                 Button(role: .destructive, action: onDelete) { Image(systemName: "trash") }
                     .buttonStyle(.borderless)
                     .frame(minWidth: 44, minHeight: 44)
                     .accessibilityLabel("删除调试地址")
                     .accessibilityIdentifier("debug-address-delete-\(serverID)")
+            }
+            if testing {
+                HStack(spacing: 6) { ProgressView(); Text("正在测试…") }
+                    .font(.footnote)
+            } else if let message {
+                Text(message).foregroundStyle(failed ? Color.red : Color.secondary)
+                    .font(.footnote)
+                    .accessibilityIdentifier("debug-address-result-\(serverID)")
             }
         }
         .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }

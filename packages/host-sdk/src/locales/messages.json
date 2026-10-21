@@ -6862,5 +6862,25 @@
   "打开地址开关以检测连接。": {
     "en": "Turn on this address to test its connection.",
     "ja": "アドレスのスイッチをオンにすると接続をテストします。"
+  },
+  "开启调试模式": {
+    "en": "Enable debug mode",
+    "ja": "デバッグモードを有効にする"
+  },
+  "选择此地址": {
+    "en": "Select this address",
+    "ja": "このアドレスを選択"
+  },
+  "选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。": {
+    "en": "Select an address, then enable debug mode. It activates only after a successful connection check. Nonempty addresses are saved when settings close.",
+    "ja": "アドレスを選択してデバッグモードをオンにします。接続確認に成功した場合のみ有効になります。設定を閉じると空欄以外のアドレスが保存されます。"
+  },
+  "已展开": {
+    "en": "Expanded",
+    "ja": "展開中"
+  },
+  "已折叠": {
+    "en": "Collapsed",
+    "ja": "折りたたみ中"
   }
 }
