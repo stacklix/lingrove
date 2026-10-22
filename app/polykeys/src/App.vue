@@ -71,13 +71,16 @@ function clear() { commit(); text.value = ''; start = end = 0; status.value = ''
 
 <template>
   <main>
-    <div class="lingrove-root-actions"><button :disabled="!text" class="quiet" @click="clear">{{ t('清空') }}</button></div>
+    <div class="lingrove-root-actions">
+      <select id="language" v-model="layoutId" class="language-select" :aria-label="t('键盘语言')" @change="changeLanguage"><option v-for="item in layouts" :key="item.id" :value="item.id">{{ t(item.name) }}</option></select>
+    </div>
     <section class="workspace">
-      <div class="section-heading"><label for="language">{{ t('键盘语言') }}</label><span> {{ symbols ? (symbolPage ? '#+=' : '123') : language.toUpperCase() }}</span></div>
-      <select id="language" v-model="layoutId" @change="changeLanguage"><option v-for="item in layouts" :key="item.id" :value="item.id">{{ t(item.name) }}</option></select>
       <div class="editor-card">
         <textarea ref="editor" v-model="text" inputmode="none" :lang="language" dir="auto" :aria-label="t('输入内容')" :placeholder="t('点击键位开始输入')" spellcheck="false" @select="capture" @click="capture" @keyup="capture" @input="commit(); capture(); status = ''" />
-        <div class="editor-footer"><span aria-live="polite" role="status">{{ t(status) }}</span><button class="copy" :disabled="!text" @click="copy">{{ t('复制文字') }}</button></div>
+        <div class="editor-footer">
+          <span class="editor-status" aria-live="polite" role="status">{{ t(status) }}</span>
+          <div class="editor-actions"><button :disabled="!text" class="quiet" @click="clear">{{ t('清空') }}</button><button class="copy" :disabled="!text" @click="copy">{{ t('复制') }}</button></div>
+        </div>
       </div>
       <p class="hint">{{ t(language === 'ko' ? '韩语使用两式键盘，辅音和元音自动合成音节；删除可逐步撤销输入。' : '切换语言不会清空文字。扩展区可输入重音和补充字母。') }}</p>
     </section>

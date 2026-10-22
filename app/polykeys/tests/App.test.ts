@@ -16,7 +16,7 @@ describe('keyboard interaction', () => {
     await wrapper.get('select').setValue('el');
     for (const char of '΄άς') await press(char);
     expect(wrapper.get('textarea').element.value).toBe("їґ'΄άς");
-    await press('复制文字');
+    await press('复制');
     expect(copyText).toHaveBeenCalledWith("їґ'΄άς");
     wrapper.unmount();
   });
@@ -33,7 +33,7 @@ describe('keyboard interaction', () => {
     await wrapper.get('[aria-label="切换大小写"]').trigger('click');
     await press('Œ');
     expect(wrapper.get('textarea').element.value).toBe("l'étéŒ");
-    await press('复制文字');
+    await press('复制');
     expect(copyText).toHaveBeenCalledWith("l'étéŒ");
     wrapper.unmount();
   });
@@ -68,7 +68,7 @@ describe('keyboard interaction', () => {
     await select.setValue('ru');
     const expected = 'пришЯё1вет';
     expect(area.element.value).toBe(expected);
-    await press('复制文字');
+    await press('复制');
     expect(copyText).toHaveBeenCalledWith(expected);
     wrapper.unmount();
   });
@@ -89,7 +89,7 @@ describe('keyboard interaction', () => {
     const expected = 'texto' + extra + '@ñ';
     expect(wrapper.get('textarea').element.value).toBe(expected);
     expect(wrapper.get('select').element.value).toBe('es');
-    await wrapper.findAll('button').find(b => b.text() === '复制文字')!.trigger('click');
+    await wrapper.findAll('button').find(b => b.text() === '复制')!.trigger('click');
     expect(copyText).toHaveBeenCalledWith(expected);
     await wrapper.get('[aria-label="符号"]').trigger('click');
     expect(wrapper.findAll('button.letter').some(b => b.text() === '1')).toBe(true);
@@ -121,7 +121,7 @@ describe('keyboard interaction', () => {
     await wrapper.get('select').setValue('es');
     await wrapper.findAll('button').find(b => b.text() === 'ñ')!.trigger('click');
     expect(wrapper.get('textarea').element.value).toBe('hello ñ');
-    await wrapper.findAll('button').find(b => b.text() === '复制文字')!.trigger('click');
+    await wrapper.findAll('button').find(b => b.text() === '复制')!.trigger('click');
     expect(copyText).toHaveBeenCalledWith('hello ñ');
     await wrapper.findAll('button').find(b => b.text() === '清空')!.trigger('click');
     expect(wrapper.get('textarea').element.value).toBe('');

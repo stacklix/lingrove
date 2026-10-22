@@ -87,10 +87,6 @@
     "en": "Tap the keys to start typing",
     "ja": "キーをタップして入力"
   },
-  "复制文字": {
-    "en": "Copy text",
-    "ja": "テキストをコピー"
-  },
   "复制失败，请重试": {
     "en": "Could not copy. Please try again.",
     "ja": "コピーできませんでした。もう一度お試しください。"
