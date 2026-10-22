@@ -567,7 +567,6 @@ private struct HostAppUpdateSection: View {
                 Button("检测更新") { updateCheckID += 1 }
                     .buttonStyle(.borderedProminent)
                     .tint(.blue)
-                    .buttonBorderShape(.roundedRectangle)
                     .fixedSize()
                     .disabled(checking)
                     .accessibilityIdentifier("host-app-check-update")
