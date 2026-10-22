@@ -5,6 +5,57 @@ const { copyText } = vi.hoisted(() => ({ copyText: vi.fn().mockResolvedValue(und
 vi.mock('@lingrove/host-sdk', () => ({ copyText, ready: vi.fn().mockResolvedValue(undefined), installFocusMode: () => () => {}, setRootPage: vi.fn() }));
 vi.mock('@lingrove/host-sdk/vue', () => ({ useAppI18n: () => ({ t: (value: string) => value }) }));
 describe('keyboard interaction', () => {
+  it('switches Japanese input methods without losing text and modifies kana at the caret', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    await wrapper.get('#language').setValue('ja');
+    const press = async (key: string) => { await wrapper.findAll('button').find(b => b.text() === key)!.trigger('click'); };
+    for (const char of 'nihon') await press(char);
+    await wrapper.get('.input-method select').setValue('kana');
+    expect(wrapper.get('textarea').element.value).toBe('にほん');
+    await wrapper.findAll('.kana-key')[5].trigger('click');
+    await wrapper.get('.kana-modifier').trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('にほんば');
+    await wrapper.get('.kana-modifier').trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('にほんぱ');
+    await wrapper.get('[aria-label="切换平假名与片假名"]').trigger('click');
+    await wrapper.findAll('.kana-key')[7].trigger('click');
+    await wrapper.get('.kana-modifier').trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('にほんぱャ');
+    await wrapper.get('[aria-label="删除字符"]').trigger('click');
+    const area = wrapper.get('textarea');
+    area.element.setSelectionRange(0, 1); await area.trigger('select');
+    await wrapper.findAll('.kana-key')[1].trigger('click');
+    expect(area.element.value).toBe('カほんぱ');
+    await wrapper.get('[aria-label="符号"]').trigger('click');
+    await press('1');
+    await wrapper.get('[aria-label="字母"]').trigger('click');
+    expect(wrapper.find('.kana-grid').exists()).toBe(true);
+    await wrapper.get('.input-method select').setValue('romaji');
+    await press('a');
+    expect(area.element.value).toBe('カ1アほんぱ');
+    wrapper.unmount();
+  });
+  it('composes Japanese, undoes input, switches kana and preserves text across languages', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    const press = async (key: string) => { await wrapper.findAll('button').find(b => b.text() === key)!.trigger('click'); };
+    await wrapper.get('select').setValue('ja');
+    for (const key of 'nihon') await press(key);
+    expect(wrapper.get('textarea').element.value).toBe('にほn');
+    await press('g'); await press('o');
+    expect(wrapper.get('textarea').element.value).toBe('にほんご');
+    await wrapper.get('[aria-label="删除字符"]').trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('にほんg');
+    await press('o');
+    await wrapper.get('[aria-label="切换平假名与片假名"]').trigger('click');
+    for (const key of 'kyaku') await press(key);
+    expect(wrapper.get('textarea').element.value).toBe('にほんごキャク');
+    await wrapper.get('select').setValue('en');
+    await press('a');
+    expect(wrapper.get('textarea').element.value).toBe('にほんごキャクa');
+    await press('复制');
+    expect(copyText).toHaveBeenCalledWith('にほんごキャクa');
+    wrapper.unmount();
+  });
   it('inserts Ukrainian main keys and Greek extended letters from the confirmed layouts', async () => {
     const wrapper = mount(App, { attachTo: document.body });
     const press = async (char: string) => {

@@ -4,6 +4,7 @@ export interface Layout { id: string; locale: string; name: string; rows: string
 const qwerty = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 export const layouts: Layout[] = [
   { id: 'ko', locale: 'ko', name: '韩语', rows: ['ㅂㅈㄷㄱㅅㅛㅕㅑㅐㅔ', 'ㅁㄴㅇㄹㅎㅗㅓㅏㅣ', 'ㅋㅌㅊㅍㅠㅜㅡ'], extra: '' },
+  { id: 'ja', locale: 'ja', name: '日语', rows: qwerty, extra: "ー、。・「」！？'" },
   { id: 'en', locale: 'en', name: '英语', rows: qwerty, extra: '' },
   { id: 'fr', locale: 'fr', name: '法语', rows: ['qwertyuiop', "asdfghjkl'", 'zxcvbnm'], extra: 'àâæçéèêëîïôœùûüÿ' },
   { id: 'de', locale: 'de', name: '德语', rows: ['qwertzuiopü', 'asdfghjklöä', 'yxcvbnm'], extra: 'ß' },

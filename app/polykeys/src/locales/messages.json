@@ -154,5 +154,41 @@
   "切换语言不会清空文字。扩展区可输入重音和补充字母。": {
     "en": "Switching languages keeps your text. Use the extra keys for accents and additional letters.",
     "ja": "言語を切り替えても入力は保持されます。拡張キーでアクセント文字や補助文字を入力できます。"
+  },
+  "日语": {
+    "en": "Japanese",
+    "ja": "日本語"
+  },
+  "切换平假名与片假名": {
+    "en": "Switch hiragana and katakana",
+    "ja": "ひらがな・カタカナの切り替え"
+  },
+  "日语使用罗马字输入假名，可切换平假名和片假名；不提供汉字转换。": {
+    "en": "Type romaji to enter kana. Switch between hiragana and katakana; kanji conversion is not available.",
+    "ja": "ローマ字でかなを入力できます。ひらがな・カタカナを切り替えられます。漢字変換には対応していません。"
+  },
+  "日语输入方式": {
+    "en": "Japanese input method",
+    "ja": "日本語の入力方式"
+  },
+  "罗马字": {
+    "en": "Romaji",
+    "ja": "ローマ字"
+  },
+  "九宫格假名": {
+    "en": "12-key kana",
+    "ja": "かな（12キー）"
+  },
+  "假名滑动键盘": {
+    "en": "Kana flick keyboard",
+    "ja": "かなフリックキーボード"
+  },
+  "切换浊音、半浊音与小假名": {
+    "en": "Cycle voiced, semi-voiced and small kana",
+    "ja": "濁音・半濁音・小文字を切り替え"
+  },
+  "点按中央，向四周滑动选择假名；小゛゜切换浊音与小假名。支持键盘方向键，不提供汉字转换。": {
+    "en": "Tap the center or flick toward a kana. 小゛゜ changes voiced and small kana. Arrow keys work too. No kanji conversion.",
+    "ja": "中央をタップ、周囲へフリックして入力。小゛゜で濁音・小文字を切り替え。矢印キー対応、漢字変換なし。"
   }
 }
