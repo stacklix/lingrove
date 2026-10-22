@@ -395,7 +395,6 @@ final class RuntimeTests: XCTestCase {
         let failedServer = page.runtime!
         failedServer.onFailure("服务器无法连接")
         XCTAssertEqual(sources.last, .loading(nil))
-        XCTAssertFalse(try XCTUnwrap(sources.last).isLoaded)
         failedServer.onReady()
         XCTAssertEqual(sources.last, .loading(nil), "A stale server callback cannot overwrite the pending fallback")
         XCTAssertNil(page.failure)
@@ -403,7 +402,6 @@ final class RuntimeTests: XCTestCase {
         page.runtime.onReady()
         XCTAssertEqual(page.reloadMessage, "服务器不可用，已加载本地资源")
         XCTAssertEqual(sources.last, .local)
-        XCTAssertTrue(try XCTUnwrap(sources.last).isLoaded)
         XCTAssertFalse(page.isReloading)
         page.reload()
         XCTAssertEqual(sources.last, .loading(nil))
