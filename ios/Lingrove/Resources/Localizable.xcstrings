@@ -4753,50 +4753,6 @@
         }
       }
     },
-    "待加载地址": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "待加载地址"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pending resource URL"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込み予定のURL"
-          }
-        }
-      }
-    },
-    "当前资源地址": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "当前资源地址"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Current resource URL"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "現在のリソースのURL"
-          }
-        }
-      }
-    },
     "调试服务器": {
       "localizations": {
         "zh-Hans": {
@@ -5259,24 +5215,46 @@
         }
       }
     },
-    "尚未加载，显示下次加载的来源。": {
+    "资源地址": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "尚未加载，显示下次加载的来源。"
+            "value": "资源地址"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Not loaded yet. Showing the source for the next load."
+            "value": "Resource URL"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "まだ読み込まれていません。次回読み込む元を表示しています。"
+            "value": "リソースのURL"
+          }
+        }
+      }
+    },
+    "未获取版本": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未获取版本"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version unavailable"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン未取得"
           }
         }
       }

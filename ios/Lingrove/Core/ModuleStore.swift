@@ -312,6 +312,13 @@ struct ModuleDownloadRecord: Codable, Equatable {
             guard let minimum = install.minimumAllowedVersion.flatMap(ModuleVersion.init), let current = ModuleVersion(install.active.version), current < minimum else { return nil }; return id
         })
     }
+    func debugResourceVersion(for module: Module, at entry: URL) -> String? {
+        guard let address = debugAddress, address == debugMetadataAddress,
+              let base = URL(string: address),
+              entry == base.appendingPathComponent("app").appendingPathComponent(module.id).appendingPathComponent(module.entry) else { return nil }
+        return debugMetadata[module.id]?.version
+    }
+
     func resourceModeChanged() {
         updateTask?.cancel()
         updateTask = nil

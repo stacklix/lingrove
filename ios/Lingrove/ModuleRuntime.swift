@@ -27,13 +27,6 @@ enum AppLanguage {
 enum ModuleResourceSource: Equatable {
     case loading(URL?), debugServer(URL), local, failed
 
-    var isLoaded: Bool {
-        switch self {
-        case .debugServer, .local: return true
-        case .loading, .failed: return false
-        }
-    }
-
     var remoteURL: URL? {
         switch self {
         case let .loading(address): return address

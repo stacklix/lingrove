@@ -948,7 +948,8 @@ struct ModuleDeveloperDetailsView: View {
                         .accessibilityValue(Text(verbatim: AppLanguage.text(value)))
                         .accessibilityIdentifier("module-resource-source")
                     if let address = source.remoteURL {
-                        ModuleInformationRow(title: source.isLoaded ? "当前资源地址" : "待加载地址", value: address.absoluteString)
+                        ModuleInformationRow(title: "版本", value: store.debugResourceVersion(for: module, at: address) ?? AppLanguage.text("未获取版本"))
+                        ModuleInformationRow(title: "资源地址", value: address.absoluteString)
                     } else {
                         ModuleInformationRow(title: "版本", value: module.version)
                         ModuleInformationRow(title: "文件名", value: store.isDownloaded(module)
@@ -957,10 +958,6 @@ struct ModuleDeveloperDetailsView: View {
                         if store.isDownloaded(module), let address = module.downloadUrl {
                             ModuleInformationRow(title: "下载地址", value: address)
                         }
-                    }
-                    if !source.isLoaded {
-                        Text("尚未加载，显示下次加载的来源。")
-                            .font(.footnote).foregroundStyle(.secondary)
                     }
                 }
             } else {
