@@ -669,7 +669,11 @@ final class RuntimeTests: XCTestCase {
         first.detach()
         XCTAssertTrue(cache.page(for: module, store: store) === first)
         first.runtime.webViewWebContentProcessDidTerminate(first.webView)
-        XCTAssertNotNil(first.failure)
+        XCTAssertNil(first.failure)
+        first.resumeIfNeeded(isActive: true)
+        first.runtime.webViewWebContentProcessDidTerminate(first.webView)
+        XCTAssertTrue(first.shouldReturnHome)
+        XCTAssertNil(first.failure)
         XCTAssertFalse(store.blocked.contains(module.id))
         let retried = cache.page(for: module, store: store)
         XCTAssertFalse(retried === first)
@@ -681,6 +685,43 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(first.webView.navigationDelegate)
         cache.reconcile(modules: [module], blocked: [module.id])
         XCTAssertNil(upgraded.webView.navigationDelegate)
+    }
+    @MainActor func testTerminatedPageRecoversAndDoesNotRejectVersion() {
+        let module = Module(id: "recovery-test", name: "Test", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        var readyCount = 0
+        var startupFailures = 0
+        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory,
+                              onReady: { readyCount += 1 }, onFailure: { XCTFail($0) },
+                              onStartupFailure: { startupFailures += 1 })
+        defer { page.close() }
+        let original = page.webView
+        page.runtime.webViewWebContentProcessDidTerminate(page.webView)
+        page.resumeIfNeeded(isActive: true)
+        XCTAssertFalse(page.webView === original)
+        page.runtime.onReady()
+        XCTAssertFalse(page.isLoading)
+        XCTAssertFalse(page.shouldReturnHome)
+        XCTAssertNil(page.failure)
+        XCTAssertEqual(readyCount, 1)
+        XCTAssertEqual(startupFailures, 0)
+    }
+
+    @MainActor func testRecoveryNavigationFailureReturnsHomeWithoutErrorOrRollback() {
+        let module = Module(id: "recovery-failure", name: "Test", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        var failures = 0
+        var startupFailures = 0
+        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory,
+                              onReady: {}, onFailure: { _ in failures += 1 },
+                              onStartupFailure: { startupFailures += 1 })
+        defer { page.close() }
+        page.runtime.webViewWebContentProcessDidTerminate(page.webView)
+        page.resumeIfNeeded(isActive: true)
+        page.runtime.webView(page.webView, didFailProvisionalNavigation: nil,
+                             withError: NSError(domain: NSURLErrorDomain, code: NSURLErrorCannotOpenFile))
+        XCTAssertTrue(page.shouldReturnHome)
+        XCTAssertNil(page.failure)
+        XCTAssertEqual(failures, 1)
+        XCTAssertEqual(startupFailures, 0)
     }
     @MainActor func testWebKitBridgeStreamsAndRestrictsOrigins() async throws {
         let module = Module(id: "runtime-test", name: "Test", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: ["https://allowed.example", "https://model.example"])

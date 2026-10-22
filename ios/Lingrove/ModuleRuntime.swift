@@ -87,7 +87,7 @@ struct ModuleReloadRecord: Codable, Equatable {
     }
 
     func page(for module: Module, store: ModuleStore, refreshing: Bool = false) -> ModulePage {
-        if let page = pages[module.id], page.matches(module), page.failure == nil,
+        if let page = pages[module.id], page.matches(module), page.failure == nil, !page.shouldReturnHome,
            page.directory == store.directory(for: module) {
             if refreshing { page.reload() }
             return page
@@ -150,6 +150,9 @@ struct ModuleReloadRecord: Codable, Equatable {
     let module: Module
     let directory: URL
     @Published private(set) var failure: String?
+    @Published private(set) var shouldReturnHome = false
+    private var recoveryPending = false
+    private var isRecovering = false
     @Published private(set) var isLoading = true
     @Published private(set) var isRootPage = true
     private(set) var runtime: Runtime!
@@ -191,6 +194,9 @@ struct ModuleReloadRecord: Codable, Equatable {
     func reload() {
         close()
         failure = nil
+        shouldReturnHome = false
+        recoveryPending = false
+        isRecovering = false
         isLoading = true
         isRootPage = true
         offset = nil
@@ -198,6 +204,36 @@ struct ModuleReloadRecord: Codable, Equatable {
         reportReload("正在刷新…")
         generation = UUID()
         load()
+    }
+
+    private func processTerminated() {
+        guard !shouldReturnHome else { return }
+        guard !isRecovering else { abandonRecovery(); return }
+        isRecovering = true
+        recoveryPending = true
+        isLoading = true
+        isRootPage = true
+        resumeIfNeeded()
+    }
+
+    func resumeIfNeeded(isActive: Bool? = nil) {
+        guard isActive ?? (UIApplication.shared.applicationState == .active),
+              recoveryPending, !shouldReturnHome else { return }
+        recoveryPending = false
+        close()
+        offset = nil
+        generation = UUID()
+        load()
+    }
+
+    private func abandonRecovery() {
+        close()
+        recoveryPending = false
+        isLoading = false
+        awaitingReloadResult = false
+        reloadMessage = nil
+        onFailure("页面进程恢复失败")
+        shouldReturnHome = true
     }
 
     private func load(usingLocalFallback: Bool = false) {
@@ -209,6 +245,7 @@ struct ModuleReloadRecord: Codable, Equatable {
                               guard let self, self.generation == loadGeneration else { return }
                               self.isLoading = false
                               self.onResourceSource(remote.map(ModuleResourceSource.debugServer) ?? .local)
+                              self.isRecovering = false
                               self.finishReload(usingLocalFallback ? "服务器不可用，已加载本地资源" : (remote == nil ? "本地资源重新加载成功" : "服务器资源刷新成功"), succeeded: !usingLocalFallback)
                               if remote == nil { self.onReady() }
                           },
@@ -224,13 +261,18 @@ struct ModuleReloadRecord: Codable, Equatable {
                                   return
                               }
                               self.onResourceSource(.failed)
+                              if self.isRecovering { self.abandonRecovery(); return }
                               self.failure = message
                               self.isLoading = false
                               self.finishReload((remote == nil ? "本地资源重新加载失败：" : "服务器资源刷新失败：") + message, succeeded: false)
                               if remote == nil { self.onFailure(message) }
                           },
-                          onStartupFailure: { [weak self] in if remote == nil { self?.onStartupFailure() } },
+                          onStartupFailure: { [weak self] in if remote == nil, self?.isRecovering == false { self?.onStartupFailure() } },
                           debugEntryURL: remote, onReload: { [weak self] in self?.reload() },
+                          onProcessTermination: { [weak self] in
+                              guard let self, self.generation == loadGeneration else { return }
+                              self.processTerminated()
+                          },
                           onNavigation: { [weak self] isRoot in
                               guard let self, self.generation == loadGeneration else { return }
                               self.isRootPage = isRoot
@@ -322,6 +364,7 @@ struct ModuleScreen: View {
     @StateObject private var page: ModulePage
     @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(module: Module, store: ModuleStore, pages: ModulePageCache) {
@@ -331,7 +374,9 @@ struct ModuleScreen: View {
     }
     var body: some View {
         Group {
-            if let failure = page.failure {
+            if page.shouldReturnHome {
+                Color(uiColor: LingroveTheme.background)
+            } else if let failure = page.failure {
                 ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && resourceMode != .bundled { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
             } else {
                 ZStack {
@@ -386,7 +431,18 @@ struct ModuleScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
-        .onAppear { store.begin(module, trackingStartup: DebugServer.entryURL(for: module) == nil) }.onDisappear { store.end(module) }
+        .onAppear {
+            if page.shouldReturnHome { dismiss() }
+            else { page.resumeIfNeeded(isActive: scenePhase == .active) }
+            store.begin(module, trackingStartup: DebugServer.entryURL(for: module) == nil)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { page.resumeIfNeeded(isActive: true) }
+        }
+        .onChange(of: page.shouldReturnHome) { _, returnHome in
+            if returnHome { dismiss() }
+        }
+        .onDisappear { store.end(module) }
     }
 }
 
@@ -459,6 +515,7 @@ struct ModuleWebView: UIViewRepresentable {
     private let debugEntryURL: URL?
     private let onReload: () -> Void
     private let onNavigation: (Bool) -> Void
+    private let onProcessTermination: (() -> Void)?
     private var ready = false
     private var closed = false
     private let stateRoot: URL
@@ -474,8 +531,9 @@ struct ModuleWebView: UIViewRepresentable {
         config.httpCookieStorage = nil; config.httpShouldSetCookies = false; config.urlCache = nil
         return URLSession(configuration: config, delegate: NoRedirect(), delegateQueue: nil)
     }()
-    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, ttsConfiguration: @escaping () throws -> TTSConfiguration = { try TTSStore.load() }, onStartupFailure: @escaping () -> Void = {}, debugEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onNavigation: @escaping (Bool) -> Void = { _ in }) {
+    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, ttsConfiguration: @escaping () throws -> TTSConfiguration = { try TTSStore.load() }, onStartupFailure: @escaping () -> Void = {}, debugEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onProcessTermination: (() -> Void)? = nil, onNavigation: @escaping (Bool) -> Void = { _ in }) {
         self.debugEntryURL = DebugServer.enabled ? debugEntryURL : nil
+        self.onProcessTermination = onProcessTermination
         self.onReload = onReload
         self.onNavigation = onNavigation
         self.onStartupFailure = onStartupFailure
@@ -506,7 +564,15 @@ struct ModuleWebView: UIViewRepresentable {
         // WebKit may update its scroll configuration when a new document commits.
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
     }
-    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) { fail("页面进程已退出，请返回后重试。", startupFailure: false) }
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        guard !closed else { return }
+        if let onProcessTermination {
+            close()
+            onProcessTermination()
+        } else {
+            fail("页面进程已退出，请返回后重试。", startupFailure: false)
+        }
+    }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { fail(error.localizedDescription) }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { fail(error.localizedDescription) }
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
