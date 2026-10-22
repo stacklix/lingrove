@@ -37,7 +37,11 @@ final class GitHubBuildNetwork: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
-        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-github-token")
+        if request.value(forHTTPHeaderField: "X-Test-Anonymous") == "true" {
+            XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+        } else {
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-github-token")
+        }
         XCTAssertEqual(request.value(forHTTPHeaderField: "User-Agent"), "Lingrove-iOS")
         let body: String
         if request.url?.path == "/repos/stacklix/lingrove/actions/workflows/ios-adhoc.yml/runs" {
@@ -71,14 +75,16 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(snapshot?.jobs.first?.activeStep, "Archive")
     }
 
-    func testGitHubBuildStatusDoesNotRequestWithoutToken() async {
-        let client = GitHubBuildStatusClient(workflow: "ios-adhoc.yml", token: "")
-        do {
-            _ = try await client.latest()
-            XCTFail("Expected missing-token error")
-        } catch {
-            XCTAssertEqual(error.localizedDescription, "请先配置并保存 GitHub Token。")
-        }
+    func testGitHubBuildStatusReadsWithoutToken() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [GitHubBuildNetwork.self]
+        configuration.httpAdditionalHeaders = ["X-Test-Anonymous": "true"]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        let client = GitHubBuildStatusClient(session: session, workflow: "ios-adhoc.yml", token: "")
+        let snapshot = try await client.latest()
+        XCTAssertEqual(snapshot?.run.id, 123)
+        XCTAssertEqual(snapshot?.jobs.first?.activeStep, "Archive")
     }
     #endif
 

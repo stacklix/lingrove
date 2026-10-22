@@ -7026,5 +7026,9 @@
   "查看下载页面": {
     "en": "View download page",
     "ja": "ダウンロードページを表示"
+  },
+  "Token 仅保存在本机 Keychain，清空后保存可删除 Token。未配置 Token 时，进入页面或切换构建流程读取一次，不自动刷新。配置 Token 后，仅设置页打开且 App 在前台时自动拉取：运行中每 5 秒刷新，结束后每 30 秒刷新，失败后每 120 秒重试。": {
+    "en": "The token is stored only in this device’s Keychain. Clear and save to delete it. Without a token, status is fetched once when opening this page or switching workflows, without automatic refresh. With a token, status refreshes only while Settings is open and the app is active: every 5 seconds while running, every 30 seconds after completion, and every 120 seconds after errors.",
+    "ja": "Token はこの端末の Keychain にのみ保存されます。空欄で保存すると削除できます。Token 未設定時は、ページを開いたときとワークフローを切り替えたときに一度だけ取得し、自動更新しません。Token 設定時は設定画面を開いてアプリが前面にある間のみ、実行中は5秒ごと、終了後は30秒ごと、エラー時は120秒ごとに更新します。"
   }
 }

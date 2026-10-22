@@ -1148,13 +1148,14 @@ struct GitHubBuildStatusClient {
 
     private func get<T: Decodable>(_ path: String, as type: T.Type) async throws -> T {
         try Task.checkCancellation()
-        guard !token.isEmpty else { throw BuildStatusError(message: "请先配置并保存 GitHub Token。") }
         let url = URL(string: "https://api.github.com/repos/stacklix/lingrove/" + path)!
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
         request.setValue("Lingrove-iOS", forHTTPHeaderField: "User-Agent")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         let (data, response) = try await session.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard status == 200 else {
@@ -1215,6 +1216,7 @@ private struct GitHubBuildStatusSection: View {
     @State private var savedToken = ""
     @State private var tokenRevision = 0
     @State private var tokenError: String?
+    @State private var tokenLoaded = false
 
     var body: some View {
         Section {
@@ -1224,6 +1226,7 @@ private struct GitHubBuildStatusSection: View {
                     .autocorrectionDisabled()
                     .accessibilityIdentifier("github-build-token")
                     .task {
+                        defer { tokenLoaded = true }
                         do {
                             let token = try GitHubBuildTokenStore.load()
                             draftToken = token
@@ -1258,16 +1261,14 @@ private struct GitHubBuildStatusSection: View {
             }
             .pickerStyle(.menu)
             .accessibilityIdentifier("github-workflow-picker")
-            if isPresented && !savedToken.isEmpty {
+            if isPresented && tokenLoaded {
                 GitHubBuildStatusView(workflow: workflow, token: savedToken, isPresented: isPresented)
                     .id("\(workflow)-\(tokenRevision)")
-            } else {
-                Text("配置并保存 Token 后显示构建进度。").foregroundStyle(.secondary)
             }
         } header: {
             Text("GitHub 构建进度")
         } footer: {
-            Text("Token 仅保存在本机 Keychain，需具备此仓库的 Actions 读取权限。清空后保存可删除 Token。仅设置页打开且 App 在前台时拉取：运行中每 5 秒刷新，结束后每 30 秒刷新，失败后每 120 秒重试。")
+            Text("Token 仅保存在本机 Keychain，清空后保存可删除 Token。未配置 Token 时，进入页面或切换构建流程读取一次，不自动刷新。配置 Token 后，仅设置页打开且 App 在前台时自动拉取：运行中每 5 秒刷新，结束后每 30 秒刷新，失败后每 120 秒重试。")
         }
     }
 }
@@ -1306,7 +1307,9 @@ struct GitHubBuildStatusView: View {
                 Text(errorMessage).font(.footnote).foregroundStyle(.secondary)
             }
             HStack {
-                Button("刷新进度") { refreshID += 1 }.disabled(loading)
+                if !token.isEmpty {
+                    Button("刷新进度") { refreshID += 1 }.disabled(loading)
+                }
                 Spacer()
                 if loading { ProgressView() }
                 else if let checkedAt {
@@ -1319,6 +1322,11 @@ struct GitHubBuildStatusView: View {
             } ?? "https://github.com/stacklix/lingrove/actions/workflows/\(workflow)")!)
                 .task(id: "\(isPresented)-\(scenePhase)-\(refreshID)") {
                     guard isPresented && scenePhase == .active else { return }
+                    if token.isEmpty {
+                        guard !loaded else { return }
+                        await refresh()
+                        return
+                    }
                     repeat {
                         await refresh()
                         // Back off after errors instead of repeatedly hitting a rate limit.
