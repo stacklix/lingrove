@@ -313,7 +313,13 @@ async function search() {
           ><input v-model="readings" type="checkbox" />{{ t('显示读音') }}</label
         >
       </div>
-      <div class="school-tabs" role="tablist" :aria-label="t('变形分组')" @keydown="navigateTabs">
+      <div
+        class="school-tabs"
+        :class="{ 'greek-form-tabs': targetLanguage === 'el' }"
+        role="tablist"
+        :aria-label="t('变形分组')"
+        @keydown="navigateTabs"
+      >
         <button
           v-for="item in groups"
           :id="`school-tab-${item.label}`"

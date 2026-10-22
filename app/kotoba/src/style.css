@@ -264,6 +264,14 @@ h4 {
   font-weight: 500;
   margin: 0;
 }
+/* Japanese Mincho fonts give Greek glyphs full-width metrics on iOS. */
+.word-summary h2:lang(el),
+.school-heading h3 span:lang(el),
+.form-card h4:lang(el),
+.example-options .example-word:lang(el) {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: normal;
+}
 .usage {
   font-size: 12px;
   line-height: 1.8;
@@ -485,6 +493,22 @@ main.native-host {
 .school-tabs button[aria-selected='true'] {
   background: var(--accent);
   color: var(--accent-ink);
+}
+.greek-form-tabs {
+  justify-content: flex-end;
+  gap: 8px;
+}
+.greek-form-tabs button {
+  min-width: 80px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.greek-form-tabs button[aria-selected='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
 }
 @media (prefers-color-scheme: dark) {
   .school-tabs button[aria-selected='true'] {
