@@ -674,21 +674,28 @@ main {
 }
 
 .directory-toggle {
-  flex-shrink: 0;
+  position: fixed;
+  right: max(20px, calc((100vw - 924px) / 2));
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 8px 12px;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 50%;
   background: var(--paper);
   color: var(--accent);
-  font-size: 12px;
+  box-shadow: 0 6px 20px var(--sheet-shadow);
+}
+.grammar-guide {
+  padding-bottom: 64px;
 }
 .directory-toggle svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;

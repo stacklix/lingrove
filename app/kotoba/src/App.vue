@@ -191,21 +191,6 @@ async function search() {
       <h2 :lang="targetLanguage">{{ input }}</h2>
     </nav>
     <div v-if="page !== 'result'" class="lingrove-root-actions">
-      <button
-        v-if="page === 'grammar'"
-        type="button"
-        class="directory-toggle"
-        :aria-label="t('打开目录')"
-        aria-haspopup="dialog"
-        :aria-controls="targetLanguage === 'ja' ? 'grammar-directory' : 'greek-directory'"
-        :aria-expanded="activeGuide?.directoryOpen ?? false"
-        @click="activeGuide?.openDirectory()"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />
-        </svg>
-        <span>{{ t('目录') }}</span>
-      </button>
       <select v-model="targetLanguage" class="lingrove-language-select" :aria-label="t('手册语言')">
         <option v-for="item in languages" :key="item.id" :value="item.id">
           {{ t(item.name) }}
@@ -218,6 +203,20 @@ async function search() {
     <KeepAlive
       ><GreekGrammarGuide ref="greekGuide" v-if="page === 'grammar' && targetLanguage === 'el'"
     /></KeepAlive>
+    <button
+      v-if="page === 'grammar'"
+      type="button"
+      class="directory-toggle"
+      :aria-label="t('打开目录')"
+      aria-haspopup="dialog"
+      :aria-controls="targetLanguage === 'ja' ? 'grammar-directory' : 'greek-directory'"
+      :aria-expanded="activeGuide?.directoryOpen ?? false"
+      @click="activeGuide?.openDirectory()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />
+      </svg>
+    </button>
     <template v-if="page === 'search'">
       <section class="intro">
         <p class="eyebrow">{{ t(language.name) }}</p>
