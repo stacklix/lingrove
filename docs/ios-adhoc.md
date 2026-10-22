@@ -35,6 +35,12 @@ Pages 保持从 `gh-pages` 根目录发布，自定义域名为 `lingrove.stackl
 
 推送到 `master` 时，仅在宿主源码或资源、Xcode 工程、共享原生文案、宿主构建/签名/发布脚本或此工作流发生变化时自动打包。`BuiltinModules/` 生成资源不触发打包；只修改子应用源码、manifest、`modules.json` 或 SDK 的 Web/TypeScript/CSS 时不会触发 iOS 打包。没有匹配文件变化时，整个工作流不启动。
 
+iOS 验证按事件分工：
+
+- PR 命中 `.github/workflows/ios.yml` 的路径名单时，运行 TypeScript、应用测试、分发脚本测试和原生核心测试，再进行无签名模拟器编译。此工作流不再由 `master` 推送自动触发，仍可手动运行作诊断。
+- `master` 命中现有 Ad Hoc 宿主路径名单时，在同一个 macOS job 中先运行上述测试，全部通过后才导入签名材料、Archive 并导出 IPA；任一步失败都会阻止后续打包与发布。保持原有自动打包路径范围，纯子应用和 SDK Web 修改仍只走 Web 发布。
+- 两条 iOS 流程的测试阶段均不提前执行 `npm run build`；由后续 Xcode 构建阶段统一构建并校验内置子应用，避免重复生成资源。`master` 不再额外编译模拟器版本。
+
 需要更新证书或描述文件、重打安装包时，仍可在 GitHub → Actions → **Build and publish iOS Ad Hoc** → Run workflow，选择 **master** 手动强制构建。
 
 工作流只构建 `Debug`，保留宿主调试功能，内置子应用也使用 Debug 构建。安装包通过 Apple Distribution 证书进行 Ad Hoc 签名。

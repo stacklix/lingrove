@@ -36,6 +36,18 @@ jobs:
           node-version: '24'
           cache: npm
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run application and native core tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm test
+          python3 scripts/tests/test-ios-distribution.py
+          scripts/test-native.sh
+
       - name: Import distribution certificate and validate Ad Hoc profile
         id: signing
         env:
@@ -65,9 +77,6 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain"
           security find-identity -v -p codesigning "$keychain" | grep 'Apple Distribution:'
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Archive and export signed IPA
         env:

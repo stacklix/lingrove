@@ -1,21 +1,5 @@
 name: iOS build and core checks
 on:
-  push:
-    branches: [master]
-    paths:
-      - 'ios/**'
-      - '!ios/Lingrove/Resources/BuiltinModules/**'
-      - 'packages/host-sdk/src/index.ts'
-      - 'packages/host-sdk/src/llm.ts'
-      - 'packages/host-sdk/src/tts.ts'
-      - 'scripts/generate-xcode.rb'
-      - 'scripts/*ios*'
-      - 'scripts/test-native.sh'
-      - 'scripts/tests/test-ios-*'
-      - 'scripts/tests/make-fixtures.py'
-      - 'scripts/publish-pages-tree.sh'
-      - 'scripts/verify-pages-build.sh'
-      - '.github/workflows/ios*.yml'
   pull_request:
     paths:
       - 'ios/**'
@@ -43,10 +27,17 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - run: npm ci && npm run check
-      - run: python3 scripts/tests/test-ios-distribution.py
-      - run: scripts/test-native.sh
-      # Exercise a clean native build without pre-generated web resources.
+      - name: Install dependencies
+        run: npm ci
+      - name: Run application and native core tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm test
+          python3 scripts/tests/test-ios-distribution.py
+          scripts/test-native.sh
+      # Xcode builds and verifies the web resources once, from a clean checkout.
       - run: rm -rf dist ios/Lingrove/Resources/BuiltinModules
       - run: xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove -sdk iphonesimulator -configuration Debug -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
       - run: python3 scripts/verify-ios-modules.py build/ios/Build/Products/Debug-iphonesimulator/Lingrove.app
