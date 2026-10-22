@@ -4753,50 +4753,6 @@
         }
       }
     },
-    "待加载来源": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "待加载来源"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pending source"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込み予定の取得元"
-          }
-        }
-      }
-    },
-    "实际来源": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "实际来源"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Actual source"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "実際の取得元"
-          }
-        }
-      }
-    },
     "待加载地址": {
       "localizations": {
         "zh-Hans": {
@@ -4837,50 +4793,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "現在のリソースのURL"
-          }
-        }
-      }
-    },
-    "本机安装包": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "本机安装包"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Installed package"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "インストール済みパッケージ"
-          }
-        }
-      }
-    },
-    "安装来源": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "安装来源"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Installation source"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "インストール元"
           }
         }
       }
@@ -5321,6 +5233,50 @@
           "stringUnit": {
             "state": "translated",
             "value": "アプリ情報を更新できませんでした。デバッグサーバーに接続できることを確認して、もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "应用来源": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用来源"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App source"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリの読み込み元"
+          }
+        }
+      }
+    },
+    "尚未加载，显示下次加载的来源。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未加载，显示下次加载的来源。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not loaded yet. Showing the source for the next load."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まだ読み込まれていません。次回読み込む元を表示しています。"
           }
         }
       }

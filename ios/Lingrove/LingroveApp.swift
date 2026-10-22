@@ -881,7 +881,7 @@ struct ModuleDeveloperDetailsView: View {
     let moduleID: String
     private var module: Module? { store.modules.first { $0.id == moduleID } }
 
-    private func installedSource(_ module: Module) -> String {
+    private func localSource(_ module: Module) -> String {
         store.isDownloaded(module) ? (module.isSnapshot ? "快照下载" : "Release 下载") : "宿主内置"
     }
 
@@ -941,25 +941,26 @@ struct ModuleDeveloperDetailsView: View {
                 }
                 Section {
                     let source = resourceSource(module)
-                    let title = source.isLoaded ? "实际来源" : "待加载来源"
-                    let value = source.remoteURL == nil ? installedSource(module) : "调试服务器"
-                    LabeledContent(AppLanguage.text(title), value: AppLanguage.text(value))
+                    let value = source.remoteURL == nil ? localSource(module) : "调试服务器"
+                    LabeledContent("应用来源", value: AppLanguage.text(value))
                         .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(Text(verbatim: AppLanguage.text(title)))
+                        .accessibilityLabel(Text(verbatim: AppLanguage.text("应用来源")))
                         .accessibilityValue(Text(verbatim: AppLanguage.text(value)))
                         .accessibilityIdentifier("module-resource-source")
                     if let address = source.remoteURL {
                         ModuleInformationRow(title: source.isLoaded ? "当前资源地址" : "待加载地址", value: address.absoluteString)
+                    } else {
+                        ModuleInformationRow(title: "版本", value: module.version)
+                        ModuleInformationRow(title: "文件名", value: store.isDownloaded(module)
+                            ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
+                            : module.entry)
+                        if store.isDownloaded(module), let address = module.downloadUrl {
+                            ModuleInformationRow(title: "下载地址", value: address)
+                        }
                     }
-                }
-                Section("本机安装包") {
-                    LabeledContent("安装来源", value: AppLanguage.text(installedSource(module)))
-                    ModuleInformationRow(title: "版本", value: module.version)
-                    ModuleInformationRow(title: "文件名", value: store.isDownloaded(module)
-                        ? (module.downloadUrl.flatMap(URL.init(string:))?.lastPathComponent ?? module.entry)
-                        : module.entry)
-                    if store.isDownloaded(module), let address = module.downloadUrl {
-                        ModuleInformationRow(title: "下载地址", value: address)
+                    if !source.isLoaded {
+                        Text("尚未加载，显示下次加载的来源。")
+                            .font(.footnote).foregroundStyle(.secondary)
                     }
                 }
             } else {
