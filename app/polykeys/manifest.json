@@ -1,10 +1,10 @@
 {
   "id": "polykeys",
   "name": "Polykeys",
-  "description": "临时输入多语言文字，切换字母键盘、输入重音字符并一键复制。",
+  "description": "轻松输入多语言文字",
   "localizedDescriptions": {
-    "en": "Type in multiple languages with alphabet layouts, accented characters and one-tap copy.",
-    "ja": "多言語の文字を手軽に入力。配列の切り替え、アクセント文字、ワンタップコピーに対応。"
+    "en": "Type in multiple languages with ease",
+    "ja": "多言語の文字を手軽に入力"
   },
   "entry": "index.html",
   "minHostVersion": "1.2.0",

@@ -336,7 +336,7 @@ struct HomeView: View {
             if let sentence { summary = sentence.trimmingCharacters(in: .whitespacesAndNewlines) }
             stop = true
         }
-        return summary
+        return summary.trimmingCharacters(in: CharacterSet(charactersIn: "。.").union(.whitespacesAndNewlines))
     }
     private func clearConnectionTest() {
         connectionTest?.cancel()
