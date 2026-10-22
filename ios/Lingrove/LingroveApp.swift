@@ -1243,6 +1243,9 @@ private struct GitHubBuildStatusSection: View {
                     tokenRevision += 1
                 } catch { tokenError = error.localizedDescription }
             }
+            .buttonStyle(.borderedProminent)
+            .tint(.blue)
+            .fixedSize()
             .accessibilityIdentifier("github-build-save-token")
             if let tokenError {
                 Text(tokenError).font(.footnote).foregroundStyle(.secondary)
