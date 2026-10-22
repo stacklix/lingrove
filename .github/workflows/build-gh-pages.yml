@@ -57,7 +57,7 @@ jobs:
         run: bash scripts/publish-pages-tree.sh web dist
 
       - name: Build and verify GitHub Pages
-        timeout-minutes: 6
+        timeout-minutes: 9
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_COMMIT: ${{ steps.publish.outputs.commit }}
