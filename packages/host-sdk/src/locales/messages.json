@@ -7030,5 +7030,89 @@
   "Token 仅保存在本机 Keychain，清空后保存可删除 Token。未配置 Token 时，进入页面或切换构建流程读取一次，不自动刷新。配置 Token 后，仅设置页打开且 App 在前台时自动拉取：运行中每 5 秒刷新，结束后每 30 秒刷新，失败后每 120 秒重试。": {
     "en": "The token is stored only in this device’s Keychain. Clear and save to delete it. Without a token, status is fetched once when opening this page or switching workflows, without automatic refresh. With a token, status refreshes only while Settings is open and the app is active: every 5 seconds while running, every 30 seconds after completion, and every 120 seconds after errors.",
     "ja": "Token はこの端末の Keychain にのみ保存されます。空欄で保存すると削除できます。Token 未設定時は、ページを開いたときとワークフローを切り替えたときに一度だけ取得し、自動更新しません。Token 設定時は設定画面を開いてアプリが前面にある間のみ、実行中は5秒ごと、終了後は30秒ごと、エラー時は120秒ごとに更新します。"
+  },
+  "键盘语言": {
+    "en": "Keyboard language",
+    "ja": "キーボードの言語"
+  },
+  "字母键盘": {
+    "en": "Alphabet keyboard",
+    "ja": "文字キーボード"
+  },
+  "点击键位开始输入": {
+    "en": "Tap the keys to start typing",
+    "ja": "キーをタップして入力"
+  },
+  "切换语言不会清空文字。重音字符可直接点选。": {
+    "en": "Switch languages without losing your text. Tap accented letters to insert them.",
+    "ja": "言語を切り替えても入力は保持されます。アクセント文字もタップで入力できます。"
+  },
+  "复制文字": {
+    "en": "Copy text",
+    "ja": "テキストをコピー"
+  },
+  "复制失败，请重试": {
+    "en": "Could not copy. Please try again.",
+    "ja": "コピーできませんでした。もう一度お試しください。"
+  },
+  "大写锁定": {
+    "en": "Caps lock",
+    "ja": "大文字固定"
+  },
+  "切换大小写": {
+    "en": "Shift",
+    "ja": "大文字・小文字の切り替え"
+  },
+  "删除字符": {
+    "en": "Delete character",
+    "ja": "文字を削除"
+  },
+  "空格": {
+    "en": "Space",
+    "ja": "スペース"
+  },
+  "换行": {
+    "en": "Return",
+    "ja": "改行"
+  },
+  "符号": {
+    "en": "Symbols",
+    "ja": "記号"
+  },
+  "重音与扩展字母": {
+    "en": "Accented and additional letters",
+    "ja": "アクセント・拡張文字"
+  },
+  "输入内容": {
+    "en": "Your text",
+    "ja": "入力内容"
+  },
+  "土耳其语": {
+    "en": "Turkish",
+    "ja": "トルコ語"
+  },
+  "乌克兰语": {
+    "en": "Ukrainian",
+    "ja": "ウクライナ語"
+  },
+  "键盘": {
+    "en": "Keyboard",
+    "ja": "キーボード"
+  },
+  "已复制": {
+    "en": "Copied",
+    "ja": "コピーしました"
+  },
+  "韩语使用两式键盘，辅音和元音自动合成音节；删除可逐步撤销输入。": {
+    "en": "The Korean two-set keyboard combines consonants and vowels into syllables. Delete undoes input one step at a time.",
+    "ja": "韓国語の2ボル式キーボードでは子音と母音が自動で音節になります。削除で入力を一段階ずつ戻せます。"
+  },
+  "切换双辅音与扩展元音": {
+    "en": "Shift Korean consonants and vowels",
+    "ja": "韓国語の双子音・拡張母音に切り替え"
+  },
+  "切换符号页": {
+    "en": "Switch symbol page",
+    "ja": "記号ページの切り替え"
   }
 }

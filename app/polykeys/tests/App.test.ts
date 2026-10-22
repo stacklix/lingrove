@@ -1,0 +1,74 @@
+import { mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
+import App from '../src/App.vue';
+const { copyText } = vi.hoisted(() => ({ copyText: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('@lingrove/host-sdk', () => ({ copyText, ready: vi.fn().mockResolvedValue(undefined), installFocusMode: () => () => {}, setRootPage: vi.fn() }));
+vi.mock('@lingrove/host-sdk/vue', () => ({ useAppI18n: () => ({ t: (value: string) => value }) }));
+describe('keyboard interaction', () => {
+  it('inserts and copies extended symbols without losing text or language', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    await wrapper.get('select').setValue('es');
+    await wrapper.get('textarea').setValue('texto');
+    await wrapper.get('[aria-label="符号"]').trigger('click');
+    await wrapper.get('[aria-label="切换符号页"]').trigger('click');
+    const extra = '_+=%#\\$';
+    for (const char of extra) {
+      await wrapper.findAll('button.letter').find(b => b.text() === char)!.trigger('click');
+    }
+    await wrapper.get('[aria-label="切换符号页"]').trigger('click');
+    await wrapper.findAll('button.letter').find(b => b.text() === '@')!.trigger('click');
+    await wrapper.get('[aria-label="字母"]').trigger('click');
+    await wrapper.findAll('button.letter').find(b => b.text() === 'ñ')!.trigger('click');
+    const expected = 'texto' + extra + '@ñ';
+    expect(wrapper.get('textarea').element.value).toBe(expected);
+    expect(wrapper.get('select').element.value).toBe('es');
+    await wrapper.findAll('button').find(b => b.text() === '复制文字')!.trigger('click');
+    expect(copyText).toHaveBeenCalledWith(expected);
+    await wrapper.get('[aria-label="符号"]').trigger('click');
+    expect(wrapper.findAll('button.letter').some(b => b.text() === '1')).toBe(true);
+    wrapper.unmount();
+  });
+  it('composes Korean, deletes one input step, and commits when switching languages', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    await wrapper.get('select').setValue('ko');
+    const press = async (key: string) => { await wrapper.findAll('button').find(b => b.text() === key)!.trigger('click'); };
+    for (const key of 'ㅎㅏㄴㄱㅡㄹ') await press(key);
+    expect(wrapper.get('textarea').element.value).toBe('한글');
+    await wrapper.get('[aria-label="删除字符"]').trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('한그');
+    await wrapper.get('[aria-label="删除字符"]').trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('한ㄱ');
+    await wrapper.get('select').setValue('en');
+    await wrapper.get('select').setValue('ko');
+    await press('ㅏ');
+    expect(wrapper.get('textarea').element.value).toBe('한ㄱㅏ');
+    const area = wrapper.get('textarea');
+    area.element.setSelectionRange(0, 1); await area.trigger('select');
+    await press('ㄴ'); await press('ㅏ');
+    expect(area.element.value).toBe('나ㄱㅏ');
+    wrapper.unmount();
+  });
+  it('keeps the text when switching languages and copies the full content', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    await wrapper.get('textarea').setValue('hello ');
+    await wrapper.get('select').setValue('es');
+    await wrapper.findAll('button').find(b => b.text() === 'ñ')!.trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('hello ñ');
+    await wrapper.findAll('button').find(b => b.text() === '复制文字')!.trigger('click');
+    expect(copyText).toHaveBeenCalledWith('hello ñ');
+    await wrapper.findAll('button').find(b => b.text() === '清空')!.trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe('');
+    wrapper.unmount();
+  });
+  it('replaces a selection and resets shift after typing', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    const area = wrapper.get('textarea');
+    await area.setValue('bonjour');
+    area.element.setSelectionRange(0, 3); await area.trigger('select');
+    await wrapper.get('[aria-label="切换大小写"]').trigger('click');
+    await wrapper.findAll('button').find(b => b.text() === 'A')!.trigger('click');
+    expect(area.element.value).toBe('Ajour');
+    expect(wrapper.get('[aria-label="切换大小写"]').attributes('aria-pressed')).toBe('false');
+    wrapper.unmount();
+  });
+});

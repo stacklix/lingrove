@@ -8,8 +8,8 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @lingrove/sentra",
-    "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora && npm run typecheck -w @lingrove/kotoba && npm run typecheck -w @lingrove/lector",
-    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora && npm run test -w @lingrove/kotoba && npm run test -w @lingrove/lector && npm run test:scripts",
+    "typecheck": "npm run typecheck -w @lingrove/sentra && npm run typecheck -w @lingrove/glyphora && npm run typecheck -w @lingrove/kotoba && npm run typecheck -w @lingrove/lector && npm run typecheck -w @lingrove/polykeys",
+    "test": "npm run test -w @lingrove/sentra && npm run test -w @lingrove/glyphora && npm run test -w @lingrove/kotoba && npm run test -w @lingrove/lector && npm run test:scripts && npm run test -w @lingrove/polykeys",
     "test:scripts": "node --test scripts/tests/*.test.mjs",
     "build": "node scripts/build-modules.mjs",
     "build:watch": "node scripts/watch-build.mjs",
