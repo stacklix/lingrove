@@ -48,6 +48,8 @@ Web 与 iOS 发布共用 `publish-gh-pages` 互斥锁，并在获得锁后读取
 
 ## 常见问题
 
+Debug 宿主设置中“开发模式”下方的“更新 App”分组包含“安装最新版”和“查看下载页面”。每次打开设置会重新获取 `/ios/latest.json`，在“安装最新版”右侧按设备本地时区显示构建时间；获取期间或失败时禁用安装按钮，下载页面始终可打开。发布脚本生成的更新信息包含版本、构建号、构建时间及当前 manifest 地址，安装按钮通过系统 OTA 入口直接发起安装，仍需系统确认及已登记设备。首次使用此功能前，需要发布包含 `latest.json` 的新安装包。
+
 - **Missing repository secret**：补齐上表三个 Secrets，再重新运行。
 - **描述文件类型 / App ID 不匹配**：下载 Ad Hoc 文件，不能使用现有通配符 Development 文件。
 - **No signing certificate / profile doesn't include signing certificate**：确认 `.p12` 带私钥，且描述文件选择了同一张 Apple Distribution 证书。

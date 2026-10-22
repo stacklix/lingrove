@@ -2,6 +2,7 @@
 import copy
 import datetime
 import importlib.util
+import json
 import os
 from pathlib import Path
 import plistlib
@@ -73,6 +74,12 @@ class DistributionTests(unittest.TestCase):
                 self.assertTrue(asset['url'].startswith('https://example.com/project/ios/'))
                 self.assertTrue((site / asset['url'].split('/')[-1]).is_file())
             page = (site / 'index.html').read_text()
+            latest = json.loads((site / 'latest.json').read_text(encoding='utf-8'))
+            self.assertEqual(latest['version'], '1.3.0')
+            self.assertEqual(latest['build'], '42.2')
+            self.assertEqual(latest['configuration'], 'Debug')
+            self.assertEqual(latest['manifestURL'], f'https://example.com/project/ios/{manifest_path.name}')
+            self.assertEqual(datetime.datetime.fromisoformat(latest['builtAt']).utcoffset(), datetime.timedelta(0))
             link = html.unescape(re.search(r'href="(itms-services:[^"]+)"', page).group(1))
             self.assertEqual(parse_qs(urlsplit(link).query)['url'], [f'https://example.com/project/ios/{manifest_path.name}'])
             self.assertNotIn('TEST-DEVICE-PRIVATE', page)

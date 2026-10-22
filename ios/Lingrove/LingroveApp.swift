@@ -218,6 +218,7 @@ struct HomeView: View {
                                     Text(store.notice).font(.footnote).foregroundStyle(.secondary)
                                 }
                             }
+                            HostAppUpdateSection()
                         }
                         #if DEBUG
                         Section {
@@ -506,6 +507,92 @@ private struct DebugAddressRow: View {
         }
         .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
         .alignmentGuide(.listRowSeparatorTrailing) { $0[.trailing] }
+    }
+}
+
+private struct HostAppRelease: Decodable {
+    let version: String
+    let build: String
+    let configuration: String
+    let builtAt: Date
+    let manifestURL: URL
+
+    var installURL: URL? {
+        guard manifestURL.scheme == "https", manifestURL.host == "lingrove.stackli.me",
+              manifestURL.user == nil, manifestURL.password == nil,
+              manifestURL.port == nil, manifestURL.query == nil, manifestURL.fragment == nil,
+              manifestURL.path.hasPrefix("/ios/manifest-"), manifestURL.path.hasSuffix(".plist") else { return nil }
+        var components = URLComponents()
+        components.scheme = "itms-services"
+        components.host = ""
+        components.queryItems = [URLQueryItem(name: "action", value: "download-manifest"),
+                                 URLQueryItem(name: "url", value: manifestURL.absoluteString)]
+        return components.url
+    }
+}
+
+private struct HostAppUpdateSection: View {
+    @State private var release: HostAppRelease?
+    @State private var checking = false
+    @State private var failed = false
+
+    var body: some View {
+        Section {
+            Button {
+                guard let url = release?.installURL else { return }
+                UIApplication.shared.open(url, options: [:]) { opened in
+                    Task { @MainActor in failed = !opened }
+                }
+            } label: {
+                HStack {
+                    Text("安装最新版")
+                    Spacer()
+                    if checking { ProgressView() }
+                    else if let release {
+                        Text(release.builtAt.formatted(date: .numeric, time: .shortened))
+                            .font(.footnote).foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+            }
+            .disabled(checking || release == nil)
+            .accessibilityIdentifier("host-app-install-update")
+            Link("查看下载页面", destination: URL(string: "https://lingrove.stackli.me/ios/")!)
+            if failed {
+                Text("无法获取或打开安装包，请稍后重试，或通过安装页面更新。")
+                    .font(.footnote).foregroundStyle(.red)
+            }
+        } header: {
+            Text("更新 App")
+        } footer: {
+            Text("更新 Lingrove 宿主 App。安装需系统确认，且设备必须已登记；安装期间请返回主屏幕等待完成。")
+        }
+        .task { await checkForUpdate() }
+    }
+
+    @MainActor private func checkForUpdate() async {
+        checking = true
+        failed = false
+        release = nil
+        defer { checking = false }
+        do {
+            var request = URLRequest(url: URL(string: "https://lingrove.stackli.me/ios/latest.json")!,
+                                     cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 20)
+            request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+            let (data, response) = try await URLSession.shared.data(for: request)
+            try Task.checkCancellation()
+            guard (response as? HTTPURLResponse)?.statusCode == 200 else { failed = true; return }
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let latest = try decoder.decode(HostAppRelease.self, from: data)
+            guard latest.installURL != nil else { failed = true; return }
+            release = latest
+        } catch is CancellationError {
+            return
+        } catch {
+            guard !Task.isCancelled else { return }
+            failed = true
+        }
     }
 }
 

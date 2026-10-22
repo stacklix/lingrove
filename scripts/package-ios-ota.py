@@ -4,6 +4,7 @@ import datetime
 import hashlib
 import html
 import importlib.util
+import json
 from pathlib import Path
 import plistlib
 import shutil
@@ -59,12 +60,17 @@ def package(ipa, output, base_url, configuration):
         'BUILD': str(info['CFBundleVersion']), 'CONFIGURATION': configuration,
         'SIZE': f'{ipa.stat().st_size / 1024 / 1024:.1f}',
         'EXPIRES': str(profile['ExpirationDate'].date()), 'SHA256': digest,
-        'DATE': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M UTC'),
+        'DATE': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds'),
     }
-    page = (ROOT / 'web/ios-install.html').read_text()
+    page = (ROOT / 'web/ios-install.html').read_text(encoding='utf-8')
+    (output / 'latest.json').write_text(json.dumps({
+        'version': values['VERSION'], 'build': values['BUILD'],
+        'configuration': configuration, 'builtAt': values['DATE'],
+        'manifestURL': f'{base}/{manifest_name}',
+    }, ensure_ascii=False, indent=2), encoding='utf-8')
     for key, value in values.items():
         page = page.replace('{{' + key + '}}', html.escape(value, quote=True))
-    (output / 'index.html').write_text(page)
+    (output / 'index.html').write_text(page, encoding='utf-8')
     print(f'Prepared {base}/ — {info["CFBundleShortVersionString"]} ({info["CFBundleVersion"]})')
 
 

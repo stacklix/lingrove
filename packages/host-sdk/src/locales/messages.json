@@ -6994,5 +6994,33 @@
   "已是最新版本": {
     "en": "Already up to date",
     "ja": "最新バージョンです"
+  },
+  "更新 App": {
+    "en": "Update App",
+    "ja": "App を更新"
+  },
+  "当前版本": {
+    "en": "Current version",
+    "ja": "現在のバージョン"
+  },
+  "构建时间": {
+    "en": "Build time",
+    "ja": "ビルド日時"
+  },
+  "无法获取或打开安装包，请稍后重试，或通过安装页面更新。": {
+    "en": "Unable to fetch or open the installer. Try again later or use the installation page.",
+    "ja": "インストーラの取得または起動に失敗しました。後で再試行するか、インストールページから更新してください。"
+  },
+  "更新 Lingrove 宿主 App。安装需系统确认，且设备必须已登记；安装期间请返回主屏幕等待完成。": {
+    "en": "Update the Lingrove host App. Installation requires system confirmation and a registered device. Return to the Home Screen and wait for installation to finish.",
+    "ja": "Lingrove ホスト App を更新します。インストールにはシステムの確認とデバイスの登録が必要です。ホーム画面に戻って完了をお待ちください。"
+  },
+  "安装最新版": {
+    "en": "Install latest version",
+    "ja": "最新版をインストール"
+  },
+  "查看下载页面": {
+    "en": "View download page",
+    "ja": "ダウンロードページを表示"
   }
 }

@@ -22,6 +22,14 @@
   <h2>如何安装</h2>
   <ol><li>在目标设备的 Safari 中打开本页。</li><li>点击安装按钮，并在系统提示中确认安装。</li><li>回到主屏幕，等待 Lingrove 下载完成。</li></ol>
   <details><summary>无法安装？</summary><p>确认设备 UDID 已包含在本次安装包的描述文件中。新增设备后，需要重新生成描述文件并重新打包。也请检查系统版本、网络及上方有效期；在微信等应用内打开时，请改用 Safari。</p></details>
-  <footer>构建时间：{{DATE}}<br>SHA-256：{{SHA256}}</footer>
-</main></body>
+  <footer>构建时间：<time id="build-time" datetime="{{DATE}}">{{DATE}}</time><br>SHA-256：{{SHA256}}</footer>
+</main>
+<script>
+  const buildTime = document.getElementById('build-time');
+  buildTime.textContent = new Intl.DateTimeFormat(navigator.language, {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short',
+  }).format(new Date(buildTime.dateTime));
+</script>
+</body>
 </html>
