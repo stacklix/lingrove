@@ -1252,6 +1252,8 @@ private struct GitHubBuildStatusSection: View {
                 .fixedSize()
                 .accessibilityIdentifier("github-build-save-token")
             }
+            .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+            .alignmentGuide(.listRowSeparatorTrailing) { $0[.trailing] }
             if let tokenError {
                 Text(tokenError).font(.footnote).foregroundStyle(.secondary)
             }
@@ -1306,15 +1308,17 @@ struct GitHubBuildStatusView: View {
             if let errorMessage {
                 Text(errorMessage).font(.footnote).foregroundStyle(.secondary)
             }
-            HStack {
-                if !token.isEmpty {
-                    Button("刷新进度") { refreshID += 1 }.disabled(loading)
-                }
-                Spacer()
-                if loading { ProgressView() }
-                else if let checkedAt {
-                    Text("更新于 \(checkedAt.formatted(date: .omitted, time: .standard))")
-                        .font(.caption).foregroundStyle(.secondary)
+            if !token.isEmpty || loading || checkedAt != nil {
+                HStack {
+                    if !token.isEmpty {
+                        Button("刷新进度") { refreshID += 1 }.disabled(loading)
+                    }
+                    Spacer()
+                    if loading { ProgressView() }
+                    else if let checkedAt {
+                        Text("更新于 \(checkedAt.formatted(date: .omitted, time: .standard))")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                 }
             }
             Link("在 GitHub 查看", destination: URL(string: snapshot.map {
