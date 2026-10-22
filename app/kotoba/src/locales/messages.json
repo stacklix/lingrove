@@ -1763,10 +1763,6 @@
     "en": "These compounds also use godan conjugation; examples only.",
     "ja": "これらも五段活用です。ここでは例のみ掲載します。"
   },
-  "Kotoba · 日语活用": {
-    "en": "Kotoba · Japanese conjugation",
-    "ja": "Kotoba · 日本語の活用"
-  },
   "打开失败，请返回后重试。": {
     "en": "Could not open. Go back and try again.",
     "ja": "開けませんでした。戻ってもう一度お試しください。"
@@ -3911,9 +3907,9 @@
     "en": "Friends, come here!",
     "ja": "友人たちよ、ここに来て！"
   },
-  "Grammora · 语言手册": {
-    "en": "Grammora · Language handbook",
-    "ja": "Grammora・言語ハンドブック"
+  "Morphora · 语言手册": {
+    "en": "Morphora · Language handbook",
+    "ja": "Morphora・言語ハンドブック"
   },
   "手册语言": {
     "en": "Handbook language",

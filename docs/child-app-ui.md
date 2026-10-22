@@ -1,6 +1,11 @@
 # 子应用 UI 规范
 
-适用于 Lingrove 的全部子应用。新增界面必须遵循；修改现有页面时同时检查受影响区域。参考 Sentra、Glyphora、Kotoba 的一致导航外观，公共实现位于 `packages/host-sdk/src/ui.css`，Lector 已接入。
+适用于 Lingrove 的全部子应用。新增界面必须遵循；修改现有页面时同时检查受影响区域。参考 Sentra、Glyphora、Morphora 的一致导航外观，公共实现位于 `packages/host-sdk/src/ui.css`，Lector 已接入。
+
+## 应用命名
+
+- 每个子应用的显示名称使用不同的英文字母开头，新增或重命名时检查所有子应用的 manifest，避免首字母重复。
+- 当前名称为 Sentra（S）、Glyphora（G）、Morphora（M）、Lector（L）、Polykeys（P）。显示名称变更时同步页面标题、翻译和文档。
 
 ## 宿主与标题栏
 
