@@ -1,0 +1,3010 @@
+{
+  "页面工具": {
+    "en": "Page tools",
+    "ja": "ページ操作"
+  },
+  "正在生成": {
+    "en": "Generating",
+    "ja": "生成中"
+  },
+  "主导航": {
+    "en": "Main navigation",
+    "ja": "メインナビゲーション"
+  },
+  "日语": {
+    "en": "Japanese",
+    "ja": "日本語"
+  },
+  "复制": {
+    "en": "Copy",
+    "ja": "コピー"
+  },
+  "假名": {
+    "en": "Kana",
+    "ja": "仮名"
+  },
+  "词性": {
+    "en": "Part of speech",
+    "ja": "品詞"
+  },
+  "礼貌表达": {
+    "en": "Polite",
+    "ja": "丁寧な表現"
+  },
+  "取消": {
+    "en": "Cancel",
+    "ja": "キャンセル"
+  },
+  "翻译": {
+    "en": "Translation",
+    "ja": "翻訳"
+  },
+  "语法": {
+    "en": "Grammar",
+    "ja": "文法"
+  },
+  "学习": {
+    "en": "Learn",
+    "ja": "学習"
+  },
+  "选择": {
+    "en": "Choice",
+    "ja": "選択"
+  },
+  "分": {
+    "en": "points",
+    "ja": "点"
+  },
+  "关闭": {
+    "en": "Close",
+    "ja": "閉じる"
+  },
+  "返回查询": {
+    "en": "Back to search",
+    "ja": "検索に戻る"
+  },
+  "一个单词，更多表达": {
+    "en": "One word, more possibilities",
+    "ja": "一語から、広がる表現"
+  },
+  "从原形，到每一种用法。": {
+    "en": "From dictionary form to every use.",
+    "ja": "原形から、さまざまな使い方へ。"
+  },
+  "输入日语单词，用活用和例句理解它的变化。": {
+    "en": "Enter a Japanese word to explore its conjugations and examples.",
+    "ja": "日本語の単語を入力し、活用と例文から変化を学びましょう。"
+  },
+  "想了解哪个单词？": {
+    "en": "Which word would you like to explore?",
+    "ja": "どの単語を調べますか？"
+  },
+  "例如：食べる、行く、高い": {
+    "en": "For example: 食べる, 行く, 高い",
+    "ja": "例：食べる、行く、高い"
+  },
+  "查询中…": {
+    "en": "Looking up…",
+    "ja": "検索中…"
+  },
+  "查看活用": {
+    "en": "View conjugations",
+    "ja": "活用を見る"
+  },
+  "动词 · い形容词 · な形容词": {
+    "en": "Verbs · i-adjectives · na-adjectives",
+    "ja": "動詞 · イ形容詞 · ナ形容詞"
+  },
+  "试试「食べる」示例 →": {
+    "en": "Try the 食べる example →",
+    "ja": "「食べる」の例を見る →"
+  },
+  "查询单词": {
+    "en": "Look up a word",
+    "ja": "単語を検索"
+  },
+  "暂时无法查询": {
+    "en": "Unable to look up",
+    "ja": "検索できません"
+  },
+  "重新查询 →": {
+    "en": "Retry lookup →",
+    "ja": "再検索 →"
+  },
+  "正在整理活用与例句": {
+    "en": "Preparing conjugations and examples",
+    "ja": "活用と例文を整理中"
+  },
+  "已显示 {0} 项，正在继续生成…": {
+    "en": "{0} entries shown, generating more…",
+    "ja": "{0} 件を表示、続けて生成中…"
+  },
+  "已收到 {0} 字符，正在整理首批条目…": {
+    "en": "Received {0} characters, preparing first entries…",
+    "ja": "{0} 文字を受信、最初の項目を整理中…"
+  },
+  "正在查询…": {
+    "en": "Looking up…",
+    "ja": "検索中…"
+  },
+  "单词释义": {
+    "en": "Word meaning",
+    "ja": "単語の意味"
+  },
+  "内置示例 · 可离线查看": {
+    "en": "Built-in example · Available offline",
+    "ja": "内蔵の例 · オフライン対応"
+  },
+  "部分结果 · 尚未完成，请勿视为完整活用表": {
+    "en": "Partial result · Not a complete conjugation table",
+    "ja": "途中の結果 · 完全な活用表ではありません"
+  },
+  "特殊用法请结合语境核对": {
+    "en": "Check special uses in context",
+    "ja": "特殊な用法は文脈と合わせて確認してください"
+  },
+  "· 此词无活用，以下展示原形例句": {
+    "en": "· This word does not conjugate; examples use its base form",
+    "ja": "· この語は活用しません。原形の例文を表示します"
+  },
+  "学校文法 → 教育文法": {
+    "en": "School grammar → Learner grammar",
+    "ja": "学校文法 → 日本語教育文法"
+  },
+  "显示读音": {
+    "en": "Show readings",
+    "ja": "読みを表示"
+  },
+  "学校文法活用形": {
+    "en": "School grammar conjugations",
+    "ja": "学校文法の活用形"
+  },
+  "派生表达": {
+    "en": "Derived expressions",
+    "ja": "派生表現"
+  },
+  "无活用": {
+    "en": "No conjugation",
+    "ja": "活用なし"
+  },
+  "补充说明": {
+    "en": "Additional notes",
+    "ja": "補足"
+  },
+  "学校文法": {
+    "en": "School grammar",
+    "ja": "学校文法"
+  },
+  "教育文法 · 常用形式与例句": {
+    "en": "Learner grammar · Common forms and examples",
+    "ja": "日本語教育文法 · よく使う形と例文"
+  },
+  "此活用形的例句正在生成… ·": {
+    "en": "Generating examples for this form… ·",
+    "ja": "この活用形の例文を生成中… ·"
+  },
+  "让单词，变成表达。": {
+    "en": "Turn words into expression.",
+    "ja": "単語を、表現へ。"
+  },
+  "从「食べる」到「食べたい」的日语世界，": {
+    "en": "From 食べる to 食べたい,",
+    "ja": "「食べる」から「食べたい」への世界は、"
+  },
+  "从了解一个单词的变化开始。": {
+    "en": "start by exploring how one word changes.",
+    "ja": "一語の変化を知ることから始まります。"
+  },
+  "01 识别词性": {
+    "en": "01 Identify the word class",
+    "ja": "01 品詞を知る"
+  },
+  "02 查看活用": {
+    "en": "02 Explore conjugations",
+    "ja": "02 活用を見る"
+  },
+  "03 读懂例句": {
+    "en": "03 Understand examples",
+    "ja": "03 例文を理解する"
+  },
+  "查询已取消": {
+    "en": "Lookup canceled",
+    "ja": "検索をキャンセルしました"
+  },
+  "浏览器支持内置示例；任意单词查询请在 Lingrove 中使用。": {
+    "en": "The browser supports built-in examples. Use Lingrove to look up other words.",
+    "ja": "ブラウザでは内蔵の例を利用できます。他の単語の検索には Lingrove をご利用ください。"
+  },
+  "单词查询": {
+    "en": "Word lookup",
+    "ja": "単語検索"
+  },
+  "查询已取消，以下仅为已收到的部分结果。": {
+    "en": "Lookup canceled. Only the partial results received are shown.",
+    "ja": "検索をキャンセルしました。受信済みの一部の結果のみ表示しています。"
+  },
+  "查询失败，请重试。": {
+    "en": "Lookup failed. Please retry.",
+    "ja": "検索に失敗しました。再試行してください。"
+  },
+  "目录": {
+    "en": "Contents",
+    "ja": "目次"
+  },
+  "打开目录": {
+    "en": "Open contents",
+    "ja": "目次を開く"
+  },
+  "从规则，理解变化": {
+    "en": "Understand changes through rules",
+    "ja": "規則から、変化を理解する"
+  },
+  "关闭目录": {
+    "en": "Close contents",
+    "ja": "目次を閉じる"
+  },
+  "正在阅读：": {
+    "en": "Reading:",
+    "ja": "閲覧中："
+  },
+  "文法基础": {
+    "en": "Grammar basics",
+    "ja": "文法の基礎"
+  },
+  "学习顺序": {
+    "en": "Learning order",
+    "ja": "学習の順序"
+  },
+  "用途": {
+    "en": "Purpose",
+    "ja": "用途"
+  },
+  "词类名称的对应": {
+    "en": "Word class terminology",
+    "ja": "品詞名の対応"
+  },
+  "教育文法": {
+    "en": "Learner grammar",
+    "ja": "日本語教育文法"
+  },
+  "例子": {
+    "en": "Example",
+    "ja": "例"
+  },
+  "变化规则": {
+    "en": "Conjugation rules",
+    "ja": "活用規則"
+  },
+  "以下从辞书形出发，先看动词本身如何变化。": {
+    "en": "Starting from the dictionary form, see how the verb itself changes.",
+    "ja": "辞書形から、動詞自体の変化を見ていきます。"
+  },
+  "规则": {
+    "en": "Rule",
+    "ja": "規則"
+  },
+  "各类动词的变化规则": {
+    "en": "Rules by verb class",
+    "ja": "動詞の種類別の活用規則"
+  },
+  "学校文法 · 六种活用形": {
+    "en": "School grammar · Six conjugation bases",
+    "ja": "学校文法 · 6つの活用形"
+  },
+  "常用表达": {
+    "en": "Common expressions",
+    "ja": "よく使う表現"
+  },
+  "构成": {
+    "en": "Structure",
+    "ja": "構成"
+  },
+  "识别": {
+    "en": "Identification",
+    "ja": "見分け方"
+  },
+  "用法": {
+    "en": "Usage",
+    "ja": "用法"
+  },
+  "对应关系": {
+    "en": "Relationships",
+    "ja": "対応関係"
+  },
+  "下一章：": {
+    "en": "Next chapter:",
+    "ja": "次の章："
+  },
+  "章节导航": {
+    "en": "Chapter navigation",
+    "ja": "章のナビゲーション"
+  },
+  "参考资料": {
+    "en": "References",
+    "ja": "参考資料"
+  },
+  "规则与例子按学习需要整理。可继续阅读：": {
+    "en": "Rules and examples are organized for learning. Further reading:",
+    "ja": "学習向けに規則と例を整理しています。関連資料："
+  },
+  "国际交流基金 · 面向日语学习者的文法讲解": {
+    "en": "Japan Foundation · Grammar for Japanese learners",
+    "ja": "国際交流基金 · 日本語学習者向け文法解説"
+  },
+  "文部科学省 · 日语教育资料（形容词术语）": {
+    "en": "MEXT · Japanese education resources (adjective terms)",
+    "ja": "文部科学省 · 日本語教育資料（形容詞の用語）"
+  },
+  "东京外国语大学 · 动词的三种类型": {
+    "en": "TUFS · Three verb classes",
+    "ja": "東京外国語大学 · 動詞の3つのタイプ"
+  },
+  "东京外国语大学 · 普通形体系": {
+    "en": "TUFS · Plain forms",
+    "ja": "東京外国語大学 · 普通形の体系"
+  },
+  "东京外国语大学 · 形容词普通形": {
+    "en": "TUFS · Plain adjective forms",
+    "ja": "東京外国語大学 · 形容詞の普通形"
+  },
+  "国际交流基金 · IRODORI 文法笔记": {
+    "en": "Japan Foundation · IRODORI grammar notes",
+    "ja": "国際交流基金 · いろどり文法ノート"
+  },
+  "查看{0} ↗": {
+    "en": "View {0} ↗",
+    "ja": "{0}を見る ↗"
+  },
+  "查看特殊词表 ↗": {
+    "en": "View special word list ↗",
+    "ja": "特殊語の一覧を見る ↗"
+  },
+  "关闭{0}": {
+    "en": "Close {0}",
+    "ja": "{0}を閉じる"
+  },
+  "关闭特殊词表": {
+    "en": "Close special word list",
+    "ja": "特殊語の一覧を閉じる"
+  },
+  "查找词语": {
+    "en": "Find words",
+    "ja": "語を探す"
+  },
+  "输入汉字、假名或中文释义": {
+    "en": "Enter kanji, kana or a meaning",
+    "ja": "漢字、仮名、意味を入力"
+  },
+  "输入汉字或假名": {
+    "en": "Enter kanji or kana",
+    "ja": "漢字または仮名を入力"
+  },
+  "这些词虽然以「い段／え段＋る」结尾，仍按五段活用，如：帰る → 帰らない・帰ります。": {
+    "en": "These words end in i/e + る but conjugate as godan verbs, e.g. 帰る → 帰らない・帰ります.",
+    "ja": "「イ段／エ段＋る」で終わりますが五段活用です。例：帰る → 帰らない・帰ります。"
+  },
+  "主词表完整列出参考资料收录的 66 条，另附补充词与复合词示例；并非日语全部此类词。异写分别列出，类型以所列读音为准。": {
+    "en": "The main list includes all 66 entries from the reference, plus extra and compound examples. It is not exhaustive. Spelling variants are separate; class follows the listed reading.",
+    "ja": "主一覧は出典の66項目すべてを収録し、補足語と複合語の例を添えています。網羅的な一覧ではありません。異表記は別記し、分類は掲載の読みに基づきます。"
+  },
+  "未找到匹配词语，试试其他汉字或假名。": {
+    "en": "No matching words. Try another kanji or kana.",
+    "ja": "一致する語がありません。他の漢字や仮名をお試しください。"
+  },
+  "词表来源：": {
+    "en": "Word list sources:",
+    "ja": "語彙一覧の出典："
+  },
+  "毎日のんびり日本語教師（66 条）": {
+    "en": "毎日のんびり日本語教師 (66 entries)",
+    "ja": "毎日のんびり日本語教師（66項目）"
+  },
+  "Shodo（补充词）": {
+    "en": "Shodo (additional words)",
+    "ja": "Shodo（補足語）"
+  },
+  "容易误判的五段动词": {
+    "en": "Commonly misclassified godan verbs",
+    "ja": "間違えやすい五段動詞"
+  },
+  "缺少资料对象": {
+    "en": "Missing data object",
+    "ja": "データオブジェクトがありません"
+  },
+  "缺少{0}": {
+    "en": "Missing {0}",
+    "ja": "{0}がありません"
+  },
+  "JSON 未完整返回或无法解析": {
+    "en": "JSON is incomplete or could not be parsed",
+    "ja": "JSONが未完了、または解析できません"
+  },
+  "缺少学校文法分组": {
+    "en": "School grammar groups are missing",
+    "ja": "学校文法のグループがありません"
+  },
+  "学校文法分组无效：{0}": {
+    "en": "Invalid school grammar group: {0}",
+    "ja": "学校文法のグループが無効です：{0}"
+  },
+  "{0}词形": {
+    "en": "{0} word form",
+    "ja": "{0}の語形"
+  },
+  "缺少教育文法条目": {
+    "en": "Learner grammar entries are missing",
+    "ja": "日本語教育文法の項目がありません"
+  },
+  "找不到对应分组：{0}": {
+    "en": "No matching group: {0}",
+    "ja": "対応するグループがありません：{0}"
+  },
+  "未指定": {
+    "en": "Unspecified",
+    "ja": "未指定"
+  },
+  "形式名称": {
+    "en": "Form name",
+    "ja": "形式名"
+  },
+  "重复条目：{0}": {
+    "en": "Duplicate entry: {0}",
+    "ja": "重複項目：{0}"
+  },
+  "{0}例句": {
+    "en": "{0} example",
+    "ja": "{0}の例文"
+  },
+  "{0}例句翻译": {
+    "en": "{0} example translation",
+    "ja": "{0}の例文訳"
+  },
+  "活用标记无效": {
+    "en": "Invalid conjugation flag",
+    "ja": "活用フラグが無効です"
+  },
+  "单词": {
+    "en": "Word",
+    "ja": "単語"
+  },
+  "释义": {
+    "en": "Meaning",
+    "ja": "意味"
+  },
+  "部分读音未返回，已保留活用与例句。": {
+    "en": "Some readings are missing. Conjugations and examples are preserved.",
+    "ja": "一部の読みがありません。活用と例文は保持されています。"
+  },
+  "请先输入一个日语单词。": {
+    "en": "Enter a Japanese word first.",
+    "ja": "日本語の単語を入力してください。"
+  },
+  "请输入一个单词，最多 40 个字符，不要输入整句。": {
+    "en": "Enter one word of up to 40 characters, not a sentence.",
+    "ja": "文ではなく、40文字以内の単語を入力してください。"
+  },
+  "请使用日语汉字或假名输入，例如「食べる」。": {
+    "en": "Use Japanese kanji or kana, for example 食べる.",
+    "ja": "日本語の漢字または仮名で入力してください。例：「食べる」。"
+  },
+  "字": {
+    "en": "characters",
+    "ja": "文字"
+  },
+  "句": {
+    "en": " sentences",
+    "ja": "文"
+  },
+  "我的": {
+    "en": "My learning",
+    "ja": "マイページ"
+  },
+  "篇文章": {
+    "en": "articles",
+    "ja": "記事"
+  },
+  "阅读": {
+    "en": "Read",
+    "ja": "読む"
+  },
+  "次": {
+    "en": "times",
+    "ja": "回"
+  },
+  "段。": {
+    "en": "sections.",
+    "ja": "段落。"
+  },
+  "字符": {
+    "en": "Characters",
+    "ja": "文字"
+  },
+  "分析": {
+    "en": "Analyze",
+    "ja": "解析"
+  },
+  "已取消": {
+    "en": "Canceled",
+    "ja": "キャンセル済み"
+  },
+  "学校文法与教育文法": {
+    "en": "School and learner grammar",
+    "ja": "学校文法と日本語教育文法"
+  },
+  "词类名称可以对应；活用形则要看接续关系。学校文法先分析词本身的变化，再分析后接成分；教育文法常把组合后的完整表达作为一种“形”来学习。": {
+    "en": "Word classes can be matched, but conjugations depend on what follows. School grammar separates inflected bases from following elements; learner grammar often teaches the complete combination as a form.",
+    "ja": "品詞名は対応しますが、活用形は接続関係を見る必要があります。学校文法は語自体の変化と後続要素を分け、日本語教育文法は組み合わせ全体を「形」として学ぶことが多いです。"
+  },
+  "五段动词": {
+    "en": "Godan verbs",
+    "ja": "五段動詞"
+  },
+  "Ⅰ类／第1组": {
+    "en": "Class I / Group 1",
+    "ja": "Ⅰ類／第1グループ"
+  },
+  "上一段・下一段动词": {
+    "en": "Upper/lower ichidan verbs",
+    "ja": "上一段・下一段動詞"
+  },
+  "Ⅱ类／第2组（一段动词）": {
+    "en": "Class II / Group 2 (ichidan)",
+    "ja": "Ⅱ類／第2グループ（一段動詞）"
+  },
+  "サ变・カ变动词": {
+    "en": "Suru/kuru irregular verbs",
+    "ja": "サ変・カ変動詞"
+  },
+  "Ⅲ类／第3组（不规则动词）": {
+    "en": "Class III / Group 3 (irregular)",
+    "ja": "Ⅲ類／第3グループ（不規則動詞）"
+  },
+  "形容词": {
+    "en": "Adjectives",
+    "ja": "形容詞"
+  },
+  "い形容词": {
+    "en": "i-adjectives",
+    "ja": "い形容詞"
+  },
+  "形容动词": {
+    "en": "Adjectival nouns",
+    "ja": "形容動詞"
+  },
+  "な形容词": {
+    "en": "na-adjectives",
+    "ja": "な形容詞"
+  },
+  "静かだ ↔ 静か；修饰名词用静かな": {
+    "en": "静かだ ↔ 静か; 静かな before a noun",
+    "ja": "静かだ ↔ 静か；名詞修飾は静かな"
+  },
+  "六种活用形 → 教育文法表达": {
+    "en": "Six bases → Learner grammar expressions",
+    "ja": "6つの活用形 → 日本語教育文法の表現"
+  },
+  "未然形 → ない形・意向形・受身形・使役形": {
+    "en": "Irrealis → Negative, volitional, passive, causative",
+    "ja": "未然形 → ナイ形・意向形・受身形・使役形"
+  },
+  "未然形是接续前的部分，如読ま、読も、食べ。": {
+    "en": "The irrealis base is the part before the ending, e.g. 読ま, 読も, 食べ.",
+    "ja": "未然形は後続要素が付く前の部分です。例：読ま、読も、食べ。"
+  },
+  "按否定、意愿、受身、使役等表达分别命名。": {
+    "en": "Forms are named for negation, volition, passive, causative, and so on.",
+    "ja": "否定、意志、受身、使役など、表現ごとに名前が付きます。"
+  },
+  "未然形＋ない → ない形：読ま＋ない → 読まない。": {
+    "en": "Irrealis + ない → negative: 読ま＋ない → 読まない.",
+    "ja": "未然形＋ない → ナイ形：読ま＋ない → 読まない。"
+  },
+  "五段未然形（お段）＋う → 意向形：読も＋う → 読もう；一段等用よう：食べ＋よう → 食べよう。": {
+    "en": "Godan o-row base + う → volitional: 読も＋う → 読もう. Ichidan uses よう: 食べ＋よう → 食べよう.",
+    "ja": "五段のオ段未然形＋う → 意向形：読も＋う → 読もう。一段などはよう：食べ＋よう → 食べよう。"
+  },
+  "未然形＋れる／られる → 受身形：読ま＋れる → 読まれる；食べ＋られる → 食べられる。": {
+    "en": "Irrealis + れる／られる → passive: 読まれる, 食べられる.",
+    "ja": "未然形＋れる／られる → 受身形：読ま＋れる → 読まれる、食べ＋られる → 食べられる。"
+  },
+  "未然形＋せる／させる → 使役形：読ま＋せる → 読ませる；食べ＋させる → 食べさせる。": {
+    "en": "Irrealis + せる／させる → causative: 読ませる, 食べさせる.",
+    "ja": "未然形＋せる／させる → 使役形：読ま＋せる → 読ませる、食べ＋させる → 食べさせる。"
+  },
+  "未然形不等于ない形；它可以连接多种成分。する、来る的具体变化见未然形一节。": {
+    "en": "The irrealis base is not the negative form; it takes several endings. See the irrealis chapter for する and 来る.",
+    "ja": "未然形はナイ形そのものではなく、さまざまな要素に接続します。する・来るの変化は未然形の章を参照してください。"
+  },
+  "连用形 → ます形・て形・た形": {
+    "en": "Continuative → masu, te, ta forms",
+    "ja": "連用形 → マス形・テ形・タ形"
+  },
+  "连用形是読み、食べ等；五段接て、た时常出现音便，如読ん。": {
+    "en": "Continuative bases include 読み and 食べ. Godan often changes sound before て or た, e.g. 読ん.",
+    "ja": "連用形は読み、食べなどです。五段はて・たに接続するとき、読んのような音便がよく起こります。"
+  },
+  "把礼貌表达、连接表达、过去表达分别作为常用形式学习。": {
+    "en": "Polite, linking and past expressions are taught as common forms.",
+    "ja": "丁寧表現、接続表現、過去表現をそれぞれの形として学びます。"
+  },
+  "连用形＋ます → ます形：読み＋ます → 読みます。": {
+    "en": "Continuative + ます → masu form: 読み＋ます → 読みます.",
+    "ja": "連用形＋ます → マス形：読み＋ます → 読みます。"
+  },
+  "连用形（含音便）＋て／で → て形：食べ＋て → 食べて；読ん＋で → 読んで。": {
+    "en": "Continuative (with sound changes) + て／で → te form: 食べて, 読んで.",
+    "ja": "連用形（音便を含む）＋て／で → テ形：食べ＋て → 食べて、読ん＋で → 読んで。"
+  },
+  "连用形（含音便）＋た／だ → た形：食べ＋た → 食べた；読ん＋だ → 読んだ。": {
+    "en": "Continuative (with sound changes) + た／だ → ta form: 食べた, 読んだ.",
+    "ja": "連用形（音便を含む）＋た／だ → タ形：食べ＋た → 食べた、読ん＋だ → 読んだ。"
+  },
+  "教材中的「ます形」有时指読みます，有时指去ます后的読み；本页用「连用形」明确表示接续前的部分。": {
+    "en": "Some textbooks use “masu form” for 読みます, others for 読み. Here “continuative” specifically means the base before the ending.",
+    "ja": "教材の「マス形」は読みますを指す場合と、ますを除いた読みを指す場合があります。本ページの「連用形」は接続前の部分です。"
+  },
+  "终止形 → 动词辞书形（句末用法）": {
+    "en": "Terminal → Dictionary form at sentence end",
+    "ja": "終止形 → 動詞の辞書形（文末用法）"
+  },
+  "现代动词的终止形用于结束句子。": {
+    "en": "The terminal form ends a sentence in modern Japanese.",
+    "ja": "現代語の動詞の終止形は文を終えるときに使います。"
+  },
+  "同一词形称辞书形，也是非过去肯定普通形。": {
+    "en": "The same shape is called dictionary form: plain affirmative non-past.",
+    "ja": "同じ語形を辞書形と呼び、非過去肯定の普通形でもあります。"
+  },
+  "読む（终止形）＝読む（辞书形）：本を読む。（看书。）": {
+    "en": "読む (terminal) = 読む (dictionary): 本を読む。— Read a book.",
+    "ja": "読む（終止形）＝読む（辞書形）：本を読む。"
+  },
+  "普通形不只包含辞书形，还包括読まない、読んだ、読まなかった等。": {
+    "en": "Plain forms also include 読まない, 読んだ, 読まなかった, not just dictionary form.",
+    "ja": "普通形には辞書形だけでなく、読まない、読んだ、読まなかったなども含まれます。"
+  },
+  "连体形 → 动词辞书形＋名词": {
+    "en": "Attributive → Dictionary form + noun",
+    "ja": "連体形 → 動詞の辞書形＋名詞"
+  },
+  "现代动词的连体形与终止形同形，用于修饰名词。": {
+    "en": "Modern verbs have identical attributive and terminal shapes; attributive modifies nouns.",
+    "ja": "現代語の動詞の連体形は終止形と同形で、名詞を修飾します。"
+  },
+  "辞书形修饰名词，是「普通形修饰名词」的一部分。": {
+    "en": "Dictionary-form noun modification is one case of plain-form noun modification.",
+    "ja": "辞書形による名詞修飾は「普通形による名詞修飾」の一部です。"
+  },
+  "読む（连体形）＋人 → 読む人（读的人）。": {
+    "en": "読む (attributive) + 人 → 読む人 (a person who reads).",
+    "ja": "読む（連体形）＋人 → 読む人。"
+  },
+  "同一个読む：本を読む。用作终止形；読む人中用作连体形。": {
+    "en": "The same 読む is terminal in 本を読む and attributive in 読む人.",
+    "ja": "同じ読むでも、本を読む。では終止形、読む人では連体形です。"
+  },
+  "読まない人、読んだ本也能修饰名词，但包含ない、た等成分，不能都当作原动词的连体形。此同形关系说的是现代动词，静かだ／静かな则不同。": {
+    "en": "読まない人 and 読んだ本 also modify nouns but include ない or た, not just the original verb. Identical shapes apply to modern verbs; 静かだ／静かな differ.",
+    "ja": "読まない人・読んだ本も名詞を修飾しますが、ない・たを含み、すべてを元の動詞の連体形とは扱えません。同形なのは現代語の動詞で、静かだ／静かなは異なります。"
+  },
+  "假定形 → 加ば后成为ば形": {
+    "en": "Conditional base + ば → ba form",
+    "ja": "仮定形＋ば → バ形"
+  },
+  "假定形是書け、食べれ、すれ、くれ等接续前的部分。": {
+    "en": "Conditional bases are 書け, 食べれ, すれ, くれ, before an ending.",
+    "ja": "仮定形は書け、食べれ、すれ、くれなどの接続前の部分です。"
+  },
+  "ば形是包含ば的完整条件表达。": {
+    "en": "The ba form is a complete conditional including ば.",
+    "ja": "バ形はばを含む条件表現全体です。"
+  },
+  "假定形＋ば → ば形：書け＋ば → 書けば；食べれ＋ば → 食べれば。": {
+    "en": "Conditional base + ば: 書け＋ば → 書けば; 食べれ＋ば → 食べれば.",
+    "ja": "仮定形＋ば → バ形：書け＋ば → 書けば、食べれ＋ば → 食べれば。"
+  },
+  "たら、と、なら也是条件表达，但并不都由原动词的假定形构成。": {
+    "en": "たら, と and なら are also conditionals, but not all use the original verb's conditional base.",
+    "ja": "たら、と、ならも条件表現ですが、すべてが元の動詞の仮定形から成るわけではありません。"
+  },
+  "命令形 → 命令形（直接对应）": {
+    "en": "Imperative → Imperative (direct match)",
+    "ja": "命令形 → 命令形（直接対応）"
+  },
+  "动词本身变为命令形，可以直接使用。": {
+    "en": "The verb itself becomes imperative and can stand alone.",
+    "ja": "動詞自体が命令形となり、そのまま使えます。"
+  },
+  "通常也称命令形，词形基本直接对应。": {
+    "en": "Also called imperative; the forms generally match directly.",
+    "ja": "日本語教育文法でも通常は命令形と呼び、語形はほぼ直接対応します。"
+  },
+  "てください是请求表达；辞书形＋な是禁止表达，都不等于动词本身的命令形。": {
+    "en": "てください is a request and dictionary + な is prohibition; neither is the verb's imperative form.",
+    "ja": "てくださいは依頼、辞書形＋なは禁止の表現で、動詞自体の命令形ではありません。"
+  },
+  "不能硬套进六种活用形的表达": {
+    "en": "Expressions outside the six-base mapping",
+    "ja": "6つの活用形に無理に当てはめられない表現"
+  },
+  "五段的可能动词是派生词；一段等可由未然形接られる表达可能。": {
+    "en": "Godan potential verbs are derived words; ichidan can express potential with irrealis + られる.",
+    "ja": "五段の可能動詞は派生語です。一段などは未然形＋られるで可能を表せます。"
+  },
+  "通常统一作为「可能形」学习，表示能够做某事。": {
+    "en": "Usually taught together as “potential form,” expressing ability.",
+    "ja": "通常は「可能形」としてまとめ、何かができることを表します。"
+  },
+  "五段：読む → 読める，是派生可能动词，不是読む的假定形。": {
+    "en": "Godan: 読む → 読める is a derived potential verb, not 読む's conditional base.",
+    "ja": "五段：読む → 読めるは派生した可能動詞で、読むの仮定形ではありません。"
+  },
+  "一段：食べ＋られる → 食べられる；する → できる；来る → 来られる（こられる）。": {
+    "en": "Ichidan: 食べ＋られる → 食べられる; する → できる; 来る → 来られる（こられる）.",
+    "ja": "一段：食べ＋られる → 食べられる。する → できる、来る → 来られる（こられる）。"
+  },
+  "食べられる也可表示受身，具体含义看语境。六种活用形并非教育文法全部表达的一一对应清单。": {
+    "en": "食べられる can also be passive; context decides. The six bases do not map one-to-one to every learner expression.",
+    "ja": "食べられるは受身にもなり、意味は文脈によります。6つの活用形は教育文法のすべての表現と一対一ではありません。"
+  },
+  "不是一一对应的改名：先看“动词本身变成什么”，再看“后面接什么”，才能把两套文法对应起来。": {
+    "en": "These are not simple renamings. First identify the changed verb base, then what follows it.",
+    "ja": "単なる一対一の言い換えではありません。まず動詞自体の変化、次に後続要素を見ると、2つの体系を対応させられます。"
+  },
+  "动词分类": {
+    "en": "Verb classes",
+    "ja": "動詞の分類"
+  },
+  "先看辞书形和读音，再按下面四类判断。Ⅰ类是五段，Ⅱ类是一段，Ⅲ类包括サ变和カ变。": {
+    "en": "Check dictionary form and reading. Class I is godan, II ichidan, III suru/kuru irregular.",
+    "ja": "辞書形と読みを確認して分類します。Ⅰ類は五段、Ⅱ類は一段、Ⅲ類はサ変とカ変です。"
+  },
+  "五段动词 · Ⅰ类": {
+    "en": "Godan · Class I",
+    "ja": "五段動詞 · Ⅰ類"
+  },
+  "以う、く、ぐ、す、つ、ぬ、ぶ、む、る之一结尾。": {
+    "en": "Ends in う, く, ぐ, す, つ, ぬ, ぶ, む or る.",
+    "ja": "う、く、ぐ、す、つ、ぬ、ぶ、む、るのいずれかで終わります。"
+  },
+  "先排除する、来る等不规则词：不以る结尾的通常是五段；以る结尾且る前为あ、う、お段音的，也是五段。い段／え段＋る中另有五段词，见特殊词表。": {
+    "en": "Exclude irregular する and 来る first. Non-る verbs are usually godan; a/u/o + る are godan too. Some i/e + る verbs are also godan; see the special list.",
+    "ja": "する・来るなどを除き、る以外で終わる動詞は通常五段です。ア・ウ・オ段＋るも五段です。イ・エ段＋るにも五段があるので特殊語一覧を参照してください。"
+  },
+  "一段动词 · Ⅱ类": {
+    "en": "Ichidan · Class II",
+    "ja": "一段動詞 · Ⅱ類"
+  },
+  "以る结尾，る前的假名是い段或え段音。": {
+    "en": "Ends in る preceded by an i- or e-row sound.",
+    "ja": "るで終わり、その前はイ段またはエ段の音です。"
+  },
+  "符合「い段／え段＋る」后，还要排除五段词。見る、寝る、着る、居る等短词也属于一段，不能按汉字数量判断。": {
+    "en": "After checking i/e + る, exclude godan exceptions. Short words like 見る, 寝る, 着る, 居る are ichidan; kanji count is not a guide.",
+    "ja": "イ・エ段＋るでも五段を除く必要があります。見る、寝る、着る、居るなどの短い語も一段で、漢字数では判断できません。"
+  },
+  "起きる（き＝い段）／食べる（べ＝え段）／見る（みる）／寝る（ねる）": {
+    "en": "起きる (き = i-row) / 食べる (べ = e-row) / 見る / 寝る",
+    "ja": "起きる（き＝イ段）／食べる（べ＝エ段）／見る（みる）／寝る（ねる）"
+  },
+  "サ变动词 · Ⅲ类": {
+    "en": "Suru irregular · Class III",
+    "ja": "サ変動詞 · Ⅲ類"
+  },
+  "サ变动词": {
+    "en": "Suru irregular verbs",
+    "ja": "サ変動詞"
+  },
+  "する，或能与する结合的动作性词语＋する。": {
+    "en": "する, or an action word that combines with する.",
+    "ja": "する、またはするに結び付く動作性の語＋するです。"
+  },
+  "确认词义和构成中包含表示“做”的する。不是所有名词都能加する；擦る（する，摩擦）是五段，不能只看读音。": {
+    "en": "Confirm it contains する meaning “do.” Not all nouns take する. 擦る (する, rub) is godan despite the same reading.",
+    "ja": "「する」の意味と構成を確認します。すべての名詞にするが付くわけではありません。擦る（する）は五段なので、読みだけでは判断できません。"
+  },
+  "カ变动词 · Ⅲ类": {
+    "en": "Kuru irregular · Class III",
+    "ja": "カ変動詞 · Ⅲ類"
+  },
+  "カ变动词": {
+    "en": "Kuru irregular verbs",
+    "ja": "カ変動詞"
+  },
+  "来る（くる），以及包含这个来る的表达。": {
+    "en": "来る (くる) and expressions containing this “come.”",
+    "ja": "来る（くる）およびこの来るを含む表現です。"
+  },
+  "确认其中的来る表示“来”。仅以くる结尾不算カ变，如作る（つくる）是五段。": {
+    "en": "Confirm 来る means “come.” Merely ending in くる is not enough: 作る is godan.",
+    "ja": "「来る」の意味を確認します。くるで終わるだけではカ変ではありません。作る（つくる）は五段です。"
+  },
+  "无法确定时查词典的活用标记。同音词也可能不同类：着る／切る、居る／要る、変える／帰る，前者是一段，后者是五段。": {
+    "en": "Check dictionary conjugation labels when unsure. Homophones may differ: 着る/切る, 居る/要る, 変える/帰る are ichidan/godan pairs.",
+    "ja": "不明な場合は辞書の活用表示を確認します。同音語でも着る／切る、居る／要る、変える／帰るは、前者が一段、後者が五段です。"
+  },
+  "连接否定、意向、受身、使役等成分，通常不单独使用。": {
+    "en": "Takes negative, volitional, passive or causative endings; usually not used alone.",
+    "ja": "否定、意向、受身、使役などに接続し、通常は単独で使いません。"
+  },
+  "词尾う段 → あ段／お段；う结尾的あ段形式用わ。": {
+    "en": "Final u-row → a/o-row; final う uses わ for the a-row.",
+    "ja": "語尾のウ段をア段／オ段へ。うのア段形はわになります。"
+  },
+  "去掉末尾る。": {
+    "en": "Remove final る.",
+    "ja": "末尾のるを取ります。"
+  },
+  "サ变 · する": {
+    "en": "Suru irregular · する",
+    "ja": "サ変 · する"
+  },
+  "按接续变为し、さ、せ。": {
+    "en": "Becomes し, さ or せ depending on the ending.",
+    "ja": "接続に応じてし、さ、せになります。"
+  },
+  "カ变 · 来る": {
+    "en": "Kuru irregular · 来る",
+    "ja": "カ変 · 来る"
+  },
+  "变为来（こ）。": {
+    "en": "Becomes 来（こ）.",
+    "ja": "来（こ）になります。"
+  },
+  "接续与用法": {
+    "en": "Connections and usage",
+    "ja": "接続と用法"
+  },
+  "否定 · ない": {
+    "en": "Negative · ない",
+    "ja": "否定 · ない"
+  },
+  "五段用あ段形式、一段去る后接ない；する→しない，来る→こない。": {
+    "en": "Godan a-row / ichidan without る + ない; する→しない, 来る→こない.",
+    "ja": "五段はア段、一段はるを取ってない。する→しない、来る→こない。"
+  },
+  "意向 · う／よう": {
+    "en": "Volitional · う／よう",
+    "ja": "意向 · う／よう"
+  },
+  "五段用お段形式＋う；一段去る＋よう；する→しよう，来る→こよう。": {
+    "en": "Godan o-row + う; ichidan without る + よう; する→しよう, 来る→こよう.",
+    "ja": "五段はオ段＋う、一段はるを取ってよう。する→しよう、来る→こよう。"
+  },
+  "受身 · れる／られる": {
+    "en": "Passive · れる／られる",
+    "ja": "受身 · れる／られる"
+  },
+  "五段用あ段形式＋れる；一段去る＋られる；する→される，来る→こられる。": {
+    "en": "Godan a-row + れる; ichidan without る + られる; する→される, 来る→こられる.",
+    "ja": "五段はア段＋れる、一段はるを取ってられる。する→される、来る→こられる。"
+  },
+  "使役 · せる／させる": {
+    "en": "Causative · せる／させる",
+    "ja": "使役 · せる／させる"
+  },
+  "五段用あ段形式＋せる；一段去る＋させる；する→させる，来る→こさせる。": {
+    "en": "Godan a-row + せる; ichidan without る + させる; する→させる, 来る→こさせる.",
+    "ja": "五段はア段＋せる、一段はるを取ってさせる。する→させる、来る→こさせる。"
+  },
+  "特殊情况": {
+    "en": "Special cases",
+    "ja": "特殊な場合"
+  },
+  "ある的否定": {
+    "en": "Negation of ある",
+    "ja": "あるの否定"
+  },
+  "普通否定用ない；礼貌否定用ありません。": {
+    "en": "Plain negative: ない; polite negative: ありません.",
+    "ja": "普通体の否定はない、丁寧体はありませんです。"
+  },
+  "可能表达的归属": {
+    "en": "Where potential belongs",
+    "ja": "可能表現の扱い"
+  },
+  "一段未然形可接られる表示可能；五段的可能动词另由え段＋る构成，不是原词的未然形。": {
+    "en": "Ichidan irrealis + られる can express ability; godan potential verbs use e-row + る, not the original irrealis base.",
+    "ja": "一段は未然形＋られるで可能を表せます。五段の可能動詞はエ段＋るで作り、元の語の未然形ではありません。"
+  },
+  "表中先列动词本身的活用形，再列接续后的完整表达。「未然」不等于将来时。": {
+    "en": "Tables show the verb base first, then the complete expression. “Irrealis” does not mean future tense.",
+    "ja": "表では動詞自体の活用形、次に接続後の表現を示します。「未然」は未来時制ではありません。"
+  },
+  "连接ます、て、た等成分，用于礼貌表达、动作连接和过去表达等。": {
+    "en": "Takes ます, て, た for polite speech, action linking and past expressions.",
+    "ja": "ます、て、たなどに接続し、丁寧表現、動作の接続、過去表現などに使います。"
+  },
+  "词尾う段 → い段；接て、た时按下表变化。": {
+    "en": "Final u-row → i-row; before て/た follow the table below.",
+    "ja": "語尾のウ段をイ段へ。て・たへの接続は下表に従います。"
+  },
+  "礼貌表达 · ます": {
+    "en": "Polite · ます",
+    "ja": "丁寧表現 · ます"
+  },
+  "连用形＋ます；否定用ません，过去用ました。": {
+    "en": "Continuative + ます; negative ません, past ました.",
+    "ja": "連用形＋ます。否定はません、過去はましたです。"
+  },
+  "动作连接 · て": {
+    "en": "Action linking · て",
+    "ja": "動作の接続 · て"
+  },
+  "一段去る＋て；する→して，来る→きて。五段按下方词尾规则变化。": {
+    "en": "Ichidan without る + て; する→して, 来る→きて. Godan follows the ending rules below.",
+    "ja": "一段はるを取ってて。する→して、来る→きて。五段は下の語尾規則に従います。"
+  },
+  "食べて／して／来て（きて）；本を読んでいます。（正在看书。）": {
+    "en": "食べて／して／来て（きて）; 本を読んでいます。— I am reading a book.",
+    "ja": "食べて／して／来て（きて）。例：本を読んでいます。"
+  },
+  "过去表达 · た": {
+    "en": "Past · た",
+    "ja": "過去表現 · た"
+  },
+  "一段去る＋た；する→した，来る→きた。五段的て／で对应换成た／だ。": {
+    "en": "Ichidan without る + た; する→した, 来る→きた. For godan, replace て/で with た/だ.",
+    "ja": "一段はるを取ってた。する→した、来る→きた。五段はて／でをた／だに替えます。"
+  },
+  "五段的て形・た形": {
+    "en": "Godan te and ta forms",
+    "ja": "五段のテ形・タ形"
+  },
+  "促音便：词尾变成っ，再接て或た。": {
+    "en": "Gemination: ending → っ, then て or た.",
+    "ja": "促音便：語尾をっにして、て・たを付けます。"
+  },
+  "拨音便：词尾变成ん，后接で或だ。": {
+    "en": "Nasal change: ending → ん, then で or だ.",
+    "ja": "撥音便：語尾をんにして、で・だを付けます。"
+  },
+  "イ音便：く变い，后接て或た。": {
+    "en": "i-sound change: く → い, then て or た.",
+    "ja": "イ音便：くをいにして、て・たを付けます。"
+  },
+  "イ音便：ぐ变い，后接で或だ。": {
+    "en": "i-sound change: ぐ → い, then で or だ.",
+    "ja": "イ音便：ぐをいにして、で・だを付けます。"
+  },
+  "す变し，后接て或た。": {
+    "en": "す → し, then て or た.",
+    "ja": "すをしにして、て・たを付けます。"
+  },
+  "行く的音便": {
+    "en": "Sound change of 行く",
+    "ja": "行くの音便"
+  },
+  "行く不用「行いて／行いた」，而用促音便。": {
+    "en": "行く uses gemination, not 行いて／行いた.",
+    "ja": "行くは行いて／行いたではなく、促音便になります。"
+  },
+  "て形、た形包含后接成分，不等于单独的连用形；た形也用于「〜たことがある」「〜たら」等表达。": {
+    "en": "Te/ta forms include endings, not just the continuative base. Ta also occurs in 〜たことがある and 〜たら.",
+    "ja": "テ形・タ形は後続要素を含み、連用形単独ではありません。タ形は〜たことがある、〜たらなどにも使います。"
+  },
+  "用于结束句子。现代动词的终止形与辞书形相同。": {
+    "en": "Ends a sentence. Modern verb terminal forms match dictionary forms.",
+    "ja": "文を終える形です。現代語の動詞では終止形と辞書形が同じです。"
+  },
+  "保留辞书形。": {
+    "en": "Keep the dictionary form.",
+    "ja": "辞書形のままです。"
+  },
+  "保留する。": {
+    "en": "Keep する.",
+    "ja": "するのままです。"
+  },
+  "保留来る，读くる。": {
+    "en": "Keep 来る, read くる.",
+    "ja": "来るのままで、くると読みます。"
+  },
+  "陈述动作": {
+    "en": "Stating actions",
+    "ja": "動作を述べる"
+  },
+  "以普通体结束句子。": {
+    "en": "End a sentence in plain style.",
+    "ja": "普通体で文を終えます。"
+  },
+  "手紙を書く。（写信。）": {
+    "en": "手紙を書く。— Write a letter.",
+    "ja": "手紙を書く。"
+  },
+  "习惯或将来": {
+    "en": "Habit or future",
+    "ja": "習慣や未来"
+  },
+  "非过去肯定的时间含义由上下文决定。": {
+    "en": "Context determines the time of affirmative non-past.",
+    "ja": "非過去肯定の時間的意味は文脈で決まります。"
+  },
+  "毎日、本を読む。（每天看书。）／明日、京都へ行く。（明天去京都。）": {
+    "en": "毎日、本を読む。— I read every day. / 明日、京都へ行く。— I will go to Kyoto tomorrow.",
+    "ja": "毎日、本を読む。／明日、京都へ行く。"
+  },
+  "注意区分": {
+    "en": "Distinguish carefully",
+    "ja": "区別に注意"
+  },
+  "礼貌表达要改用连用形": {
+    "en": "Polite speech uses the continuative",
+    "ja": "丁寧表現は連用形を使う"
+  },
+  "不能在终止形后直接加ます。": {
+    "en": "Do not attach ます directly to the terminal form.",
+    "ja": "終止形に直接ますは付けられません。"
+  },
+  "読まない、読んだ包含ない、た等后续成分，应与原动词本身的终止形分开分析。": {
+    "en": "読まない and 読んだ contain ない/た; analyze these separately from the original verb's terminal base.",
+    "ja": "読まない・読んだはない・たなどを含むので、元の動詞自体の終止形とは分けて分析します。"
+  },
+  "放在名词前作修饰。现代动词与终止形同形，区别在句中作用。": {
+    "en": "Modifies a following noun. Modern verbs share the terminal shape but have a different function.",
+    "ja": "名詞の前で修飾します。現代語の動詞は終止形と同形ですが、文中の役割が異なります。"
+  },
+  "保留辞书形，后接名词。": {
+    "en": "Keep dictionary form, followed by a noun.",
+    "ja": "辞書形の後に名詞を置きます。"
+  },
+  "用する，后接名词。": {
+    "en": "Use する followed by a noun.",
+    "ja": "するの後に名詞を置きます。"
+  },
+  "用来る（くる），后接名词。": {
+    "en": "Use 来る（くる） followed by a noun.",
+    "ja": "来る（くる）の後に名詞を置きます。"
+  },
+  "修饰名词": {
+    "en": "Modifying nouns",
+    "ja": "名詞を修飾"
+  },
+  "修饰内容放在名词前，中间不加「の」。": {
+    "en": "Place the modifier before the noun without の.",
+    "ja": "修飾部分を名詞の前に置き、間にのは入れません。"
+  },
+  "手紙を書く人（写信的人）": {
+    "en": "手紙を書く人 — a person who writes letters",
+    "ja": "手紙を書く人"
+  },
+  "扩展修饰内容": {
+    "en": "Expanding modifiers",
+    "ja": "修飾内容を広げる"
+  },
+  "动作的时间、对象等也放在被修饰名词前。": {
+    "en": "The action's time and object also go before the modified noun.",
+    "ja": "動作の時間や対象も、修飾する名詞の前に置きます。"
+  },
+  "毎朝パンを食べる人（每天早上吃面包的人）": {
+    "en": "毎朝パンを食べる人 — a person who eats bread every morning",
+    "ja": "毎朝パンを食べる人"
+  },
+  "否定、过去也能修饰名词": {
+    "en": "Negative and past noun modifiers",
+    "ja": "否定・過去も名詞を修飾"
+  },
+  "这时还包含ない、た等成分的连体形式，不只是原动词的变化。": {
+    "en": "These include attributive forms of ない/た, not just changes to the original verb.",
+    "ja": "ない・たなどの連体形も含み、元の動詞の変化だけではありません。"
+  },
+  "肉を食べない人（不吃肉的人）／昨日読んだ本（昨天读的书）": {
+    "en": "肉を食べない人 — someone who does not eat meat / 昨日読んだ本 — the book read yesterday",
+    "ja": "肉を食べない人／昨日読んだ本"
+  },
+  "这里讲动词；形容词与形容动词另见「形容词」一章，如高い山、静かな町。": {
+    "en": "This chapter covers verbs. For 高い山 or 静かな町, see adjectives.",
+    "ja": "ここでは動詞を扱います。高い山・静かな町などは形容詞の章を参照してください。"
+  },
+  "连接ば，表示某个条件成立时的结果。": {
+    "en": "Takes ば to express a result under a condition.",
+    "ja": "ばに接続し、ある条件が成立した場合の結果を表します。"
+  },
+  "词尾う段 → え段。": {
+    "en": "Final u-row → e-row.",
+    "ja": "語尾のウ段をエ段にします。"
+  },
+  "去る＋れ。": {
+    "en": "Remove る, add れ.",
+    "ja": "るを取ってれを付けます。"
+  },
+  "条件 · ば": {
+    "en": "Conditional · ば",
+    "ja": "条件 · ば"
+  },
+  "假定形后接ば，构成完整的条件表达。": {
+    "en": "Add ば to the conditional base for the full expression.",
+    "ja": "仮定形にばを付け、条件表現を作ります。"
+  },
+  "放进句子": {
+    "en": "In a sentence",
+    "ja": "文の中で"
+  },
+  "前半句给出条件，后半句说明结果。": {
+    "en": "The first clause gives the condition; the second gives the result.",
+    "ja": "前半で条件、後半で結果を述べます。"
+  },
+  "毎日読めば、少しずつわかる。（每天读，就会一点点明白。）": {
+    "en": "毎日読めば、少しずつわかる。— Read every day and you will gradually understand.",
+    "ja": "毎日読めば、少しずつわかる。"
+  },
+  "与其他条件、可能表达区分": {
+    "en": "Other conditionals and potential",
+    "ja": "他の条件・可能表現との区別"
+  },
+  "たら、と、なら不能都归为原动词的假定形；え段＋る构成的可能动词也不是假定形。": {
+    "en": "たら, と, なら are not all original conditional bases; e-row + る potential verbs are not conditional bases either.",
+    "ja": "たら、と、ならをすべて元の動詞の仮定形とは扱えません。エ段＋るの可能動詞も仮定形ではありません。"
+  },
+  "読め＋ば → 読めば（如果读）／読める（能够读）": {
+    "en": "読め＋ば → 読めば (if one reads) / 読める (can read)",
+    "ja": "読め＋ば → 読めば（条件）／読める（可能）"
+  },
+  "假定形是「書け」，ば形是「書けば」：后者包含接续助词ば。": {
+    "en": "書け is the conditional base; 書けば is the ba form, including conjunction ば.",
+    "ja": "仮定形は書け、バ形は書けばです。後者には接続助詞ばが含まれます。"
+  },
+  "直接用于命令、号令或强烈指示，可以单独结束句子。": {
+    "en": "Used for direct commands, calls or strong instructions; can end a sentence alone.",
+    "ja": "命令、号令、強い指示に使い、単独で文を終えられます。"
+  },
+  "去る＋ろ；书面语也可用よ。": {
+    "en": "Remove る, add ろ; literary よ is also possible.",
+    "ja": "るを取ってろ。文章語ではよも使います。"
+  },
+  "直接命令": {
+    "en": "Direct commands",
+    "ja": "直接の命令"
+  },
+  "用命令形结束句子，语气强烈。": {
+    "en": "End with the imperative for a strong command.",
+    "ja": "命令形で文を終えると、強い語調になります。"
+  },
+  "早く読め。（快读！）": {
+    "en": "早く読め。— Read it quickly!",
+    "ja": "早く読め。"
+  },
+  "礼貌请求": {
+    "en": "Polite requests",
+    "ja": "丁寧な依頼"
+  },
+  "日常请求常用てください，语气与命令形不同。": {
+    "en": "Everyday requests often use てください, with a different tone from the imperative.",
+    "ja": "日常の依頼にはてくださいをよく使い、命令形とは語調が異なります。"
+  },
+  "読んでください。（请读。）": {
+    "en": "読んでください。— Please read.",
+    "ja": "読んでください。"
+  },
+  "禁止用辞书形＋な": {
+    "en": "Prohibition: dictionary + な",
+    "ja": "禁止は辞書形＋な"
+  },
+  "这不是命令形加ない，也不是动词本身的命令形。": {
+    "en": "This is neither imperative + ない nor the verb's own imperative.",
+    "ja": "命令形＋ないでも、動詞自体の命令形でもありません。"
+  },
+  "ここに入るな。（不准进入这里。）": {
+    "en": "ここに入るな。— Do not enter here.",
+    "ja": "ここに入るな。"
+  },
+  "五段动词的命令形与假定形同形，但接续不同：読め！是命令，読めば是条件。": {
+    "en": "Godan imperative and conditional bases share a shape, but connections differ: 読め！ commands; 読めば conditions.",
+    "ja": "五段の命令形と仮定形は同形ですが、接続が異なります。読め！は命令、読めばは条件です。"
+  },
+  "按い形容词、な形容词分别学习：先看学校文法的六种活用形，再看常用表达。": {
+    "en": "Study i- and na-adjectives separately: six school-grammar bases first, then common expressions.",
+    "ja": "イ形容詞とナ形容詞を分け、学校文法の6つの活用形、次によく使う表現を見ます。"
+  },
+  "い形容词 · 学校文法的形容词": {
+    "en": "i-adjectives · School grammar adjectives",
+    "ja": "イ形容詞 · 学校文法の形容詞"
+  },
+  "以高い为例：去掉末尾い，保留高，再接下面的活用词尾。": {
+    "en": "For 高い, remove final い and add the endings below to 高.",
+    "ja": "高いなら、末尾のいを取って高に以下の活用語尾を付けます。"
+  },
+  "去い＋かろ；后接う，表示推量。": {
+    "en": "Remove い + かろ, then う for conjecture.",
+    "ja": "いを取ってかろ。うを付けて推量を表します。"
+  },
+  "去い＋く／かっ。": {
+    "en": "Remove い + く／かっ.",
+    "ja": "いを取ってく／かっを付けます。"
+  },
+  "保留い，用于句末。": {
+    "en": "Keep い at sentence end.",
+    "ja": "いのまま文末で使います。"
+  },
+  "この山は高い。（这座山很高。）": {
+    "en": "この山は高い。— This mountain is high.",
+    "ja": "この山は高い。"
+  },
+  "保留い，后接名词。": {
+    "en": "Keep い before a noun.",
+    "ja": "いのまま名詞に接続します。"
+  },
+  "高い山（高山）": {
+    "en": "高い山 — a high mountain",
+    "ja": "高い山"
+  },
+  "去い＋けれ；后接ば。": {
+    "en": "Remove い + けれ, then ば.",
+    "ja": "いを取ってけれ、さらにばを付けます。"
+  },
+  "无命令形。": {
+    "en": "No imperative form.",
+    "ja": "命令形はありません。"
+  },
+  "否定与过去": {
+    "en": "Negative and past",
+    "ja": "否定と過去"
+  },
+  "去い＋くない／かった／くなかった。": {
+    "en": "Remove い + くない／かった／くなかった.",
+    "ja": "いを取ってくない／かった／くなかった。"
+  },
+  "连接": {
+    "en": "Linking",
+    "ja": "接続"
+  },
+  "去い＋くて，连接后续描述。": {
+    "en": "Remove い + くて to link descriptions.",
+    "ja": "いを取ってくてにし、次の描写につなげます。"
+  },
+  "安くておいしい。（便宜又好吃。）": {
+    "en": "安くておいしい。— Cheap and delicious.",
+    "ja": "安くておいしい。"
+  },
+  "修饰名词／动词": {
+    "en": "Modifying nouns / verbs",
+    "ja": "名詞／動詞の修飾"
+  },
+  "修饰名词保留い；修饰动词用く。": {
+    "en": "Keep い for nouns; use く for verbs.",
+    "ja": "名詞にはい、動詞にはくを使います。"
+  },
+  "高い山／早く起きる（早起）": {
+    "en": "高い山 / 早く起きる — get up early",
+    "ja": "高い山／早く起きる"
+  },
+  "条件": {
+    "en": "Conditional",
+    "ja": "条件"
+  },
+  "去い＋ければ。": {
+    "en": "Remove い + ければ.",
+    "ja": "いを取ってければ。"
+  },
+  "安ければ買います。（便宜的话就买。）": {
+    "en": "安ければ買います。— I will buy it if it is cheap.",
+    "ja": "安ければ買います。"
+  },
+  "肯定用いです；过去用かったです；否定可用くないです。": {
+    "en": "Affirmative いです; past かったです; negative can be くないです.",
+    "ja": "肯定はいです、過去はかったです、否定にはくないですも使えます。"
+  },
+  "特殊词：いい的变化通常以よい为基础：よくない、よかった、よくて、よければ。推量日常也常用「高いだろう」。": {
+    "en": "Exception: いい usually conjugates from よい: よくない, よかった, よくて, よければ. Everyday conjecture also uses 高いだろう.",
+    "ja": "いいは通常よいを基に、よくない、よかった、よくて、よければと変化します。推量には高いだろうもよく使います。"
+  },
+  "な形容词 · 学校文法的形容动词": {
+    "en": "na-adjectives · School grammar adjectival nouns",
+    "ja": "ナ形容詞 · 学校文法の形容動詞"
+  },
+  "以静かだ为例：保留静か，变化的是后面的だ。修饰名词时用な，因此教育文法称な形容词。": {
+    "en": "For 静かだ, 静か stays and だ changes. な modifies nouns, hence “na-adjective.”",
+    "ja": "静かだでは静かを保ち、後ろのだが変化します。名詞修飾はななので、日本語教育文法ではナ形容詞と呼びます。"
+  },
+  "だ → だろ；后接う，表示推量。": {
+    "en": "だ → だろ, then う for conjecture.",
+    "ja": "だをだろにし、うを付けて推量を表します。"
+  },
+  "用だ，用于句末。": {
+    "en": "Use だ at sentence end.",
+    "ja": "だを文末で使います。"
+  },
+  "この町は静かだ。（这个城镇很安静。）": {
+    "en": "この町は静かだ。— This town is quiet.",
+    "ja": "この町は静かだ。"
+  },
+  "だ → な，后接名词。": {
+    "en": "だ → な before a noun.",
+    "ja": "だをなにして名詞に接続します。"
+  },
+  "静かな町（安静的城镇）": {
+    "en": "静かな町 — a quiet town",
+    "ja": "静かな町"
+  },
+  "だ → なら；ば常省略。": {
+    "en": "だ → なら; ば is often omitted.",
+    "ja": "だをならにします。ばはよく省略されます。"
+  },
+  "だ → ではない／だった／ではなかった；口语可将では换成じゃ。": {
+    "en": "だ → ではない／だった／ではなかった; colloquially では can become じゃ.",
+    "ja": "だをではない／だった／ではなかったにします。口語ではではをじゃにできます。"
+  },
+  "だ → で，连接后续描述。": {
+    "en": "だ → で to link descriptions.",
+    "ja": "だをでにして次の描写につなげます。"
+  },
+  "静かできれいだ。（安静又漂亮。）": {
+    "en": "静かできれいだ。— Quiet and beautiful.",
+    "ja": "静かできれいだ。"
+  },
+  "修饰名词用な；修饰动词用に。": {
+    "en": "Use な for nouns and に for verbs.",
+    "ja": "名詞の修飾にはな、動詞にはにを使います。"
+  },
+  "静かな部屋／静かに話す（轻声说话）": {
+    "en": "静かな部屋 / 静かに話す — speak quietly",
+    "ja": "静かな部屋／静かに話す"
+  },
+  "静かなら勉強できます。（安静的话就能学习。）": {
+    "en": "静かなら勉強できます。— I can study if it is quiet.",
+    "ja": "静かなら勉強できます。"
+  },
+  "だ → です；过去用でした；否定可用ではありません。": {
+    "en": "だ → です; past でした; negative can be ではありません.",
+    "ja": "だをですにします。過去はでした、否定にはではありませんを使えます。"
+  },
+  "易混词：きれい、嫌い虽然以い结尾，仍属于な形容词。礼貌肯定用「静かです」，不用「静かだです」。": {
+    "en": "Watch out: きれい and 嫌い end in い but are na-adjectives. Polite affirmative is 静かです, not 静かだです.",
+    "ja": "きれい・嫌いはいで終わりますがナ形容詞です。丁寧な肯定は静かですであり、静かだですではありません。"
+  },
+  "活用形与完整表达要分开看：例如「高けれ」是假定形，「高ければ」还包含ば。名词本身不活用，「学生だった」是后续判断表达的变化。": {
+    "en": "Separate bases from full expressions: 高けれ is conditional; 高ければ includes ば. Nouns do not conjugate; 学生だった changes the following copular expression.",
+    "ja": "活用形と表現全体を分けましょう。高けれは仮定形、高ければはばも含みます。名詞自体は活用せず、学生だったは後続の判断表現が変化しています。"
+  },
+  "未然形": {
+    "en": "Irrealis",
+    "ja": "未然形"
+  },
+  "连用形": {
+    "en": "Continuative",
+    "ja": "連用形"
+  },
+  "终止形": {
+    "en": "Terminal",
+    "ja": "終止形"
+  },
+  "连体形": {
+    "en": "Attributive",
+    "ja": "連体形"
+  },
+  "假定形": {
+    "en": "Conditional",
+    "ja": "仮定形"
+  },
+  "命令形": {
+    "en": "Imperative",
+    "ja": "命令形"
+  },
+  "可能形": {
+    "en": "Potential",
+    "ja": "可能形"
+  },
+  "完成": {
+    "en": "Done",
+    "ja": "完了"
+  },
+  "好": {
+    "en": "OK",
+    "ja": "OK"
+  },
+  "高": {
+    "en": "High",
+    "ja": "高"
+  },
+  "吃；食用": {
+    "en": "Eat; consume",
+    "ja": "食べること"
+  },
+  "一段动词": {
+    "en": "Ichidan verb",
+    "ja": "一段動詞"
+  },
+  "去掉词尾「る」，再接相应词尾。可能形与受身形同为「食べられる」，要根据语境区分。": {
+    "en": "Remove final る and add the appropriate ending. Potential and passive both use 食べられる; context distinguishes them.",
+    "ja": "語尾のるを取り、対応する語尾を付けます。可能も受身も食べられるとなり、文脈で区別します。"
+  },
+  "接「ない・られる・させる・よう」等，构成否定、可能、受身、使役和意向表达。": {
+    "en": "Takes ない, られる, させる, よう for negative, potential, passive, causative and volitional.",
+    "ja": "ない・られる・させる・ようなどに接続し、否定・可能・受身・使役・意向を表します。"
+  },
+  "接「ます・た・て」等。礼貌否定和过去否定还涉及后续助动词的变化。": {
+    "en": "Takes ます, た and て. Polite and past negatives also change the following auxiliaries.",
+    "ja": "ます・た・てなどに接続します。丁寧な否定や過去の否定には、後続の助動詞の変化も含まれます。"
+  },
+  "用于结束句子，对应教育文法中的辞书形。": {
+    "en": "Ends a sentence; corresponds to learner grammar's dictionary form.",
+    "ja": "文を終え、日本語教育文法の辞書形に対応します。"
+  },
+  "修饰名词，与终止形同形，但句法作用不同。": {
+    "en": "Modifies nouns; same shape as terminal, different syntactic function.",
+    "ja": "名詞を修飾します。終止形と同形ですが、文法上の役割は異なります。"
+  },
+  "接「ば」构成条件表达。注意「食べれば」整体是教育文法中的ば形。": {
+    "en": "Takes ば for a conditional. The whole 食べれば is the learner grammar ba form.",
+    "ja": "ばに接続して条件を表します。食べれば全体が日本語教育文法のバ形です。"
+  },
+  "表示命令；「食べよ」多见于书面语。": {
+    "en": "Expresses commands; 食べよ is mainly literary.",
+    "ja": "命令を表します。食べよは主に文章語です。"
+  },
+  "连体用法（辞书形）": {
+    "en": "Attributive use (dictionary form)",
+    "ja": "連体用法（辞書形）"
+  },
+  "辞书形放在名词前，修饰该名词。": {
+    "en": "Dictionary form precedes and modifies a noun.",
+    "ja": "辞書形を名詞の前に置いて修飾します。"
+  },
+  "没有吃饭的时间。": {
+    "en": "There is no time to eat.",
+    "ja": "食べる時間がない。"
+  },
+  "辞书形": {
+    "en": "Dictionary form",
+    "ja": "辞書形"
+  },
+  "基本形式，表示习惯或将来。": {
+    "en": "Basic form for habits or future actions.",
+    "ja": "習慣や未来の動作を表す基本形です。"
+  },
+  "每天早上吃面包。": {
+    "en": "I eat bread every morning.",
+    "ja": "毎朝パンを食べる。"
+  },
+  "ます形": {
+    "en": "Masu form",
+    "ja": "マス形"
+  },
+  "礼貌地表达现在或将来的动作。": {
+    "en": "Politely expresses present or future actions.",
+    "ja": "現在や未来の動作を丁寧に表します。"
+  },
+  "中午吃荞麦面。": {
+    "en": "I eat soba at lunchtime.",
+    "ja": "昼にそばを食べます。"
+  },
+  "ない形": {
+    "en": "Nai form",
+    "ja": "ナイ形"
+  },
+  "表示否定。": {
+    "en": "Expresses negation.",
+    "ja": "否定を表します。"
+  },
+  "我不吃肉。": {
+    "en": "I do not eat meat.",
+    "ja": "肉は食べない。"
+  },
+  "ません形": {
+    "en": "Masen form",
+    "ja": "マセン形"
+  },
+  "礼貌的否定表达。": {
+    "en": "Polite negative expression.",
+    "ja": "丁寧な否定表現です。"
+  },
+  "我不吃鱼。": {
+    "en": "I do not eat fish.",
+    "ja": "魚は食べません。"
+  },
+  "た形": {
+    "en": "Ta form",
+    "ja": "タ形"
+  },
+  "表示已经发生的动作。": {
+    "en": "Expresses a completed past action.",
+    "ja": "過去に起きた動作を表します。"
+  },
+  "昨天吃了寿司。": {
+    "en": "I ate sushi yesterday.",
+    "ja": "昨日、寿司を食べた。"
+  },
+  "ました形": {
+    "en": "Mashita form",
+    "ja": "マシタ形"
+  },
+  "礼貌地表达过去的动作。": {
+    "en": "Politely expresses a past action.",
+    "ja": "過去の動作を丁寧に表します。"
+  },
+  "吃过早饭了。": {
+    "en": "I ate breakfast.",
+    "ja": "朝ご飯を食べました。"
+  },
+  "なかった形": {
+    "en": "Nakatta form",
+    "ja": "ナカッタ形"
+  },
+  "表示过去没有做。": {
+    "en": "Expresses not doing something in the past.",
+    "ja": "過去にしなかったことを表します。"
+  },
+  "昨天没有吃点心。": {
+    "en": "I did not eat sweets yesterday.",
+    "ja": "昨日はお菓子を食べなかった。"
+  },
+  "て形": {
+    "en": "Te form",
+    "ja": "テ形"
+  },
+  "连接动作，也可以接「ください」表达请求。": {
+    "en": "Links actions; add ください to make a request.",
+    "ja": "動作をつなぎ、くださいを付けて依頼も表せます。"
+  },
+  "请慢慢吃。": {
+    "en": "Please eat slowly.",
+    "ja": "ゆっくり食べてください。"
+  },
+  "表示能够吃，与受身形同形。": {
+    "en": "Means being able to eat; identical in shape to passive.",
+    "ja": "食べる能力を表し、受身形と同形です。"
+  },
+  "我能吃纳豆。": {
+    "en": "I can eat natto.",
+    "ja": "私は納豆が食べられる。"
+  },
+  "受身形": {
+    "en": "Passive",
+    "ja": "受身形"
+  },
+  "表示被吃，通过语境与可能形区分。": {
+    "en": "Means being eaten; context distinguishes it from potential.",
+    "ja": "食べられる側であることを表し、可能とは文脈で区別します。"
+  },
+  "这种叶子会被虫子吃。": {
+    "en": "These leaves are eaten by insects.",
+    "ja": "この葉は虫に食べられる。"
+  },
+  "使役形": {
+    "en": "Causative",
+    "ja": "使役形"
+  },
+  "表示让某人吃。": {
+    "en": "Means making or letting someone eat.",
+    "ja": "誰かに食べさせることを表します。"
+  },
+  "让孩子吃蔬菜。": {
+    "en": "Have the child eat vegetables.",
+    "ja": "子供に野菜を食べさせる。"
+  },
+  "意向形": {
+    "en": "Volitional",
+    "ja": "意向形"
+  },
+  "表达意愿或邀请。": {
+    "en": "Expresses intention or invitation.",
+    "ja": "意志や誘いを表します。"
+  },
+  "一起吃饭吧。": {
+    "en": "Let's eat together.",
+    "ja": "一緒にご飯を食べよう。"
+  },
+  "条件形（ば）": {
+    "en": "Conditional (ba)",
+    "ja": "条件形（ば）"
+  },
+  "表示「如果吃……」。": {
+    "en": "Means “if one eats…”",
+    "ja": "「食べるなら」という条件を表します。"
+  },
+  "吃一点就会有精神。": {
+    "en": "Eat a little and you will feel better.",
+    "ja": "少し食べれば、元気になる。"
+  },
+  "强硬命令，日常礼貌请求应使用「食べてください」。": {
+    "en": "A forceful command. Use 食べてください for polite everyday requests.",
+    "ja": "強い命令です。日常の丁寧な依頼には食べてくださいを使います。"
+  },
+  "快吃！": {
+    "en": "Eat now!",
+    "ja": "早く食べろ！"
+  },
+  "サ变动词词例": {
+    "en": "Suru verb examples",
+    "ja": "サ変動詞の例"
+  },
+  "サ变包括「する」及与它结合的动词。下面列出常见例子，并非完整词表；不是所有名词都能直接加する。": {
+    "en": "Suru verbs include する and its compounds. These are common examples, not an exhaustive list. Not every noun takes する.",
+    "ja": "サ変にはするおよびそれと結び付く動詞があります。以下は代表例で、完全な一覧ではありません。すべての名詞にするが付くわけではありません。"
+  },
+  "常见变化：する → しない・します・して・した・すれば・しよう。复合词通常保留前半部分，变化末尾的する。": {
+    "en": "Common forms: する → しない・します・して・した・すれば・しよう. Compounds usually keep the first part and change final する.",
+    "ja": "主な変化：する → しない・します・して・した・すれば・しよう。複合語は通常、前半を保って末尾のするが変化します。"
+  },
+  "基本词": {
+    "en": "Basic word",
+    "ja": "基本語"
+  },
+  "する可以表示做、进行等，具体含义取决于搭配。": {
+    "en": "する can mean do or perform; meaning depends on the combination.",
+    "ja": "するは行うことなどを表し、意味は組み合わせによります。"
+  },
+  "做；进行": {
+    "en": "Do; perform",
+    "ja": "行う"
+  },
+  "常见「～する」动词": {
+    "en": "Common ～する verbs",
+    "ja": "よく使う「～する」動詞"
+  },
+  "从学习、生活到工作中都很常见。": {
+    "en": "Common in study, everyday life and work.",
+    "ja": "学習、生活、仕事でよく使います。"
+  },
+  "练习": {
+    "en": "Practice",
+    "ja": "練習"
+  },
+  "打扫": {
+    "en": "Clean",
+    "ja": "掃除"
+  },
+  "做饭；烹饪": {
+    "en": "Cook",
+    "ja": "料理"
+  },
+  "洗衣服": {
+    "en": "Do laundry",
+    "ja": "洗濯"
+  },
+  "散步": {
+    "en": "Take a walk",
+    "ja": "散歩"
+  },
+  "运动": {
+    "en": "Exercise",
+    "ja": "運動"
+  },
+  "工作": {
+    "en": "Work",
+    "ja": "仕事"
+  },
+  "打电话": {
+    "en": "Make a phone call",
+    "ja": "電話"
+  },
+  "预约": {
+    "en": "Book; reserve",
+    "ja": "予約"
+  },
+  "旅行": {
+    "en": "Travel",
+    "ja": "旅行"
+  },
+  "复印；复制": {
+    "en": "Copy",
+    "ja": "コピー"
+  },
+  "カ变动词词例": {
+    "en": "Kuru verb examples",
+    "ja": "カ変動詞の例"
+  },
+  "现代日语的カ变核心动词只有「来る（くる）」。下面同时列出含来る的常见表达，并不是多个独立的カ变基本动词。": {
+    "en": "Modern Japanese has one core kuru-irregular verb: 来る. The other items are expressions containing it, not separate basic verbs.",
+    "ja": "現代語のカ変の基本動詞は来るだけです。以下には来るを含む表現も挙げていますが、別々の基本動詞ではありません。"
+  },
+  "注意读音变化：来ない（こない）・来ます（きます）・来て（きて）・来た（きた）・来れば（くれば）・来よう（こよう）。": {
+    "en": "Notice reading changes: 来ない（こない）, 来ます（きます）, 来て（きて）, 来た（きた）, 来れば（くれば）, 来よう（こよう）.",
+    "ja": "読みの変化に注意：来ない（こない）・来ます（きます）・来て（きて）・来た（きた）・来れば（くれば）・来よう（こよう）。"
+  },
+  "核心动词": {
+    "en": "Core verb",
+    "ja": "基本動詞"
+  },
+  "表示“来”；仅仅读音以くる结尾并不能判断为カ变，如作る（つくる）是五段。": {
+    "en": "Means “come.” Ending in くる alone does not imply kuru irregular: 作る is godan.",
+    "ja": "来ることを表します。くるで終わるだけではカ変とは限らず、作るは五段です。"
+  },
+  "来": {
+    "en": "Come",
+    "ja": "来ること"
+  },
+  "含「来る」的常见表达": {
+    "en": "Common expressions with 来る",
+    "ja": "来るを含むよく使う表現"
+  },
+  "前面的动词使用て形，末尾的来る按カ变活用。": {
+    "en": "The preceding verb uses te form; final 来る follows kuru irregular conjugation.",
+    "ja": "前の動詞はテ形、末尾の来るはカ変活用です。"
+  },
+  "到来；来到": {
+    "en": "Come; arrive",
+    "ja": "やって来ること"
+  },
+  "带来（物品）": {
+    "en": "Bring (an object)",
+    "ja": "物を持って来ること"
+  },
+  "带来（人或动物）": {
+    "en": "Bring (a person or animal)",
+    "ja": "人や動物を連れて来ること"
+  },
+  "回来": {
+    "en": "Come back",
+    "ja": "帰って来ること"
+  },
+  "返回；回来": {
+    "en": "Return; come back",
+    "ja": "戻って来ること"
+  },
+  "い段＋る": {
+    "en": "i-row + る",
+    "ja": "イ段＋る"
+  },
+  "词表收录 38 条，含同音异写。": {
+    "en": "38 entries, including spelling variants.",
+    "ja": "異表記を含む38項目を収録。"
+  },
+  "え段＋る": {
+    "en": "e-row + る",
+    "ja": "エ段＋る"
+  },
+  "词表收录 28 条，含同音异写。": {
+    "en": "28 entries, including spelling variants.",
+    "ja": "異表記を含む28項目を収録。"
+  },
+  "补充词": {
+    "en": "Additional words",
+    "ja": "補足語"
+  },
+  "另列口语及较少见的词。": {
+    "en": "Additional colloquial and less common words.",
+    "ja": "口語や比較的少ない語を別記。"
+  },
+  "复合词示例": {
+    "en": "Compound examples",
+    "ja": "複合語の例"
+  },
+  "这些复合词也按五段活用；此处仅列示例。": {
+    "en": "These compounds also use godan conjugation; examples only.",
+    "ja": "これらも五段活用です。ここでは例のみ掲載します。"
+  },
+  "Kotoba · 日语活用": {
+    "en": "Kotoba · Japanese conjugation",
+    "ja": "Kotoba · 日本語の活用"
+  },
+  "打开失败，请返回后重试。": {
+    "en": "Could not open. Go back and try again.",
+    "ja": "開けませんでした。戻ってもう一度お試しください。"
+  },
+  "活用结果未完整生成，请重新查询。": {
+    "en": "Conjugation results are incomplete. Please search again.",
+    "ja": "活用結果が不完全です。もう一度検索してください。"
+  },
+  "中文": {
+    "en": "Chinese",
+    "ja": "中国語"
+  },
+  "句子": {
+    "en": "Sentence",
+    "ja": "文"
+  },
+  "来源": {
+    "en": "Source",
+    "ja": "提供元"
+  },
+  "今天不写信。": {
+    "en": "I will not write a letter today.",
+    "ja": "今日は手紙を書かない。"
+  },
+  "一起吃午饭吧。": {
+    "en": "Let's have lunch together.",
+    "ja": "一緒に昼ご飯を食べよう。"
+  },
+  "老师叫了我的名字。": {
+    "en": "The teacher called my name.",
+    "ja": "先生に名前を呼ばれた。"
+  },
+  "妈妈让孩子吃蔬菜。": {
+    "en": "The mother makes her child eat vegetables.",
+    "ja": "母は子どもに野菜を食べさせる。"
+  },
+  "今天没有时间。": {
+    "en": "I have no time today.",
+    "ja": "今日は時間がない。"
+  },
+  "每晚看书。": {
+    "en": "I read a book every evening.",
+    "ja": "毎晩、本を読みます。"
+  },
+  "吃完早饭去学校。": {
+    "en": "I eat breakfast and go to school.",
+    "ja": "朝ご飯を食べて、学校へ行く。"
+  },
+  "昨天看了电影。": {
+    "en": "I watched a movie yesterday.",
+    "ja": "昨日、映画を見た。"
+  },
+  "在车站等朋友，然后一起回家了。": {
+    "en": "I waited for a friend at the station, and we went home together.",
+    "ja": "駅で友達を待って、一緒に帰った。"
+  },
+  "看完书后在公园玩了。": {
+    "en": "After reading a book, I played in the park.",
+    "ja": "本を読んでから、公園で遊んだ。"
+  },
+  "写上名字后交给了老师。": {
+    "en": "I wrote my name and handed it to the teacher.",
+    "ja": "名前を書いて、先生に渡した。"
+  },
+  "昨天在游泳池游泳了。": {
+    "en": "I swam in the pool yesterday.",
+    "ja": "昨日、プールで泳いだ。"
+  },
+  "和朋友用日语交谈了。": {
+    "en": "I talked with a friend in Japanese.",
+    "ja": "友達と日本語で話した。"
+  },
+  "星期天去了京都。": {
+    "en": "I went to Kyoto on Sunday.",
+    "ja": "日曜日に京都へ行った。"
+  },
+  "妹妹每天写日记。": {
+    "en": "My younger sister writes in her diary every day.",
+    "ja": "妹は毎日日記を書く。"
+  },
+  "明天在图书馆看书。": {
+    "en": "I will read a book at the library tomorrow.",
+    "ja": "明日、図書館で本を読む。"
+  },
+  "每天早上读报纸。": {
+    "en": "I read the newspaper every morning.",
+    "ja": "毎朝、新聞を読みます。"
+  },
+  "写信的人是哥哥。": {
+    "en": "The person writing a letter is my older brother.",
+    "ja": "手紙を書く人は兄です。"
+  },
+  "每天早上吃面包的人很多。": {
+    "en": "Many people eat bread every morning.",
+    "ja": "毎朝パンを食べる人が多い。"
+  },
+  "昨天读的书很有趣。": {
+    "en": "The book I read yesterday was interesting.",
+    "ja": "昨日読んだ本は面白かった。"
+  },
+  "每天练习就会进步。": {
+    "en": "If you practice every day, you will improve.",
+    "ja": "毎日練習すれば、上手になる。"
+  },
+  "每天读就会一点点明白。": {
+    "en": "If you read every day, you will gradually understand.",
+    "ja": "毎日読めば、少しずつわかる。"
+  },
+  "这本书一天就能读完。": {
+    "en": "I can finish this book in one day.",
+    "ja": "この本は一日で読める。"
+  },
+  "老师说：“快读！”": {
+    "en": "The teacher said, \"Read it quickly!\"",
+    "ja": "先生は「早く読め」と言った。"
+  },
+  "请读这篇文章。": {
+    "en": "Please read this passage.",
+    "ja": "この文章を読んでください。"
+  },
+  "不准进入这里。": {
+    "en": "Do not enter here.",
+    "ja": "ここに入るな。"
+  },
+  "明天不学习。": {
+    "en": "I will not study tomorrow.",
+    "ja": "明日は勉強しない。"
+  },
+  "他今天不来。": {
+    "en": "He is not coming today.",
+    "ja": "彼は今日は来ない。"
+  },
+  "每天写日记。": {
+    "en": "I write in my diary every day.",
+    "ja": "毎日、日記を書きます。"
+  },
+  "昨天打扫了房间。": {
+    "en": "I cleaned my room yesterday.",
+    "ja": "昨日、部屋を掃除した。"
+  },
+  "朋友来家里了。": {
+    "en": "A friend came to my house.",
+    "ja": "友達が家に来ました。"
+  },
+  "在图书馆学习。": {
+    "en": "I study at the library.",
+    "ja": "図書館で勉強する。"
+  },
+  "明天朋友会来。": {
+    "en": "A friend will come tomorrow.",
+    "ja": "明日、友達が来る。"
+  },
+  "有人在看书。": {
+    "en": "There is someone reading a book.",
+    "ja": "本を読む人がいる。"
+  },
+  "没有吃午饭的时间。": {
+    "en": "I have no time to eat lunch.",
+    "ja": "昼ご飯を食べる時間がない。"
+  },
+  "这里是学生学习的地方。": {
+    "en": "This is a place where students study.",
+    "ja": "ここは学生が勉強する場所です。"
+  },
+  "明天来的人有三个。": {
+    "en": "Three people are coming tomorrow.",
+    "ja": "明日来る人は三人です。"
+  },
+  "每天写就能记住汉字。": {
+    "en": "If you write every day, you can remember kanji.",
+    "ja": "毎日書けば、漢字を覚えられる。"
+  },
+  "吃了早饭就会有精神。": {
+    "en": "If you eat breakfast, you will feel energized.",
+    "ja": "朝ご飯を食べれば、元気が出る。"
+  },
+  "春天来了花就会开。": {
+    "en": "When spring comes, flowers bloom.",
+    "ja": "春が来れば、花が咲く。"
+  },
+  "爸爸说：“凉之前快吃！”": {
+    "en": "My father said, \"Eat before it gets cold!\"",
+    "ja": "父は「冷める前に食べろ」と言った。"
+  },
+  "教练喊道：“集中注意力！”": {
+    "en": "The coach shouted, \"Focus!\"",
+    "ja": "監督は「集中しろ」と叫んだ。"
+  },
+  "哥哥说：“到这边来！”": {
+    "en": "My older brother said, \"Come here!\"",
+    "ja": "兄は「こっちに来い」と言った。"
+  },
+  "山顶大概很冷吧。": {
+    "en": "It is probably cold on the mountaintop.",
+    "ja": "山の上は寒かろう。"
+  },
+  "昨天不冷。": {
+    "en": "It was not cold yesterday.",
+    "ja": "昨日は寒くなかった。"
+  },
+  "这座山很高。": {
+    "en": "This mountain is high.",
+    "ja": "この山は高い。"
+  },
+  "想爬高山。": {
+    "en": "I want to climb a high mountain.",
+    "ja": "高い山に登りたい。"
+  },
+  "价格贵的话就不买。": {
+    "en": "If the price is high, I will not buy it.",
+    "ja": "値段が高ければ、買いません。"
+  },
+  "昨天的电影很有趣。": {
+    "en": "Yesterday's movie was interesting.",
+    "ja": "昨日の映画は面白かった。"
+  },
+  "这家店的菜便宜又好吃。": {
+    "en": "The food at this restaurant is inexpensive and delicious.",
+    "ja": "この店の料理は安くておいしい。"
+  },
+  "明天早起。": {
+    "en": "I will get up early tomorrow.",
+    "ja": "明日は早く起きる。"
+  },
+  "便宜的话就买。": {
+    "en": "If it is inexpensive, I will buy it.",
+    "ja": "安ければ買います。"
+  },
+  "这个包不贵。": {
+    "en": "This bag is not expensive.",
+    "ja": "このかばんは高くないです。"
+  },
+  "夜里这个城镇大概也很安静吧。": {
+    "en": "This town is probably quiet at night too.",
+    "ja": "夜はこの町も静かだろう。"
+  },
+  "昨天的图书馆很安静。": {
+    "en": "The library was quiet yesterday.",
+    "ja": "昨日の図書館は静かだった。"
+  },
+  "这个城镇很安静。": {
+    "en": "This town is quiet.",
+    "ja": "この町は静かだ。"
+  },
+  "在安静的房间里看书。": {
+    "en": "I read a book in a quiet room.",
+    "ja": "静かな部屋で本を読む。"
+  },
+  "安静的话，想在这里学习。": {
+    "en": "If it is quiet, I want to study here.",
+    "ja": "静かなら、ここで勉強したい。"
+  },
+  "昨天的教室不安静。": {
+    "en": "The classroom was not quiet yesterday.",
+    "ja": "昨日の教室は静かではなかった。"
+  },
+  "这个公园安静又漂亮。": {
+    "en": "This park is quiet and beautiful.",
+    "ja": "この公園は静かできれいだ。"
+  },
+  "在图书馆请轻声说话。": {
+    "en": "Please speak quietly in the library.",
+    "ja": "図書館では静かに話してください。"
+  },
+  "安静的话就能学习。": {
+    "en": "If it is quiet, I can study.",
+    "ja": "静かなら勉強できます。"
+  },
+  "这个房间很安静。": {
+    "en": "This room is quiet.",
+    "ja": "この部屋は静かです。"
+  },
+  "例句": {
+    "en": "Example sentence",
+    "ja": "例文"
+  },
+  "格助词": {
+    "en": "Case particles",
+    "ja": "格助詞"
+  },
+  "主语与新信息": {
+    "en": "Subject and new information",
+    "ja": "主語・新しい情報"
+  },
+  "说明谁做某事，或什么发生了；回答「谁／什么」时常用が。": {
+    "en": "Identifies who acts or what happens; often used to answer who or what.",
+    "ja": "誰が行うか、何が起こるかを示し、「誰・何」への答えにも使います。"
+  },
+  "猫正在院子里睡觉。": {
+    "en": "A cat is sleeping in the garden.",
+    "ja": "猫が庭で寝ています。"
+  },
+  "喜好与能力的对象": {
+    "en": "Preference and ability",
+    "ja": "好み・能力の対象"
+  },
+  "好き、上手、わかる等表达常用が标记对象，应连同谓语一起记忆。": {
+    "en": "Learn が together with predicates such as 好き, 上手 and わかる.",
+    "ja": "好き・上手・わかるなどは、対象にがを使う表現として覚えます。"
+  },
+  "我懂日语。": {
+    "en": "I understand Japanese.",
+    "ja": "私は日本語がわかります。"
+  },
+  "格助词「が」": {
+    "en": "Particle が",
+    "ja": "格助詞「が」"
+  },
+  "标记主语，也常与喜好、能力等表达搭配。": {
+    "en": "Marks the subject and occurs with expressions of preference and ability.",
+    "ja": "主語を示し、好みや能力を表す表現にも使います。"
+  },
+  "が标记主语，は提示话题或对比；不能简单理解成可以随意互换。": {
+    "en": "が marks the subject; は introduces a topic or contrast. They are not freely interchangeable.",
+    "ja": "がは主語を示し、はは話題や対比を示します。自由には置き換えられません。"
+  },
+  "动作的对象": {
+    "en": "Object of an action",
+    "ja": "動作の対象"
+  },
+  "他动词前用「名词＋を」表示动作直接作用的对象。": {
+    "en": "Use noun + を for the object of a transitive verb.",
+    "ja": "他動詞の対象を「名詞＋を」で示します。"
+  },
+  "妹妹正在写信。": {
+    "en": "My younger sister is writing a letter.",
+    "ja": "妹は手紙を書いています。"
+  },
+  "经过的路线": {
+    "en": "Route",
+    "ja": "移動の経路"
+  },
+  "歩く、渡る、通る等移动动词可用を标记经过的路线。": {
+    "en": "With motion verbs such as 歩く, 渡る and 通る, を marks the route.",
+    "ja": "歩く・渡る・通るなどでは、をで移動の経路を示します。"
+  },
+  "我每天早上都过这座桥。": {
+    "en": "I cross this bridge every morning.",
+    "ja": "毎朝、この橋を渡ります。"
+  },
+  "离开的地点": {
+    "en": "Place of departure",
+    "ja": "離れる場所"
+  },
+  "出る、降りる等动词可用を标记离开的地方或交通工具。": {
+    "en": "With 出る and 降りる, を can mark the place or vehicle one leaves.",
+    "ja": "出る・降りるなどでは、離れる場所や乗り物にをを使います。"
+  },
+  "我在下一站下电车。": {
+    "en": "I will get off the train at the next station.",
+    "ja": "次の駅で電車を降ります。"
+  },
+  "格助词「を」": {
+    "en": "Particle を",
+    "ja": "格助詞「を」"
+  },
+  "标记动作对象，也表示移动经过或离开的地方。读作「お」。": {
+    "en": "Marks an object, route or place of departure. Pronounced お.",
+    "ja": "動作の対象、移動の経路、離れる場所を示します。発音は「お」です。"
+  },
+  "「公園で歩く」侧重活动场所，「公園を歩く」侧重移动经过的区域。": {
+    "en": "公園で歩く focuses on the setting; 公園を歩く focuses on the area traversed.",
+    "ja": "「公園で歩く」は活動の場所、「公園を歩く」は移動する範囲に重点があります。"
+  },
+  "到达点与存在地点": {
+    "en": "Destination and location of existence",
+    "ja": "到着点・存在場所"
+  },
+  "行く等用に表示到达点；ある、いる等用に表示存在地点。": {
+    "en": "に marks a destination with 行く, or a location of existence with ある and いる.",
+    "ja": "行くなどでは到着点を、ある・いるなどでは存在場所を示します。"
+  },
+  "桌子下面有一只狗。": {
+    "en": "There is a dog under the desk.",
+    "ja": "机の下に犬がいます。"
+  },
+  "具体时间点": {
+    "en": "Specific time",
+    "ja": "具体的な時点"
+  },
+  "钟点、日期等具体时间常用に；今日、明日、毎日等通常不加に。": {
+    "en": "Use に with specific times and dates; usually omit it after 今日, 明日 and 毎日.",
+    "ja": "時刻や日付にはにを使い、今日・明日・毎日などには普通つけません。"
+  },
+  "课九点开始。": {
+    "en": "Class starts at nine.",
+    "ja": "授業は九時に始まります。"
+  },
+  "接收者与动作对象": {
+    "en": "Recipient and interaction partner",
+    "ja": "受け手・動作の相手"
+  },
+  "给、教、询问等动作可用に标记接收者或对象，具体搭配由动词决定。": {
+    "en": "に marks the recipient or partner of verbs such as giving, teaching and asking; learn the verb pattern.",
+    "ja": "与える・教える・尋ねるなどの相手を示します。動詞ごとの使い方を覚えます。"
+  },
+  "我向老师提了问题。": {
+    "en": "I asked the teacher a question.",
+    "ja": "先生に質問しました。"
+  },
+  "变化的结果": {
+    "en": "Result of change",
+    "ja": "変化の結果"
+  },
+  "「名词＋に＋なる」表示变成某种身份或状态。": {
+    "en": "Noun + に + なる indicates a resulting role or state.",
+    "ja": "「名詞＋に＋なる」で変化した後の身分や状態を表します。"
+  },
+  "姐姐成为了医生。": {
+    "en": "My older sister became a doctor.",
+    "ja": "姉は医者になりました。"
+  },
+  "格助词「に」": {
+    "en": "Particle に",
+    "ja": "格助詞「に」"
+  },
+  "标记到达点、存在地点、时间点、动作对象或变化结果。": {
+    "en": "Marks a destination, location of existence, time, recipient or resulting state.",
+    "ja": "到着点、存在場所、時点、相手、変化の結果などを示します。"
+  },
+  "存在地点用に，动作进行的场所常用で；「図書館にいる」与「図書館で読む」含义不同。": {
+    "en": "Use に for existence and often で for activity: 図書館にいる versus 図書館で読む.",
+    "ja": "存在場所にはに、動作をする場所には主にでを使います。「図書館にいる」と「図書館で読む」を比べましょう。"
+  },
+  "移动方向": {
+    "en": "Direction of movement",
+    "ja": "移動の方向"
+  },
+  "「地点＋へ＋移动动词」表示朝某处移动。": {
+    "en": "Place + へ + motion verb indicates movement toward a place.",
+    "ja": "「場所＋へ＋移動動詞」で、その場所に向かうことを示します。"
+  },
+  "周末我要去海边。": {
+    "en": "I am going to the seaside this weekend.",
+    "ja": "週末は海へ行きます。"
+  },
+  "与の组合修饰名词": {
+    "en": "Modifying a noun with への",
+    "ja": "へので名詞を修飾する"
+  },
+  "へ后面可以接の，用「～への＋名词」表达朝向或送往某处的事物。": {
+    "en": "へ can precede の: ～への + noun describes something directed toward a place or person.",
+    "ja": "へにのを続け、「～への＋名詞」で、ある場所や人に向かうものを表します。"
+  },
+  "这是写给母亲的信。": {
+    "en": "This is a letter to my mother.",
+    "ja": "これは母への手紙です。"
+  },
+  "格助词「へ」": {
+    "en": "Particle へ",
+    "ja": "格助詞「へ」"
+  },
+  "表示移动的方向，也可以表示目的地。读作「え」。": {
+    "en": "Marks the direction or destination of movement. Pronounced え.",
+    "ja": "移動の方向や目的地を示します。発音は「え」です。"
+  },
+  "表示目的地时に和へ常可替换，但时间点、接收者、存在地点等用法不能直接改为へ。": {
+    "en": "に and へ often alternate for destinations, but not for times, recipients or locations of existence.",
+    "ja": "目的地ではにとへを使えることが多いですが、時点・受け手・存在場所のにをへには置き換えられません。"
+  },
+  "动作发生的场所": {
+    "en": "Setting of an action",
+    "ja": "動作が行われる場所"
+  },
+  "用「地点＋で」说明在哪里进行活动；活动或事件的举办地点也可用で。": {
+    "en": "Place + で indicates where an activity or event takes place.",
+    "ja": "「場所＋で」で、活動や行事が行われる場所を示します。"
+  },
+  "我在图书馆做作业。": {
+    "en": "I do my homework at the library.",
+    "ja": "図書館で宿題をします。"
+  },
+  "手段与材料": {
+    "en": "Means and material",
+    "ja": "手段・材料"
+  },
+  "交通工具、使用的语言、工具或材料等可用で表示。": {
+    "en": "で can mark transport, language, tools or materials.",
+    "ja": "乗り物、使用言語、道具、材料などをでで示します。"
+  },
+  "我乘电车通勤。": {
+    "en": "I commute to work by train.",
+    "ja": "電車で会社に通っています。"
+  },
+  "原因与范围": {
+    "en": "Cause and scope",
+    "ja": "原因・範囲"
+  },
+  "で可表示导致结果的原因，也可限定比较、人数或数量的范围。": {
+    "en": "で can indicate a cause or delimit a comparison, group size or quantity.",
+    "ja": "結果を引き起こす原因や、比較・人数・数量の範囲を示すこともあります。"
+  },
+  "公交车因下雪晚点了。": {
+    "en": "The bus was delayed by snow.",
+    "ja": "雪でバスが遅れました。"
+  },
+  "格助词「で」": {
+    "en": "Particle で",
+    "ja": "格助詞「で」"
+  },
+  "表示动作发生的场所、手段、材料、原因或范围。": {
+    "en": "Marks the setting, means, material, cause or scope of an action.",
+    "ja": "動作の場所、手段、材料、原因、範囲などを示します。"
+  },
+  "「公園に花がある」说明存在地点；「公園で祭りがある」说明活动举办地点。": {
+    "en": "公園に花がある describes existence; 公園で祭りがある describes an event venue.",
+    "ja": "「公園に花がある」は存在場所、「公園で祭りがある」は行事の場所を表します。"
+  },
+  "共同参与者": {
+    "en": "Companion",
+    "ja": "一緒に行う相手"
+  },
+  "「人＋と」表示与谁一起做事，可搭配一緒に。": {
+    "en": "Person + と indicates who joins an action; it can be used with 一緒に.",
+    "ja": "「人＋と」で、誰と一緒に行うかを示します。一緒にを添えることもできます。"
+  },
+  "我和朋友一起看了电影。": {
+    "en": "I watched a movie with a friend.",
+    "ja": "友達と映画を見ました。"
+  },
+  "引用与思考内容": {
+    "en": "Quoted speech and thought",
+    "ja": "引用・考えの内容"
+  },
+  "と放在引用内容之后，连接言う、思う等；引用中的句末通常用普通形。": {
+    "en": "と follows quoted content before 言う or 思う; quoted sentences usually use plain forms.",
+    "ja": "引用内容の後にとを置き、言う・思うなどにつなげます。引用文の文末は普通形が基本です。"
+  },
+  "我想明天会放晴。": {
+    "en": "I think it will be sunny tomorrow.",
+    "ja": "明日は晴れると思います。"
+  },
+  "格助词「と」": {
+    "en": "Particle と",
+    "ja": "格助詞「と」"
+  },
+  "表示共同参与者、相互动作的对象，以及引用的内容。": {
+    "en": "Marks a companion, a partner in a reciprocal action, or quoted content.",
+    "ja": "一緒に行う相手、相互動作の相手、引用内容などを示します。"
+  },
+  "名词并列中的と常归为并列助词；「雨が降ると」中的と是接续助词，要按用法区分。": {
+    "en": "と joining nouns is often classified as a parallel particle; と in 雨が降ると is conjunctive. Classify it by usage.",
+    "ja": "名詞を並べるとは並立助詞、「雨が降ると」のとは接続助詞とされます。用法で区別しましょう。"
+  },
+  "时间与地点的起点": {
+    "en": "Starting point in time or space",
+    "ja": "時間・場所の起点"
+  },
+  "「～から」表示从某时或某处开始，常与表示终点的まで搭配。": {
+    "en": "～から means from a time or place; it often pairs with まで for the endpoint.",
+    "ja": "～からは、ある時点・場所から始まることを示し、終点のまでとよく使います。"
+  },
+  "我每天从家走到车站。": {
+    "en": "I walk from home to the station every day.",
+    "ja": "毎日、家から駅まで歩きます。"
+  },
+  "信息或物品的来源": {
+    "en": "Source of information or goods",
+    "ja": "情報・物の出所"
+  },
+  "もらう、聞く、借りる等动词可用から标记来源人物。": {
+    "en": "から can mark the source person with もらう, 聞く or 借りる.",
+    "ja": "もらう・聞く・借りるなどでは、からで出所となる人を示せます。"
+  },
+  "哥哥给了我一本词典。": {
+    "en": "I received a dictionary from my older brother.",
+    "ja": "兄から辞書をもらいました。"
+  },
+  "格助词「から」": {
+    "en": "Particle から",
+    "ja": "格助詞「から」"
+  },
+  "表示时间、地点的起点，也可以表示信息或物品的来源。": {
+    "en": "Marks a starting point in time or space, or a source of information or goods.",
+    "ja": "時間・場所の起点や、情報・物の出所を示します。"
+  },
+  "「寒いから帰る」中的から连接理由，是接续助词。まで常见于终点表达；学校文法通常把まで归为副助词。": {
+    "en": "から connecting a reason, as in 寒いから帰る, is conjunctive. まで marks an endpoint and is usually a副助詞 in school grammar.",
+    "ja": "「寒いから帰る」のからは理由をつなぐ接続助詞です。までは終点を示し、学校文法では通常、副助詞に分類します。"
+  },
+  "比较的基准": {
+    "en": "Standard of comparison",
+    "ja": "比較の基準"
+  },
+  "「AはBより～」表示以B为基准，说明A的性质或程度。": {
+    "en": "AはBより～ compares a property or degree of A against B.",
+    "ja": "「AはBより～」で、Bを基準としてAの性質や程度を述べます。"
+  },
+  "今天比昨天暖和。": {
+    "en": "Today is warmer than yesterday.",
+    "ja": "今日は昨日より暖かいです。"
+  },
+  "正式表达中的起点": {
+    "en": "Formal starting point",
+    "ja": "改まった表現の起点"
+  },
+  "通知、广播等正式语境中，より也可表示起点，含义接近から。": {
+    "en": "In formal notices or announcements, より can mark a starting point, similar to から.",
+    "ja": "通知や放送などの改まった場面では、よりがからに近い起点の意味で使われます。"
+  },
+  "下午两点起开始受理。": {
+    "en": "Registration opens at two in the afternoon.",
+    "ja": "午後二時より受付を開始します。"
+  },
+  "格助词「より」": {
+    "en": "Particle より",
+    "ja": "格助詞「より」"
+  },
+  "常用于比较，标记比较的基准。": {
+    "en": "Commonly marks the standard of comparison.",
+    "ja": "主に比較の基準を示します。"
+  },
+  "より本身不表示“更好”；比较的具体性质由后面的谓语决定。": {
+    "en": "より does not itself mean better; the predicate specifies what is compared.",
+    "ja": "より自体が「より良い」という意味ではありません。何を比べるかは後の述語で決まります。"
+  },
+  "名词之间的关系": {
+    "en": "Relations between nouns",
+    "ja": "名詞同士の関係"
+  },
+  "「名词A＋の＋名词B」用A说明B的所属、类别、内容等；并不都译成“的”。": {
+    "en": "In noun A + の + noun B, A specifies possession, category or content of B; it need not translate literally as of.",
+    "ja": "「名詞A＋の＋名詞B」で、AがBの所属・種類・内容などを説明します。"
+  },
+  "这是日语教科书。": {
+    "en": "This is a Japanese textbook.",
+    "ja": "これは日本語の教科書です。"
+  },
+  "修饰名词的从句中的主语": {
+    "en": "Subject in an adnominal clause",
+    "ja": "連体修飾節の主語"
+  },
+  "在修饰名词的从句中，主语的が有时可换成の；并非所有が都能替换。": {
+    "en": "In some clauses modifying a noun, subject が can be replaced by の; this does not apply to every が.",
+    "ja": "名詞を修飾する節では、主語のがをのに替えられることがあります。全てのがが対象ではありません。"
+  },
+  "我喜欢妈妈做的菜。": {
+    "en": "I like the food my mother makes.",
+    "ja": "母の作った料理が好きです。"
+  },
+  "格助词「の」": {
+    "en": "Particle の",
+    "ja": "格助詞「の」"
+  },
+  "连接名词表示所属、类别等关系；也可在修饰名词的从句中标记主语。": {
+    "en": "Links nouns to show possession or category, and can mark the subject of an adnominal clause.",
+    "ja": "名詞同士をつないで所属・種類などを示し、連体修飾節では主語を示すこともあります。"
+  },
+  "「読むのが好き」中的の把动词短语名词化，与本节连接名词、标记从句主语的用法不同。": {
+    "en": "の nominalizing a verb phrase in 読むのが好き differs from noun linking and subject marking.",
+    "ja": "「読むのが好き」ののは動詞句を名詞化するもので、名詞をつなぐ用法や節の主語を示す用法とは異なります。"
+  },
+  "语法手册": {
+    "en": "Grammar handbook",
+    "ja": "文法ガイド"
+  },
+  "日语语法": {
+    "en": "Japanese grammar",
+    "ja": "日本語文法"
+  },
+  "东京外国语大学 · 格助词": {
+    "en": "Tokyo University of Foreign Studies · Case particles",
+    "ja": "東京外国語大学 · 格助詞"
+  },
+  "词类": {
+    "en": "Word classes",
+    "ja": "品詞"
+  },
+  "动词": {
+    "en": "Verbs",
+    "ja": "動詞"
+  },
+  "其他词类": {
+    "en": "Other word classes",
+    "ja": "その他の品詞"
+  },
+  "助词": {
+    "en": "Particles",
+    "ja": "助詞"
+  },
+  "敬语系统": {
+    "en": "Honorific system",
+    "ja": "敬語体系"
+  },
+  "动词活用": {
+    "en": "Verb conjugation",
+    "ja": "動詞の活用"
+  },
+  "选择格助词": {
+    "en": "Choose a case particle",
+    "ja": "格助詞を選ぶ"
+  },
+  "动词活用形": {
+    "en": "Verb conjugation forms",
+    "ja": "動詞の活用形"
+  },
+  "表示动作、存在或变化，可以活用。": {
+    "en": "Expresses actions, existence or change; inflects.",
+    "ja": "動作・存在・変化を表し、活用します。"
+  },
+  "形容词（い形容词）": {
+    "en": "Adjectives (i-adjectives)",
+    "ja": "形容詞（い形容詞）"
+  },
+  "表示性质或状态，辞书形通常以い结尾。": {
+    "en": "Expresses properties or states; dictionary forms usually end in い.",
+    "ja": "性質・状態を表し、辞書形は通常いで終わります。"
+  },
+  "形容动词（な形容词）": {
+    "en": "Adjectival nouns (na-adjectives)",
+    "ja": "形容動詞（な形容詞）"
+  },
+  "表示性质或状态，修饰名词时常接な。": {
+    "en": "Expresses properties or states; usually takes な before a noun.",
+    "ja": "性質・状態を表し、名詞を修飾するときは通常なを使います。"
+  },
+  "名词": {
+    "en": "Nouns",
+    "ja": "名詞"
+  },
+  "为人、事物、地点或概念命名；代名词属于名词。": {
+    "en": "Names people, things, places or concepts; pronouns are a noun subtype.",
+    "ja": "人・物・場所・概念を表します。代名詞は名詞の一種です。"
+  },
+  "副词": {
+    "en": "Adverbs",
+    "ja": "副詞"
+  },
+  "不活用，主要修饰动词、形容词或整句话。": {
+    "en": "Does not inflect; mainly modifies verbs, adjectives or whole sentences.",
+    "ja": "活用せず、主に動詞・形容詞や文全体を修飾します。"
+  },
+  "连体词": {
+    "en": "Adnominals",
+    "ja": "連体詞"
+  },
+  "不活用，直接修饰名词。": {
+    "en": "Does not inflect and directly modifies nouns.",
+    "ja": "活用せず、名詞を直接修飾します。"
+  },
+  "接续词": {
+    "en": "Conjunctions",
+    "ja": "接続詞"
+  },
+  "连接句子或段落，表达顺接、转折等关系。": {
+    "en": "Links sentences or passages, expressing continuation, contrast and other relations.",
+    "ja": "文や段落をつなぎ、順接・逆接などの関係を表します。"
+  },
+  "感叹词": {
+    "en": "Interjections",
+    "ja": "感動詞"
+  },
+  "独立表达感叹、呼唤或应答。": {
+    "en": "Independently expresses emotion, calls or responses.",
+    "ja": "感動・呼びかけ・応答などを独立して表します。"
+  },
+  "助动词": {
+    "en": "Auxiliaries",
+    "ja": "助動詞"
+  },
+  "不能独立使用，接在其他词后活用，增添否定、过去等意义。": {
+    "en": "Cannot stand alone; follows other words and inflects to add negation, past and other meanings.",
+    "ja": "単独では使わず、他の語に続いて活用し、否定・過去などの意味を加えます。"
+  },
+  "不能独立使用且不活用，标记关系或语气。": {
+    "en": "Cannot stand alone and does not inflect; marks relations or discourse meanings.",
+    "ja": "単独では使わず活用もしません。関係や語気を示します。"
+  },
+  "日语词类总览": {
+    "en": "Japanese word classes",
+    "ja": "日本語の品詞一覧"
+  },
+  "学校文法通常分为十种词类。先看能否独立使用，再看是否活用，以及在句子中的作用。": {
+    "en": "School grammar commonly distinguishes ten word classes. Consider independence, inflection and sentence function.",
+    "ja": "学校文法では通常十品詞に分けます。自立するか、活用するか、文中の働きに注目しましょう。"
+  },
+  "教育文法常说“い形容词／な形容词”；本目录把它们分成两页。格助词属于助词的一类。": {
+    "en": "Learner grammar uses i-/na-adjectives; they have separate pages here. Case particles are a subtype of particles.",
+    "ja": "教育文法のい形容詞・な形容詞は別々のページで学びます。格助詞は助詞の一種です。"
+  },
+  "人物与听者两条轴线": {
+    "en": "People and listeners",
+    "ja": "人物と聞き手の二つの軸"
+  },
+  "尊敬语抬高动作主体；谦让语Ⅰ抬高动作所向的人；丁宁语对听者表达礼貌。": {
+    "en": "Respectful forms elevate an actor, humble I elevates a recipient, and polite forms address the listener.",
+    "ja": "尊敬語は動作主を、謙譲語Ⅰは行為の向かう先を立て、丁寧語は聞き手に丁寧に述べます。"
+  },
+  "老师在这里。": {
+    "en": "The teacher is here.",
+    "ja": "先生がいらっしゃいます。"
+  },
+  "五类敬语": {
+    "en": "Five honorific categories",
+    "ja": "敬語の五分類"
+  },
+  "本目录区分尊敬语、谦让语Ⅰ、谦让语Ⅱ（郑重语）、丁宁语和美化语；详细表达见“敬语系统”。": {
+    "en": "This guide separates respectful, humble I, humble II, polite and beautifying forms; see Honorific system for details.",
+    "ja": "尊敬語・謙譲語Ⅰ・謙譲語Ⅱ（丁重語）・丁寧語・美化語に分け、詳しい表現は「敬語体系」で学びます。"
+  },
+  "我明天去。": {
+    "en": "I will go tomorrow.",
+    "ja": "私は明日参ります。"
+  },
+  "敬语系统简介": {
+    "en": "Introduction to honorifics",
+    "ja": "敬語体系の概要"
+  },
+  "敬语表达对话题人物、听者及场合的尊重。判断谁做动作、动作朝向谁、正在对谁说话。": {
+    "en": "Honorifics express regard for people, listeners and situations. Identify the actor, recipient and listener.",
+    "ja": "敬語は話題の人物・聞き手・場面への配慮を表します。動作主、動作の向かう先、聞き手を確認します。"
+  },
+  "不以“越长越尊敬”为原则；根据内外关系、场合和动作主体选择表达。": {
+    "en": "Longer is not automatically more respectful; choose forms by group relations, situation and actor.",
+    "ja": "長ければよいわけではありません。内外関係・場面・動作主に合わせて選びます。"
+  },
+  "名词作谓语": {
+    "en": "Noun predicates",
+    "ja": "名詞述語"
+  },
+  "名词后接だ／です等判断表达；变化发生在后续表达，名词本身不活用。": {
+    "en": "Nouns take copular expressions such as だ/です; the noun itself does not inflect.",
+    "ja": "名詞にだ・ですなどを続けます。変化するのは後続表現で、名詞自体は活用しません。"
+  },
+  "我是大学生。": {
+    "en": "I am a university student.",
+    "ja": "私は大学生です。"
+  },
+  "指示与代名词": {
+    "en": "Reference and pronouns",
+    "ja": "指示・代名詞"
+  },
+  "これ／それ／あれ可独立指物；この／その／あの要接名词，属于连体词。": {
+    "en": "これ/それ/あれ refer to things independently; この/その/あの take a noun and are adnominals.",
+    "ja": "これ・それ・あれは単独で物を指します。この・その・あのは名詞を伴う連体詞です。"
+  },
+  "这是我的伞。": {
+    "en": "This is my umbrella.",
+    "ja": "これは私の傘です。"
+  },
+  "名词与代名词": {
+    "en": "Nouns and pronouns",
+    "ja": "名詞と代名詞"
+  },
+  "名词不活用，可以接助词作主语或宾语；代名词指代人、事物或地点。": {
+    "en": "Nouns do not inflect and take particles as subjects or objects; pronouns refer to people, things or places.",
+    "ja": "名詞は活用せず、助詞を伴って主語・目的語などになります。代名詞は人・物・場所などを指します。"
+  },
+  "日语常省略可由语境确定的主语，不必每句重复私或あなた。": {
+    "en": "Japanese often omits contextually clear subjects; do not repeat 私 or あなた in every sentence.",
+    "ja": "文脈で分かる主語は省くことが多く、毎回私・あなたを言う必要はありません。"
+  },
+  "方式与程度": {
+    "en": "Manner and degree",
+    "ja": "様子と程度"
+  },
+  "ゆっくり修饰动作方式；とても、少し等表示程度。": {
+    "en": "ゆっくり describes manner; とても and 少し indicate degree.",
+    "ja": "ゆっくりは動作の様子、とても・少しなどは程度を表します。"
+  },
+  "请再说慢一点。": {
+    "en": "Please speak a little more slowly.",
+    "ja": "もう少しゆっくり話してください。"
+  },
+  "与否定搭配": {
+    "en": "Negation patterns",
+    "ja": "否定との呼応"
+  },
+  "あまり常与否定搭配，表示“不太”；一起记忆后续谓语。": {
+    "en": "あまり commonly pairs with a negative predicate to mean not very much.",
+    "ja": "あまりは否定と呼応して、程度が高くないことを表します。述語と一緒に覚えます。"
+  },
+  "我不太去这家店。": {
+    "en": "I do not go to this shop very often.",
+    "ja": "この店にはあまり行きません。"
+  },
+  "副词从程度、方式、时间等方面修饰表达，通常不活用。": {
+    "en": "Adverbs modify degree, manner, time and more; they normally do not inflect.",
+    "ja": "副詞は程度・様子・時間などを表し、通常は活用しません。"
+  },
+  "副词不等于形容词的副词用法；高く、静かに分别来自动词以外的活用词。": {
+    "en": "Distinguish lexical adverbs from adjective adverbial forms such as 高く and 静かに.",
+    "ja": "副詞という品詞と、形容詞・形容動詞の連用形である高く・静かにを区別します。"
+  },
+  "指示名词": {
+    "en": "Pointing to a noun",
+    "ja": "名詞を指し示す"
+  },
+  "この／その／あの后必须有名词，不能当作これ／それ／あれ独立使用。": {
+    "en": "この/その/あの require a noun; they do not stand alone like これ/それ/あれ.",
+    "ja": "この・その・あのには名詞が必要です。これ・それ・あれのようには単独で使いません。"
+  },
+  "我可以借这本书吗？": {
+    "en": "May I borrow this book?",
+    "ja": "この本を借りてもいいですか。"
+  },
+  "固定的名词修饰": {
+    "en": "Fixed noun modification",
+    "ja": "固定的な名詞修飾"
+  },
+  "大きな、小さな是连体词；大きい、小さい是可以活用的い形容词。": {
+    "en": "大きな/小さな are adnominals; 大きい/小さい are inflecting i-adjectives.",
+    "ja": "大きな・小さなは連体詞で、大きい・小さいは活用する形容詞です。"
+  },
+  "小花园里开着花。": {
+    "en": "Flowers are blooming in a small garden.",
+    "ja": "小さな庭に花が咲いています。"
+  },
+  "连体词直接放在名词前，不活用，也通常不能独立作谓语。": {
+    "en": "Adnominals precede nouns, do not inflect and generally cannot be predicates alone.",
+    "ja": "連体詞は名詞の前に置き、活用せず、普通は単独で述語になりません。"
+  },
+  "不要把所有修饰名词的形式都称为连体词：动词连体形、形容词也能修饰名词。": {
+    "en": "Not everything modifying a noun is an adnominal; verbs and adjectives also modify nouns.",
+    "ja": "名詞を修飾する語が全て連体詞なのではありません。動詞・形容詞も名詞を修飾します。"
+  },
+  "顺接与追加": {
+    "en": "Sequence and addition",
+    "ja": "順接・添加"
+  },
+  "だから表示由前文推出结果；そして表示顺序或追加。": {
+    "en": "だから introduces a consequence; そして indicates sequence or addition.",
+    "ja": "だからは前の内容からの結果を、そしては順序や追加を示します。"
+  },
+  "正在下雨，所以我要带伞。": {
+    "en": "It is raining, so I will take an umbrella.",
+    "ja": "雨が降っています。だから、傘を持っていきます。"
+  },
+  "转折与选择": {
+    "en": "Contrast and choice",
+    "ja": "逆接・選択"
+  },
+  "しかし表示转折；それとも常用于问句中列出选择。": {
+    "en": "しかし marks contrast; それとも commonly introduces alternatives in questions.",
+    "ja": "しかしは逆接を示し、それともは主に疑問文で選択肢を示します。"
+  },
+  "您要茶，还是咖啡？": {
+    "en": "Would you like tea or coffee?",
+    "ja": "お茶にしますか。それとも、コーヒーにしますか。"
+  },
+  "接续词连接前后句或段落，明确内容之间的关系。": {
+    "en": "Conjunctions link sentences or passages and make their relationship explicit.",
+    "ja": "接続詞は文や段落をつなぎ、前後の関係を明確にします。"
+  },
+  "接续词可在句首独立连接句子；接续助词接在词或分句后，如けれど、ので。": {
+    "en": "Conjunctions can link sentences independently; conjunctive particles follow words or clauses, e.g. けれど and ので.",
+    "ja": "接続詞は独立して文をつなぎます。接続助詞のけれど・のでなどは語や節に続きます。"
+  },
+  "应答与呼唤": {
+    "en": "Responses and calls",
+    "ja": "応答・呼びかけ"
+  },
+  "はい表示应答；ねえ用于引起注意，要留意对象和场合。": {
+    "en": "はい gives a response; ねえ attracts attention. Consider who you are addressing and the situation.",
+    "ja": "はいは応答、ねえは注意を引く呼びかけです。相手や場面に気をつけます。"
+  },
+  "好的，我明白了。": {
+    "en": "Yes, I understand.",
+    "ja": "はい、わかりました。"
+  },
+  "感叹与语境": {
+    "en": "Emotion and context",
+    "ja": "感動と文脈"
+  },
+  "ああ、わあ等表达即时感受，语调会影响含义。": {
+    "en": "ああ and わあ express immediate reactions; intonation affects meaning.",
+    "ja": "ああ・わあなどはその場の感情を表し、イントネーションで意味が変わります。"
+  },
+  "哇，景色真美啊。": {
+    "en": "Wow, what a beautiful view.",
+    "ja": "わあ、きれいな景色ですね。"
+  },
+  "感叹词可独立用于应答、感叹、呼唤或问候。": {
+    "en": "Interjections independently express responses, emotion, calls or greetings.",
+    "ja": "感動詞は応答・感動・呼びかけ・挨拶などに独立して使います。"
+  },
+  "感叹词通常不与其他成分形成主语、宾语等关系。": {
+    "en": "Interjections normally do not form subject/object relations with other sentence elements.",
+    "ja": "感動詞は普通、他の成分と主語・目的語などの関係を作りません。"
+  },
+  "否定、过去与礼貌": {
+    "en": "Negation, past and politeness",
+    "ja": "否定・過去・丁寧"
+  },
+  "ない、た、ます分别增添否定、过去／完成、礼貌等意义，接续形式不同。": {
+    "en": "ない, た and ます add negation, past/completion and politeness, with different connection forms.",
+    "ja": "ない・た・ますは否定、過去・完了、丁寧などを表し、接続の形が異なります。"
+  },
+  "昨天我没有看电影。": {
+    "en": "I did not watch a movie yesterday.",
+    "ja": "昨日は映画を見ませんでした。"
+  },
+  "受身、使役与推量": {
+    "en": "Passive, causative and conjecture",
+    "ja": "受身・使役・推量"
+  },
+  "れる／られる、せる／させる等接在未然形后；意义要结合语境判断。": {
+    "en": "れる/られる and せる/させる follow irrealis bases; interpret their meaning in context.",
+    "ja": "れる・られる、せる・させるなどは未然形に続きます。意味は文脈で判断します。"
+  },
+  "我受到了老师的表扬。": {
+    "en": "I was praised by my teacher.",
+    "ja": "私は先生に褒められました。"
+  },
+  "学校文法的助动词是附属且会活用的词。按接续位置及意义学习，不能只看中文译义。": {
+    "en": "In school grammar, auxiliaries are dependent inflecting words. Learn their connection and meaning.",
+    "ja": "学校文法の助動詞は、付属語のうち活用する語です。意味だけでなく接続も学びます。"
+  },
+  "教育文法常把完整组合称为“ない形／た形”；学校文法区分词干的活用和后接的助动词。": {
+    "en": "Learner grammar often names the whole negative/past form; school grammar distinguishes bases from auxiliaries.",
+    "ja": "教育文法では全体をない形・た形などと呼び、学校文法では活用部分と助動詞を分けます。"
+  },
+  "格关系与连接": {
+    "en": "Case relations and linking",
+    "ja": "格関係と接続"
+  },
+  "が、を、に等标记名词与谓语的关系；けれど、ので等连接分句。": {
+    "en": "が/を/に mark noun-predicate relations; けれど/ので link clauses.",
+    "ja": "が・を・になどは名詞と述語の関係を示し、けれど・のでなどは節をつなぎます。"
+  },
+  "因为下雨，我待在家里。": {
+    "en": "I stayed home because it rained.",
+    "ja": "雨が降ったので、家にいました。"
+  },
+  "话题、限定与语气": {
+    "en": "Topic, focus and tone",
+    "ja": "話題・取り立て・語気"
+  },
+  "は提示话题或对比，も表示追加，だけ限定范围；か、ね、よ等用于句末语气。": {
+    "en": "は marks topic/contrast, も adds, だけ limits; か/ね/よ convey sentence-final meanings.",
+    "ja": "はは話題・対比、もは追加、だけは限定を示します。か・ね・よなどは文末の語気を表します。"
+  },
+  "我也在学日语。": {
+    "en": "I am studying Japanese too.",
+    "ja": "私も日本語を勉強しています。"
+  },
+  "助词的种类": {
+    "en": "Types of particles",
+    "ja": "助詞の種類"
+  },
+  "助词不活用，用于标记关系、连接内容或表达话题与语气；格助词另设页面筛选学习。": {
+    "en": "Particles do not inflect. They mark relations, connect content or express topic and tone. Case particles have a separate filterable page.",
+    "ja": "助詞は活用せず、関係・接続・話題・語気などを示します。格助詞は別ページで選んで学べます。"
+  },
+  "助词的分类会因学校文法或教育文法而异；本目录先依据句子中的实际用法解释。": {
+    "en": "Particle classifications vary across school and learner grammar; this guide prioritizes actual usage.",
+    "ja": "学校文法と教育文法では分類が異なることがあります。ここでは文中の使い方を優先します。"
+  },
+  "专门的尊敬动词": {
+    "en": "Special respectful verbs",
+    "ja": "特定の尊敬語"
+  },
+  "行く／来る／いる可用いらっしゃる，食べる／飲む可用召し上がる。": {
+    "en": "いらっしゃる replaces 行く/来る/いる; 召し上がる replaces 食べる/飲む.",
+    "ja": "行く・来る・いるは、いらっしゃる、食べる・飲むは、召し上がるなどで表します。"
+  },
+  "老师已经回去了。": {
+    "en": "The teacher has already gone home.",
+    "ja": "先生はもうお帰りになりました。"
+  },
+  "お／ご～になる": {
+    "en": "お/ご～になる",
+    "ja": "お・ご～になる"
+  },
+  "常见形式为お＋连用形＋になる或ご＋汉语词＋になる；并非每个动词都可机械套用。": {
+    "en": "Common patterns are お + continuative + になる and ご + Sino-Japanese word + になる; not every verb fits.",
+    "ja": "お＋連用形＋になる、ご＋漢語＋になるなどを使います。全ての動詞に機械的に使えるわけではありません。"
+  },
+  "您要在这里等吗？": {
+    "en": "Will you wait here?",
+    "ja": "こちらでお待ちになりますか。"
+  },
+  "尊敬语": {
+    "en": "Respectful language",
+    "ja": "尊敬語"
+  },
+  "对他人动作或状态使用抬高表达，先确认动作主体。": {
+    "en": "Uses elevated expressions for another person’s actions or state. Identify the actor first.",
+    "ja": "他の人の動作・状態を立てて述べます。まず動作主を確認します。"
+  },
+  "不要用尊敬语抬高自己的动作；同一种尊敬形式一般不要重复叠加。": {
+    "en": "Do not elevate your own actions with respectful language or mechanically stack forms.",
+    "ja": "自分の動作を尊敬語で高めたり、同じ種類の敬語を機械的に重ねたりしないようにします。"
+  },
+  "动作所向的人": {
+    "en": "Recipient of an action",
+    "ja": "行為の向かう先"
+  },
+  "伺う可表示拜访或请教；拝見する表示看对方有关的事物。": {
+    "en": "伺う means visit or ask; 拝見する respectfully describes viewing something associated with the other person.",
+    "ja": "伺うは訪問・質問など、拝見するは相手に関わる物を見ることなどに使います。"
+  },
+  "明天我去拜访老师家。": {
+    "en": "I will visit my teacher’s home tomorrow.",
+    "ja": "明日、先生のお宅に伺います。"
+  },
+  "お／ご～する": {
+    "en": "お/ご～する",
+    "ja": "お・ご～する"
+  },
+  "用お＋连用形＋する或ご＋汉语词＋する表达朝向对方的行为。": {
+    "en": "お + continuative + する or ご + Sino-Japanese word + する describes actions directed toward someone.",
+    "ja": "お＋連用形＋する、ご＋漢語＋するで、相手に向かう行為を表します。"
+  },
+  "我来把资料送给您。": {
+    "en": "I will deliver the materials to you.",
+    "ja": "私が資料をお届けします。"
+  },
+  "谦让语Ⅰ": {
+    "en": "Humble language I",
+    "ja": "謙譲語Ⅰ"
+  },
+  "谦让表达自己的动作，从而抬高动作所朝向的人。": {
+    "en": "Humbles one’s own action to elevate the person it is directed toward.",
+    "ja": "自分側の行為を、その向かう先の人を立てて述べます。"
+  },
+  "谦让语Ⅰ需要有值得抬高的“向かう先”；不把自己的普通动作一律改成お～する。": {
+    "en": "Humble I needs a recipient to elevate; do not apply お～する indiscriminately to all your actions.",
+    "ja": "謙譲語Ⅰには立てるべき「向かう先」が必要です。自分の動作を全てお～するにはしません。"
+  },
+  "参る与申す": {
+    "en": "参る and 申す",
+    "ja": "参る・申す"
+  },
+  "参る表示郑重地说去／来，申す用于说或自我介绍；与伺う的敬意方向不同。": {
+    "en": "参る courteously means go/come; 申す means say or introduce oneself. Their direction of respect differs from 伺う.",
+    "ja": "参るは行く・来るを、申すは言う・名乗ることを丁重に述べます。伺うとは敬意の向きが異なります。"
+  },
+  "我叫田中。": {
+    "en": "My name is Tanaka.",
+    "ja": "田中と申します。"
+  },
+  "おります与いたします": {
+    "en": "おります and いたします",
+    "ja": "おります・いたします"
+  },
+  "おる、いたす常与ます组合，用郑重语气述说自己一方的状态或动作。": {
+    "en": "おる and いたす commonly combine with ます to courteously describe one’s side.",
+    "ja": "おる・いたすはますと組み合わせ、自分側の状態・動作を丁重に述べることが多い表現です。"
+  },
+  "我在接待处。": {
+    "en": "I am at reception.",
+    "ja": "私は受付におります。"
+  },
+  "谦让语Ⅱ（郑重语）": {
+    "en": "Humble language II (courteous)",
+    "ja": "謙譲語Ⅱ（丁重語）"
+  },
+  "对听者郑重地述说自己一方的行为，不要求行为朝向听者。": {
+    "en": "Courteously describes one’s side to the listener; the action need not be directed at them.",
+    "ja": "自分側の行為を聞き手に丁重に述べます。行為が聞き手に向かう必要はありません。"
+  },
+  "不要把おる用于抬高对方主体；介绍对方在场通常用いらっしゃる。": {
+    "en": "Do not use おる to elevate the other person; use いらっしゃる for their presence.",
+    "ja": "おるで相手を立てることはできません。相手がいることには普通いらっしゃるを使います。"
+  },
+  "です与ます": {
+    "en": "です and ます",
+    "ja": "です・ます"
+  },
+  "名词和な形容词等用です；动词用连用形＋ます。い形容词后也可接です。": {
+    "en": "Use です with nouns/na-adjectives and after i-adjectives; verbs take continuative + ます.",
+    "ja": "名詞・形容動詞などにです、動詞には連用形＋ますを使います。い形容詞にもですを続けられます。"
+  },
+  "今天很冷。": {
+    "en": "It is cold today.",
+    "ja": "今日は寒いです。"
+  },
+  "组合使用": {
+    "en": "Combining forms",
+    "ja": "組み合わせ"
+  },
+  "尊敬语或谦让语可再与ます组合；尊敬的对象和听者的礼貌是不同层面。": {
+    "en": "Respectful or humble expressions may combine with ます; actor respect and listener politeness are distinct.",
+    "ja": "尊敬語・謙譲語にますを組み合わせられます。人物への敬意と聞き手への丁寧さは別の軸です。"
+  },
+  "丁宁语": {
+    "en": "Polite language",
+    "ja": "丁寧語"
+  },
+  "用です、ます等对听者表达礼貌，不直接改变动作主体的高低关系。": {
+    "en": "です and ます express politeness to the listener without directly elevating the actor.",
+    "ja": "です・ますなどで聞き手に丁寧に述べ、動作主を直接高めるわけではありません。"
+  },
+  "です／ます不等于尊敬语；避免「静かだです」「高いでございます」等机械拼接。": {
+    "en": "です/ます are not respectful language; avoid mechanical combinations like 静かだです or 高いでございます.",
+    "ja": "です・ますは尊敬語ではありません。静かだです・高いでございますのような機械的な接続を避けます。"
+  },
+  "文雅的词语": {
+    "en": "Refined wording",
+    "ja": "上品な言い方"
+  },
+  "お酒、お料理等常作美化语使用，是否自然要看词语的固定习惯。": {
+    "en": "お酒 and お料理 often beautify wording; naturalness depends on established usage.",
+    "ja": "お酒・お料理などは美化語として使われます。語ごとの慣用に注意します。"
+  },
+  "要不要喝杯茶？": {
+    "en": "Would you like some tea?",
+    "ja": "お茶を飲みませんか。"
+  },
+  "根据语境判断お／ご": {
+    "en": "Interpreting お/ご in context",
+    "ja": "文脈で判断するお・ご"
+  },
+  "同样的お／ご也可表达对人的尊敬，不能只看词头就判断为美化语。": {
+    "en": "The same prefixes may express respect for a person; do not classify them by prefix alone.",
+    "ja": "同じお・ごでも人物への尊敬を表すことがあります。接頭辞だけでは判断できません。"
+  },
+  "请告诉我老师的姓名。": {
+    "en": "Please tell me the teacher’s name.",
+    "ja": "先生のお名前を教えてください。"
+  },
+  "美化语": {
+    "en": "Beautifying language",
+    "ja": "美化語"
+  },
+  "使措辞显得文雅，常见形式是名词前的お／ご，并不一定抬高某个人。": {
+    "en": "Refines wording, often with noun prefixes お/ご, without necessarily elevating a person.",
+    "ja": "言葉を上品にする表現で、名詞の前のお・ごなどが代表的です。特定の人物を立てるとは限りません。"
+  },
+  "不要给所有名词都加お／ご；最后一个例句中的お名前与人物相关，应按尊敬表达理解。": {
+    "en": "Do not prefix every noun; お名前 in the final example is person-related respect.",
+    "ja": "全ての名詞にお・ごをつけるわけではありません。最後の例のお名前は人物に関わる尊敬表現です。"
+  },
+  "文化厅 · 敬语的指针": {
+    "en": "Agency for Cultural Affairs · Honorific guidelines",
+    "ja": "文化庁 · 敬語の指針"
+  },
+  "先认识词类和敬语，再按词类学习变化与用法。": {
+    "en": "Explore word classes and honorifics, then study forms and usage by class.",
+    "ja": "品詞と敬語の概要を知り、品詞ごとに変化と使い方を学びましょう。"
+  },
+  "格助词接在名词后，说明它与谓语或其他名词的关系。选择一个词，查看常见用法和例句。": {
+    "en": "Case particles follow nouns to show their relation to predicates or other nouns. Choose one to view its uses and examples.",
+    "ja": "格助詞は名詞に続き、述語や他の名詞との関係を示します。語を選んで使い方と例文を確認しましょう。"
+  },
+  "正在生成…": {
+    "en": "Generating…",
+    "ja": "生成中…"
+  }
+}

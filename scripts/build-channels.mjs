@@ -29,7 +29,7 @@ if (tag) {
     run('git', ['archive', '--format=tar', '-o', archive, tag]);
     run('tar', ['-xf', archive, '-C', source]);
     // Use the current packaging contract with the exact tagged application sources.
-    for (const script of ['build-version.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'sync-localizations.mjs', 'verify-release.py']) {
+    for (const script of ['build-version.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'verify-release.py']) {
       await cp(path.join(root, 'scripts', script), path.join(source, 'scripts', script));
     }
     run('npm', ['ci'], source);

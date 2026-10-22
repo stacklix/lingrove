@@ -147,6 +147,7 @@ export async function getAppLanguage(): Promise<string> {
 }
 
 export { installFocusMode } from './focus';
+export type { AppMessages } from './i18n';
 
 export {
   initializeAppLanguage,

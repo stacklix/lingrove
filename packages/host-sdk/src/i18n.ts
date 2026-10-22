@@ -1,6 +1,10 @@
 import { getAppLanguage } from './index';
 import messages from './locales/messages.json';
 
+export type AppMessages = Record<string, { en: string; ja: string }>;
+let catalog: AppMessages = messages;
+let patterns = createPatterns(catalog);
+
 export type AppLocale = 'zh-Hans' | 'en' | 'ja';
 export const appLocales: AppLocale[] = ['zh-Hans', 'en', 'ja'];
 export function resolveAppLocale(language: string): AppLocale {
@@ -31,7 +35,10 @@ export function onAppLocaleChange(listener: () => void): () => void {
   };
 }
 let initialized = false;
-export async function initializeAppLanguage(): Promise<void> {
+export async function initializeAppLanguage(appMessages: AppMessages): Promise<void> {
+  // Each child supplies its own bundled copy. The SDK owns only API-level messages.
+  catalog = { ...messages, ...appMessages };
+  patterns = createPatterns(catalog);
   if (!initialized) {
     initialized = true;
     window.addEventListener('lingrove:languagechange', (event) => {
@@ -46,23 +53,23 @@ export async function initializeAppLanguage(): Promise<void> {
   }
   setAppLocale(await getAppLanguage());
 }
-type Translation = { en: string; ja: string };
-const catalog = messages as Record<string, Translation>;
-const patterns = Object.entries(catalog)
-  .filter(([key]) => /\{\d+\}/.test(key))
-  .map(([key, value]) => ({
-    pattern: new RegExp(
-      '^' +
-        key
-          .split(/(\{\d+\})/)
-          .map((part) =>
-            /^\{\d+\}$/.test(part) ? '([\\s\\S]*?)' : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-          )
-          .join('') +
-        '$',
-    ),
-    value,
-  }));
+function createPatterns(source: AppMessages) {
+  return Object.entries(source)
+    .filter(([key]) => /\{\d+\}/.test(key))
+    .map(([key, value]) => ({
+      pattern: new RegExp(
+        '^' +
+          key
+            .split(/(\{\d+\})/)
+            .map((part) =>
+              /^\{\d+\}$/.test(part) ? '([\\s\\S]*?)' : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+            )
+            .join('') +
+          '$',
+      ),
+      value,
+    }));
+}
 /** Only use for application copy. User input and generated/stored learning content are not translated. */
 export function translate(value: unknown, values: readonly unknown[] = []): string {
   const source = value == null ? '' : String(value);

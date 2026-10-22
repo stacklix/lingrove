@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { grammarTopics, grammarLessons } from '../src/grammar';
 import GrammarExample from '../src/components/GrammarExample.vue';
-import messages from '../../../packages/host-sdk/src/locales/messages.json';
+import messages from '../src/locales/messages.json';
 
 it('provides complete sentences and translated meanings for every inflection and usage', () => {
   const entries = grammarLessons.flatMap((topic) => [

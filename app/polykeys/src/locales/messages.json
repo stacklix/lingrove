@@ -1,0 +1,162 @@
+{
+  "清空": {
+    "en": "Clear",
+    "ja": "クリア"
+  },
+  "删除": {
+    "en": "Delete",
+    "ja": "削除"
+  },
+  "英语": {
+    "en": "English",
+    "ja": "英語"
+  },
+  "复制": {
+    "en": "Copy",
+    "ja": "コピー"
+  },
+  "俄语": {
+    "en": "Russian",
+    "ja": "ロシア語"
+  },
+  "希腊语": {
+    "en": "Greek",
+    "ja": "ギリシャ語"
+  },
+  "字母": {
+    "en": "Letters",
+    "ja": "文字"
+  },
+  "大写": {
+    "en": "Uppercase",
+    "ja": "大文字"
+  },
+  "小写": {
+    "en": "Lowercase",
+    "ja": "小文字"
+  },
+  "撤销": {
+    "en": "Undo",
+    "ja": "元に戻す"
+  },
+  "字": {
+    "en": "characters",
+    "ja": "文字"
+  },
+  "字符": {
+    "en": "Characters",
+    "ja": "文字"
+  },
+  "打开失败，请返回后重试。": {
+    "en": "Could not open. Go back and try again.",
+    "ja": "開けませんでした。戻ってもう一度お試しください。"
+  },
+  "韩语": {
+    "en": "Korean",
+    "ja": "韓国語"
+  },
+  "法语": {
+    "en": "French",
+    "ja": "フランス語"
+  },
+  "德语": {
+    "en": "German",
+    "ja": "ドイツ語"
+  },
+  "西班牙语": {
+    "en": "Spanish",
+    "ja": "スペイン語"
+  },
+  "意大利语": {
+    "en": "Italian",
+    "ja": "イタリア語"
+  },
+  "葡萄牙语": {
+    "en": "Portuguese",
+    "ja": "ポルトガル語"
+  },
+  "键盘语言": {
+    "en": "Keyboard language",
+    "ja": "キーボードの言語"
+  },
+  "字母键盘": {
+    "en": "Alphabet keyboard",
+    "ja": "文字キーボード"
+  },
+  "点击键位开始输入": {
+    "en": "Tap the keys to start typing",
+    "ja": "キーをタップして入力"
+  },
+  "切换语言不会清空文字。重音字符可直接点选。": {
+    "en": "Switch languages without losing your text. Tap accented letters to insert them.",
+    "ja": "言語を切り替えても入力は保持されます。アクセント文字もタップで入力できます。"
+  },
+  "复制文字": {
+    "en": "Copy text",
+    "ja": "テキストをコピー"
+  },
+  "复制失败，请重试": {
+    "en": "Could not copy. Please try again.",
+    "ja": "コピーできませんでした。もう一度お試しください。"
+  },
+  "大写锁定": {
+    "en": "Caps lock",
+    "ja": "大文字固定"
+  },
+  "切换大小写": {
+    "en": "Shift",
+    "ja": "大文字・小文字の切り替え"
+  },
+  "删除字符": {
+    "en": "Delete character",
+    "ja": "文字を削除"
+  },
+  "空格": {
+    "en": "Space",
+    "ja": "スペース"
+  },
+  "换行": {
+    "en": "Return",
+    "ja": "改行"
+  },
+  "符号": {
+    "en": "Symbols",
+    "ja": "記号"
+  },
+  "重音与扩展字母": {
+    "en": "Accented and additional letters",
+    "ja": "アクセント・拡張文字"
+  },
+  "输入内容": {
+    "en": "Your text",
+    "ja": "入力内容"
+  },
+  "土耳其语": {
+    "en": "Turkish",
+    "ja": "トルコ語"
+  },
+  "乌克兰语": {
+    "en": "Ukrainian",
+    "ja": "ウクライナ語"
+  },
+  "键盘": {
+    "en": "Keyboard",
+    "ja": "キーボード"
+  },
+  "已复制": {
+    "en": "Copied",
+    "ja": "コピーしました"
+  },
+  "韩语使用两式键盘，辅音和元音自动合成音节；删除可逐步撤销输入。": {
+    "en": "The Korean two-set keyboard combines consonants and vowels into syllables. Delete undoes input one step at a time.",
+    "ja": "韓国語の2ボル式キーボードでは子音と母音が自動で音節になります。削除で入力を一段階ずつ戻せます。"
+  },
+  "切换双辅音与扩展元音": {
+    "en": "Shift Korean consonants and vowels",
+    "ja": "韓国語の双子音・拡張母音に切り替え"
+  },
+  "切换符号页": {
+    "en": "Switch symbol page",
+    "ja": "記号ページの切り替え"
+  }
+}

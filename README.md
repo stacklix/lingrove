@@ -57,6 +57,8 @@ npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的
 
 应用介绍由各子应用的 `manifest.json` 管理：`description` 是默认中文介绍，`localizedDescriptions` 保存 `en`、`ja` 等语言的介绍。宿主按当前界面语言直接读取元数据，缺少该语言时使用默认介绍；首页显示首句，应用详情显示全文。这些内容随目录、ZIP 和内置 manifest 一起打包更新，无需加入共享翻译字典。
 
+子应用可独立更新：业务代码、翻译和教材随各自的 ZIP 一起发布，各应用词库位于 `app/<id>/src/locales/messages.json`。SDK 仅提供桥接 API、公共 UI 与语言切换能力；宿主的 `Localizable.xcstrings` 独立维护，宿主只消费应用显式提供的元数据，不在构建时从子应用源码、词库或内容中提取文案。纯子应用更新只发布 Web/ZIP，不触发 iOS 构建与 Ad Hoc 发布。
+
 目录和 ZIP 都必须通过 HTTPS 获取，使用系统默认 TLS 证书校验，不接受重定向。下载后校验包大小和 SHA-256，确认包与目录中的元数据一致。
 
 ## 配置自动更新

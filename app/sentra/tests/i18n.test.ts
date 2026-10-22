@@ -7,8 +7,10 @@ import {
   translate,
 } from '../../../packages/host-sdk/src/i18n';
 import App from '../src/App.vue';
+import messages from '../src/locales/messages.json';
 
-beforeEach(() => {
+beforeEach(async () => {
+  await initializeAppLanguage(messages);
   localStorage.clear();
   setAppLocale('zh-Hans');
 });
@@ -17,6 +19,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe('app language', () => {
+  it('replaces child copy without leaking a previous catalog or losing SDK messages', async () => {
+    await initializeAppLanguage({ '独立提示': { en: 'Child-only message', ja: '子アプリ専用' } });
+    setAppLocale('en');
+    expect(translate('独立提示')).toBe('Child-only message');
+    expect(translate('模型服务返回错误')).toBe('Model service error');
+    await initializeAppLanguage({});
+    setAppLocale('en');
+    expect(translate('独立提示')).toBe('独立提示');
+    expect(translate('模型服务返回错误')).toBe('Model service error');
+  });
   it.each([
     ['zh-CN', 'zh-Hans'],
     ['zh-TW', 'zh-Hans'],
@@ -29,7 +41,7 @@ describe('app language', () => {
   });
   it('updates an open page from the host event without losing input or changing select values', async () => {
     vi.stubGlobal('navigator', { language: 'zh-CN' });
-    await initializeAppLanguage();
+    await initializeAppLanguage(messages);
     const page = mount(App);
     await flushPromises();
     await page.get('textarea').setValue('設定 — original user input');
@@ -53,8 +65,8 @@ describe('app language', () => {
   });
   it('localizes variable messages and keeps arbitrary input intact', () => {
     setAppLocale('en');
-    expect(translate('已显示 12 项，正在继续生成…')).toBe('12 entries shown, generating more…');
-    expect(translate('查看{0} ↗', ['<user text>'])).toBe('View <user text> ↗');
+    expect(translate('缺少API Key')).toBe('Missing API Key');
+    expect(translate('关闭{0}', ['<user text>'])).toBe('Close <user text>');
     expect(translate('unlisted user sentence')).toBe('unlisted user sentence');
   });
 });

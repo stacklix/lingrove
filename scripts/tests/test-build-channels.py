@@ -11,14 +11,13 @@ repository = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='lingrove-channels-') as temporary:
     root = Path(temporary)
     (root / 'scripts').mkdir()
-    for name in ['build-version.mjs', 'build-channels.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'sync-localizations.mjs', 'verify-release.py']:
+    for name in ['build-version.mjs', 'build-channels.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'verify-release.py']:
         shutil.copy(repository / 'scripts' / name, root / 'scripts' / name)
     (root / 'app/sentra').mkdir(parents=True)
     (root / 'app/sentra/manifest.json').write_text((repository / 'app/sentra/manifest.json').read_text())
-    (root / 'packages/host-sdk/src/locales').mkdir(parents=True)
-    (root / 'packages/host-sdk/src/locales/messages.json').write_text('{}')
     (root / 'ios/Lingrove/Resources').mkdir(parents=True)
-    (root / 'ios/Lingrove/Resources/.gitkeep').touch()
+    host_catalog = root / 'ios/Lingrove/Resources/Localizable.xcstrings'
+    host_catalog.write_text('host-only-catalog')
     (root / 'modules.json').write_text('["sentra"]')
     (root / 'index.html').write_text('home')
     (root / 'source.txt').write_text('tag source')
@@ -44,6 +43,7 @@ output.mkdir(parents=True)
     run('git', 'add', '.')
     run('git', '-c', 'commit.gpgsign=false', 'commit', '-m', 'release source')
     run('node', 'scripts/build-channels.mjs')
+    assert host_catalog.read_text() == 'host-only-catalog', 'Child build must not read or rewrite the host catalog'
     assert (root / 'dist/catalog.snapshot.json').is_file()
     assert not (root / 'dist/catalog.json').exists()
     assert not (root / 'dist/release').exists()

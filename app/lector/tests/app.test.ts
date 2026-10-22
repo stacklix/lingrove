@@ -1,4 +1,5 @@
-import { setAppLocale } from '../../../packages/host-sdk/src/i18n';
+import messages from '../src/locales/messages.json';
+import { initializeAppLanguage, setAppLocale } from '../../../packages/host-sdk/src/i18n';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import App from '../src/App.vue';
@@ -43,7 +44,8 @@ vi.mock('@lingrove/host-sdk', async (importOriginal) => ({
   createID: () => 'reading-1',
   moduleStorage: () => ({ get: mocks.get, set: mocks.set }),
 }));
-beforeEach(() => {
+beforeEach(async () => {
+  await initializeAppLanguage(messages);
   setAppLocale('zh-Hans');
   vi.clearAllMocks();
   mocks.generateArticle.mockReset();

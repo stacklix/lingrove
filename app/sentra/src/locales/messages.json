@@ -1,0 +1,422 @@
+{
+  "记录": {
+    "en": "History",
+    "ja": "履歴"
+  },
+  "设置": {
+    "en": "Settings",
+    "ja": "設定"
+  },
+  "页面工具": {
+    "en": "Page tools",
+    "ja": "ページ操作"
+  },
+  "重试保存": {
+    "en": "Retry saving",
+    "ja": "保存を再試行"
+  },
+  "保存失败": {
+    "en": "Save failed",
+    "ja": "保存失敗"
+  },
+  "关闭提示": {
+    "en": "Dismiss message",
+    "ja": "通知を閉じる"
+  },
+  "你的句子": {
+    "en": "Your sentence",
+    "ja": "あなたの文"
+  },
+  "清空": {
+    "en": "Clear",
+    "ja": "クリア"
+  },
+  "翻译为": {
+    "en": "Translate into",
+    "ja": "翻訳先"
+  },
+  "直接分析原句，保留原文语言": {
+    "en": "Analyze the original sentence in its own language",
+    "ja": "原文の言語を保ったまま解析します"
+  },
+  "停止生成": {
+    "en": "Stop generating",
+    "ja": "生成を停止"
+  },
+  "学习笔记": {
+    "en": "Study notes",
+    "ja": "学習ノート"
+  },
+  "正在生成": {
+    "en": "Generating",
+    "ja": "生成中"
+  },
+  "正在连接": {
+    "en": "Connecting",
+    "ja": "接続中"
+  },
+  "复制完整结果": {
+    "en": "Copy full result",
+    "ja": "結果をすべてコピー"
+  },
+  "正在琢磨这句话…": {
+    "en": "Working on your sentence…",
+    "ja": "文を分析しています…"
+  },
+  "好表达，从一句话开始": {
+    "en": "Good expression starts with a sentence",
+    "ja": "一文から、伝わる表現へ"
+  },
+  "结果会逐步出现在这里。": {
+    "en": "Results will appear here as they arrive.",
+    "ja": "結果は順次ここに表示されます。"
+  },
+  "写下一个句子，探索它的意思、结构和更多可能。": {
+    "en": "Write a sentence to explore its meaning, structure and possibilities.",
+    "ja": "文を入力して、意味や構造、表現の可能性を探りましょう。"
+  },
+  "学习结果": {
+    "en": "Learning results",
+    "ja": "学習結果"
+  },
+  "把世界，读成自己的语言。": {
+    "en": "Read the world in your own words.",
+    "ja": "世界を、自分の言葉で読む。"
+  },
+  "主导航": {
+    "en": "Main navigation",
+    "ja": "メインナビゲーション"
+  },
+  "学过的每一句，都在这里。": {
+    "en": "Every sentence you studied, in one place.",
+    "ja": "学んだ文を、ここに。"
+  },
+  "搜索记录": {
+    "en": "Search history",
+    "ja": "履歴を検索"
+  },
+  "搜索句子或学习笔记…": {
+    "en": "Search sentences or study notes…",
+    "ja": "文や学習ノートを検索…"
+  },
+  "没有找到相关记录": {
+    "en": "No matching history",
+    "ja": "該当する履歴はありません"
+  },
+  "你的第一句，值得留下": {
+    "en": "Your first sentence is worth keeping",
+    "ja": "最初の一文を残しましょう"
+  },
+  "完成一次学习，结果会自动保存在这里。": {
+    "en": "Completed results are saved here automatically.",
+    "ja": "学習が完了すると、結果がここに自動保存されます。"
+  },
+  "删除": {
+    "en": "Delete",
+    "ja": "削除"
+  },
+  "删除记录": {
+    "en": "Delete entry",
+    "ja": "履歴を削除"
+  },
+  "学习偏好": {
+    "en": "Learning preferences",
+    "ja": "学習設定"
+  },
+  "英语": {
+    "en": "English",
+    "ja": "英語"
+  },
+  "日语": {
+    "en": "Japanese",
+    "ja": "日本語"
+  },
+  "学习水平": {
+    "en": "Learning level",
+    "ja": "学習レベル"
+  },
+  "初级": {
+    "en": "Beginner",
+    "ja": "初級"
+  },
+  "中级": {
+    "en": "Intermediate",
+    "ja": "中級"
+  },
+  "高级": {
+    "en": "Advanced",
+    "ja": "上級"
+  },
+  "默认翻译语言": {
+    "en": "Default translation language",
+    "ja": "翻訳先の既定言語"
+  },
+  "开始翻译": {
+    "en": "Translate",
+    "ja": "翻訳する"
+  },
+  "重新翻译": {
+    "en": "Translate again",
+    "ja": "再翻訳"
+  },
+  "分析语法": {
+    "en": "Analyze grammar",
+    "ja": "文法を解析"
+  },
+  "重新分析": {
+    "en": "Analyze again",
+    "ja": "再解析"
+  },
+  "优化表达": {
+    "en": "Improve expression",
+    "ja": "表現を改善"
+  },
+  "重新优化": {
+    "en": "Improve again",
+    "ja": "再改善"
+  },
+  "设置读取失败，请重新配置。": {
+    "en": "Could not load settings. Please configure them again.",
+    "ja": "設定を読み込めません。再設定してください。"
+  },
+  "记录读取失败，已停止写入以保护原数据。请重新打开。": {
+    "en": "Could not load history. Saving is paused to protect your data. Please reopen.",
+    "ja": "履歴を読み込めません。元データを保護するため保存を停止しました。開き直してください。"
+  },
+  "每次最多输入 4000 个字符": {
+    "en": "Enter up to 4,000 characters at a time",
+    "ja": "一度に入力できるのは4,000文字までです"
+  },
+  "结果已生成，但保存失败。请释放空间后点击重试保存。": {
+    "en": "Result generated, but saving failed. Free up space and retry saving.",
+    "ja": "結果は生成されましたが保存に失敗しました。空き容量を確保して再保存してください。"
+  },
+  "已停止生成，未完成结果不会保存。": {
+    "en": "Generation stopped. Incomplete results will not be saved.",
+    "ja": "生成を停止しました。未完了の結果は保存されません。"
+  },
+  "记录已保存": {
+    "en": "History saved",
+    "ja": "履歴を保存しました"
+  },
+  "保存失败，请检查可用空间": {
+    "en": "Save failed. Check available storage.",
+    "ja": "保存に失敗しました。空き容量をご確認ください"
+  },
+  "请先停止该页面的生成，再打开记录": {
+    "en": "Stop generation on this page before opening history",
+    "ja": "このページの生成を停止してから履歴を開いてください"
+  },
+  "删除保存失败，请重试": {
+    "en": "Could not save deletion. Please retry.",
+    "ja": "削除結果を保存できません。再試行してください"
+  },
+  "✓ 已复制": {
+    "en": "✓ Copied",
+    "ja": "✓ コピーしました"
+  },
+  "复制失败，重试": {
+    "en": "Copy failed. Retry",
+    "ja": "コピー失敗、再試行"
+  },
+  "复制中…": {
+    "en": "Copying…",
+    "ja": "コピー中…"
+  },
+  "复制": {
+    "en": "Copy",
+    "ja": "コピー"
+  },
+  "01 · 直译": {
+    "en": "01 · Literal translation",
+    "ja": "01 · 直訳"
+  },
+  "02 · 地道表达": {
+    "en": "02 · Natural expression",
+    "ja": "02 · 自然な表現"
+  },
+  "假名": {
+    "en": "Kana",
+    "ja": "仮名"
+  },
+  "表达笔记": {
+    "en": "Expression notes",
+    "ja": "表現メモ"
+  },
+  "原句读音": {
+    "en": "Original reading",
+    "ja": "原文の読み"
+  },
+  "句子结构": {
+    "en": "Sentence structure",
+    "ja": "文の構造"
+  },
+  "语法修正": {
+    "en": "Grammar corrections",
+    "ja": "文法の修正"
+  },
+  "句子成分": {
+    "en": "Sentence components",
+    "ja": "文の成分"
+  },
+  "词性": {
+    "en": "Part of speech",
+    "ja": "品詞"
+  },
+  "作用说明": {
+    "en": "Function",
+    "ja": "役割の説明"
+  },
+  "自然表达": {
+    "en": "Natural",
+    "ja": "自然な表現"
+  },
+  "日常口语": {
+    "en": "Conversational",
+    "ja": "日常会話"
+  },
+  "礼貌表达": {
+    "en": "Polite",
+    "ja": "丁寧な表現"
+  },
+  "取消": {
+    "en": "Cancel",
+    "ja": "キャンセル"
+  },
+  "保存中…": {
+    "en": "Saving…",
+    "ja": "保存中…"
+  },
+  "保存": {
+    "en": "Save",
+    "ja": "保存"
+  },
+  "关闭面板": {
+    "en": "Close panel",
+    "ja": "パネルを閉じる"
+  },
+  "翻译": {
+    "en": "Translation",
+    "ja": "翻訳"
+  },
+  "语法": {
+    "en": "Grammar",
+    "ja": "文法"
+  },
+  "更地道": {
+    "en": "Expression",
+    "ja": "より自然に"
+  },
+  "俄语": {
+    "en": "Russian",
+    "ja": "ロシア語"
+  },
+  "希腊语": {
+    "en": "Greek",
+    "ja": "ギリシャ語"
+  },
+  "模型更改了待分析原句，请重试": {
+    "en": "The model changed the original sentence. Please retry.",
+    "ja": "モデルが原文を変更しました。再試行してください"
+  },
+  "缺少语法判断": {
+    "en": "Grammar assessment is missing",
+    "ja": "文法の判定がありません"
+  },
+  "语法判断与纠错矛盾": {
+    "en": "Grammar assessment conflicts with corrections",
+    "ja": "文法判定と修正が矛盾しています"
+  },
+  "模型未返回有效的日语假名，请重试": {
+    "en": "The model did not return valid kana. Please retry.",
+    "ja": "正しい仮名が返されませんでした。再試行してください"
+  },
+  "下一个": {
+    "en": "Next",
+    "ja": "次へ"
+  },
+  "学习": {
+    "en": "Learn",
+    "ja": "学習"
+  },
+  "分": {
+    "en": "points",
+    "ja": "点"
+  },
+  "关闭": {
+    "en": "Close",
+    "ja": "閉じる"
+  },
+  "关闭{0}": {
+    "en": "Close {0}",
+    "ja": "{0}を閉じる"
+  },
+  "缺少{0}": {
+    "en": "Missing {0}",
+    "ja": "{0}がありません"
+  },
+  "字": {
+    "en": "characters",
+    "ja": "文字"
+  },
+  "句": {
+    "en": " sentences",
+    "ja": "文"
+  },
+  "次": {
+    "en": "times",
+    "ja": "回"
+  },
+  "字符": {
+    "en": "Characters",
+    "ja": "文字"
+  },
+  "已保存": {
+    "en": "Saved",
+    "ja": "保存済み"
+  },
+  "分析": {
+    "en": "Analyze",
+    "ja": "解析"
+  },
+  "连接": {
+    "en": "Linking",
+    "ja": "接続"
+  },
+  "完成": {
+    "en": "Done",
+    "ja": "完了"
+  },
+  "好": {
+    "en": "OK",
+    "ja": "OK"
+  },
+  "高": {
+    "en": "High",
+    "ja": "高"
+  },
+  "Sentra · 句子学习": {
+    "en": "Sentra · Sentence learning",
+    "ja": "Sentra · 文の学習"
+  },
+  "打开失败，请返回后重试。": {
+    "en": "Could not open. Go back and try again.",
+    "ja": "開けませんでした。戻ってもう一度お試しください。"
+  },
+  "生成结果不完整，请重试。": {
+    "en": "The result is incomplete. Please try again.",
+    "ja": "結果が不完全です。もう一度お試しください。"
+  },
+  "原文": {
+    "en": "Original text",
+    "ja": "原文"
+  },
+  "句子": {
+    "en": "Sentence",
+    "ja": "文"
+  },
+  "已复制": {
+    "en": "Copied",
+    "ja": "コピーしました"
+  }
+}

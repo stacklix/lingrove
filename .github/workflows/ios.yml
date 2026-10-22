@@ -2,7 +2,35 @@ name: iOS build and core checks
 on:
   push:
     branches: [master]
+    paths:
+      - 'ios/**'
+      - '!ios/Lingrove/Resources/BuiltinModules/**'
+      - 'packages/host-sdk/src/index.ts'
+      - 'packages/host-sdk/src/llm.ts'
+      - 'packages/host-sdk/src/tts.ts'
+      - 'scripts/generate-xcode.rb'
+      - 'scripts/*ios*'
+      - 'scripts/test-native.sh'
+      - 'scripts/tests/test-ios-*'
+      - 'scripts/tests/make-fixtures.py'
+      - 'scripts/publish-pages-tree.sh'
+      - 'scripts/verify-pages-build.sh'
+      - '.github/workflows/ios*.yml'
   pull_request:
+    paths:
+      - 'ios/**'
+      - '!ios/Lingrove/Resources/BuiltinModules/**'
+      - 'packages/host-sdk/src/index.ts'
+      - 'packages/host-sdk/src/llm.ts'
+      - 'packages/host-sdk/src/tts.ts'
+      - 'scripts/generate-xcode.rb'
+      - 'scripts/*ios*'
+      - 'scripts/test-native.sh'
+      - 'scripts/tests/test-ios-*'
+      - 'scripts/tests/make-fixtures.py'
+      - 'scripts/publish-pages-tree.sh'
+      - 'scripts/verify-pages-build.sh'
+      - '.github/workflows/ios*.yml'
   workflow_dispatch:
 permissions:
   contents: read

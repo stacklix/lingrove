@@ -70,10 +70,10 @@
 ## App 语言
 
 - 宿主统一提供“跟随系统”、简体中文、英语、日语。子应用通过 SDK 读取规范化语言；所有中文区域映射为简体中文，其他未支持语言映射为英语。
-- 子应用启动时调用 `initializeAppLanguage()`；Vue 页面使用 `@lingrove/host-sdk/vue` 的 `useAppI18n()`，让已打开页面响应宿主语言变更，保留输入、导航与学习进度。
-- 界面文案（含无障碍标签、提示、内置教材）统一维护在 `packages/host-sdk/src/locales/messages.json`，使用 `t()` 渲染。选择项显式设置稳定的 `value`，不以翻译后的标签作为存储值或业务判断条件。
+- 子应用启动时调用 `initializeAppLanguage(messages)`，传入本应用打包的词库；Vue 页面使用 `@lingrove/host-sdk/vue` 的 `useAppI18n()`，让已打开页面响应宿主语言变更，保留输入、导航与学习进度。
+- 各子应用的界面文案（含无障碍标签、提示、内置教材）独立维护在自身的 `app/<id>/src/locales/messages.json`，使用 `t()` 渲染。SDK 词库仅包含 SDK 自身 API 的提示，不存放子应用业务文案。选择项显式设置稳定的 `value`，不以翻译后的标签作为存储值或业务判断条件。
 - 原文、用户标题和历史模型结果保持原内容；新生成的释义、解释与成分翻译跟随 App 语言，学习目标语言单独选择。缓存分析必须校验生成语言；切换语言不能误用其他语言缓存。
-- `npm run build` 同步生成宿主 `Localizable.xcstrings`。验收语言切换、长文案的窄屏布局、输入保留、选项值不变和缓存语言隔离。
+- 宿主翻译独立维护在 `ios/Lingrove/Resources/Localizable.xcstrings`。宿主只读取子应用显式提供的 manifest/catalog 元数据；禁止在构建时从子应用源码、词库或教材提取、汇总内容到宿主。`npm run build` 只打包各子应用及其词库，不生成或改写宿主翻译。验收语言切换、长文案的窄屏布局、输入保留、选项值不变和缓存语言隔离。
 
 ## 用户提示文案
 

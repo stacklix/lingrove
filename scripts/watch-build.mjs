@@ -9,7 +9,6 @@ const buildScripts = new Set([
   'build-modules.mjs',
   'build-version.mjs',
   'package-modules.mjs',
-  'sync-localizations.mjs',
   'stored-zip.py',
 ]);
 

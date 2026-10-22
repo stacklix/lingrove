@@ -7,7 +7,6 @@ on:
       - 'ios/Lingrove/**'
       - '!ios/Lingrove/Resources/BuiltinModules/**'
       - 'ios/Lingrove.xcodeproj/**'
-      - 'packages/host-sdk/src/locales/messages.json'
       - 'scripts/generate-xcode.rb'
       - 'scripts/embed-ios-modules.sh'
       - 'scripts/verify-ios-modules.py'
