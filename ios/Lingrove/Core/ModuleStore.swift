@@ -443,7 +443,7 @@ struct ModuleDownloadRecord: Codable, Equatable {
         do {
             var request = URLRequest(url: base.appendingPathComponent("catalog.json"), cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 8)
             request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
-            let data = try await session.download(request: request, limit: 1024 * 1024)
+            let data = try await session.download(request: request, limit: 1024 * 1024, onProgress: nil)
             let catalog = try JSONDecoder().decode(Catalog.self, from: data)
             try catalog.validate()
             try Task.checkCancellation()
