@@ -10,6 +10,7 @@
   font-display: block;
 }
 :root {
+  --control-bg: var(--paper);
   --font-print:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo,
     sans-serif;
@@ -782,9 +783,6 @@ footer p {
     padding: 24px 20px;
   }
 
-  .header-actions .text-button {
-    font-size: 11px;
-  }
   .hero {
     padding: 16px 0 30px;
     gap: 4px;
@@ -932,61 +930,6 @@ footer p {
   }
 }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.header-icon {
-  width: 44px;
-  height: 44px;
-  min-height: 44px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--accent);
-}
-.header-icon:hover,
-.header-icon:focus-within {
-  background: var(--soft);
-}
-.header-icon svg {
-  width: 21px;
-  height: 21px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  pointer-events: none;
-}
-.language-select {
-  position: relative;
-  flex-shrink: 0;
-}
-.language-select select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  font: inherit;
-}
-.language-select:has(select:focus-visible) {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
-}
-.language-select:has(select:disabled) {
-  opacity: 0.5;
-}
-.language-select select:disabled {
-  cursor: default;
-}
 .current-language {
   padding: 28px;
   border: 1px solid var(--line);
@@ -1040,24 +983,6 @@ footer p {
   align-items: center;
   justify-content: flex-end;
   background: var(--canvas);
-}
-.page-tools .tab-title {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  max-width: calc(100% - 144px);
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-}
-.native .page-tools {
-  padding-left: 120px;
 }
 @media (max-width: 700px) {
   .page-tools {

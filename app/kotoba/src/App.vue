@@ -191,14 +191,6 @@ async function search() {
       <h2 :lang="targetLanguage">{{ input }}</h2>
     </nav>
     <div v-if="page !== 'result'" class="lingrove-root-actions">
-      <label class="language-control"
-        ><span class="sr-only">{{ t('手册语言') }}</span>
-        <select v-model="targetLanguage" :aria-label="t('手册语言')">
-          <option v-for="item in languages" :key="item.id" :value="item.id">
-            {{ t(item.name) }}
-          </option>
-        </select>
-      </label>
       <button
         v-if="page === 'grammar'"
         type="button"
@@ -214,6 +206,11 @@ async function search() {
         </svg>
         <span>{{ t('目录') }}</span>
       </button>
+      <select v-model="targetLanguage" class="lingrove-language-select" :aria-label="t('手册语言')">
+        <option v-for="item in languages" :key="item.id" :value="item.id">
+          {{ t(item.name) }}
+        </option>
+      </select>
     </div>
     <KeepAlive
       ><GrammarGuide ref="japaneseGuide" v-if="page === 'grammar' && targetLanguage === 'ja'"

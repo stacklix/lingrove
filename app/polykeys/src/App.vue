@@ -72,7 +72,7 @@ function clear() { commit(); text.value = ''; start = end = 0; status.value = ''
 <template>
   <main>
     <div class="lingrove-root-actions">
-      <select id="language" v-model="layoutId" class="language-select" :aria-label="t('键盘语言')" @change="changeLanguage"><option v-for="item in layouts" :key="item.id" :value="item.id">{{ t(item.name) }}</option></select>
+      <select id="language" v-model="layoutId" class="lingrove-language-select" :aria-label="t('键盘语言')" @change="changeLanguage"><option v-for="item in layouts" :key="item.id" :value="item.id">{{ t(item.name) }}</option></select>
     </div>
     <section class="workspace">
       <div class="editor-card">

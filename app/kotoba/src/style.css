@@ -1,4 +1,5 @@
 :root {
+  --control-bg: var(--paper);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans', sans-serif;
   color: var(--ink);
   color-scheme: light dark;
@@ -1085,32 +1086,6 @@ select {
 .lingrove-root-actions {
   gap: 8px;
 }
-.language-control {
-  min-width: 0;
-  max-width: 204px;
-}
-.language-control select {
-  min-height: 44px;
-  max-width: 100%;
-  width: 204px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  color: var(--accent);
-  background: var(--paper);
-  font-size: 13px;
-}
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
 .offline-examples {
   margin-top: 32px;
 }
@@ -1196,10 +1171,6 @@ select {
   max-width: 100%;
 }
 @media (max-width: 400px) {
-  .language-control select {
-    width: 150px;
-    font-size: 12px;
-  }
   .example-options {
     grid-template-columns: 1fr;
   }

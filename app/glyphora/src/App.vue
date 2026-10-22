@@ -610,7 +610,7 @@ onMounted(async () => {
   <div class="app-shell" :class="{ native: isNative() }">
     <nav
       class="page-tools"
-      :class="{ 'secondary-toolbar': pageTitle }"
+      :class="{ 'secondary-toolbar': pageTitle, 'lingrove-root-actions': !pageTitle }"
       :aria-label="t('页面工具')"
       :inert="!!detail || !!reviewAnswer"
     >
@@ -633,29 +633,18 @@ onMounted(async () => {
           </button>
         </div>
       </template>
-      <h2 v-if="['home', 'test-home', 'library'].includes(page)" class="tab-title">
-        {{ t(languageName) }} ·
-        {{ t(page === 'home' ? '学习' : page === 'test-home' ? '测试' : '字母') }}
-      </h2>
-      <div v-if="isRootPage" class="header-actions">
-        <div class="language-select header-icon" :title="t('练习语言：{0}', [t(languageName)])">
-          <select
-            :aria-label="t('练习语言')"
-            :value="language"
-            :disabled="busy || loading || !fontsReady"
-            @change="requestLanguage"
-          >
-            <option v-for="item in languages" :key="item.id" :value="item.id">
-              {{ t(item.name) }}
-            </option>
-          </select>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <ellipse cx="12" cy="12" rx="4" ry="9" />
-            <path d="M3 12h18" />
-          </svg>
-        </div>
-      </div>
+      <select
+        v-if="isRootPage"
+        class="lingrove-language-select"
+        :aria-label="t('练习语言')"
+        :value="language"
+        :disabled="busy || loading || !fontsReady"
+        @change="requestLanguage"
+      >
+        <option v-for="item in languages" :key="item.id" :value="item.id">
+          {{ t(item.name) }}
+        </option>
+      </select>
     </nav>
     <main :class="{ 'learning-page': page === 'learn' }" :inert="!!detail || !!reviewAnswer">
       <div v-if="loading" class="loading">{{ t('正在准备离线字帖…') }}</div>
