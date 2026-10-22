@@ -1,4 +1,5 @@
-// Publish master Snapshot and, when present, the most recently created tag.
+// Publish the checked-out source as Snapshot and the triggering tag as Release.
+// Branch builds continue publishing the most recently created tag as Release.
 import { cp, mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -14,7 +15,9 @@ function run(command, args, cwd = root, env = process.env) {
 }
 const tags = spawnSync('git', ['for-each-ref', '--sort=-creatordate', '--format=%(refname)', 'refs/tags'], { cwd: root, encoding: 'utf8' });
 if (tags.status !== 0) throw new Error('Cannot list release tags');
-const tag = tags.stdout.trim().split('\n').filter(Boolean)[0];
+const tag = process.env.GITHUB_REF_TYPE === 'tag'
+  ? process.env.GITHUB_REF
+  : tags.stdout.trim().split('\n').filter(Boolean)[0];
 run('node', ['scripts/build-modules.mjs'], root, { ...process.env, MODULE_CHANNEL: 'snapshot', MODULE_BASE_URL: base });
 run('python3', ['scripts/verify-release.py', '--snapshot']);
 if (tag) {
@@ -36,7 +39,7 @@ if (tag) {
     run('python3', ['scripts/verify-release.py'], source);
     await cp(path.join(source, 'dist'), path.join(root, 'dist/release'), { recursive: true });
     await cp(path.join(source, 'dist/catalog.json'), path.join(root, 'dist/catalog.json'));
-    console.log(`Release built from ${tag}; Snapshot built from master.`);
+    console.log(`Release built from ${tag}; Snapshot built from the checked-out source.`);
   } finally {
     await rm(temporary, { recursive: true, force: true });
   }

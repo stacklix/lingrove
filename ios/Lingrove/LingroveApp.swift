@@ -243,6 +243,7 @@ struct HomeView: View {
                                 .accessibilityIdentifier("module-developer-details-\(module.id)")
                             }
                         }
+                        GitHubBuildStatusSection()
                         #endif
                         Section("外观") {
                             Picker("主题", selection: $draftAppearance) {
@@ -510,12 +511,28 @@ private struct DebugAddressRow: View {
     }
 }
 
-private struct HostAppRelease: Decodable {
+struct HostAppRelease: Decodable {
     let version: String
     let build: String
     let configuration: String
     let builtAt: Date
     let manifestURL: URL
+
+    func isNewer(than currentVersion: String, build currentBuild: String) -> Bool {
+        guard let remote = Version(version), let current = Version(currentVersion) else { return false }
+        if remote != current { return remote > current }
+        func parts(_ value: String) -> [Int]? {
+            let components = value.split(separator: ".", omittingEmptySubsequences: false)
+            guard !components.isEmpty, components.allSatisfy({ !$0.isEmpty && $0.utf8.allSatisfy { (48...57).contains($0) } }) else { return nil }
+            let numbers = components.compactMap { Int($0) }
+            return numbers.count == components.count ? numbers : nil
+        }
+        guard var remoteBuild = parts(build), var localBuild = parts(currentBuild) else { return false }
+        let count = max(remoteBuild.count, localBuild.count)
+        remoteBuild += Array(repeating: 0, count: count - remoteBuild.count)
+        localBuild += Array(repeating: 0, count: count - localBuild.count)
+        return localBuild.lexicographicallyPrecedes(remoteBuild)
+    }
 
     var installURL: URL? {
         guard manifestURL.scheme == "https", manifestURL.host == "lingrove.stackli.me",
@@ -538,25 +555,33 @@ private struct HostAppUpdateSection: View {
 
     var body: some View {
         Section {
-            Button {
-                guard let url = release?.installURL else { return }
-                UIApplication.shared.open(url, options: [:]) { opened in
-                    Task { @MainActor in failed = !opened }
-                }
-            } label: {
-                HStack {
-                    Text("安装最新版")
-                    Spacer()
-                    if checking { ProgressView() }
-                    else if let release {
-                        Text(release.builtAt.formatted(date: .numeric, time: .shortened))
-                            .font(.footnote).foregroundStyle(.secondary)
-                            .multilineTextAlignment(.trailing)
+            if let release, release.isNewer(than: HostConfiguration.currentVersion,
+                                           build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "") {
+                Button {
+                    guard let url = release.installURL else { return }
+                    UIApplication.shared.open(url, options: [:]) { opened in
+                        Task { @MainActor in failed = !opened }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .foregroundStyle(.green)
+                            .accessibilityHidden(true)
+                        Text("安装最新版")
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text("\(release.version) (\(release.build))")
+                            Text(release.builtAt.formatted(date: .numeric, time: .shortened))
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
+                        .multilineTextAlignment(.trailing)
                     }
                 }
+                .accessibilityIdentifier("host-app-install-update")
             }
-            .disabled(checking || release == nil)
-            .accessibilityIdentifier("host-app-install-update")
+            if checking {
+                ProgressView().frame(maxWidth: .infinity)
+            }
             Link("查看下载页面", destination: URL(string: "https://lingrove.stackli.me/ios/")!)
             if failed {
                 Text("无法获取或打开安装包，请稍后重试，或通过安装页面更新。")
@@ -1016,3 +1041,200 @@ struct NetworkAuthorizationSection: View {
         )
     }
 }
+
+#if DEBUG
+private struct BuildStatusError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
+}
+
+struct GitHubBuildStatusClient {
+    var session: URLSession = .shared
+    let workflow: String
+
+    struct Run: Decodable {
+        let id: Int
+        let runNumber: Int
+        let runAttempt: Int
+        let status: String
+        let conclusion: String?
+        let updatedAt: Date
+
+        var refreshInterval: Int {
+            status == "completed" || conclusion != nil ? 30 : 5
+        }
+    }
+    struct Job: Decodable, Identifiable {
+        struct Step: Decodable {
+            let name: String
+            let status: String
+        }
+        let id: Int
+        let name: String
+        let status: String
+        let conclusion: String?
+        let steps: [Step]?
+
+        var activeStep: String? {
+            steps?.first { $0.status == "in_progress" }?.name
+        }
+    }
+    struct Snapshot {
+        let run: Run
+        let jobs: [Job]
+    }
+
+    private func get<T: Decodable>(_ path: String, as type: T.Type) async throws -> T {
+        let url = URL(string: "https://api.github.com/repos/stacklix/lingrove/" + path)!
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        let (data, response) = try await session.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200 else {
+            switch status {
+            case 401:
+                throw BuildStatusError(message: "无法读取构建状态，请检查仓库访问权限。")
+            case 403, 404:
+                throw BuildStatusError(message: "无法读取构建状态（HTTP \(status)）。请确认仓库及 Actions 可公开访问；也可能遇到 API 限流，请稍后刷新。")
+            case 429:
+                throw BuildStatusError(message: "GitHub 请求频率受限，请稍后刷新。")
+            default:
+                throw BuildStatusError(message: "读取构建状态失败（HTTP \(status)），请稍后刷新。")
+            }
+        }
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(type, from: data)
+    }
+
+    func latest() async throws -> Snapshot? {
+        struct Runs: Decodable { let workflowRuns: [Run] }
+        struct Jobs: Decodable { let jobs: [Job] }
+        let result = try await get("actions/workflows/\(workflow)/runs?branch=master&per_page=1", as: Runs.self)
+        guard let run = result.workflowRuns.first else { return nil }
+        // Pin jobs to this attempt so a rerun never mixes old and new steps.
+        let jobs = try await get("actions/runs/\(run.id)/attempts/\(run.runAttempt)/jobs?per_page=100", as: Jobs.self)
+        return Snapshot(run: run, jobs: jobs.jobs)
+    }
+
+    static func statusText(_ status: String, conclusion: String?) -> String {
+        if let conclusion {
+            switch conclusion {
+            case "success": return "已完成"
+            case "failure": return "失败"
+            case "cancelled": return "已取消"
+            case "skipped": return "已跳过"
+            case "timed_out": return "超时"
+            case "action_required": return "需要操作"
+            case "neutral": return "已结束"
+            default: return conclusion
+            }
+        }
+        switch status {
+        case "queued": return "排队中"
+        case "in_progress": return "执行中"
+        case "waiting", "pending", "requested": return "等待中"
+        case "completed": return "已结束"
+        default: return status
+        }
+    }
+}
+
+private struct GitHubBuildStatusSection: View {
+    @State private var workflow = "ios-adhoc.yml"
+
+    var body: some View {
+        Section {
+            Picker("构建流程", selection: $workflow) {
+                Text("iOS 安装包").tag("ios-adhoc.yml")
+                Text("子应用发布").tag("build-gh-pages.yml")
+            }
+            .pickerStyle(.menu)
+            .accessibilityIdentifier("github-workflow-picker")
+            GitHubBuildStatusView(workflow: workflow)
+                .id(workflow)
+        } header: {
+            Text("GitHub 构建进度")
+        } footer: {
+            Text("显示 master 分支最新构建，页面在前台时有任务每 5 秒刷新，无任务每 30 秒刷新。读取失败后每 120 秒重试。可安装版本以已发布版本为准。")
+        }
+    }
+}
+
+struct GitHubBuildStatusView: View {
+    let workflow: String
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var snapshot: GitHubBuildStatusClient.Snapshot?
+    @State private var errorMessage: String?
+    @State private var loading = false
+    @State private var loaded = false
+    @State private var refreshID = 0
+    @State private var checkedAt: Date?
+
+    var body: some View {
+        Group {
+            if let snapshot {
+                LabeledContent("构建 #\(snapshot.run.runNumber)", value: GitHubBuildStatusClient.statusText(snapshot.run.status, conclusion: snapshot.run.conclusion))
+                ForEach(snapshot.jobs) { job in
+                    VStack(alignment: .leading, spacing: 4) {
+                        LabeledContent(job.name == "build" ? "打包" : job.name == "deploy" ? "发布下载页面" : job.name,
+                                       value: GitHubBuildStatusClient.statusText(job.status, conclusion: job.conclusion))
+                        if let step = job.activeStep {
+                            Text(step).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } else if !loaded {
+                ProgressView("读取构建进度…")
+            } else if errorMessage == nil {
+                Text("暂无构建记录").foregroundStyle(.secondary)
+            }
+            if let errorMessage {
+                Text(errorMessage).font(.footnote).foregroundStyle(.secondary)
+            }
+            HStack {
+                Button("刷新进度") { refreshID += 1 }.disabled(loading)
+                Spacer()
+                if loading { ProgressView() }
+                else if let checkedAt {
+                    Text("更新于 \(checkedAt.formatted(date: .omitted, time: .standard))")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Link("在 GitHub 查看", destination: URL(string: snapshot.map {
+                "https://github.com/stacklix/lingrove/actions/runs/\($0.run.id)"
+            } ?? "https://github.com/stacklix/lingrove/actions/workflows/\(workflow)")!)
+                .task(id: "\(scenePhase)-\(refreshID)") {
+                    guard scenePhase == .active else { return }
+                    repeat {
+                        await refresh()
+                        // Back off after errors instead of repeatedly hitting a rate limit.
+                        let interval = errorMessage == nil ? (snapshot?.run.refreshInterval ?? 30) : 120
+                        do { try await Task.sleep(for: .seconds(interval)) }
+                        catch { return }
+                    } while !Task.isCancelled
+                }
+        }
+    }
+
+    @MainActor private func refresh() async {
+        loading = true
+        defer { loading = false }
+        do {
+            let latest = try await GitHubBuildStatusClient(workflow: workflow).latest()
+            try Task.checkCancellation()
+            snapshot = latest
+            errorMessage = nil
+            checkedAt = .now
+            loaded = true
+        } catch {
+            guard !Task.isCancelled else { return }
+            errorMessage = error.localizedDescription
+            loaded = true
+        }
+    }
+}
+
+#endif

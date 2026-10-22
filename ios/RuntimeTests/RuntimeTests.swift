@@ -33,6 +33,19 @@ final class StubNetwork: URLProtocol, @unchecked Sendable {
     override func stopLoading() {}
 }
 final class RuntimeTests: XCTestCase {
+    func testHostAppUpdateComparesVersionThenNumericBuild() {
+        func release(_ version: String, _ build: String) -> HostAppRelease {
+            HostAppRelease(version: version, build: build, configuration: "Debug", builtAt: Date(),
+                           manifestURL: URL(string: "https://lingrove.stackli.me/ios/manifest-test.plist")!)
+        }
+        XCTAssertTrue(release("1.4.0", "1").isNewer(than: "1.3.0", build: "100"))
+        XCTAssertFalse(release("1.2.0", "200").isNewer(than: "1.3.0", build: "1"))
+        XCTAssertTrue(release("1.3.0", "42.10").isNewer(than: "1.3.0", build: "42.2"))
+        XCTAssertFalse(release("1.3.0", "42.2").isNewer(than: "1.3.0", build: "42.10"))
+        XCTAssertFalse(release("1.3.0", "42.2").isNewer(than: "1.3.0", build: "42.2"))
+        XCTAssertFalse(release("1.3.0", "42.0").isNewer(than: "1.3.0", build: "42"))
+        XCTAssertFalse(release("1.3.0", "invalid").isNewer(than: "1.3.0", build: "42"))
+    }
     @MainActor func testModuleDisplayOrderPersistsAndAppendsNewModules() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let builtin = root.appendingPathComponent("builtin")

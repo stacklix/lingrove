@@ -1,6 +1,6 @@
 # GitHub Actions 打包与网页安装
 
-工作流 `.github/workflows/ios-adhoc.yml` 手动构建 Ad Hoc IPA，发布到现有 `gh-pages` 分支的 `/ios/`，安装地址为 **https://lingrove.stackli.me/ios/**。在 iPhone / iPad 的 Safari 打开后点击安装；也可单独下载 IPA。
+工作流 `.github/workflows/ios-adhoc.yml` 在宿主相关文件推送到 `master` 时自动构建 Debug Ad Hoc IPA，发布到现有 `gh-pages` 分支的 `/ios/`，安装地址为 **https://lingrove.stackli.me/ios/**。在 iPhone / iPad 的 Safari 打开后点击安装；也可单独下载 IPA。
 
 Ad Hoc 只允许描述文件列出的设备安装，不是任意访客都能安装。Pages 上的安装包公开可下载；IPA 内的描述文件包含已登记的设备 UDID。新增测试设备后必须更新描述文件并重新打包。
 
@@ -33,10 +33,11 @@ Pages 保持从 `gh-pages` 根目录发布，自定义域名为 `lingrove.stackl
 
 ## 打包与发布
 
-GitHub → Actions → **Build and publish iOS Ad Hoc** → Run workflow，选择 **master**：
+推送到 `master` 时，仅在宿主源码或资源、Xcode 工程、共享原生文案、宿主构建/签名/发布脚本或此工作流发生变化时自动打包。`BuiltinModules/` 生成资源不触发打包；只修改子应用源码、manifest、`modules.json` 或 SDK 的 Web/TypeScript/CSS 时不会触发 iOS 打包。没有匹配文件变化时，整个工作流不启动。
 
-- 默认 `Debug`：保留宿主调试功能，内置子应用也使用 Debug 构建。
-- 明确需要正式功能构建时选择 `Release`。两者均通过 Apple Distribution 证书进行 Ad Hoc 签名，安装范围相同。
+需要更新证书或描述文件、重打安装包时，仍可在 GitHub → Actions → **Build and publish iOS Ad Hoc** → Run workflow，选择 **master** 手动强制构建。
+
+工作流只构建 `Debug`，保留宿主调试功能，内置子应用也使用 Debug 构建。安装包通过 Apple Distribution 证书进行 Ad Hoc 签名。
 
 工作流读取描述文件中的 Team ID、UUID；验证它为未过期的、对应独立 App ID 的 Ad Hoc 文件，然后创建临时钥匙串。Archive 自动构建内置子应用；`xcodebuild -exportArchive` 使用当前 Xcode 的 `release-testing` 导出方式（Ad Hoc）。构建号使用 Actions 的运行编号与重试编号。
 
@@ -48,7 +49,7 @@ Web 与 iOS 发布共用 `publish-gh-pages` 互斥锁，并在获得锁后读取
 
 ## 常见问题
 
-Debug 宿主设置中“开发模式”下方的“更新 App”分组包含“安装最新版”和“查看下载页面”。每次打开设置会重新获取 `/ios/latest.json`，在“安装最新版”右侧按设备本地时区显示构建时间；获取期间或失败时禁用安装按钮，下载页面始终可打开。发布脚本生成的更新信息包含版本、构建号、构建时间及当前 manifest 地址，安装按钮通过系统 OTA 入口直接发起安装，仍需系统确认及已登记设备。首次使用此功能前，需要发布包含 `latest.json` 的新安装包。
+Debug 宿主设置中“开发模式”下方的“更新 App”分组每次打开设置会重新获取 `/ios/latest.json`。仅当远端版本号更高，或版本号相同且构建号更高时，显示带绿色图标的“安装最新版”；右侧显示版本号和构建号，下一行按设备本地时区显示构建时间。“查看下载页面”始终可打开。发布脚本生成的更新信息包含版本、构建号、构建时间及当前 manifest 地址，安装按钮通过系统 OTA 入口直接发起安装，仍需系统确认及已登记设备。首次使用此功能前，需要发布包含 `latest.json` 的新安装包。
 
 - **Missing repository secret**：补齐上表三个 Secrets，再重新运行。
 - **描述文件类型 / App ID 不匹配**：下载 Ad Hoc 文件，不能使用现有通配符 Development 文件。

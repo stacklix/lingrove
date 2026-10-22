@@ -1,13 +1,22 @@
 name: Build and publish iOS Ad Hoc
 
 on:
+  push:
+    branches: [master]
+    paths:
+      - 'ios/Lingrove/**'
+      - '!ios/Lingrove/Resources/BuiltinModules/**'
+      - 'ios/Lingrove.xcodeproj/**'
+      - 'packages/host-sdk/src/locales/messages.json'
+      - 'scripts/generate-xcode.rb'
+      - 'scripts/embed-ios-modules.sh'
+      - 'scripts/verify-ios-modules.py'
+      - 'scripts/prepare-ios-signing.py'
+      - 'scripts/package-ios-ota.py'
+      - 'scripts/publish-pages-tree.sh'
+      - 'scripts/verify-pages-build.sh'
+      - '.github/workflows/ios-adhoc.yml'
   workflow_dispatch:
-    inputs:
-      configuration:
-        description: 'Debug 保留调试功能；Release 为正式功能构建'
-        type: choice
-        options: [Debug, Release]
-        default: Debug
 
 permissions:
   contents: read
@@ -63,7 +72,7 @@ jobs:
 
       - name: Archive and export signed IPA
         env:
-          CONFIGURATION: ${{ inputs.configuration }}
+          CONFIGURATION: Debug
           TEAM_ID: ${{ steps.signing.outputs.team }}
           PROFILE_UUID: ${{ steps.signing.outputs.profile }}
         shell: bash
