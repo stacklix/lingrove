@@ -1,4 +1,5 @@
 import SwiftUI
+import Security
 
 // Dynamic colors shared by the native shell and the embedded page background.
 enum LingroveTheme {
@@ -243,7 +244,7 @@ struct HomeView: View {
                                 .accessibilityIdentifier("module-developer-details-\(module.id)")
                             }
                         }
-                        GitHubBuildStatusSection()
+                        GitHubBuildStatusSection(isPresented: showingSettings)
                         #endif
                         Section("外观") {
                             Picker("主题", selection: $draftAppearance) {
@@ -1048,9 +1049,51 @@ private struct BuildStatusError: LocalizedError {
     var errorDescription: String? { message }
 }
 
+private enum GitHubBuildTokenStore {
+    private static var query: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: "me.stackli.lingrove.github-build",
+         kSecAttrAccount as String: "token"]
+    }
+
+    static func load() throws -> String {
+        var request = query
+        request[kSecReturnData as String] = true
+        request[kSecMatchLimit as String] = kSecMatchLimitOne
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(request as CFDictionary, &result)
+        if status == errSecItemNotFound { return "" }
+        guard status == errSecSuccess, let data = result as? Data,
+              let token = String(data: data, encoding: .utf8) else {
+            throw BuildStatusError(message: "无法读取 GitHub Token，请解锁设备后重试（\(status)）。")
+        }
+        return token
+    }
+
+    static func save(_ token: String) throws {
+        if token.isEmpty {
+            let status = SecItemDelete(query as CFDictionary)
+            guard status == errSecSuccess || status == errSecItemNotFound else {
+                throw BuildStatusError(message: "无法删除 GitHub Token（\(status)）。")
+            }
+            return
+        }
+        let attributes: [String: Any] = [kSecValueData as String: Data(token.utf8),
+                                        kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
+        var status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        if status == errSecItemNotFound {
+            status = SecItemAdd(query.merging(attributes) { _, value in value } as CFDictionary, nil)
+        }
+        guard status == errSecSuccess else {
+            throw BuildStatusError(message: "无法保存 GitHub Token（\(status)）。")
+        }
+    }
+}
+
 struct GitHubBuildStatusClient {
     var session: URLSession = .shared
     let workflow: String
+    let token: String
 
     struct Run: Decodable {
         let id: Int
@@ -1085,18 +1128,22 @@ struct GitHubBuildStatusClient {
     }
 
     private func get<T: Decodable>(_ path: String, as type: T.Type) async throws -> T {
+        try Task.checkCancellation()
+        guard !token.isEmpty else { throw BuildStatusError(message: "请先配置并保存 GitHub Token。") }
         let url = URL(string: "https://api.github.com/repos/stacklix/lingrove/" + path)!
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        request.setValue("Lingrove-iOS", forHTTPHeaderField: "User-Agent")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         let (data, response) = try await session.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard status == 200 else {
             switch status {
             case 401:
-                throw BuildStatusError(message: "无法读取构建状态，请检查仓库访问权限。")
+                throw BuildStatusError(message: "GitHub Token 无效或已过期，请重新配置并保存。")
             case 403, 404:
-                throw BuildStatusError(message: "无法读取构建状态（HTTP \(status)）。请确认仓库及 Actions 可公开访问；也可能遇到 API 限流，请稍后刷新。")
+                throw BuildStatusError(message: "无法读取构建状态（HTTP \(status)）。请检查 Token 是否可访问 stacklix/lingrove 并具有 Actions 读取权限；也可能遇到 API 限流。")
             case 429:
                 throw BuildStatusError(message: "GitHub 请求频率受限，请稍后刷新。")
             default:
@@ -1143,28 +1190,68 @@ struct GitHubBuildStatusClient {
 }
 
 private struct GitHubBuildStatusSection: View {
+    let isPresented: Bool
     @State private var workflow = "ios-adhoc.yml"
+    @State private var draftToken = ""
+    @State private var savedToken = ""
+    @State private var tokenRevision = 0
+    @State private var tokenError: String?
 
     var body: some View {
         Section {
+            SecureField("GitHub Token", text: $draftToken)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .accessibilityIdentifier("github-build-token")
+                .task {
+                    do {
+                        let token = try GitHubBuildTokenStore.load()
+                        draftToken = token
+                        savedToken = token
+                    } catch { tokenError = error.localizedDescription }
+                }
+            Button("保存 Token") {
+                let token = draftToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard token.utf8.count <= 16384, token.rangeOfCharacter(from: .controlCharacters) == nil else {
+                    tokenError = "GitHub Token 格式无效。"
+                    return
+                }
+                do {
+                    try GitHubBuildTokenStore.save(token)
+                    draftToken = token
+                    savedToken = token
+                    tokenError = nil
+                    tokenRevision += 1
+                } catch { tokenError = error.localizedDescription }
+            }
+            .accessibilityIdentifier("github-build-save-token")
+            if let tokenError {
+                Text(tokenError).font(.footnote).foregroundStyle(.secondary)
+            }
             Picker("构建流程", selection: $workflow) {
                 Text("iOS 安装包").tag("ios-adhoc.yml")
                 Text("子应用发布").tag("build-gh-pages.yml")
             }
             .pickerStyle(.menu)
             .accessibilityIdentifier("github-workflow-picker")
-            GitHubBuildStatusView(workflow: workflow)
-                .id(workflow)
+            if isPresented && !savedToken.isEmpty {
+                GitHubBuildStatusView(workflow: workflow, token: savedToken, isPresented: isPresented)
+                    .id("\(workflow)-\(tokenRevision)")
+            } else {
+                Text("配置并保存 Token 后显示构建进度。").foregroundStyle(.secondary)
+            }
         } header: {
             Text("GitHub 构建进度")
         } footer: {
-            Text("显示 master 分支最新构建，页面在前台时有任务每 5 秒刷新，无任务每 30 秒刷新。读取失败后每 120 秒重试。可安装版本以已发布版本为准。")
+            Text("Token 仅保存在本机 Keychain，需具备此仓库的 Actions 读取权限。清空后保存可删除 Token。仅设置页打开且 App 在前台时拉取：运行中每 5 秒刷新，结束后每 30 秒刷新，失败后每 120 秒重试。")
         }
     }
 }
 
 struct GitHubBuildStatusView: View {
     let workflow: String
+    let token: String
+    let isPresented: Bool
     @Environment(\.scenePhase) private var scenePhase
     @State private var snapshot: GitHubBuildStatusClient.Snapshot?
     @State private var errorMessage: String?
@@ -1206,8 +1293,8 @@ struct GitHubBuildStatusView: View {
             Link("在 GitHub 查看", destination: URL(string: snapshot.map {
                 "https://github.com/stacklix/lingrove/actions/runs/\($0.run.id)"
             } ?? "https://github.com/stacklix/lingrove/actions/workflows/\(workflow)")!)
-                .task(id: "\(scenePhase)-\(refreshID)") {
-                    guard scenePhase == .active else { return }
+                .task(id: "\(isPresented)-\(scenePhase)-\(refreshID)") {
+                    guard isPresented && scenePhase == .active else { return }
                     repeat {
                         await refresh()
                         // Back off after errors instead of repeatedly hitting a rate limit.
@@ -1220,10 +1307,11 @@ struct GitHubBuildStatusView: View {
     }
 
     @MainActor private func refresh() async {
+        guard isPresented && scenePhase == .active && !Task.isCancelled else { return }
         loading = true
         defer { loading = false }
         do {
-            let latest = try await GitHubBuildStatusClient(workflow: workflow).latest()
+            let latest = try await GitHubBuildStatusClient(workflow: workflow, token: token).latest()
             try Task.checkCancellation()
             snapshot = latest
             errorMessage = nil

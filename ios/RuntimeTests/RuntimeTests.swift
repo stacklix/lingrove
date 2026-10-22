@@ -32,7 +32,56 @@ final class StubNetwork: URLProtocol, @unchecked Sendable {
     }
     override func stopLoading() {}
 }
+#if DEBUG
+final class GitHubBuildNetwork: URLProtocol, @unchecked Sendable {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-github-token")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "User-Agent"), "Lingrove-iOS")
+        let body: String
+        if request.url?.path == "/repos/stacklix/lingrove/actions/workflows/ios-adhoc.yml/runs" {
+            XCTAssertEqual(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "branch" })?.value, "master")
+            body = #"{"workflow_runs":[{"id":123,"run_number":42,"run_attempt":2,"status":"in_progress","conclusion":null,"updated_at":"2026-10-22T03:00:00Z"}]}"#
+        } else {
+            XCTAssertEqual(request.url?.path, "/repos/stacklix/lingrove/actions/runs/123/attempts/2/jobs")
+            body = #"{"jobs":[{"id":1,"name":"build","status":"in_progress","conclusion":null,"steps":[{"name":"Archive","status":"in_progress"}]}]}"#
+        }
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil,
+                                       headerFields: ["Content-Type": "application/json"])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data(body.utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+#endif
+
 final class RuntimeTests: XCTestCase {
+    #if DEBUG
+    func testGitHubBuildStatusUsesSavedTokenAndCurrentAttempt() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [GitHubBuildNetwork.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        let client = GitHubBuildStatusClient(session: session, workflow: "ios-adhoc.yml", token: "test-github-token")
+        let snapshot = try await client.latest()
+        XCTAssertEqual(snapshot?.run.id, 123)
+        XCTAssertEqual(snapshot?.run.runAttempt, 2)
+        XCTAssertEqual(snapshot?.jobs.first?.activeStep, "Archive")
+    }
+
+    func testGitHubBuildStatusDoesNotRequestWithoutToken() async {
+        let client = GitHubBuildStatusClient(workflow: "ios-adhoc.yml", token: "")
+        do {
+            _ = try await client.latest()
+            XCTFail("Expected missing-token error")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "请先配置并保存 GitHub Token。")
+        }
+    }
+    #endif
+
     func testHostAppUpdateComparesVersionThenNumericBuild() {
         func release(_ version: String, _ build: String) -> HostAppRelease {
             HostAppRelease(version: version, build: build, configuration: "Debug", builtAt: Date(),
