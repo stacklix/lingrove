@@ -3411,28 +3411,6 @@
         }
       }
     },
-    "Kotoba · 日语活用": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kotoba · 日语活用"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kotoba · Japanese conjugation"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kotoba · 日本語の活用"
-          }
-        }
-      }
-    },
     "Lector · 阅读辅助": {
       "localizations": {
         "zh-Hans": {

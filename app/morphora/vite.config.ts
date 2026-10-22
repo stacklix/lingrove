@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
     minify: mode === 'production',
     sourcemap: mode !== 'production',
     target: 'safari16',
-    outDir: '../../dist/app/kotoba',
+    outDir: '../../dist/app/morphora',
     emptyOutDir: true,
   },
   test: { environment: 'jsdom' },
