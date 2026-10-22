@@ -1218,35 +1218,37 @@ private struct GitHubBuildStatusSection: View {
 
     var body: some View {
         Section {
-            SecureField("GitHub Token", text: $draftToken)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .accessibilityIdentifier("github-build-token")
-                .task {
+            HStack(spacing: 16) {
+                SecureField("GitHub Token", text: $draftToken)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .accessibilityIdentifier("github-build-token")
+                    .task {
+                        do {
+                            let token = try GitHubBuildTokenStore.load()
+                            draftToken = token
+                            savedToken = token
+                        } catch { tokenError = error.localizedDescription }
+                    }
+                Button("保存") {
+                    let token = draftToken.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard token.utf8.count <= 16384, token.rangeOfCharacter(from: .controlCharacters) == nil else {
+                        tokenError = "GitHub Token 格式无效。"
+                        return
+                    }
                     do {
-                        let token = try GitHubBuildTokenStore.load()
+                        try GitHubBuildTokenStore.save(token)
                         draftToken = token
                         savedToken = token
+                        tokenError = nil
+                        tokenRevision += 1
                     } catch { tokenError = error.localizedDescription }
                 }
-            Button("保存 Token") {
-                let token = draftToken.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard token.utf8.count <= 16384, token.rangeOfCharacter(from: .controlCharacters) == nil else {
-                    tokenError = "GitHub Token 格式无效。"
-                    return
-                }
-                do {
-                    try GitHubBuildTokenStore.save(token)
-                    draftToken = token
-                    savedToken = token
-                    tokenError = nil
-                    tokenRevision += 1
-                } catch { tokenError = error.localizedDescription }
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
+                .fixedSize()
+                .accessibilityIdentifier("github-build-save-token")
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.blue)
-            .fixedSize()
-            .accessibilityIdentifier("github-build-save-token")
             if let tokenError {
                 Text(tokenError).font(.footnote).foregroundStyle(.secondary)
             }
