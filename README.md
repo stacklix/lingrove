@@ -86,9 +86,9 @@ MODULE_BASE_URL=https://your-domain.example npm run build:release
 
 iOS Ad Hoc 打包及 Safari 网页安装见 [配置说明](docs/ios-adhoc.md)。在 Actions 手动运行 **Build and publish iOS Ad Hoc**，默认构建 Debug，成功后发布到 `https://lingrove.stackli.me/ios/`。需先配置分发证书及 Ad Hoc 描述文件三个 Secrets；只有已登记设备可安装。Web 发布保留已有 iOS 安装包，iOS 发布保留现有子应用网页及更新目录。
 
-iOS 的 PR 验证运行测试和无签名模拟器编译；宿主改动推送到 `master` 时，由 Ad Hoc 流程先测试、再签名打包发布，测试失败不会发布 IPA，且不再重复编译模拟器。内置子应用统一在 Xcode 构建阶段生成一次。
+快速开发阶段，Web 和 iOS 打包均跳过自动测试，直接安装依赖、构建、校验产物并发布；构建或校验失败会阻止发布。iOS 的 PR 验证仍保留测试和无签名模拟器编译，`master` 不再重复编译模拟器。内置子应用统一在 Xcode 构建阶段生成一次。
 
-`.github/workflows/build-gh-pages.yml` 在推送 `master` 或 tag 时自动执行，也可从 Actions 手动触发（选择 `master`）。始终检出最新 `master`，生成带 `-snapshot.zip` 后缀的 Debug 包与 `catalog.snapshot.json`。有 tag 时按 Git `creatordate` 降序选择最新 tag（附注 tag 使用创建时间，轻量 tag 使用提交时间），在隔离目录用该 tag 的源码和锁定依赖构建 production 正式包，ZIP 不带后缀，目录为 `catalog.json`；没有 tag 则不生成正式包及正式目录。流程先检查 TypeScript、运行测试，再构建并校验两类产物；校验通过才将 `dist/` 发布到 `gh-pages` 分支根目录。无需额外发布密钥 Secret。
+`.github/workflows/build-gh-pages.yml` 在推送 `master` 或 tag 时自动执行，也可从 Actions 手动触发（选择 `master`）。始终检出最新 `master`，生成带 `-snapshot.zip` 后缀的 Debug 包与 `catalog.snapshot.json`。有 tag 时按 Git `creatordate` 降序选择最新 tag（附注 tag 使用创建时间，轻量 tag 使用提交时间），在隔离目录用该 tag 的源码和锁定依赖构建 production 正式包，ZIP 不带后缀，目录为 `catalog.json`；没有 tag 则不生成正式包及正式目录。流程安装依赖后直接构建并校验两类产物，跳过独立测试步骤；校验通过才将 `dist/` 发布到 `gh-pages` 分支根目录。无需额外发布密钥 Secret。
 
 发布后的分支结构：
 

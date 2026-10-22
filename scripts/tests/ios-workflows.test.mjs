@@ -33,41 +33,46 @@ test('automatic simulator checks run on PRs, while master uses the signed build 
   assert.doesNotMatch(adhoc, /iphonesimulator/);
 });
 
-test('both iOS builds test before compiling and let Xcode build web resources once', async () => {
-  for (const [file, jobName] of [
-    ['ios.yml', 'ios'],
-    ['ios-adhoc.yml', 'build'],
+test('PR checks keep application and native tests before the simulator build', async () => {
+  const job = block(await workflow('ios.yml'), 2, 'ios');
+  const ordered = steps(job);
+  const install = ordered.findIndex((step) => /run: npm ci/.test(step));
+  const checks = ordered.findIndex((step) => step.includes('scripts/test-native.sh'));
+  const compile = ordered.findIndex((step) => step.includes('xcodebuild -project'));
+  assert.ok(install >= 0 && checks > install && compile > checks);
+  for (const command of [
+    'npm run typecheck',
+    'npm test',
+    'python3 scripts/tests/test-ios-distribution.py',
   ]) {
-    const job = block(await workflow(file), 2, jobName);
-    const ordered = steps(job);
-    const install = ordered.findIndex((step) => /run: npm ci/.test(step));
-    const checks = ordered.findIndex((step) => step.includes('scripts/test-native.sh'));
-    const compile = ordered.findIndex((step) => step.includes('xcodebuild -project'));
-    assert.ok(install >= 0 && checks > install && compile > checks, file);
-    for (const command of [
-      'npm run typecheck',
-      'npm test',
-      'python3 scripts/tests/test-ios-distribution.py',
-    ]) {
-      assert.ok(ordered[checks].includes(command), `${file}: ${command}`);
-    }
-    assert.match(ordered[checks], /set -euo pipefail/);
-    assert.doesNotMatch(ordered[checks], /continue-on-error:|\|\|\s*true|^\s*if:/m);
-    assert.doesNotMatch(ordered[compile], /continue-on-error:|^\s*if:/m);
-    assert.doesNotMatch(job, /npm run (?:check|build(?:\s|:))/);
-    assert.doesNotMatch(job, /^    (?:continue-on-error|if):.*(?:true|always\()/m);
+    assert.ok(ordered[checks].includes(command), command);
+  }
+  assert.match(ordered[checks], /set -euo pipefail/);
+  assert.doesNotMatch(ordered[checks], /continue-on-error:|\|\|\s*true|^\s*if:/m);
+  assert.doesNotMatch(job, /npm run (?:check|build(?:\s|:))/);
+});
+
+test('rapid-development publishing builds and verifies artifacts without running tests', async () => {
+  for (const file of ['ios-adhoc.yml', 'build-gh-pages.yml']) {
+    const source = await workflow(file);
+    assert.doesNotMatch(
+      source,
+      /npm (?:test|run (?:test|check|typecheck))|node --test|scripts\/tests\/|scripts\/test-native\.sh/,
+    );
+    assert.match(source, /run: npm ci/);
+    assert.match(source, /verify-(?:ios-modules|pages-build)/);
   }
 });
 
-test('signing, archive and publishing cannot bypass failed checks', async () => {
+test('signed publishing still requires a successful archive and artifact upload', async () => {
   const source = await workflow('ios-adhoc.yml');
   const job = block(source, 2, 'build');
   const ordered = steps(job);
-  const checks = ordered.findIndex((step) => step.includes('scripts/test-native.sh'));
+  const install = ordered.findIndex((step) => /run: npm ci/.test(step));
   const signing = ordered.findIndex((step) => step.includes('id: signing'));
   const archive = ordered.findIndex((step) => step.includes('xcodebuild -project'));
   const upload = ordered.findIndex((step) => step.includes('actions/upload-artifact@'));
-  assert.ok(checks >= 0 && signing > checks && archive > signing && upload > archive);
+  assert.ok(install >= 0 && signing > install && archive > signing && upload > archive);
   for (const index of [signing, archive, upload]) {
     assert.doesNotMatch(ordered[index], /continue-on-error:|^\s*if:/m);
   }

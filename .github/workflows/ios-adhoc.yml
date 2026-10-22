@@ -39,15 +39,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run application and native core tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm run typecheck
-          npm test
-          python3 scripts/tests/test-ios-distribution.py
-          scripts/test-native.sh
-
       - name: Import distribution certificate and validate Ad Hoc profile
         id: signing
         env:
