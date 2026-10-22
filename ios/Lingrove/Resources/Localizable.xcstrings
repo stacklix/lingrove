@@ -6578,6 +6578,28 @@
           }
         }
       }
+    },
+    "应用信息刷新失败，请确认调试服务器可用后重试。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用信息刷新失败，请确认调试服务器可用后重试。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not refresh app information. Check that the debug server is available, then try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ情報を更新できませんでした。デバッグサーバーに接続できることを確認して、もう一度お試しください。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

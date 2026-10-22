@@ -351,7 +351,7 @@ struct HomeView: View {
         waitingForReloadResults = false
         Task { @MainActor in
             updateCheckSucceeded = true
-            if snapshotEnabled { updateCheckSucceeded = await store.checkForUpdates(forceSnapshot: true) }
+            if snapshotEnabled || debugEnabled { updateCheckSucceeded = await store.checkForUpdates(forceSnapshot: true) }
             waitingForReloadResults = true
             pages.reloadAll(store: store)
             finishRefreshIfNeeded()
@@ -445,14 +445,15 @@ struct HomeView: View {
         if DebugServer.available { debugServers.save() }
         guard DebugServer.available,
               initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress else { return }
-        pages.reloadAll(store: store)
-        if snapshotEnabled {
+        if snapshotEnabled || debugEnabled {
+            let expectedMode = resourceMode
+            let expectedAddress = DebugServer.activeAddress
             Task { @MainActor in
                 await store.checkForUpdates()
-                guard snapshotEnabled else { return }
+                guard resourceMode == expectedMode, DebugServer.activeAddress == expectedAddress else { return }
                 pages.reloadAll(store: store)
             }
-        }
+        } else { pages.reloadAll(store: store) }
     }
 
 

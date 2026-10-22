@@ -229,6 +229,8 @@ struct ModuleDownloadRecord: Codable, Equatable {
     @Published var blocked = Set<String>()
     private var registry: [String: Installed] = [:]
     private var builtins: [String: Module] = [:]
+    private var debugMetadata: [String: Module] = [:]
+    private var debugMetadataAddress: String?
     private var activeSessions = Set<String>()
     private var rejectedVersions: [String: String] = [:]
     private var downloadStatusOwners: [String: UUID] = [:]
@@ -292,6 +294,14 @@ struct ModuleDownloadRecord: Codable, Equatable {
         if !bundledOnly {
             for (id, install) in registry { all[id] = install.active }
         }
+        // Server display metadata is temporary; local package identities and permissions stay intact.
+        if let address = debugAddress, address == debugMetadataAddress {
+            for (id, metadata) in debugMetadata where all[id] != nil {
+                all[id]?.name = metadata.name
+                all[id]?.description = metadata.description
+                all[id]?.localizedDescriptions = metadata.localizedDescriptions
+            }
+        }
         let order = defaults.stringArray(forKey: Self.displayOrderKey) ?? []
         modules = all.values.sorted {
             let left = order.firstIndex(of: $0.id) ?? Int.max
@@ -311,6 +321,8 @@ struct ModuleDownloadRecord: Codable, Equatable {
         downloadProgress.removeAll()
         downloadStatusOwners.removeAll()
         downloadRecords = completedDownloads
+        debugMetadata.removeAll()
+        debugMetadataAddress = nil
         if registryReadable { notice = "" }
         refresh()
     }
@@ -395,11 +407,12 @@ struct ModuleDownloadRecord: Codable, Equatable {
         return try await session.download(request: request, limit: limit, onProgress: onProgress)
     }
     @discardableResult func checkForUpdates(forceSnapshot: Bool = false) async -> Bool {
-        if HostConfiguration.usesBundledResources(defaults: defaults) {
+        let debugging = debugAddress != nil
+        if HostConfiguration.usesBundledResources(defaults: defaults) && !debugging {
             resourceModeChanged()
             return true
         }
-        guard registryReadable else { return false }
+        guard registryReadable || debugging else { return false }
         let force = forceSnapshot && HostConfiguration.usesSnapshot(defaults: defaults)
         guard !checking || force else { return false }
         updateTask?.cancel()
@@ -407,7 +420,9 @@ struct ModuleDownloadRecord: Codable, Equatable {
         updateID = id
         checking = true
         let task = Task { @MainActor in
-            let succeeded = await self.performUpdateCheck(forceSnapshot: force, id: id)
+            let succeeded = debugging
+                ? await self.performDebugMetadataCheck(id: id)
+                : await self.performUpdateCheck(forceSnapshot: force, id: id)
             if self.updateID == id {
                 self.checking = false
                 self.updateTask = nil
@@ -416,6 +431,36 @@ struct ModuleDownloadRecord: Codable, Equatable {
         }
         updateTask = task
         return await task.value
+    }
+    private var debugAddress: String? {
+        guard DebugServer.available, HostConfiguration.resourceMode(defaults: defaults) == .debug,
+              let raw = DebugServerSettings.load(defaults: defaults).activeAddress,
+              let address = try? DebugServer.normalized(raw), !address.isEmpty else { return nil }
+        return address
+    }
+    private func performDebugMetadataCheck(id: UUID) async -> Bool {
+        guard let address = debugAddress, let base = URL(string: address) else { return false }
+        do {
+            var request = URLRequest(url: base.appendingPathComponent("catalog.json"), cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 8)
+            request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
+            let data = try await session.download(request: request, limit: 1024 * 1024)
+            let catalog = try JSONDecoder().decode(Catalog.self, from: data)
+            try catalog.validate()
+            try Task.checkCancellation()
+            guard updateID == id, debugAddress == address else { return false }
+            debugMetadata = Dictionary(uniqueKeysWithValues: catalog.modules.map { ($0.id, $0) })
+            debugMetadataAddress = address
+            notice = ""
+            refresh()
+            return true
+        } catch {
+            guard !Task.isCancelled, updateID == id, debugAddress == address else { return false }
+            debugMetadata.removeAll()
+            debugMetadataAddress = nil
+            notice = "应用信息刷新失败，请确认调试服务器可用后重试。"
+            refresh()
+            return false
+        }
     }
     private func performUpdateCheck(forceSnapshot: Bool, id: UUID) async -> Bool {
         guard updateID == id else { return false }

@@ -97,6 +97,64 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         rejects("malformed catalog rejected") { _ = try JSONDecoder().decode(Catalog.self, from: Data("{}".utf8)) }
         let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [MockProtocol.self]
         let session = URLSession(configuration: config)
+        #if DEBUG
+        let metadataSuite = "debug-metadata-\(UUID().uuidString)"
+        let metadataDefaults = UserDefaults(suiteName: metadataSuite)!
+        defer { metadataDefaults.removePersistentDomain(forName: metadataSuite) }
+        metadataDefaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        DebugServerSettings(addresses: [.init(id: "local", url: "http://debug.test/preview/")], activeID: "local").save(defaults: metadataDefaults)
+        let metadataRoot = fixtures.appendingPathComponent("debug-metadata")
+        let metadataStore = ModuleStore(root: metadataRoot, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: metadataDefaults)
+        let metadataBuiltin = metadataStore.modules[0]
+        var renamedDebugModule = module
+        renamedDebugModule.name = "Morphora"
+        renamedDebugModule.description = "Debug handbook"
+        renamedDebugModule.localizedDescriptions = ["en": "Debug English introduction", "ja": "Debug Japanese introduction"]
+        renamedDebugModule.version = "20260104"
+        renamedDebugModule.allowedOrigins = ["https://extra.test"]
+        MockProtocol.responses = ["/preview/catalog.json": (200, try catalog(renamedDebugModule))]
+        var metadataRequests: [URLRequest] = []
+        MockProtocol.intercept = { request in metadataRequests.append(request.request); return false }
+        let metadataSucceeded = await metadataStore.checkForUpdates()
+        check(metadataSucceeded && metadataStore.modules[0].name == "Morphora", "debug catalog refresh updates home-screen names")
+        check(metadataStore.modules[0].description(for: "en") == "Debug English introduction" && metadataStore.modules[0].description(for: "ja") == "Debug Japanese introduction", "debug catalog refresh updates translated introductions")
+        check(metadataStore.modules[0].resourceIdentity == metadataBuiltin.resourceIdentity && metadataStore.modules[0].allowedOrigins == metadataBuiltin.allowedOrigins, "debug display metadata cannot replace installed resources or permissions")
+        check(metadataRequests.count == 1 && metadataRequests[0].url?.path == "/preview/catalog.json" && metadataRequests[0].cachePolicy == .reloadIgnoringLocalCacheData, "debug refresh uses the selected server base path without cached responses or ZIP downloads")
+        check(!FileManager.default.fileExists(atPath: metadataRoot.appendingPathComponent("registry.json").path), "debug display metadata does not write the installed registry")
+        renamedDebugModule.name = "Renamed again"
+        MockProtocol.responses["/preview/catalog.json"] = (200, try catalog(renamedDebugModule))
+        await metadataStore.checkForUpdates()
+        check(metadataStore.modules[0].name == "Renamed again", "debug names refresh again without a version or hash change")
+        let metadataRestart = ModuleStore(root: metadataRoot, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: metadataDefaults)
+        check(metadataRestart.modules[0].name == metadataBuiltin.name, "debug metadata stays in memory rather than changing local installation records")
+        MockProtocol.responses["/preview/catalog.json"] = (404, Data())
+        let failedMetadataRefresh = await metadataStore.checkForUpdates()
+        check(!failedMetadataRefresh && metadataStore.modules[0].name == metadataBuiltin.name && metadataStore.notice.contains("应用信息刷新失败"), "failed debug metadata refresh restores local names and reports failure")
+        MockProtocol.responses["/preview/catalog.json"] = (200, try catalog(renamedDebugModule))
+        await metadataStore.checkForUpdates()
+        metadataDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        metadataStore.resourceModeChanged()
+        check(metadataStore.modules[0].name == metadataBuiltin.name, "turning off debugging immediately restores bundled display metadata")
+        metadataDefaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        metadataStore.resourceModeChanged()
+        var heldMetadataRequest: MockProtocol?
+        MockProtocol.intercept = { request in
+            guard request.request.url?.path == "/preview/catalog.json" else { return false }
+            heldMetadataRequest = request
+            return true
+        }
+        let pendingMetadata = Task { await metadataStore.checkForUpdates() }
+        for _ in 0..<1_000 {
+            if heldMetadataRequest != nil { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        check(heldMetadataRequest != nil, "debug catalog check is in flight before a mode switch")
+        metadataDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        metadataStore.resourceModeChanged()
+        let cancelledMetadata = await pendingMetadata.value
+        MockProtocol.intercept = nil
+        check(!cancelledMetadata && metadataStore.modules[0].name == metadataBuiltin.name, "a cancelled debug request cannot change names after leaving debug mode")
+        #endif
         var localizedUpdate = try JSONDecoder().decode(Module.self, from: Data(contentsOf: fixtures.appendingPathComponent("localized-update.json")))
         let localizedArchive = try Data(contentsOf: fixtures.appendingPathComponent("localized-update.zip"))
         localizedUpdate.downloadUrl = "https://updates.test/localized-update.zip"

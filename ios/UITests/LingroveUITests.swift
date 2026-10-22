@@ -359,7 +359,7 @@ final class LingroveUITests: XCTestCase {
         }
         app.buttons["settings-back"].tap()
         app.terminate(); app.launch()
-        for name in ["Glyphora", "Kotoba", "Lector", "Sentra"] {
+        for name in ["Glyphora", "Morphora", "Lector", "Sentra"] {
             waitForEnabled(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch)
         }
     }
