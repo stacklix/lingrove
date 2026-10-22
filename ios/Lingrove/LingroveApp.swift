@@ -553,9 +553,22 @@ private struct HostAppUpdateSection: View {
     @State private var release: HostAppRelease?
     @State private var checking = false
     @State private var failed = false
+    @State private var updateCheckID = 0
+
+    private var currentVersion: String {
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        return "\(HostConfiguration.currentVersion) (\(build))"
+    }
 
     var body: some View {
         Section {
+            HStack {
+                LabeledContent("当前版本", value: currentVersion)
+                Button("检测更新") { updateCheckID += 1 }
+                    .buttonStyle(.borderless)
+                    .disabled(checking)
+                    .accessibilityIdentifier("host-app-check-update")
+            }
             if let release, release.isNewer(than: HostConfiguration.currentVersion,
                                            build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "") {
                 Button {
@@ -582,6 +595,10 @@ private struct HostAppUpdateSection: View {
             }
             if checking {
                 ProgressView().frame(maxWidth: .infinity)
+            } else if !failed, let release,
+                      !release.isNewer(than: HostConfiguration.currentVersion,
+                                       build: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "") {
+                Text("已是最新版本").font(.footnote).foregroundStyle(.secondary)
             }
             Link("查看下载页面", destination: URL(string: "https://lingrove.stackli.me/ios/")!)
             if failed {
@@ -593,7 +610,7 @@ private struct HostAppUpdateSection: View {
         } footer: {
             Text("更新 Lingrove 宿主 App。安装需系统确认，且设备必须已登记；安装期间请返回主屏幕等待完成。")
         }
-        .task { await checkForUpdate() }
+        .task(id: updateCheckID) { await checkForUpdate() }
     }
 
     @MainActor private func checkForUpdate() async {
