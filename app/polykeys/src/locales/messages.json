@@ -87,10 +87,6 @@
     "en": "Tap the keys to start typing",
     "ja": "キーをタップして入力"
   },
-  "切换语言不会清空文字。重音字符可直接点选。": {
-    "en": "Switch languages without losing your text. Tap accented letters to insert them.",
-    "ja": "言語を切り替えても入力は保持されます。アクセント文字もタップで入力できます。"
-  },
   "复制文字": {
     "en": "Copy text",
     "ja": "テキストをコピー"
@@ -158,5 +154,9 @@
   "切换符号页": {
     "en": "Switch symbol page",
     "ja": "記号ページの切り替え"
+  },
+  "切换语言不会清空文字。扩展区可输入重音和补充字母。": {
+    "en": "Switching languages keeps your text. Use the extra keys for accents and additional letters.",
+    "ja": "言語を切り替えても入力は保持されます。拡張キーでアクセント文字や補助文字を入力できます。"
   }
 }

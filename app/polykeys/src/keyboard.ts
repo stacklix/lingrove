@@ -1,17 +1,19 @@
-export interface Layout { id: string; name: string; rows: string[]; extra: string; }
+export interface Layout { id: string; locale: string; name: string; rows: string[]; extra: string; }
+// Select an existing iPhone layout per language; do not invent phonetic remappings.
+// Variant choices and source screenshots are documented in ../README.md.
 const qwerty = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 export const layouts: Layout[] = [
-  { id: 'ko', name: '韩语', rows: ['ㅂㅈㄷㄱㅅㅛㅕㅑㅐㅔ', 'ㅁㄴㅇㄹㅎㅗㅓㅏㅣ', 'ㅋㅌㅊㅍㅠㅜㅡ'], extra: '' },
-  { id: 'en', name: '英语', rows: qwerty, extra: '' },
-  { id: 'fr', name: '法语', rows: ['azertyuiop', 'qsdfghjklm', 'wxcvbn'], extra: 'àâæçéèêëîïôœùûüÿ' },
-  { id: 'de', name: '德语', rows: ['qwertzuiopü', 'asdfghjklöä', 'yxcvbnm'], extra: 'ß' },
-  { id: 'es', name: '西班牙语', rows: ['qwertyuiop', 'asdfghjklñ', 'zxcvbnm'], extra: 'áéíóúü¿¡' },
-  { id: 'pt', name: '葡萄牙语', rows: qwerty, extra: 'áàâãçéêíóôõúü' },
-  { id: 'it', name: '意大利语', rows: qwerty, extra: 'àèéìíîòóùú' },
-  { id: 'tr', name: '土耳其语', rows: ['qwertyuıopğü', 'asdfghjklşi', 'zxcvbnmöç'], extra: 'âîû' },
-  { id: 'ru', name: '俄语', rows: ['йцукенгшщзх', 'фывапролджэ', 'ячсмитьбю'], extra: 'ёъ' },
-  { id: 'uk', name: '乌克兰语', rows: ['йцукенгшщзх', 'фівапролджє', 'ячсмитьбю'], extra: 'ґї’' },
-  { id: 'el', name: '希腊语', rows: ['ςερτυθιοπ', 'ασδφγηξκλ', 'ζχψωβνμ'], extra: 'άέήίόύώϊϋΐΰ' },
+  { id: 'ko', locale: 'ko', name: '韩语', rows: ['ㅂㅈㄷㄱㅅㅛㅕㅑㅐㅔ', 'ㅁㄴㅇㄹㅎㅗㅓㅏㅣ', 'ㅋㅌㅊㅍㅠㅜㅡ'], extra: '' },
+  { id: 'en', locale: 'en', name: '英语', rows: qwerty, extra: '' },
+  { id: 'fr', locale: 'fr', name: '法语', rows: ['qwertyuiop', "asdfghjkl'", 'zxcvbnm'], extra: 'àâæçéèêëîïôœùûüÿ' },
+  { id: 'de', locale: 'de', name: '德语', rows: ['qwertzuiopü', 'asdfghjklöä', 'yxcvbnm'], extra: 'ß' },
+  { id: 'es', locale: 'es', name: '西班牙语', rows: ['qwertyuiop', 'asdfghjklñ', 'zxcvbnm'], extra: 'áéíóúü¿¡' },
+  { id: 'pt', locale: 'pt', name: '葡萄牙语', rows: qwerty, extra: 'áàâãçéêíóôõúü' },
+  { id: 'it', locale: 'it', name: '意大利语', rows: qwerty, extra: 'àèéìíîòóùú' },
+  { id: 'tr', locale: 'tr', name: '土耳其语', rows: qwerty, extra: 'çğıöşüâîû' },
+  { id: 'ru', locale: 'ru', name: '俄语', rows: ['яшертыуиопэ', 'асдфгчйклжщ', 'зхцвбнмью'], extra: 'ёъ' },
+  { id: 'uk', locale: 'uk', name: '乌克兰语', rows: ['йцукенгшщзхї', "фівапролджє'", 'ячсмитьбюґ'], extra: '' },
+  { id: 'el', locale: 'el', name: '希腊语', rows: ['ερτυθιοπ΄', 'ασδφγηξκλ', 'ζχψωβνμ'], extra: 'ςάέήίόύώϊϋΐΰ' },
 ];
 export function letterCase(value: string, upper: boolean, language: string) {
   if (language === 'ko') return upper ? ({ 'ㅂ':'ㅃ', 'ㅈ':'ㅉ', 'ㄷ':'ㄸ', 'ㄱ':'ㄲ', 'ㅅ':'ㅆ', 'ㅐ':'ㅒ', 'ㅔ':'ㅖ' } as Record<string, string>)[value] ?? value : value;

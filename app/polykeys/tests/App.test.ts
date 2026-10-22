@@ -5,6 +5,73 @@ const { copyText } = vi.hoisted(() => ({ copyText: vi.fn().mockResolvedValue(und
 vi.mock('@lingrove/host-sdk', () => ({ copyText, ready: vi.fn().mockResolvedValue(undefined), installFocusMode: () => () => {}, setRootPage: vi.fn() }));
 vi.mock('@lingrove/host-sdk/vue', () => ({ useAppI18n: () => ({ t: (value: string) => value }) }));
 describe('keyboard interaction', () => {
+  it('inserts Ukrainian main keys and Greek extended letters from the confirmed layouts', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    const press = async (char: string) => {
+      await wrapper.findAll('button').find(button => button.text() === char)!.trigger('click');
+    };
+    await wrapper.get('select').setValue('uk');
+    expect(wrapper.find('.extras').exists()).toBe(false);
+    for (const char of "їґ'") await press(char);
+    await wrapper.get('select').setValue('el');
+    for (const char of '΄άς') await press(char);
+    expect(wrapper.get('textarea').element.value).toBe("їґ'΄άς");
+    await press('复制文字');
+    expect(copyText).toHaveBeenCalledWith("їґ'΄άς");
+    wrapper.unmount();
+  });
+  it('keeps the French apostrophe in the main keyboard and accented letters as separate keys', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    await wrapper.get('select').setValue('fr');
+    expect(wrapper.findAll('.key-row')[1].findAll('button').map(button => button.text()).join('')).toBe("asdfghjkl'");
+    const extras = wrapper.get('[role="group"][aria-label="重音与扩展字母"]');
+    expect(extras.findAll('button').map(button => button.text()).join('')).toBe('àâæçéèêëîïôœùûüÿ');
+    const press = async (char: string) => {
+      await wrapper.findAll('button').find(button => button.text() === char)!.trigger('click');
+    };
+    for (const char of "l'été") await press(char);
+    await wrapper.get('[aria-label="切换大小写"]').trigger('click');
+    await press('Œ');
+    expect(wrapper.get('textarea').element.value).toBe("l'étéŒ");
+    await press('复制文字');
+    expect(copyText).toHaveBeenCalledWith("l'étéŒ");
+    wrapper.unmount();
+  });
+  it('switches languages while keeping text, caret, casing, symbols and copying usable', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    const select = wrapper.get('select');
+    const area = wrapper.get('textarea');
+    const press = async (char: string) => {
+      await wrapper.findAll('button').find(button => button.text() === char)!.trigger('click');
+    };
+    await select.setValue('fr');
+    expect(wrapper.findAll('button.letter')[0].text()).toBe('q');
+    await area.setValue('привет');
+    area.element.setSelectionRange(3, 3); await area.trigger('select');
+    await select.setValue('ru');
+    expect(area.element.value).toBe('привет');
+    expect(area.attributes('lang')).toBe('ru');
+    expect(wrapper.findAll('button.letter')[0].text()).toBe('я');
+    await press('ш');
+    expect(area.element.value).toBe('пришвет');
+    await wrapper.get('[aria-label="切换大小写"]').trigger('click');
+    await press('Я');
+    expect(area.element.value).toBe('пришЯвет');
+    await press('ё');
+    await wrapper.get('[aria-label="符号"]').trigger('click');
+    await press('1');
+    await wrapper.get('[aria-label="字母"]').trigger('click');
+    expect(select.element.value).toBe('ru');
+    await select.setValue('uk');
+    expect(area.attributes('lang')).toBe('uk');
+    expect(wrapper.findAll('button.letter')[0].text()).toBe('й');
+    await select.setValue('ru');
+    const expected = 'пришЯё1вет';
+    expect(area.element.value).toBe(expected);
+    await press('复制文字');
+    expect(copyText).toHaveBeenCalledWith(expected);
+    wrapper.unmount();
+  });
   it('inserts and copies extended symbols without losing text or language', async () => {
     const wrapper = mount(App, { attachTo: document.body });
     await wrapper.get('select').setValue('es');
@@ -18,7 +85,7 @@ describe('keyboard interaction', () => {
     await wrapper.get('[aria-label="切换符号页"]').trigger('click');
     await wrapper.findAll('button.letter').find(b => b.text() === '@')!.trigger('click');
     await wrapper.get('[aria-label="字母"]').trigger('click');
-    await wrapper.findAll('button.letter').find(b => b.text() === 'ñ')!.trigger('click');
+    await wrapper.findAll('button').find(b => b.text() === 'ñ')!.trigger('click');
     const expected = 'texto' + extra + '@ñ';
     expect(wrapper.get('textarea').element.value).toBe(expected);
     expect(wrapper.get('select').element.value).toBe('es');

@@ -5,8 +5,9 @@ import { useAppI18n } from '@lingrove/host-sdk/vue';
 import { layouts, letterCase, replaceSelection, deleteSelection } from './keyboard';
 import { appendHangul, isHangulKey } from './hangul';
 const { t } = useAppI18n();
-const language = ref('en');
-const layout = computed(() => layouts.find(item => item.id === language.value)!);
+const layoutId = ref('en');
+const layout = computed(() => layouts.find(item => item.id === layoutId.value)!);
+const language = computed(() => layout.value.locale);
 const text = ref('');
 const editor = ref<HTMLTextAreaElement>();
 const shift = ref(false);
@@ -73,15 +74,15 @@ function clear() { commit(); text.value = ''; start = end = 0; status.value = ''
     <div class="lingrove-root-actions"><button :disabled="!text" class="quiet" @click="clear">{{ t('清空') }}</button></div>
     <section class="workspace">
       <div class="section-heading"><label for="language">{{ t('键盘语言') }}</label><span> {{ symbols ? (symbolPage ? '#+=' : '123') : language.toUpperCase() }}</span></div>
-      <select id="language" v-model="language" @change="changeLanguage"><option v-for="item in layouts" :key="item.id" :value="item.id">{{ t(item.name) }}</option></select>
+      <select id="language" v-model="layoutId" @change="changeLanguage"><option v-for="item in layouts" :key="item.id" :value="item.id">{{ t(item.name) }}</option></select>
       <div class="editor-card">
         <textarea ref="editor" v-model="text" inputmode="none" :lang="language" dir="auto" :aria-label="t('输入内容')" :placeholder="t('点击键位开始输入')" spellcheck="false" @select="capture" @click="capture" @keyup="capture" @input="commit(); capture(); status = ''" />
         <div class="editor-footer"><span aria-live="polite" role="status">{{ t(status) }}</span><button class="copy" :disabled="!text" @click="copy">{{ t('复制文字') }}</button></div>
       </div>
-      <p class="hint">{{ t(language === 'ko' ? '韩语使用两式键盘，辅音和元音自动合成音节；删除可逐步撤销输入。' : '切换语言不会清空文字。重音字符可直接点选。') }}</p>
+      <p class="hint">{{ t(language === 'ko' ? '韩语使用两式键盘，辅音和元音自动合成音节；删除可逐步撤销输入。' : '切换语言不会清空文字。扩展区可输入重音和补充字母。') }}</p>
     </section>
     <section class="keyboard" :aria-label="t('字母键盘')" @pointerdown.prevent>
-      <div v-if="!symbols && layout.extra" class="extras" :aria-label="t('重音与扩展字母')"><button v-for="char in layout.extra" :key="char" @click="edit(key(char))">{{ key(char) }}</button></div>
+      <div v-if="!symbols && layout.extra" class="extras" role="group" :aria-label="t('重音与扩展字母')"><button v-for="char in layout.extra" :key="char" @click="edit(key(char))">{{ key(char) }}</button></div>
       <div v-for="(row, index) in rows" :key="index" class="key-row"><button v-for="char in row" :key="char" class="letter" @click="edit(symbols ? char : key(char))">{{ symbols ? char : key(char) }}</button></div>
       <div class="key-row"><button class="function" :class="{ active: symbols ? symbolPage : shift || caps }" :aria-label="t(symbols ? '切换符号页' : language === 'ko' ? '切换双辅音与扩展元音' : '切换大小写')" :aria-pressed="symbols ? symbolPage : shift || caps" @click="toggleShift">{{ symbols ? (symbolPage ? '123' : '#+=') : '⇧' }}</button><button v-if="!symbols && language !== 'ko'" class="function" :class="{ active: caps }" :aria-label="t('大写锁定')" :aria-pressed="caps" @click="caps = !caps; shift = false">⇪</button><button class="function" :aria-pressed="symbols" :aria-label="t(symbols ? '字母' : '符号')" @click="toggleSymbols">{{ symbols ? t('字母') : '123' }}</button><button class="space" @click="edit(' ')">{{ t('空格') }}</button><button class="function" :aria-label="t('删除字符')" @click="edit('', true)">⌫</button><button class="function" :aria-label="t('换行')" @click="edit('\n')">↵</button></div>
     </section>
