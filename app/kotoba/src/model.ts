@@ -1,11 +1,12 @@
-export interface SchoolForm {
+import type { HandbookLanguage } from './languages';
+export interface InflectionGroup {
   label: string;
   word: string;
   reading: string;
   usage: string;
 }
 export interface Form {
-  schoolForm: string;
+  group: string;
   label: string;
   word: string;
   reading: string;
@@ -21,26 +22,14 @@ export interface Entry {
   type: string;
   note: string;
   inflectable: boolean;
-  schoolForms: SchoolForm[];
+  groups: InflectionGroup[];
   forms: Form[];
 }
 const invalid = (detail: string) =>
-  new Error('活用结果未完整生成，请重新查询。', { cause: detail });
-const groupAliases: Record<string, string> = {
-  連用形: '连用形',
-  終止形: '终止形',
-  連体形: '连体形',
-  仮定形: '假定形',
-  派生表現: '派生表达',
-  無活用: '无活用',
-};
-function groupName(value: unknown): string {
-  const name = typeof value === 'string' ? value.trim() : '';
-  return groupAliases[name] ?? name;
-}
-function object(value: unknown): Record<string, any> {
+  new Error('变形结果未完整生成，请重新查询。', { cause: detail });
+function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw invalid('缺少资料对象');
-  return value as Record<string, any>;
+  return value as Record<string, unknown>;
 }
 function required(value: unknown, field: string): string {
   if (typeof value !== 'string' || !value.trim()) throw invalid(`缺少${field}`);
@@ -63,24 +52,14 @@ export function parseEntry(raw: string): Entry {
   }
   const v = object(value);
   if (typeof v.error === 'string' && v.error.trim()) throw new Error(v.error);
-  const school = v.schoolForms ?? v.school_forms;
-  if (!Array.isArray(school) || !school.length || school.length > 8)
-    throw invalid('缺少学校文法分组');
+  const sourceGroups = v.groups;
+  if (!Array.isArray(sourceGroups) || !sourceGroups.length || sourceGroups.length > 16)
+    throw invalid('缺少变形分组');
   const names = new Set<string>();
-  const allowed = [
-    '未然形',
-    '连用形',
-    '终止形',
-    '连体形',
-    '假定形',
-    '命令形',
-    '派生表达',
-    '无活用',
-  ];
-  const schoolForms = school.map((item) => {
+  const groups = sourceGroups.map((item) => {
     const group = object(item);
-    const label = groupName(group.label);
-    if (!allowed.includes(label) || names.has(label)) throw invalid(`学校文法分组无效：${label}`);
+    const label = required(group.label, '分组名称');
+    if (names.has(label)) throw invalid(`重复分组：${label}`);
     names.add(label);
     return {
       label,
@@ -89,50 +68,38 @@ export function parseEntry(raw: string): Entry {
       usage: optional(group.usage),
     };
   });
-  // Accept nested educational forms as well as the flat wire format.
-  const source =
-    v.forms ??
-    school.flatMap((group) =>
-      Array.isArray(group.forms)
-        ? group.forms.map((form: unknown) => ({ ...object(form), schoolForm: group.label }))
-        : [],
-    );
-  if (!Array.isArray(source) || !source.length || source.length > 32)
-    throw invalid('缺少教育文法条目');
+  const source = v.forms;
+  if (!Array.isArray(source) || !source.length || source.length > 120)
+    throw invalid('缺少变形条目');
   const labels = new Set<string>();
   const forms = source.map((item) => {
     const form = object(item);
-    const schoolForm = groupName(form.schoolForm ?? form.school_form);
-    if (!names.has(schoolForm)) throw invalid(`找不到对应分组：${schoolForm || '未指定'}`);
+    const group = required(form.group, '所属分组');
+    if (!names.has(group)) throw invalid(`找不到对应分组：${group || '未指定'}`);
     const label = required(form.label, '形式名称');
-    const key = `${schoolForm}:${label}`;
+    const key = `${group}:${label}`;
     if (labels.has(key)) throw invalid(`重复条目：${label}`);
     labels.add(key);
     return {
-      schoolForm,
+      group,
       label,
       word: required(form.word, `${label}词形`),
       reading: optional(form.reading),
       usage: optional(form.usage),
       example: required(form.example, `${label}例句`),
-      exampleReading: optional(form.exampleReading ?? form.example_reading),
+      exampleReading: optional(form.exampleReading),
       translation: required(form.translation, `${label}例句翻译`),
     };
   });
-  if (v.inflectable !== undefined && typeof v.inflectable !== 'boolean')
-    throw invalid('活用标记无效');
-  const missingReadings =
-    schoolForms.some((g) => !g.reading) || forms.some((f) => !f.reading || !f.exampleReading);
+  if (typeof v.inflectable !== 'boolean') throw invalid('活用标记无效');
   return {
     word: required(v.word, '单词'),
     reading: optional(v.reading),
     meaning: required(v.meaning, '释义'),
     type: required(v.type, '词性'),
-    note: [optional(v.note), missingReadings ? '部分读音未返回，已保留活用与例句。' : '']
-      .filter(Boolean)
-      .join(' '),
-    inflectable: v.inflectable ?? !names.has('无活用'),
-    schoolForms,
+    note: optional(v.note),
+    inflectable: v.inflectable,
+    groups,
     forms,
   };
 }
@@ -165,12 +132,14 @@ export function partialEntry(raw: string): Entry | null {
     return null;
   }
 }
-export function validateInput(text: string): string {
-  const word = text.trim();
-  if (!word) throw new Error('请先输入一个日语单词。');
-  if (word.length > 40 || /[\r\n。！？!?]/u.test(word))
+export function validateInput(text: string, language: HandbookLanguage = 'ja'): string {
+  const word = text.trim().normalize('NFC');
+  if (!word) throw new Error('请先输入一个单词。');
+  if (word.length > 40 || /[\r\n。！？!?;；.·]/u.test(word))
     throw new Error('请输入一个单词，最多 40 个字符，不要输入整句。');
-  if (!/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u.test(word))
+  if (language === 'ja' && !/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u.test(word))
     throw new Error('请使用日语汉字或假名输入，例如「食べる」。');
+  if (language === 'el' && !/^[\p{Script=Greek}\p{M}]+$/u.test(word))
+    throw new Error('请使用希腊字母输入，例如「γράφω」或「καλός」。');
   return word;
 }

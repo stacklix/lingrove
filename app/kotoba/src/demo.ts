@@ -6,7 +6,7 @@ export const demo: Entry = {
   type: '一段动词',
   inflectable: true,
   note: '去掉词尾「る」，再接相应词尾。可能形与受身形同为「食べられる」，要根据语境区分。',
-  schoolForms: [
+  groups: [
     {
       label: '未然形',
       word: '食べ',
@@ -181,7 +181,7 @@ export const demo: Entry = {
       '快吃！',
     ],
   ].map(([label, word, reading, usage, example, exampleReading, translation]) => ({
-    schoolForm:
+    group:
       (
         {
           辞书形: '终止形',

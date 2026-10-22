@@ -195,7 +195,7 @@ it('groups construction rules by verb class within a single chapter', async () =
 it('opens case-particle lessons from the grammar directory and preserves the selected lesson', async () => {
   const wrapper = mount(App);
   const tab = wrapper.findAll('.bottom-tabs button')[1];
-  expect(tab.text()).toBe('语法');
+  expect(tab.text()).toBe('语法手册');
   await tab.trigger('click');
   await wrapper.get('.directory-toggle').trigger('click');
   await wrapper
@@ -248,4 +248,103 @@ it('navigates conjugation tabs by keyboard and keeps adjective pages separate', 
   await open('谦让语Ⅱ（郑重语）');
   expect(wrapper.get('.guide-content').text()).toContain('田中と申します。');
   wrapper.unmount();
+});
+
+it('uses the selected language for both tabs and preserves separate word drafts', async () => {
+  const wrapper = mount(App);
+  await wrapper.get('#word').setValue('読む');
+  await wrapper.get('select').setValue('el');
+  expect(wrapper.get('#word').attributes('lang')).toBe('el');
+  await wrapper.get('#word').setValue('καλός');
+  expect(wrapper.findAll('.example-options button')).toHaveLength(3);
+  await wrapper.findAll('.example-options button')[1].trigger('click');
+  expect(wrapper.get('.word-summary h2').text()).toBe('καλός');
+  expect(wrapper.findAll('[role=tab]')).toHaveLength(6);
+  expect(wrapper.findAll('.form-card')).toHaveLength(4);
+  expect(wrapper.find('.reading-toggle').exists()).toBe(false);
+  expect(wrapper.find('.bottom-tabs').exists()).toBe(false);
+  await wrapper.findAll('[role=tab]')[3].trigger('click');
+  expect(wrapper.get('[role=tabpanel]').text()).toContain('καλών');
+  await wrapper.get('.result-navigation button').trigger('click');
+  await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
+  expect(wrapper.get('.guide-content h2').text()).toBe('词类与变形总览');
+  await wrapper.get('.directory-toggle').trigger('click');
+  await wrapper
+    .findAll('.guide-topics button')
+    .find((b) => b.text().includes('形容词'))!
+    .trigger('click');
+  expect(wrapper.get('.guide-content h2').text()).toBe('形容词：一致与比较');
+  expect(wrapper.get('.grammar-mapping-table').text()).toContain('καλού');
+  await wrapper.get('select').setValue('ja');
+  expect(wrapper.get('.guide-content h2').text()).toBe('学校文法与教育文法');
+  await wrapper.findAll('.bottom-tabs button')[0].trigger('click');
+  expect(wrapper.get('#word').element.value).toBe('読む');
+  await wrapper.get('select').setValue('el');
+  expect(wrapper.get('#word').element.value).toBe('καλός');
+  await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
+  expect(wrapper.get('.guide-content h2').text()).toBe('形容词：一致与比较');
+  wrapper.unmount();
+});
+
+it('passes the handbook language to lookup and restores root navigation after returning', async () => {
+  const { greekDemos } = await import('../src/greek-demos');
+  const { setRootPage } = await import('@lingrove/host-sdk');
+  vi.mocked(lookup).mockResolvedValueOnce(greekDemos[2]);
+  const wrapper = mount(App);
+  await flushPromises();
+  await wrapper.get('select').setValue('el');
+  await wrapper.get('#word').setValue('φίλου');
+  await wrapper.get('form').trigger('submit');
+  await flushPromises();
+  expect(lookup).toHaveBeenLastCalledWith(
+    'φίλου',
+    expect.any(AbortSignal),
+    expect.any(Function),
+    expect.any(Function),
+    'el',
+  );
+  expect(setRootPage).toHaveBeenLastCalledWith(false);
+  expect(wrapper.get('.word-summary h2').text()).toBe('φίλος');
+  await wrapper.get('.result-navigation button').trigger('click');
+  expect(setRootPage).toHaveBeenLastCalledWith(true);
+  expect(wrapper.get('#word').element.value).toBe('φίλου');
+  expect(wrapper.findAll('.bottom-tabs button')).toHaveLength(2);
+  wrapper.unmount();
+});
+
+it('updates UI language without changing the handbook, draft or selected chapter', async () => {
+  const { initializeAppLanguage, setAppLocale } =
+    await import('../../../packages/host-sdk/src/i18n');
+  const { default: messages } = await import('../src/locales/messages.json');
+  await initializeAppLanguage(messages);
+  setAppLocale('zh-Hans');
+  const wrapper = mount(App);
+  await flushPromises();
+  try {
+    await wrapper.get('select').setValue('el');
+    await wrapper.get('#word').setValue('καλός');
+    window.dispatchEvent(
+      new CustomEvent('lingrove:languagechange', { detail: { language: 'en' } }),
+    );
+    await flushPromises();
+    expect(wrapper.get('h1').text()).toBe('Inflection reference');
+    expect(wrapper.get('select').element.value).toBe('el');
+    expect(wrapper.get('#word').element.value).toBe('καλός');
+    await wrapper.findAll('.bottom-tabs button')[1].trigger('click');
+    await wrapper.get('.directory-toggle').trigger('click');
+    await wrapper
+      .findAll('.guide-topics button')
+      .find((b) => b.text().includes('Adjectives'))!
+      .trigger('click');
+    window.dispatchEvent(
+      new CustomEvent('lingrove:languagechange', { detail: { language: 'ja' } }),
+    );
+    await flushPromises();
+    expect(wrapper.get('.guide-content h2').text()).toBe('形容詞：一致と比較');
+    expect(wrapper.get('select').element.value).toBe('el');
+    expect(wrapper.get('.grammar-mapping-table').text()).toContain('καλού');
+  } finally {
+    wrapper.unmount();
+    setAppLocale('zh-Hans');
+  }
 });

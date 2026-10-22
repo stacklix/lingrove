@@ -560,7 +560,7 @@
     "ja": "Ⅲ類／第3グループ（不規則動詞）"
   },
   "形容词": {
-    "en": "Adjectives",
+    "en": "Adjective",
     "ja": "形容詞"
   },
   "い形容词": {
@@ -2421,7 +2421,7 @@
   },
   "语法手册": {
     "en": "Grammar handbook",
-    "ja": "文法ガイド"
+    "ja": "文法ハンドブック"
   },
   "日语语法": {
     "en": "Japanese grammar",
@@ -3006,5 +3006,1065 @@
   "正在生成…": {
     "en": "Generating…",
     "ja": "生成中…"
+  },
+  "词类与变形总览": {
+    "en": "Word classes and inflection",
+    "ja": "品詞と語形変化の全体像"
+  },
+  "本手册介绍现代希腊语。先区分词类，再决定查动词的人称与时态，还是名词短语的性、数、格。": {
+    "en": "This handbook covers Modern Greek. Identify the word class first, then study verb person and tense or nominal gender, number and case.",
+    "ja": "現代ギリシャ語の手引きです。品詞を見分け、動詞の人称・時制、または名詞句の性・数・格を学びます。"
+  },
+  "有变化的词": {
+    "en": "Inflected words",
+    "ja": "語形変化する語"
+  },
+  "名词、形容词、冠词、代词和动词都可能变形。名词通常有固定的语法性；形容词随所修饰的名词变化。": {
+    "en": "Nouns, adjectives, articles, pronouns and verbs can inflect. Nouns usually have a fixed grammatical gender; adjectives agree with their nouns.",
+    "ja": "名詞・形容詞・冠詞・代名詞・動詞は変化します。名詞の文法上の性は通常固定で、形容詞は名詞に一致します。"
+  },
+  "好朋友：阳性单数 → 阳性复数。": {
+    "en": "Good friend: masculine singular → masculine plural.",
+    "ja": "良い友人：男性単数 → 男性複数。"
+  },
+  "不变的词": {
+    "en": "Invariable words",
+    "ja": "変化しない語"
+  },
+  "副词、介词、连词和许多小品词不按性、数、格变形。它们表达时间、地点、逻辑关系或语气。": {
+    "en": "Adverbs, prepositions, conjunctions and many particles do not decline for gender, number or case. They express circumstances, relations or mood.",
+    "ja": "副詞・前置詞・接続詞・多くの小辞は性・数・格で変化せず、状況や関係、話し手の態度を表します。"
+  },
+  "今天我在这里写字。": {
+    "en": "Today I am writing here.",
+    "ja": "今日はここで書いています。"
+  },
+  "词典中的基本形式": {
+    "en": "Dictionary forms",
+    "ja": "辞書の見出し形"
+  },
+  "动词通常以现在时第一人称单数收录，如 γράφω；形容词常列出三种性，如 καλός, καλή, καλό。": {
+    "en": "Verbs are normally listed in the first-person singular present, such as γράφω. Adjectives commonly list three genders: καλός, καλή, καλό.",
+    "ja": "動詞は通常、現在形の一人称単数（γράφω）で、形容詞は三つの性（καλός, καλή, καλό）で示されます。"
+  },
+  "写；好的（阳性、阴性、中性）。": {
+    "en": "I write; good (masculine, feminine, neuter).",
+    "ja": "私は書く；良い（男性・女性・中性）。"
+  },
+  "主格": {
+    "en": "Nominative",
+    "ja": "主格"
+  },
+  "属格": {
+    "en": "Genitive",
+    "ja": "属格"
+  },
+  "宾格": {
+    "en": "Accusative",
+    "ja": "対格"
+  },
+  "呼格": {
+    "en": "Vocative",
+    "ja": "呼格"
+  },
+  "冠词与四种格": {
+    "en": "Articles and the four cases",
+    "ja": "冠詞と四つの格"
+  },
+  "冠词和名词保持性、数、格一致。现代希腊语有主格、属格、宾格、呼格；冠词本身没有呼格。": {
+    "en": "Articles agree with nouns in gender, number and case. Modern Greek has nominative, genitive, accusative and vocative; articles have no vocative.",
+    "ja": "冠詞は名詞の性・数・格に一致します。現代ギリシャ語には主格・属格・対格・呼格がありますが、冠詞には呼格がありません。"
+  },
+  "主语与直接宾语": {
+    "en": "Subjects and direct objects",
+    "ja": "主語と直接目的語"
+  },
+  "主语通常用主格，直接宾语通常用宾格。不要只按词序判断句子成分。": {
+    "en": "Subjects usually take nominative and direct objects accusative. Word order alone does not identify a grammatical role.",
+    "ja": "主語は通常主格、直接目的語は通常対格です。語順だけで文の役割を判断しないようにします。"
+  },
+  "朋友看见老师。": {
+    "en": "The friend sees the teacher.",
+    "ja": "友人が先生を見ています。"
+  },
+  "所属与称呼": {
+    "en": "Possession and address",
+    "ja": "所有と呼びかけ"
+  },
+  "属格常表达所属；呼格用于直接称呼，前面不加定冠词。": {
+    "en": "Genitive often marks possession. Vocative is used for direct address without a definite article.",
+    "ja": "属格は所有などを表し、呼格は定冠詞を付けずに呼びかけに使います。"
+  },
+  "朋友的书；朋友，过来！": {
+    "en": "The friend's book; Friend, come!",
+    "ja": "友人の本；友よ、来て！"
+  },
+  "不定冠词": {
+    "en": "Indefinite articles",
+    "ja": "不定冠詞"
+  },
+  "ένας、μία／μια、ένα 分别用于阳性、阴性、中性单数，没有复数形式。词形也随格变化。": {
+    "en": "ένας, μία/μια and ένα mark masculine, feminine and neuter singular. They have no plural and also change for case.",
+    "ja": "ένας・μία／μια・ένα は男性・女性・中性の単数を表し、格で変化します。複数形はありません。"
+  },
+  "我有一个朋友。": {
+    "en": "I have a friend.",
+    "ja": "私には友人が一人います。"
+  },
+  "格／数": {
+    "en": "Case / number",
+    "ja": "格／数"
+  },
+  "阳性": {
+    "en": "Masculine",
+    "ja": "男性"
+  },
+  "阴性": {
+    "en": "Feminine",
+    "ja": "女性"
+  },
+  "中性": {
+    "en": "Neuter",
+    "ja": "中性"
+  },
+  "单数主格": {
+    "en": "Singular nominative",
+    "ja": "単数主格"
+  },
+  "单数属格": {
+    "en": "Singular genitive",
+    "ja": "単数属格"
+  },
+  "单数宾格": {
+    "en": "Singular accusative",
+    "ja": "単数対格"
+  },
+  "复数主格": {
+    "en": "Plural nominative",
+    "ja": "複数主格"
+  },
+  "复数属格": {
+    "en": "Plural genitive",
+    "ja": "複数属格"
+  },
+  "复数宾格": {
+    "en": "Plural accusative",
+    "ja": "複数対格"
+  },
+  "名词：性、数、格": {
+    "en": "Nouns: gender, number and case",
+    "ja": "名詞：性・数・格"
+  },
+  "学习名词时连同冠词一起记忆。不同词尾属于不同变化类型，重音位置也可能改变。": {
+    "en": "Learn nouns together with their articles. Endings belong to different declension patterns, and stress may shift.",
+    "ja": "名詞は冠詞と一緒に覚えます。語尾により変化の型が異なり、アクセントが移ることもあります。"
+  },
+  "阳性 -ος 型": {
+    "en": "Masculine nouns in -ος",
+    "ja": "男性名詞 -ος 型"
+  },
+  "以 φίλος 为例，单数常见词尾是 -ος、-ου、-ο、-ε；复数是 -οι、-ων、-ους、-οι。": {
+    "en": "For φίλος, singular endings are -ος, -ου, -ο, -ε; plural endings are -οι, -ων, -ους, -οι.",
+    "ja": "φίλος の単数語尾は -ος・-ου・-ο・-ε、複数語尾は -οι・-ων・-ους・-οι です。"
+  },
+  "朋友：单数的主格、属格、宾格、呼格。": {
+    "en": "Friend: singular nominative, genitive, accusative, vocative.",
+    "ja": "友人：単数の主格・属格・対格・呼格。"
+  },
+  "阴性 -α／-η 型": {
+    "en": "Feminine nouns in -α / -η",
+    "ja": "女性名詞 -α／-η 型"
+  },
+  "常见阴性名词有 χώρα、τιμή；单数属格常加 -ς。复数不能仅凭性别机械套用，需记住所属类型。": {
+    "en": "Common feminine nouns include χώρα and τιμή; singular genitive often adds -ς. Learn each declension rather than deriving plurals from gender alone.",
+    "ja": "χώρα・τιμή などが代表的です。単数属格ではよく -ς が付きますが、複数形は性だけでなく変化型も覚えます。"
+  },
+  "国家；国家的；多个国家。": {
+    "en": "The country; of the country; the countries.",
+    "ja": "国；国の；複数の国。"
+  },
+  "中性与重音": {
+    "en": "Neuter nouns and stress",
+    "ja": "中性名詞とアクセント"
+  },
+  "中性名词的主格、宾格、呼格同形。-ι 型如 παιδί 的属格是 παιδιού，复数为 παιδιά、παιδιών，需注意重音。": {
+    "en": "Neuter nominative, accusative and vocative coincide. For παιδί, note παιδιού, plural παιδιά and genitive plural παιδιών, including their stress.",
+    "ja": "中性名詞では主格・対格・呼格が同形です。παιδί は παιδιού、複数 παιδιά、複数属格 παιδιών となり、アクセントにも注意します。"
+  },
+  "孩子：单数与复数的主格、属格。": {
+    "en": "Child: singular and plural nominative and genitive.",
+    "ja": "子ども：単数・複数の主格と属格。"
+  },
+  "形容词：一致与比较": {
+    "en": "Adjectives: agreement and comparison",
+    "ja": "形容詞：一致と比較"
+  },
+  "形容词随名词的性、数、格变化。先确定名词，再选择形容词形式。": {
+    "en": "Adjectives agree with nouns in gender, number and case. Identify the noun before choosing the adjective form.",
+    "ja": "形容詞は名詞の性・数・格に一致します。名詞を確認してから形容詞の形を選びます。"
+  },
+  "三种性与两种数": {
+    "en": "Three genders and two numbers",
+    "ja": "三つの性と二つの数"
+  },
+  "常见类型为 -ος／-η／-ο，如 καλός、καλή、καλό；也有 -ος／-α／-ο，如 νέος、νέα、νέο。": {
+    "en": "Common patterns include -ος/-η/-ο (καλός, καλή, καλό) and -ος/-α/-ο (νέος, νέα, νέο).",
+    "ja": "代表的な型は -ος／-η／-ο（καλός・καλή・καλό）と -ος／-α／-ο（νέος・νέα・νέο）です。"
+  },
+  "好朋友（男）；好朋友（女）；好孩子。": {
+    "en": "The good male friend; the good female friend; the good child.",
+    "ja": "良い男性の友人；良い女性の友人；良い子ども。"
+  },
+  "定语与表语": {
+    "en": "Attributive and predicative use",
+    "ja": "限定用法と叙述用法"
+  },
+  "修饰名词和作表语时都要一致；作表语的形容词通常不加冠词。": {
+    "en": "Agreement applies both before a noun and after a copula. Predicative adjectives usually have no article.",
+    "ja": "名詞を修飾する場合も、繋辞の後で述語になる場合も一致します。述語の形容詞には通常冠詞を付けません。"
+  },
+  "这些女性朋友很好。": {
+    "en": "The female friends are good.",
+    "ja": "その女性の友人たちは良い人です。"
+  },
+  "比较级与最高级": {
+    "en": "Comparatives and superlatives",
+    "ja": "比較級と最上級"
+  },
+  "常用 πιο 加形容词表达比较；也有合成比较级，如 καλύτερος。相对最高级常在比较级前加定冠词。": {
+    "en": "Use πιο with an adjective or a synthetic comparative such as καλύτερος. The relative superlative commonly adds the definite article to a comparative.",
+    "ja": "πιο＋形容詞や καλύτερος などの比較級を使います。相対最上級では比較級に定冠詞を付けるのが一般的です。"
+  },
+  "好 → 更好 → 最好（阳性单数主格）。": {
+    "en": "Good → better → the best (masculine singular nominative).",
+    "ja": "良い → より良い → 最も良い（男性単数主格）。"
+  },
+  "格": {
+    "en": "Case",
+    "ja": "格"
+  },
+  "阳性单数": {
+    "en": "Masculine singular",
+    "ja": "男性単数"
+  },
+  "阴性单数": {
+    "en": "Feminine singular",
+    "ja": "女性単数"
+  },
+  "中性单数": {
+    "en": "Neuter singular",
+    "ja": "中性単数"
+  },
+  "复数主格为 καλοί／καλές／καλά；复数属格三性均为 καλών。呼格常见于称呼人，其他语境较少使用。": {
+    "en": "Plural nominative: καλοί/καλές/καλά. Genitive plural is καλών in all genders. Vocatives are mainly used to address people.",
+    "ja": "複数主格は καλοί／καλές／καλά、複数属格は三性とも καλών です。呼格は主に人への呼びかけで使います。"
+  },
+  "代词：主语、宾语与所属": {
+    "en": "Pronouns: subjects, objects and possession",
+    "ja": "代名詞：主語・目的語・所有"
+  },
+  "强形式用于强调或对比，弱形式紧靠动词或名词。代词也要区分格和数。": {
+    "en": "Strong forms mark emphasis or contrast; weak forms attach closely to verbs or nouns. Distinguish their case and number.",
+    "ja": "強形は強調や対比に使い、弱形は動詞や名詞に密接に結び付きます。格と数も区別します。"
+  },
+  "主语可省略": {
+    "en": "Omitting subject pronouns",
+    "ja": "主語代名詞の省略"
+  },
+  "动词词尾往往已表明人称，所以 εγώ、εσύ 等主语代词常省略；需要强调时再出现。": {
+    "en": "Verb endings usually identify the person, so subjects such as εγώ and εσύ are often omitted unless emphasized.",
+    "ja": "動詞の語尾で人称が分かるため、εγώ・εσύ などは強調が必要な場合を除き、よく省略されます。"
+  },
+  "我写字。／是我在写字。": {
+    "en": "I am writing. / I am the one writing.",
+    "ja": "書いています。／書いているのは私です。"
+  },
+  "弱宾语代词的位置": {
+    "en": "Position of weak object pronouns",
+    "ja": "弱形目的語代名詞の位置"
+  },
+  "普通陈述句中弱代词通常放在动词前；肯定命令式中通常放在动词后。": {
+    "en": "Weak object pronouns usually precede the verb in statements and follow affirmative imperatives.",
+    "ja": "平叙文では弱形代名詞は通常動詞の前に、肯定命令では後に置きます。"
+  },
+  "我看见他。／看看他！": {
+    "en": "I see him. / Look at him!",
+    "ja": "彼が見えます。／彼を見て！"
+  },
+  "所属代词": {
+    "en": "Possessive pronouns",
+    "ja": "所有代名詞"
+  },
+  "μου、σου、του、της、μας、σας、τους 可放在名词后表示所属；不要和动词前的弱宾语代词混淆。": {
+    "en": "μου, σου, του, της, μας, σας, τους follow nouns to express possession. Distinguish them from weak objects before verbs.",
+    "ja": "μου・σου・του・της・μας・σας・τους は名詞の後で所有を表します。動詞の前の弱形目的語とは区別します。"
+  },
+  "我的书在这里。": {
+    "en": "My book is here.",
+    "ja": "私の本はここにあります。"
+  },
+  "第一人称单数": {
+    "en": "1st person singular",
+    "ja": "一人称単数"
+  },
+  "第二人称单数": {
+    "en": "2nd person singular",
+    "ja": "二人称単数"
+  },
+  "第三人称单数": {
+    "en": "3rd person singular",
+    "ja": "三人称単数"
+  },
+  "第一人称复数": {
+    "en": "1st person plural",
+    "ja": "一人称複数"
+  },
+  "第二人称复数": {
+    "en": "2nd person plural",
+    "ja": "二人称複数"
+  },
+  "第三人称复数": {
+    "en": "3rd person plural",
+    "ja": "三人称複数"
+  },
+  "动词：人称与现在时": {
+    "en": "Verbs: person and present tense",
+    "ja": "動詞：人称と現在形"
+  },
+  "动词与主语在人称和数上一致。现在时通常表达正在进行或习惯性动作。": {
+    "en": "Verbs agree with their subjects in person and number. The present commonly expresses ongoing or habitual actions.",
+    "ja": "動詞は主語の人称と数に一致します。現在形は進行中の動作や習慣を表します。"
+  },
+  "第一变位与第二变位": {
+    "en": "First and second conjugations",
+    "ja": "第一活用と第二活用"
+  },
+  "γράφω 一类现在时第一人称词尾不重读；μιλώ／μιλάω 一类有不同的重音和词尾模式。不能把所有动词都按 -ω 一式变化。": {
+    "en": "γράφω-type verbs have unstressed first-person endings. μιλώ/μιλάω-type verbs follow different stress and ending patterns. One -ω paradigm does not fit every verb.",
+    "ja": "γράφω 型では一人称語尾に強勢がなく、μιλώ／μιλάω 型では強勢や語尾が異なります。すべてを同じ -ω 型で変化させません。"
+  },
+  "我写 → 你写；我说 → 你说。": {
+    "en": "I write → you write; I speak → you speak.",
+    "ja": "私は書く → 君は書く；私は話す → 君は話す。"
+  },
+  "常见不规则动词": {
+    "en": "Common irregular verbs",
+    "ja": "よく使う不規則動詞"
+  },
+  "είμαι、έχω、πάω 等高频动词需单独记忆。είμαι 的现在时依次是 είμαι、είσαι、είναι、είμαστε、είστε、είναι。": {
+    "en": "Learn frequent verbs such as είμαι, έχω and πάω individually. Present είμαι: είμαι, είσαι, είναι, είμαστε, είστε, είναι.",
+    "ja": "είμαι・έχω・πάω などは個別に覚えます。είμαι の現在形は είμαι・είσαι・είναι・είμαστε・είστε・είναι です。"
+  },
+  "我们是朋友。": {
+    "en": "We are friends.",
+    "ja": "私たちは友人です。"
+  },
+  "人称与数": {
+    "en": "Person and number",
+    "ja": "人称と数"
+  },
+  "主语代词": {
+    "en": "Subject pronoun",
+    "ja": "主語代名詞"
+  },
+  "现在时": {
+    "en": "Present",
+    "ja": "現在形"
+  },
+  "时态与体：持续还是整体": {
+    "en": "Tense and aspect: ongoing or whole",
+    "ja": "時制とアスペクト：継続と全体"
+  },
+  "时间回答“何时”，体回答“如何看待动作”。同一个将来事件可以强调持续，也可以作为整体来看。": {
+    "en": "Tense locates an event in time; aspect presents it as ongoing or as a whole. A future event can be viewed either way.",
+    "ja": "時制は「いつ」、アスペクトは「動作をどう捉えるか」を示します。未来でも継続として見るか、全体として見るかを選びます。"
+  },
+  "过去进行时与简单过去时": {
+    "en": "Imperfect and aorist",
+    "ja": "未完了過去とアオリスト"
+  },
+  "έγραφα 表达过去持续或反复写；έγραψα 把写的事件作为一个整体，并不等于动作一定短暂。": {
+    "en": "έγραφα describes ongoing or repeated past writing. έγραψα views a past event as a whole; it need not be brief.",
+    "ja": "έγραφα は過去の継続・反復、έγραψα は出来事全体を表します。全体として捉えることは、短時間であることとは限りません。"
+  },
+  "昨天我写了一封信。": {
+    "en": "Yesterday I wrote a letter.",
+    "ja": "昨日、私は手紙を一通書きました。"
+  },
+  "两种将来表达": {
+    "en": "Two future aspects",
+    "ja": "二つの未来表現"
+  },
+  "θα γράφω 强调将来的持续或反复；θα γράψω 将事件作为整体。不要把两者只理解成不同时间。": {
+    "en": "θα γράφω emphasizes ongoing or repeated future writing; θα γράψω presents the event as a whole. The contrast is aspect, not simply time.",
+    "ja": "θα γράφω は未来の継続・反復、θα γράψω は出来事全体を表します。違いは時間だけでなくアスペクトにあります。"
+  },
+  "明天我会写一封信。": {
+    "en": "Tomorrow I will write a letter.",
+    "ja": "明日、私は手紙を一通書きます。"
+  },
+  "完成时结构": {
+    "en": "Perfect constructions",
+    "ja": "完了の構文"
+  },
+  "έχω 加不变的完成式成分，如 έχω γράψει，表示与现在有关的完成；είχα γράψει 表示在过去某时之前已完成。": {
+    "en": "έχω plus an invariant form, as in έχω γράψει, marks completion relevant to the present. είχα γράψει marks completion before a past reference point.",
+    "ja": "έχω＋不変の形（έχω γράψει）は現在に関係する完了、είχα γράψει は過去の基準時より前の完了を表します。"
+  },
+  "我已经写好这封信。": {
+    "en": "I have written the letter.",
+    "ja": "私はその手紙をもう書きました。"
+  },
+  "形式": {
+    "en": "Form",
+    "ja": "形"
+  },
+  "理解重点": {
+    "en": "Key distinction",
+    "ja": "理解のポイント"
+  },
+  "现在／习惯，未完成体": {
+    "en": "Present or habitual, imperfective",
+    "ja": "現在・習慣、未完了体"
+  },
+  "过去进行时": {
+    "en": "Imperfect",
+    "ja": "未完了過去"
+  },
+  "过去持续或反复": {
+    "en": "Ongoing or repeated in the past",
+    "ja": "過去の継続・反復"
+  },
+  "简单过去时": {
+    "en": "Aorist",
+    "ja": "アオリスト"
+  },
+  "过去的整体事件": {
+    "en": "A past event viewed as a whole",
+    "ja": "過去の出来事全体"
+  },
+  "持续将来时": {
+    "en": "Imperfective future",
+    "ja": "継続未来"
+  },
+  "将来持续或反复": {
+    "en": "Ongoing or repeated in the future",
+    "ja": "未来の継続・反復"
+  },
+  "简单将来时": {
+    "en": "Perfective future",
+    "ja": "完了体未来"
+  },
+  "将来的整体事件": {
+    "en": "A future event viewed as a whole",
+    "ja": "未来の出来事全体"
+  },
+  "现在完成时": {
+    "en": "Present perfect",
+    "ja": "現在完了"
+  },
+  "与现在有关的完成": {
+    "en": "Completion relevant to the present",
+    "ja": "現在に関係する完了"
+  },
+  "语气、语态与否定": {
+    "en": "Mood, voice and negation",
+    "ja": "法・態・否定"
+  },
+  "να、θα 等小品词与动词共同构成表达。非主动形态的意义需结合具体动词判断。": {
+    "en": "Particles such as να and θα combine with verbs. Interpret non-active morphology in the context of the specific verb.",
+    "ja": "να・θα などの小辞が動詞と組み合わさります。非能動の形の意味は、個々の動詞に即して考えます。"
+  },
+  "να 与虚拟式": {
+    "en": "να and the subjunctive",
+    "ja": "να と接続法"
+  },
+  "να 常引出愿望、目的或补语；να γράφω 与 να γράψω 仍有持续／整体的体差异。": {
+    "en": "να introduces wishes, purpose or complements. να γράφω and να γράψω retain the imperfective/perfective contrast.",
+    "ja": "να は願望・目的・補文などを導きます。να γράφω と να γράψω にも継続と全体の違いがあります。"
+  },
+  "我想写一封信。": {
+    "en": "I want to write a letter.",
+    "ja": "手紙を一通書きたいです。"
+  },
+  "命令与禁止": {
+    "en": "Commands and prohibitions",
+    "ja": "命令と禁止"
+  },
+  "肯定命令用命令式，如 γράψε、γράψτε；禁止通常用 μη(ν) 加虚拟式，不直接在肯定命令前加否定词。": {
+    "en": "Affirmative commands use imperatives such as γράψε and γράψτε. Prohibitions normally use μη(ν) with subjunctive forms.",
+    "ja": "肯定命令は γράψε・γράψτε などの命令形、禁止は通常 μη(ν)＋接続法で表します。"
+  },
+  "写吧！／不要写！": {
+    "en": "Write! / Do not write!",
+    "ja": "書いて！／書かないで！"
+  },
+  "主动与非主动": {
+    "en": "Active and non-active voice",
+    "ja": "能動と非能動"
+  },
+  "非主动形态可表示被动、自反、相互等，也有只用非主动形式的动词，不能一律翻译成“被”。": {
+    "en": "Non-active forms can be passive, reflexive or reciprocal, and some verbs only use non-active morphology. They are not always passive in meaning.",
+    "ja": "非能動形は受動・再帰・相互などを表し、非能動形しか使わない動詞もあります。常に受け身とは限りません。"
+  },
+  "孩子在洗澡／洗自己。": {
+    "en": "The child is washing themself.",
+    "ja": "子どもは自分の体を洗っています。"
+  },
+  "δεν 与 μη(ν)": {
+    "en": "δεν and μη(ν)",
+    "ja": "δεν と μη(ν)"
+  },
+  "直陈式通常用 δεν 否定；να 结构和禁止等通常用 μη(ν)。": {
+    "en": "Indicative clauses usually take δεν. να constructions and prohibitions usually take μη(ν).",
+    "ja": "直説法の否定は通常 δεν、να の構文や禁止には通常 μη(ν) を使います。"
+  },
+  "我不写。／我想不写。": {
+    "en": "I am not writing. / I want not to write.",
+    "ja": "私は書きません。／書かずにいたいです。"
+  },
+  "副词与比较": {
+    "en": "Adverbs and comparison",
+    "ja": "副詞と比較"
+  },
+  "副词说明方式、时间、地点或程度，通常不变形。不要把副词和中性形容词只凭外形混为一类。": {
+    "en": "Adverbs express manner, time, place or degree and normally do not inflect. Similar-looking neuter adjectives still have a different role.",
+    "ja": "副詞は様態・時間・場所・程度を示し、通常変化しません。中性形容詞と形が似ていても役割は異なります。"
+  },
+  "方式副词": {
+    "en": "Manner adverbs",
+    "ja": "様態副詞"
+  },
+  "许多副词以 -α 结尾，如 καλά；也有其他类型。形容词 καλός 修饰名词，καλά 可修饰动作。": {
+    "en": "Many adverbs end in -α, such as καλά, but other patterns exist. καλός modifies a noun; καλά can modify an action.",
+    "ja": "καλά のように -α で終わる副詞が多くあります。καλός は名詞を、καλά は動作を修飾できます。"
+  },
+  "他／她希腊语说得很好。": {
+    "en": "They speak Greek well.",
+    "ja": "その人はギリシャ語を上手に話します。"
+  },
+  "时间、地点与程度": {
+    "en": "Time, place and degree",
+    "ja": "時間・場所・程度"
+  },
+  "σήμερα 表示今天，εδώ 表示这里，πολύ 表示很／很多。副词比较可用 πιο καλά，也常用 καλύτερα。": {
+    "en": "σήμερα means today, εδώ here, πολύ very/much. Adverb comparison can use πιο καλά or καλύτερα.",
+    "ja": "σήμερα は今日、εδώ はここ、πολύ はとても・たくさんです。比較には πιο καλά や καλύτερα を使います。"
+  },
+  "今天我感觉更好了。": {
+    "en": "Today I feel better.",
+    "ja": "今日は気分が良くなりました。"
+  },
+  "介词与名词短语": {
+    "en": "Prepositions and noun phrases",
+    "ja": "前置詞と名詞句"
+  },
+  "常见介词通常接宾格；具体意义由介词、动词和上下文一起决定。": {
+    "en": "Common prepositions usually take accusative. Their meaning depends on the preposition, verb and context.",
+    "ja": "一般的な前置詞は通常対格を取ります。意味は前置詞・動詞・文脈の組み合わせで決まります。"
+  },
+  "σε 与定冠词合并": {
+    "en": "σε contracts with the article",
+    "ja": "σε と定冠詞の融合"
+  },
+  "σε 常表示在／到，并与定冠词合成 στον、στη(ν)、στο、στους、στις、στα 等形式。": {
+    "en": "σε often means in, at or to and contracts with articles: στον, στη(ν), στο, στους, στις, στα.",
+    "ja": "σε は場所や方向を表し、定冠詞と結び付いて στον・στη(ν)・στο・στους・στις・στα などになります。"
+  },
+  "我去学校。": {
+    "en": "I am going to school.",
+    "ja": "学校へ行きます。"
+  },
+  "από、με、για": {
+    "en": "από, με, για",
+    "ja": "από・με・για"
+  },
+  "από 常表来源，με 常表伴随或工具，για 常表目的或对象；三者通常接宾格。": {
+    "en": "από often marks origin, με accompaniment or means, and για purpose or intended recipient; all usually take accusative.",
+    "ja": "από は起点、με は同伴や手段、για は目的や対象などを表し、通常対格を取ります。"
+  },
+  "我用铅笔写字。": {
+    "en": "I write with a pencil.",
+    "ja": "鉛筆で書きます。"
+  },
+  "连词、疑问与复句": {
+    "en": "Conjunctions, questions and clauses",
+    "ja": "接続詞・疑問・複文"
+  },
+  "掌握句子连接和信息重点，才能把词形变化放回真实表达中。": {
+    "en": "Connect clauses and track information focus to use inflected forms in real sentences.",
+    "ja": "文のつなぎ方や情報の焦点を学び、語形変化を実際の表現に結び付けます。"
+  },
+  "并列与从属": {
+    "en": "Coordination and subordination",
+    "ja": "並列と従属"
+  },
+  "και 表示“和／并且”，αλλά 表示“但是”，ότι 常引出陈述内容，επειδή 引出原因。": {
+    "en": "και means and, αλλά but, ότι introduces reported content, and επειδή gives a reason.",
+    "ja": "και は「そして」、αλλά は「しかし」、ότι は内容、επειδή は理由を導きます。"
+  },
+  "我知道你在写字。": {
+    "en": "I know that you are writing.",
+    "ja": "君が書いていることを知っています。"
+  },
+  "关系从句": {
+    "en": "Relative clauses",
+    "ja": "関係節"
+  },
+  "που 是常用的不变关系词。关系从句紧接所说明的名词，动词仍与从句主语一致。": {
+    "en": "που is a common invariable relative marker. Relative clauses follow the noun; their verbs still agree with their subjects.",
+    "ja": "που は変化しない関係詞としてよく使います。関係節は名詞に続き、動詞は節内の主語に一致します。"
+  },
+  "我正在读的这本书很好。": {
+    "en": "The book I am reading is good.",
+    "ja": "私が読んでいる本は良い本です。"
+  },
+  "疑问与词序": {
+    "en": "Questions and word order",
+    "ja": "疑問と語順"
+  },
+  "希腊语问号写作 ;。疑问词有 ποιος、τι、πού、πότε 等；词序较灵活，但格和一致关系仍需保持。": {
+    "en": "The Greek question mark is ;. Question words include ποιος, τι, πού and πότε. Word order is flexible, but case and agreement remain essential.",
+    "ja": "ギリシャ語の疑問符は ; です。ποιος・τι・πού・πότε などを使います。語順は柔軟ですが、格と一致は保ちます。"
+  },
+  "书在哪里？": {
+    "en": "Where is the book?",
+    "ja": "本はどこですか。"
+  },
+  "写；书写": {
+    "en": "write",
+    "ja": "書く"
+  },
+  "动词 · 第一变位": {
+    "en": "Verb · first conjugation",
+    "ja": "動詞・第一活用"
+  },
+  "以下展示主动语态的常用形式。词干从 γραφ- 变为 γραψ-；动词没有性、格变化，词尾标记人称与数。": {
+    "en": "Common active-voice forms. The stem changes from γραφ- to γραψ-. Verbs mark person and number, not gender or case.",
+    "ja": "能動態の主な形を示します。語幹は γραφ- から γραψ- に変わります。動詞は人称と数を表し、性・格では変化しません。"
+  },
+  "表示正在进行或习惯性动作。": {
+    "en": "Ongoing or habitual actions.",
+    "ja": "進行中の動作や習慣を表します。"
+  },
+  "将过去的写作事件作为整体。": {
+    "en": "Past writing viewed as a whole.",
+    "ja": "過去の書く行為を全体として捉えます。"
+  },
+  "用 θα 加完成体非过去式表示将来的整体事件。": {
+    "en": "θα plus perfective nonpast presents a future event as a whole.",
+    "ja": "θα＋完了体非過去形で未来の出来事全体を表します。"
+  },
+  "έχω 按人称变化，γράψει 保持不变。": {
+    "en": "έχω changes with person; γράψει stays invariant.",
+    "ja": "έχω は人称で変化し、γράψει は変わりません。"
+  },
+  "我每天写字。": {
+    "en": "I write every day.",
+    "ja": "私は毎日書きます。"
+  },
+  "你每天写字。": {
+    "en": "You write every day.",
+    "ja": "君は毎日書きます。"
+  },
+  "他／她每天写字。": {
+    "en": "They write every day.",
+    "ja": "その人は毎日書きます。"
+  },
+  "我们每天写字。": {
+    "en": "We write every day.",
+    "ja": "私たちは毎日書きます。"
+  },
+  "你们每天写字。": {
+    "en": "You all write every day.",
+    "ja": "あなたたちは毎日書きます。"
+  },
+  "他们每天写字。": {
+    "en": "They all write every day.",
+    "ja": "彼らは毎日書きます。"
+  },
+  "昨天你写了一封信。": {
+    "en": "Yesterday you wrote a letter.",
+    "ja": "昨日、君は手紙を一通書きました。"
+  },
+  "昨天他／她写了一封信。": {
+    "en": "Yesterday they wrote a letter.",
+    "ja": "昨日、その人は手紙を一通書きました。"
+  },
+  "昨天我们写了一封信。": {
+    "en": "Yesterday we wrote a letter.",
+    "ja": "昨日、私たちは手紙を一通書きました。"
+  },
+  "昨天你们写了一封信。": {
+    "en": "Yesterday you all wrote a letter.",
+    "ja": "昨日、あなたたちは手紙を一通書きました。"
+  },
+  "昨天他们写了一封信。": {
+    "en": "Yesterday they all wrote a letter.",
+    "ja": "昨日、彼らは手紙を一通書きました。"
+  },
+  "明天你会写一封信。": {
+    "en": "Tomorrow you will write a letter.",
+    "ja": "明日、君は手紙を一通書きます。"
+  },
+  "明天他／她会写一封信。": {
+    "en": "Tomorrow they will write a letter.",
+    "ja": "明日、その人は手紙を一通書きます。"
+  },
+  "明天我们会写一封信。": {
+    "en": "Tomorrow we will write a letter.",
+    "ja": "明日、私たちは手紙を一通書きます。"
+  },
+  "明天你们会写一封信。": {
+    "en": "Tomorrow you all will write a letter.",
+    "ja": "明日、あなたたちは手紙を一通書きます。"
+  },
+  "明天他们会写一封信。": {
+    "en": "Tomorrow they all will write a letter.",
+    "ja": "明日、彼らは手紙を一通書きます。"
+  },
+  "你已经写好这封信。": {
+    "en": "You have written the letter.",
+    "ja": "君はその手紙をもう書きました。"
+  },
+  "他／她已经写好这封信。": {
+    "en": "They have written the letter.",
+    "ja": "その人はその手紙をもう書きました。"
+  },
+  "我们已经写好这封信。": {
+    "en": "We have written the letter.",
+    "ja": "私たちはその手紙をもう書きました。"
+  },
+  "你们已经写好这封信。": {
+    "en": "You all have written the letter.",
+    "ja": "あなたたちはその手紙をもう書きました。"
+  },
+  "他们已经写好这封信。": {
+    "en": "They all have written the letter.",
+    "ja": "彼らはその手紙をもう書きました。"
+  },
+  "完成体的第二人称命令；复数也可用于礼貌称呼。": {
+    "en": "Perfective second-person commands; plural can also be polite address.",
+    "ja": "完了体の二人称命令です。複数形は丁寧な呼びかけにも使います。"
+  },
+  "写下你的名字。": {
+    "en": "Write your name.",
+    "ja": "君の名前を書いて。"
+  },
+  "请写下您的名字。": {
+    "en": "Please write your name.",
+    "ja": "お名前を書いてください。"
+  },
+  "好的；善良的": {
+    "en": "good; kind",
+    "ja": "良い・親切な"
+  },
+  "规则 -ός／-ή／-ό 型。按三种性、两种数分组，每组列出四种格；呼格用于直接称呼。": {
+    "en": "Regular -ός/-ή/-ό pattern. Three genders × two numbers, each with four cases. Vocative is used in direct address.",
+    "ja": "規則的な -ός／-ή／-ό 型です。三つの性と二つの数に分け、それぞれ四つの格を示します。呼格は呼びかけに使います。"
+  },
+  "形容词与名词的性、数、格一致。": {
+    "en": "The adjective agrees with the noun in gender, number and case.",
+    "ja": "形容詞は名詞の性・数・格に一致します。"
+  },
+  "这位好朋友在这里。": {
+    "en": "The good friend is here.",
+    "ja": "その良い友人はここにいます。"
+  },
+  "这位好朋友的书在这里。": {
+    "en": "The good friend's book is here.",
+    "ja": "その良い友人の本はここにあります。"
+  },
+  "我看见这位好朋友。": {
+    "en": "I see the good friend.",
+    "ja": "その良い友人が見えます。"
+  },
+  "好朋友，来这里！": {
+    "en": "Dear friend, come here!",
+    "ja": "親愛なる友よ、ここに来て！"
+  },
+  "这位女性好朋友在这里。": {
+    "en": "The good female friend is here.",
+    "ja": "その良い女性の友人はここにいます。"
+  },
+  "这位女性好朋友的书在这里。": {
+    "en": "The good female friend's book is here.",
+    "ja": "その良い女性の友人の本はここにあります。"
+  },
+  "我看见这位女性好朋友。": {
+    "en": "I see the good female friend.",
+    "ja": "その良い女性の友人が見えます。"
+  },
+  "我的好朋友，来这里！": {
+    "en": "My dear friend, come here!",
+    "ja": "私の親愛なる友よ、ここに来て！"
+  },
+  "这个好孩子在这里。": {
+    "en": "The good child is here.",
+    "ja": "その良い子はここにいます。"
+  },
+  "这个好孩子的书在这里。": {
+    "en": "The good child's book is here.",
+    "ja": "その良い子の本はここにあります。"
+  },
+  "我看见这个好孩子。": {
+    "en": "I see the good child.",
+    "ja": "その良い子が見えます。"
+  },
+  "好孩子，来这里！": {
+    "en": "My good child, come here!",
+    "ja": "良い子よ、ここに来て！"
+  },
+  "这些好朋友在这里。": {
+    "en": "The good friends are here.",
+    "ja": "その良い友人たちはここにいます。"
+  },
+  "这些好朋友的书在这里。": {
+    "en": "The good friends' books are here.",
+    "ja": "その良い友人たちの本はここにあります。"
+  },
+  "我看见这些好朋友。": {
+    "en": "I see the good friends.",
+    "ja": "その良い友人たちが見えます。"
+  },
+  "好朋友们，来这里！": {
+    "en": "My dear friends, come here!",
+    "ja": "親愛なる友人たちよ、ここに来て！"
+  },
+  "这些女性好朋友在这里。": {
+    "en": "The good female friends are here.",
+    "ja": "その良い女性の友人たちはここにいます。"
+  },
+  "这些女性好朋友的书在这里。": {
+    "en": "The good female friends' books are here.",
+    "ja": "その良い女性の友人たちの本はここにあります。"
+  },
+  "我看见这些女性好朋友。": {
+    "en": "I see the good female friends.",
+    "ja": "その良い女性の友人たちが見えます。"
+  },
+  "女性好朋友们，来这里！": {
+    "en": "My dear female friends, come here!",
+    "ja": "親愛なる女性の友人たちよ、ここに来て！"
+  },
+  "这些好孩子在这里。": {
+    "en": "The good children are here.",
+    "ja": "その良い子どもたちはここにいます。"
+  },
+  "这些好孩子的书在这里。": {
+    "en": "The good children's books are here.",
+    "ja": "その良い子どもたちの本はここにあります。"
+  },
+  "我看见这些好孩子。": {
+    "en": "I see the good children.",
+    "ja": "その良い子どもたちが見えます。"
+  },
+  "好孩子们，来这里！": {
+    "en": "My good children, come here!",
+    "ja": "良い子どもたちよ、ここに来て！"
+  },
+  "朋友（男性）": {
+    "en": "friend (male)",
+    "ja": "友人（男性）"
+  },
+  "阳性名词": {
+    "en": "Masculine noun",
+    "ja": "男性名詞"
+  },
+  "阳性 -ος 型。名词的语法性固定；以下按数分组，列出四种格，呼格不带冠词。": {
+    "en": "Masculine -ος noun with fixed grammatical gender. Each number lists four cases; vocatives take no article.",
+    "ja": "男性の -ος 型名詞です。性は固定です。単数と複数で四つの格を示し、呼格には冠詞を付けません。"
+  },
+  "按主格、属格、宾格、呼格排列。": {
+    "en": "Nominative, genitive, accusative, vocative.",
+    "ja": "主格・属格・対格・呼格の順です。"
+  },
+  "朋友在这里。": {
+    "en": "The friend is here.",
+    "ja": "友人はここにいます。"
+  },
+  "朋友的书在这里。": {
+    "en": "The friend's book is here.",
+    "ja": "友人の本はここにあります。"
+  },
+  "我看见这位朋友。": {
+    "en": "I see the friend.",
+    "ja": "その友人が見えます。"
+  },
+  "朋友，来这里！": {
+    "en": "Friend, come here!",
+    "ja": "友よ、ここに来て！"
+  },
+  "朋友们在这里。": {
+    "en": "The friends are here.",
+    "ja": "友人たちはここにいます。"
+  },
+  "朋友们的书在这里。": {
+    "en": "The friends' books are here.",
+    "ja": "友人たちの本はここにあります。"
+  },
+  "我看见这些朋友。": {
+    "en": "I see the friends.",
+    "ja": "その友人たちが見えます。"
+  },
+  "朋友们，来这里！": {
+    "en": "Friends, come here!",
+    "ja": "友人たちよ、ここに来て！"
+  },
+  "Grammora · 语言手册": {
+    "en": "Grammora · Language handbook",
+    "ja": "Grammora・言語ハンドブック"
+  },
+  "手册语言": {
+    "en": "Handbook language",
+    "ja": "学習する言語"
+  },
+  "希腊语": {
+    "en": "Greek",
+    "ja": "ギリシャ語"
+  },
+  "现代希腊语": {
+    "en": "Modern Greek",
+    "ja": "現代ギリシャ語"
+  },
+  "变形速查": {
+    "en": "Inflection reference",
+    "ja": "語形変化早見"
+  },
+  "查看变形": {
+    "en": "Show forms",
+    "ja": "語形を見る"
+  },
+  "变形分组": {
+    "en": "Inflection groups",
+    "ja": "語形グループ"
+  },
+  "输入日语单词，查看动词活用、形容词变化与例句。": {
+    "en": "Enter a Japanese word to explore verb and adjective forms with examples.",
+    "ja": "日本語の単語を入力して、動詞・形容詞の活用と例文を確認します。"
+  },
+  "输入现代希腊语单词，查看动词的人称、数、时态，以及名词和形容词的性、数、格。": {
+    "en": "Enter a Modern Greek word to explore verb person, number and tense, or noun and adjective gender, number and case.",
+    "ja": "現代ギリシャ語の単語を入力して、動詞の人称・数・時制、名詞や形容詞の性・数・格を確認します。"
+  },
+  "例如：γράφω、καλός、φίλος": {
+    "en": "For example: γράφω, καλός, φίλος",
+    "ja": "例：γράφω、καλός、φίλος"
+  },
+  "动词 · 名词 · 形容词 · 冠词 · 代词": {
+    "en": "Verbs · nouns · adjectives · articles · pronouns",
+    "ja": "動詞・名詞・形容詞・冠詞・代名詞"
+  },
+  "查看离线示例 →": {
+    "en": "View offline example →",
+    "ja": "オフラインの例を見る →"
+  },
+  "离线示例": {
+    "en": "Offline examples",
+    "ja": "オフラインの例"
+  },
+  "从一个例子开始": {
+    "en": "Start with an example",
+    "ja": "例から始める"
+  },
+  "可离线查看": {
+    "en": "Available offline",
+    "ja": "オフラインで閲覧可能"
+  },
+  "正在整理变形与例句": {
+    "en": "Preparing forms and examples",
+    "ja": "語形と例文をまとめています"
+  },
+  "部分结果 · 尚未完成，请勿视为完整变形表": {
+    "en": "Partial results · This inflection table is not yet complete",
+    "ja": "一部の結果・語形変化表はまだ完成していません"
+  },
+  "按时态、性与数分组查看": {
+    "en": "Browse by tense, gender and number",
+    "ja": "時制・性・数のグループ別に表示"
+  },
+  "词形与例句": {
+    "en": "Forms and examples",
+    "ja": "語形と例文"
+  },
+  "此分组的例句正在生成… ·": {
+    "en": "Generating examples for this group… ·",
+    "ja": "このグループの例文を生成中…・"
+  },
+  "· 此词不变形，以下展示原形例句": {
+    "en": "· This word is invariable; original-form examples follow",
+    "ja": "・この語は変化しないため、基本形の例文を示します"
+  },
+  "现代希腊语 · 从词类、性数格到时态与句法。": {
+    "en": "Modern Greek · From word classes and declension to tense and syntax.",
+    "ja": "現代ギリシャ語・品詞と性・数・格から時制と構文まで。"
+  },
+  "希腊语中心 · 性、数、格": {
+    "en": "Centre for the Greek Language · Gender, number and case",
+    "ja": "ギリシャ語センター・性・数・格"
+  },
+  "希腊教育部 · 现代希腊语语法：形容词": {
+    "en": "Greek Ministry of Education · Modern Greek grammar: adjectives",
+    "ja": "ギリシャ教育省・現代ギリシャ語文法：形容詞"
+  },
+  "希腊教育部 · 现代希腊语语法：动词": {
+    "en": "Greek Ministry of Education · Modern Greek grammar: verbs",
+    "ja": "ギリシャ教育省・現代ギリシャ語文法：動詞"
+  },
+  "变形结果未完整生成，请重新查询。": {
+    "en": "The inflection results are incomplete. Please try again.",
+    "ja": "語形変化の結果が不完全です。もう一度検索してください。"
+  },
+  "请先输入一个单词。": {
+    "en": "Enter a word first.",
+    "ja": "まず単語を入力してください。"
+  },
+  "请使用希腊字母输入，例如「γράφω」或「καλός」。": {
+    "en": "Enter a word in Greek letters, such as γράφω or καλός.",
+    "ja": "γράφω や καλός のようにギリシャ文字で入力してください。"
+  },
+  "阳性复数": {
+    "en": "Masculine plural",
+    "ja": "男性複数"
+  },
+  "阴性复数": {
+    "en": "Feminine plural",
+    "ja": "女性複数"
+  },
+  "中性复数": {
+    "en": "Neuter plural",
+    "ja": "中性複数"
+  },
+  "单数": {
+    "en": "Singular",
+    "ja": "単数"
+  },
+  "复数": {
+    "en": "Plural",
+    "ja": "複数"
+  },
+  "虚拟式": {
+    "en": "Subjunctive",
+    "ja": "接続法"
+  },
+  "命令式": {
+    "en": "Imperative",
+    "ja": "命令法"
+  },
+  "冠词": {
+    "en": "Article",
+    "ja": "冠詞"
+  },
+  "代词": {
+    "en": "Pronoun",
+    "ja": "代名詞"
+  },
+  "原形": {
+    "en": "Base form",
+    "ja": "基本形"
+  },
+  "无变化": {
+    "en": "Invariable",
+    "ja": "変化なし"
   }
 }

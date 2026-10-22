@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { demo } from '../src/demo';
+import { greekDemos } from '../src/greek-demos';
+import { greekTopics } from '../src/greek';
+import messages from '../src/locales/messages.json';
 import { parseEntry, partialEntry, validateInput } from '../src/model';
 vi.mock('@lingrove/host-sdk', () => ({
   llm: { complete: vi.fn() },
@@ -44,7 +47,7 @@ describe('query validation and response boundaries', () => {
     expect(await lookup(' 食べる ', signal)).toEqual(demo);
     expect(llm.complete).toHaveBeenLastCalledWith(
       expect.objectContaining({ messages: [{ role: 'user', content: '{"word":"食べる"}' }] }),
-      { signal, onProgress: undefined },
+      { signal, onStatus: undefined, onProgress: undefined },
     );
   });
   it('surfaces unrecognized-word errors', async () => {
@@ -57,24 +60,20 @@ describe('query validation and response boundaries', () => {
 });
 
 it('rejects missing school grammar or educational forms without a matching parent', () => {
-  expect(() => parseEntry(JSON.stringify({ ...demo, schoolForms: [] }))).toThrow();
+  expect(() => parseEntry(JSON.stringify({ ...demo, groups: [] }))).toThrow();
   expect(() =>
-    parseEntry(JSON.stringify({ ...demo, forms: [{ ...demo.forms[0], schoolForm: '不存在' }] })),
+    parseEntry(JSON.stringify({ ...demo, forms: [{ ...demo.forms[0], group: '不存在' }] })),
   ).toThrow();
 });
 
-it('normalizes Japanese group labels, snake-case fields, and missing optional readings', () => {
-  const value = JSON.parse(JSON.stringify(demo));
-  value.schoolForms[1].label = '連用形';
-  for (const form of value.forms) {
-    if (form.schoolForm === '连用形') form.schoolForm = '連用形';
-  }
+it('allows optional readings without inventing them for Greek', () => {
+  const value = JSON.parse(JSON.stringify(greekDemos[1]));
   delete value.note;
   delete value.forms[0].exampleReading;
   const parsed = parseEntry(JSON.stringify(value));
-  expect(parsed.schoolForms[1].label).toBe('连用形');
-  expect(parsed.forms.find((f) => f.label === 'ます形')?.schoolForm).toBe('连用形');
-  expect(parsed.note).toContain('部分读音');
+  expect(parsed.forms[0].exampleReading).toBe('');
+  expect(parsed.note).toBe('');
+  expect(parsed.groups).toHaveLength(6);
 });
 it('shows complete streamed rows without exposing the trailing incomplete row', () => {
   const full = JSON.stringify(demo);
@@ -88,27 +87,68 @@ it('handles a fenced model error without replacing it with a generic format erro
   expect(() => parseEntry('```json\n{"error":"无法识别这个词"}\n```')).toThrow('无法识别这个词');
 });
 
-it('accepts nested forms and snake-case payloads without losing parent links', () => {
-  const nested = {
-    ...demo,
-    forms: undefined,
-    schoolForms: demo.schoolForms.map((group) => ({
-      ...group,
-      forms: demo.forms.filter((f) => f.schoolForm === group.label),
-    })),
-  };
-  expect(parseEntry(JSON.stringify(nested)).forms).toHaveLength(demo.forms.length);
-  const snake = {
-    ...demo,
-    schoolForms: undefined,
-    school_forms: demo.schoolForms,
-    forms: demo.forms.map((f) => ({
-      ...f,
-      schoolForm: undefined,
-      school_form: f.schoolForm,
-      exampleReading: undefined,
-      example_reading: f.exampleReading,
-    })),
-  };
-  expect(parseEntry(JSON.stringify(snake))).toEqual(demo);
+it('validates Greek input independently, including decomposed accents', () => {
+  expect(validateInput(' γράφω ', 'el')).toBe('γράφω');
+  for (const word of ['καλός', 'φίλου', 'έγραψα', 'η'])
+    expect(validateInput(word, 'el')).toBe(word);
+  for (const word of ['食べる', 'grapho', 'γράφω σπίτι', 'γράφω;', 'γράφω?', 'γράφω\nκαλός']) {
+    expect(() => validateInput(word, 'el')).toThrow();
+  }
+  expect(() => validateInput('γράφω', 'ja')).toThrow();
+});
+
+it('routes Greek queries to a Modern Greek prompt and streams the generic schema', async () => {
+  const value = greekDemos[1];
+  vi.mocked(llm.complete).mockImplementationOnce(async (request, options) => {
+    expect(request.system).toContain('MODERN Greek');
+    expect(request.system).toContain('Use en for meanings');
+    expect(request.system).toContain('SIX groups');
+    options?.onProgress?.(JSON.stringify(value));
+    return { text: JSON.stringify(value), model: 'test' };
+  });
+  const progress = vi.fn();
+  expect(await lookup('καλός', new AbortController().signal, progress, undefined, 'el')).toEqual(
+    value,
+  );
+  expect(progress).toHaveBeenCalledWith(value, expect.any(Number));
+});
+
+it('ships full Greek adjective and noun cases, plus all six verb persons', () => {
+  for (const entry of greekDemos) expect(parseEntry(JSON.stringify(entry))).toEqual(entry);
+  expect(greekDemos[1].forms).toHaveLength(24);
+  expect(greekDemos[2].forms).toHaveLength(8);
+  for (const group of greekDemos[1].groups) {
+    expect(greekDemos[1].forms.filter((f) => f.group === group.label).map((f) => f.label)).toEqual([
+      '主格',
+      '属格',
+      '宾格',
+      '呼格',
+    ]);
+  }
+  expect(greekDemos[0].forms.filter((f) => f.group === '现在时')).toHaveLength(6);
+  expect(greekDemos[1].forms.find((f) => f.group === '阳性复数' && f.label === '宾格')?.word).toBe(
+    'καλούς',
+  );
+  expect(greekDemos[2].forms.find((f) => f.group === '复数' && f.label === '属格')?.word).toBe(
+    'των φίλων',
+  );
+});
+
+it('localizes all Greek lessons and offline explanations in English and Japanese', () => {
+  const text: string[] = [];
+  for (const topic of greekTopics) {
+    text.push(topic.title, topic.intro, topic.note);
+    for (const rule of topic.rules) text.push(rule.name, rule.rule, rule.translation);
+    text.push(...(topic.table?.columns ?? []), ...(topic.table?.rows.flat() ?? []));
+  }
+  for (const entry of greekDemos) {
+    text.push(entry.meaning, entry.type, entry.note);
+    for (const group of entry.groups) text.push(group.label, group.usage);
+    for (const form of entry.forms) text.push(form.label, form.usage, form.translation);
+  }
+  const catalog = messages as Record<string, { en: string; ja: string }>;
+  for (const value of text.filter((s) => /[\p{Script=Han}]/u.test(s))) {
+    expect(catalog[value]?.en, value).toBeTruthy();
+    expect(catalog[value]?.ja, value).toBeTruthy();
+  }
 });

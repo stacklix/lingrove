@@ -1,10 +1,10 @@
 {
   "id": "kotoba",
-  "name": "Kotoba",
-  "description": "日语语法手册。按基础、词类与敬语梳理语法，通过例句理解用法。",
+  "name": "Grammora",
+  "description": "多语言变形速查与语法手册。从词形到用法，通过例句理解日语与现代希腊语的词类、变化和语法。",
   "localizedDescriptions": {
-    "en": "A Japanese grammar handbook. Explore grammar foundations, word classes and honorifics through examples.",
-    "ja": "日本語文法ハンドブック。文法の基礎、品詞、敬語を例文で学びます。"
+    "en": "A multilingual inflection reference and grammar handbook. Explore Japanese and Modern Greek word classes, forms and usage through examples.",
+    "ja": "多言語の語形変化早見・文法ハンドブック。日本語と現代ギリシャ語の品詞、語形、用法を例文で学べます。"
   },
   "entry": "index.html",
   "minHostVersion": "1.2.0",

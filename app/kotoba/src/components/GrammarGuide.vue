@@ -34,12 +34,13 @@ function navigateLessons(event: KeyboardEvent) {
   void selectLesson(lessons[next].id, true);
 }
 const directory = ref<HTMLDialogElement>();
-const directoryButton = ref<HTMLButtonElement>();
+let directoryOpener: HTMLElement | null = null;
 const content = ref<HTMLElement>();
 const directoryOpen = ref(false);
 let previousOverflow = '';
 function openDirectory() {
   if (directoryOpen.value || !directory.value) return;
+  directoryOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   previousOverflow = document.body.style.overflow;
   directory.value.showModal();
   directoryOpen.value = true;
@@ -55,7 +56,7 @@ function restorePage() {
 function closeDirectory() {
   directory.value?.close();
   restorePage();
-  directoryButton.value?.focus();
+  directoryOpener?.focus();
 }
 async function selectTopic(id: string) {
   selected.value = id;
@@ -81,26 +82,13 @@ const ruleGroups = computed(() => {
   }
   return groups;
 });
+defineExpose({ openDirectory, directoryOpen });
 </script>
 <template>
   <section class="grammar-guide" :aria-label="t('语法手册')">
-    <button
-      ref="directoryButton"
-      type="button"
-      class="directory-toggle"
-      :aria-label="t('打开目录')"
-      aria-haspopup="dialog"
-      aria-controls="grammar-directory"
-      :aria-expanded="directoryOpen"
-      @click="openDirectory"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg
-      ><span>{{ t('目录') }}</span>
-    </button>
     <div class="intro">
       <p class="eyebrow">{{ t('从规则，理解变化') }}</p>
-      <h1>{{ t('日语语法') }}</h1>
+      <h1>{{ t('语法手册') }}</h1>
       <p class="subtitle">{{ t('先认识词类和敬语，再按词类学习变化与用法。') }}</p>
     </div>
     <dialog

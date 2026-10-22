@@ -1,6 +1,17 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans', sans-serif;
-  color: #283f38;
+  color: var(--ink);
+  color-scheme: light dark;
+  --ink: #283f38;
+  --accent-ink: #fff;
+  --focus: #82a993;
+  --error: #984f3d;
+  --mark: #819b88;
+  --line: var(--border);
+  --nav-bg: rgba(250, 250, 243, 0.97);
+  --toolbar-bg: var(--canvas);
+  --overlay: #14271c55;
+  --sheet-shadow: #152a2926;
   background: var(--canvas);
   --canvas: #f6f4ee;
   font-synthesis: none;
@@ -36,7 +47,7 @@ button:disabled {
   outline: none;
 }
 :root[data-keyboard-focus='true'] :focus-visible {
-  outline: 3px solid #82a993;
+  outline: 3px solid var(--focus);
   outline-offset: 4px;
 }
 main {
@@ -95,7 +106,7 @@ form > label {
   border: 0;
   border-radius: 10px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   padding: 0 22px;
   font-weight: 600;
 }
@@ -122,7 +133,7 @@ form > label {
 .empty-character {
   display: inline-block;
   font-family: serif;
-  color: #819b88;
+  color: var(--mark);
   background: var(--soft);
   width: 66px;
   height: 66px;
@@ -296,7 +307,7 @@ footer {
   line-height: 1.8;
 }
 .error {
-  color: #984f3d;
+  color: var(--error);
   background: var(--paper);
 }
 .loading {
@@ -392,7 +403,14 @@ footer {
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    color: #e1e9df;
+    --ink: #e1e9df;
+    --accent-ink: #14271c;
+    --error: #f3b29d;
+    --mark: #b0cfb8;
+    --focus: #b3d3a4;
+    --nav-bg: rgba(32, 42, 36, 0.97);
+    --overlay: #07150eb3;
+    --sheet-shadow: #00000055;
     background: var(--canvas);
     --canvas: #18221e;
     --paper: #202d26;
@@ -402,19 +420,20 @@ footer {
     --soft: #2e4336;
   }
   .primary {
-    color: #14271c;
+    color: var(--accent-ink);
   }
   .error {
-    color: #f3b29d;
+    color: var(--error);
   }
   .empty-character {
-    color: #b0cfb8;
+    color: var(--mark);
   }
 }
 
 /* Initial clearance for the host Home button; scrolls with the page. */
+main,
 main.native-host {
-  padding-top: 60px;
+  padding-top: 0;
 }
 
 .grammar-hierarchy,
@@ -464,11 +483,11 @@ main.native-host {
 }
 .school-tabs button[aria-selected='true'] {
   background: var(--accent);
-  color: var(--paper);
+  color: var(--accent-ink);
 }
 @media (prefers-color-scheme: dark) {
   .school-tabs button[aria-selected='true'] {
-    color: #14271c;
+    color: var(--accent-ink);
   }
 }
 
@@ -525,67 +544,8 @@ main.native-host.result-page {
   }
 }
 
-/* Shared bottom navigation appearance with Glyphora and Sentra. */
 main {
   padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
-}
-.bottom-tabs {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 45;
-  display: flex;
-  width: min(100%, 660px);
-  padding: 9px 10px calc(9px + env(safe-area-inset-bottom, 0px));
-  background: rgba(250, 250, 243, 0.97);
-  backdrop-filter: blur(18px);
-  border: 1px solid var(--border);
-  border-bottom: 0;
-  border-radius: 18px 18px 0 0;
-  box-shadow: 0 -4px 24px #293e3608;
-}
-.bottom-tabs button {
-  flex: 1;
-  min-width: 0;
-  min-height: 52px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 5px 2px;
-  border: 0;
-  border-radius: 10px;
-  color: var(--muted);
-  background: transparent;
-  font-size: 11px;
-}
-.bottom-tabs button.active {
-  color: var(--accent);
-  background: var(--soft);
-  font-weight: 600;
-}
-.bottom-tabs svg {
-  width: 23px;
-  height: 23px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.65;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-@media (max-width: 760px) {
-  .bottom-tabs {
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-  }
-}
-@media (prefers-color-scheme: dark) {
-  .bottom-tabs {
-    background: rgba(32, 42, 36, 0.97);
-  }
 }
 .guide-topics {
   display: flex;
@@ -689,10 +649,7 @@ main {
 }
 
 .directory-toggle {
-  position: fixed;
-  top: 8px;
-  right: max(18px, calc((100vw - 924px) / 2));
-  z-index: 35;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -727,7 +684,7 @@ main {
   border-radius: 0 0 22px 22px;
   background: var(--canvas);
   color: inherit;
-  box-shadow: 0 16px 48px #152a2926;
+  box-shadow: 0 16px 48px var(--sheet-shadow);
 }
 .directory-sheet[open] {
   display: flex;
@@ -735,7 +692,7 @@ main {
   animation: directory-enter 200ms ease-out;
 }
 .directory-sheet::backdrop {
-  background: #14271c55;
+  background: var(--overlay);
 }
 .directory-inner {
   padding: 0 22px 24px;
@@ -833,10 +790,10 @@ main {
   border-radius: 22px 22px 0 0;
   background: var(--canvas);
   color: inherit;
-  box-shadow: 0 -12px 48px #152a2926;
+  box-shadow: 0 -12px 48px var(--sheet-shadow);
 }
 .special-verbs-sheet::backdrop {
-  background: #14271c55;
+  background: var(--overlay);
 }
 .special-verbs-sheet[open] {
   animation: special-verbs-enter 200ms ease-out;
@@ -1120,4 +1077,133 @@ main {
   color: var(--accent);
   background: var(--soft);
   border-color: var(--accent);
+}
+
+select {
+  font: inherit;
+}
+.lingrove-root-actions {
+  gap: 8px;
+}
+.language-control {
+  min-width: 0;
+  max-width: 204px;
+}
+.language-control select {
+  min-height: 44px;
+  max-width: 100%;
+  width: 204px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--accent);
+  background: var(--paper);
+  font-size: 13px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.offline-examples {
+  margin-top: 32px;
+}
+.examples-heading {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.examples-heading h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.examples-heading > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.example-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.example-options button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 14px;
+  color: var(--muted);
+  background: var(--paper);
+  font-size: 11px;
+  text-align: left;
+}
+.example-options button:hover {
+  border-color: var(--accent);
+}
+.example-options .example-word {
+  font-family: serif;
+  color: var(--ink);
+  font-size: 23px;
+}
+.example-arrow {
+  position: absolute;
+  right: 12px;
+  top: 16px;
+  color: var(--accent);
+}
+.grammar-table-scroll {
+  overflow-x: auto;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+.greek-table {
+  min-width: 440px;
+  table-layout: auto;
+  margin: 0;
+}
+.greek-table th,
+.greek-table td {
+  white-space: nowrap;
+}
+.greek-directory {
+  display: grid;
+  gap: 6px;
+}
+.greek-directory button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  min-height: 44px;
+}
+.greek-directory button span {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+.school-tabs button {
+  min-height: 44px;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+@media (max-width: 400px) {
+  .language-control select {
+    width: 150px;
+    font-size: 12px;
+  }
+  .example-options {
+    grid-template-columns: 1fr;
+  }
+  .example-options button {
+    padding: 16px;
+  }
 }
