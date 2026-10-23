@@ -98,42 +98,87 @@ class DistributionTests(unittest.TestCase):
             run('git', 'init', '--bare', str(remote))
             run('git', 'init', '-b', 'master', str(source))
             run('git', 'remote', 'add', 'origin', str(remote), cwd=source)
+            run('git', 'config', 'user.name', 'Test', cwd=source)
+            run('git', 'config', 'user.email', 'test@example.com', cwd=source)
             (source / 'web').mkdir()
             shutil.copy(ROOT / 'web/ios-pending.html', source / 'web/ios-pending.html')
+            history = source / 'source.txt'
+            def advance(value):
+                history.write_text(value)
+                run('git', 'add', 'source.txt', cwd=source)
+                run('git', '-c', 'commit.gpgsign=false', 'commit', '-m', value, cwd=source)
+                return run('git', 'rev-parse', 'HEAD', cwd=source)
+            first = advance('first source')
             web, ios = source / 'dist', source / 'ios-output'
-            web.mkdir(); ios.mkdir()
-            (web / 'index.html').write_text('home')
-            (web / 'catalog.snapshot.json').write_text('catalog v1')
+            (web / 'snapshot/app/sentra').mkdir(parents=True)
+            (web / 'app/sentra').mkdir(parents=True)
+            (web / 'packages').mkdir()
+            ios.mkdir()
             (web / 'CNAME').write_text('lingrove.stackli.me')
             (ios / 'index.html').write_text('installer v1')
             (ios / 'app.ipa').write_bytes(b'test IPA')
-            env = {**os.environ, 'SOURCE_SHA': 'test', 'GITHUB_OUTPUT': str(folder / 'outputs'),
-                   'GIT_CONFIG_COUNT': '1', 'GIT_CONFIG_KEY_0': 'commit.gpgsign', 'GIT_CONFIG_VALUE_0': 'false'}
-
+            env = {**os.environ, 'SOURCE_SHA': first, 'GITHUB_OUTPUT': str(folder / 'outputs')}
+            def prepare(channel, commit, version):
+                directory = web / 'snapshot' if channel == 'snapshot' else web
+                catalog = 'catalog.snapshot.json' if channel == 'snapshot' else 'catalog.json'
+                (directory / catalog).write_text(version)
+                (directory / 'index.html').write_text(channel + ' home ' + version)
+                (directory / 'app/sentra/index.html').write_text(channel + ' HTML ' + version)
+                (directory / 'publication.json').write_text(json.dumps({
+                    'channel': channel, 'commit': commit,
+                    'ref': 'refs/heads/master' if channel == 'snapshot' else 'refs/tags/v1.0.0',
+                }))
+                if channel == 'release': (directory / 'packages/app.zip').write_bytes(b'release ZIP')
             def publish(mode, directory):
-                run('bash', str(ROOT / 'scripts/publish-pages-tree.sh'), mode, str(directory), cwd=source, env=env)
-
-            def read(path):
-                return run('git', '--git-dir', str(remote), 'show', f'gh-pages:{path}')
-
-            publish('web', web)
+                try:
+                    run('node', str(ROOT / 'scripts/publish-pages-tree.mjs'), mode, str(directory), cwd=source, env=env)
+                except subprocess.CalledProcessError as error:
+                    error.add_note(error.stderr or '')
+                    raise
+            def read(name):
+                return run('git', '--git-dir', str(remote), 'show', f'gh-pages:{name}')
+            prepare('snapshot', first, 'debug v1')
+            publish('snapshot', web)
             self.assertIn('安装包尚未发布', read('ios/index.html'))
             publish('ios', ios)
-            self.assertEqual(read('catalog.snapshot.json'), 'catalog v1')
+            self.assertEqual(read('snapshot/catalog.snapshot.json'), 'debug v1')
             self.assertEqual(read('CNAME'), 'lingrove.stackli.me')
             self.assertEqual(read('ios/app.ipa'), 'test IPA')
-            (web / 'catalog.snapshot.json').write_text('catalog v2')
-            publish('web', web)
-            self.assertEqual(read('ios/index.html'), 'installer v1')
+            second = advance('second source')
+            prepare('release', second, 'release v1')
+            publish('release', web)
+            self.assertEqual(read('snapshot/app/sentra/index.html'), 'snapshot HTML debug v1')
+            self.assertEqual(read('app/sentra/index.html'), 'release HTML release v1')
+            self.assertEqual(read('packages/app.zip'), 'release ZIP')
+            self.assertEqual(read('ios/app.ipa'), 'test IPA')
+            third = advance('third source')
+            prepare('snapshot', third, 'debug v2')
+            publish('snapshot', web)
+            self.assertEqual(read('snapshot/catalog.snapshot.json'), 'debug v2')
+            self.assertEqual(read('catalog.json'), 'release v1')
+            self.assertEqual(read('app/sentra/index.html'), 'release HTML release v1')
+            self.assertEqual(read('catalog.json'), 'release v1')
+            self.assertEqual(read('index.html'), 'release home release v1')
+            before = read('publication.json')
+            prepare('release', first, 'old release')
+            with self.assertRaises(subprocess.CalledProcessError) as rejected: publish('release', web)
+            self.assertIn('Refusing older or divergent release source', rejected.exception.stderr)
+            self.assertEqual(read('publication.json'), before)
+            prepare('snapshot', first, 'old debug')
+            with self.assertRaises(subprocess.CalledProcessError) as rejected: publish('snapshot', web)
+            self.assertIn('Refusing older or divergent snapshot source', rejected.exception.stderr)
+            self.assertEqual(read('snapshot/catalog.snapshot.json'), 'debug v2')
             (ios / 'app.ipa').unlink()
             (ios / 'new.ipa').write_bytes(b'new IPA')
             publish('ios', ios)
-            self.assertEqual(read('catalog.snapshot.json'), 'catalog v2')
+            self.assertEqual(read('snapshot/catalog.snapshot.json'), 'debug v2')
+            self.assertEqual(read('catalog.json'), 'release v1')
             self.assertEqual(read('ios/new.ipa'), 'new IPA')
             files = run('git', '--git-dir', str(remote), 'ls-tree', '-r', '--name-only', 'gh-pages')
             self.assertNotIn('ios/app.ipa', files)
+            self.assertNotIn('\nrelease/', '\n' + files)
+            self.assertNotIn('\ncatalog.snapshot.json', '\n' + files)
             self.assertEqual(run('git', '--git-dir', str(remote), 'rev-list', '--count', 'gh-pages'), '1')
-
 
 if __name__ == '__main__':
     unittest.main()

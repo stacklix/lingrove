@@ -44,6 +44,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     }
 }
 struct HomeView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @ObservedObject var store: ModuleStore
     @StateObject private var pages = ModulePageCache()
     @State private var didCheck = false
@@ -61,7 +62,6 @@ struct HomeView: View {
     @State private var connectionTestID = UUID()
     @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
     private var debugEnabled: Bool { resourceMode == .debug }
-    private var snapshotEnabled: Bool { resourceMode == .snapshot }
     @State private var initialResourceMode = ChildAppResourceMode.bundled
     @State private var initialDebugAddress: String?
     @State private var draftAppLanguage = "system"
@@ -131,7 +131,7 @@ struct HomeView: View {
                 HStack(spacing: 8) {
                     Text("Lingrove").font(.title2.weight(.semibold)).accessibilityAddTraits(.isHeader)
                     Spacer(minLength: 8)
-                    if DebugServer.available && (debugEnabled || snapshotEnabled) {
+                    if DebugServer.available && debugEnabled {
                         Button(action: refreshModules) {
                             Group {
                                 if refreshingModules { ProgressView() }
@@ -167,8 +167,6 @@ struct HomeView: View {
                     Form {
                         if DebugServer.available {
                             Section("开发模式") {
-                                Toggle("快照模式", isOn: Binding(get: { snapshotEnabled }, set: setSnapshotEnabled))
-                                    .accessibilityIdentifier("snapshot-toggle")
                                 HStack(spacing: 12) {
                                     Button {
                                         withAnimation { debugSettingsExpanded.toggle() }
@@ -215,7 +213,7 @@ struct HomeView: View {
                                     Text("选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。")
                                         .font(.footnote).foregroundStyle(.secondary)
                                 }
-                                if snapshotEnabled && !store.notice.isEmpty {
+                                if !store.notice.isEmpty {
                                     Text(store.notice).font(.footnote).foregroundStyle(.secondary)
                                 }
                             }
@@ -231,7 +229,7 @@ struct HomeView: View {
                                     HStack(spacing: 12) {
                                         Text(module.name)
                                         Spacer(minLength: 8)
-                                        if snapshotEnabled {
+                                        if !debugEnabled {
                                             ModuleListDownloadStatusView(record: store.downloadRecords[module.id], progress: store.downloadProgress[module.id])
                                                 .accessibilityIdentifier("module-download-status-\(module.id)")
                                         } else {
@@ -321,6 +319,10 @@ struct HomeView: View {
             .alert("通用模型设置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(AppLanguage.text(modelError)) }
         }.tint(Color(uiColor: LingroveTheme.accent))
         .onChange(of: store.modules) { _, modules in pages.reconcile(modules: modules, blocked: store.blocked) }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active, didCheck else { return }
+            Task { await store.checkForUpdates() }
+        }
         .onChange(of: store.blocked) { _, blocked in pages.reconcile(modules: store.modules, blocked: blocked) }
         .onChange(of: pages.reloadStates) { _, _ in finishRefreshIfNeeded() }
         .task(id: refreshSucceeded) {
@@ -350,8 +352,7 @@ struct HomeView: View {
         refreshingModules = true
         waitingForReloadResults = false
         Task { @MainActor in
-            updateCheckSucceeded = true
-            if snapshotEnabled || debugEnabled { updateCheckSucceeded = await store.checkForUpdates(forceSnapshot: true) }
+            updateCheckSucceeded = await store.checkForUpdates(forceRefresh: true)
             waitingForReloadResults = true
             pages.reloadAll(store: store)
             finishRefreshIfNeeded()
@@ -367,11 +368,6 @@ struct HomeView: View {
         resourceMode = mode
         store.resourceModeChanged()
         draftModules = store.modules
-    }
-    private func setSnapshotEnabled(_ enabled: Bool) {
-        guard showingSettings else { return }
-        clearConnectionTest()
-        setResourceMode(enabled ? .snapshot : .bundled)
     }
     private func setDebugEnabled(_ enabled: Bool) {
         guard showingSettings else { return }
@@ -445,15 +441,13 @@ struct HomeView: View {
         if DebugServer.available { debugServers.save() }
         guard DebugServer.available,
               initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress else { return }
-        if snapshotEnabled || debugEnabled {
-            let expectedMode = resourceMode
-            let expectedAddress = DebugServer.activeAddress
-            Task { @MainActor in
-                await store.checkForUpdates()
-                guard resourceMode == expectedMode, DebugServer.activeAddress == expectedAddress else { return }
-                pages.reloadAll(store: store)
-            }
-        } else { pages.reloadAll(store: store) }
+        let expectedMode = resourceMode
+        let expectedAddress = DebugServer.activeAddress
+        Task { @MainActor in
+            await store.checkForUpdates()
+            guard resourceMode == expectedMode, DebugServer.activeAddress == expectedAddress else { return }
+            pages.reloadAll(store: store)
+        }
     }
 
 
@@ -882,7 +876,7 @@ struct ModuleDeveloperDetailsView: View {
     private var module: Module? { store.modules.first { $0.id == moduleID } }
 
     private func localSource(_ module: Module) -> String {
-        store.isDownloaded(module) ? (module.isSnapshot ? "快照下载" : "Release 下载") : "宿主内置"
+        store.isDownloaded(module) ? "Release 下载" : "宿主内置"
     }
 
     private func resourceSource(_ module: Module) -> ModuleResourceSource {
@@ -897,18 +891,18 @@ struct ModuleDeveloperDetailsView: View {
     var body: some View {
         Form {
             if let module {
-                if resourceMode == .snapshot {
+                if resourceMode != .debug {
                     Section {
                         HStack(spacing: 12) {
                             Text("下载状态")
                             Spacer(minLength: 8)
                             ModuleDownloadStatusView(state: store.downloadRecords[moduleID]?.state,
                                                      progress: store.downloadProgress[moduleID],
-                                                     installed: module.isSnapshot && store.isDownloaded(module))
+                                                     installed: store.isDownloaded(module))
                         }
                         .fixedSize(horizontal: false, vertical: true)
                         .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-                        ModuleInformationRow(title: "最近下载时间", value: (module.isSnapshot ? store.lastUpdatedAt(for: module) : nil).map {
+                        ModuleInformationRow(title: "最近下载时间", value: store.lastUpdatedAt(for: module).map {
                             $0.formatted(Date.FormatStyle(date: .abbreviated, time: .standard).locale(Locale(identifier: AppLanguage.current)))
                         } ?? AppLanguage.text("暂无记录"))
                         .accessibilityIdentifier("module-download-time")
@@ -948,7 +942,7 @@ struct ModuleDeveloperDetailsView: View {
                         .accessibilityValue(Text(verbatim: AppLanguage.text(value)))
                         .accessibilityIdentifier("module-resource-source")
                     if let address = source.remoteURL {
-                        ModuleInformationRow(title: "版本", value: store.debugResourceVersion(for: module, at: address) ?? AppLanguage.text("未获取版本"))
+                        ModuleInformationRow(title: "目录版本", value: store.catalogVersion(for: module))
                         ModuleInformationRow(title: "资源地址", value: address.absoluteString)
                     } else {
                         ModuleInformationRow(title: "版本", value: module.version)

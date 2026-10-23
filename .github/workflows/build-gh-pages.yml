@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   build-and-publish:
+    if: github.ref == 'refs/heads/master' || github.ref_type == 'tag'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -24,6 +25,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v5
         with:
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Set up Node
@@ -50,11 +52,12 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      - name: Publish web applications, preserving iOS installation files
+      - name: Publish selected channel, preserving the other channel and iOS
         id: publish
         env:
           SOURCE_SHA: ${{ github.sha }}
-        run: bash scripts/publish-pages-tree.sh web dist
+          PUBLISH_CHANNEL: ${{ github.ref_type == 'tag' && 'release' || 'snapshot' }}
+        run: node scripts/publish-pages-tree.mjs "$PUBLISH_CHANNEL" dist
 
       - name: Build and verify GitHub Pages
         timeout-minutes: 9

@@ -28,6 +28,7 @@ test('watches build inputs, including new apps and shared locales, while ignorin
     assert.equal(isBuildInput(file), true, file);
   for (const file of [
     'dist/app/verso/assets/index.js',
+    'dist/snapshot/app/verso/assets/index.js',
     'dist/packages/verso.zip',
     'ios/Lingrove/Resources/BuiltinModules/verso/index.html',
     'ios/Lingrove/Resources/Localizable.xcstrings',

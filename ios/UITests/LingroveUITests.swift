@@ -311,13 +311,13 @@ final class LingroveUITests: XCTestCase {
         app.buttons["debug-address-delete-\(secondID)"].tap()
         XCTAssertFalse(restoredSecond.exists)
         XCTAssertFalse(addressSelection(app, restoredFirst).isSelected)
-        tapSwitch(app.switches["snapshot-toggle"].firstMatch)
+        XCTAssertFalse(app.switches["snapshot-toggle"].exists)
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         XCTAssertEqual(debugFields(app).count, 1)
         addressSelection(app, restoredFirst).tap()
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         XCTAssertTrue(addressResult(app, restoredFirst).waitForExistence(timeout: 15))
-        XCTAssertEqual(app.switches["snapshot-toggle"].firstMatch.value as? String, "0")
+        XCTAssertFalse(app.switches["snapshot-toggle"].exists)
         XCTAssertTrue(restoredFirst.exists)
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         app.buttons["settings-back"].tap()
@@ -482,38 +482,29 @@ final class LingroveUITests: XCTestCase {
         settings.tap()
         XCTAssertTrue(app.webViews.staticTexts["学习偏好"].firstMatch.waitForExistence(timeout: 10))
     }
-    func testSnapshotDetailsUseDownloadLabelsLightMode() { checkSnapshotDetailsLabels(appearance: "light") }
-    func testSnapshotDetailsUseDownloadLabelsDarkMode() { checkSnapshotDetailsLabels(appearance: "dark") }
-    private func checkSnapshotDetailsLabels(appearance: String) {
+    func testNormalDetailsUseDownloadLabelsLightMode() { checkNormalDetailsLabels(appearance: "light") }
+    func testNormalDetailsUseDownloadLabelsDarkMode() { checkNormalDetailsLabels(appearance: "dark") }
+    private func checkNormalDetailsLabels(appearance: String) {
         let app = XCUIApplication()
         app.launchArguments += ["-app.appearance", appearance,
-                                "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+                                "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)",
+                                "-resources.mode", "bundled"]
         app.launch()
         XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 20))
         app.buttons["应用设置"].tap()
-        let snapshotToggle = app.switches["snapshot-toggle"]
-        if snapshotToggle.value as? String == "1" { tapSwitch(snapshotToggle) }
-        tapSwitch(snapshotToggle)
-        XCTAssertEqual(snapshotToggle.value as? String, "1")
+        XCTAssertFalse(app.switches["snapshot-toggle"].exists)
         app.buttons["module-developer-details-sentra"].tap()
         XCTAssertTrue(app.staticTexts["下载状态"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["最近下载时间"].exists)
         XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.label, "应用来源")
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "module-resource-source").count, 1)
         let source = app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String ?? ""
-        XCTAssertTrue(["宿主内置", "快照下载", "Release 下载"].contains(source), "Unopened local pages should show their selected package source")
+        XCTAssertTrue(["宿主内置", "Release 下载"].contains(source), "Unopened local pages should show their selected package source")
         XCTAssertFalse(app.staticTexts["资源地址"].exists)
         XCTAssertFalse(app.staticTexts["刷新状态"].exists)
         XCTAssertFalse(app.staticTexts["最近刷新时间"].exists)
         let screenshot = XCTAttachment(screenshot: app.screenshot())
-        screenshot.name = "Snapshot-download-details-\(appearance)"; screenshot.lifetime = .keepAlways; add(screenshot)
-        app.navigationBars["Sentra"].buttons.firstMatch.tap()
-        tapSwitch(app.switches["snapshot-toggle"])
-        app.buttons["module-developer-details-sentra"].tap()
-        XCTAssertTrue(app.staticTexts["刷新状态"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["最近刷新时间"].exists)
-        XCTAssertFalse(app.staticTexts["下载状态"].exists)
-        XCTAssertFalse(app.staticTexts["最近下载时间"].exists)
+        screenshot.name = "Normal-download-details-\(appearance)"; screenshot.lifetime = .keepAlways; add(screenshot)
     }
 
     func testRefreshStatusInSettingsLightMode() throws { try checkRefreshStatusInSettings(appearance: "light", fails: false) }

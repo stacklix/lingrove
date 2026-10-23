@@ -4,10 +4,9 @@ import path from 'node:path';
 import { moduleBuildVersion } from './build-version.mjs';
 process.env.MODULE_BUILD_VERSION = moduleBuildVersion();
 const mode = process.argv.includes('--release') ? 'production' : 'debug';
+process.env.MODULE_CHANNEL ||= mode === 'production' ? 'release' : 'snapshot';
 const root = path.resolve(import.meta.dirname, '..');
-const npm = process.env.npm_execpath
-  ? [process.execPath, process.env.npm_execpath]
-  : ['npm'];
+const npm = process.env.npm_execpath ? [process.execPath, process.env.npm_execpath] : ['npm'];
 const modules = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));
 if (
   !Array.isArray(modules) ||
@@ -22,16 +21,7 @@ await rm(path.join(root, 'dist'), { recursive: true, force: true });
 for (const module of modules) {
   const result = spawnSync(
     npm[0],
-    [
-      ...npm.slice(1),
-      'run',
-      'build',
-      '--workspace',
-      `app/${module}`,
-      '--',
-      '--mode',
-      mode,
-    ],
+    [...npm.slice(1), 'run', 'build', '--workspace', `app/${module}`, '--', '--mode', mode],
     {
       cwd: root,
       stdio: 'inherit',

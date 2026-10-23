@@ -4423,50 +4423,6 @@
         }
       }
     },
-    "快照模式": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "快照模式"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Snapshot mode"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "スナップショットモード"
-          }
-        }
-      }
-    },
-    "快照下载": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "快照下载"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Snapshot download"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "スナップショットのダウンロード"
-          }
-        }
-      }
-    },
     "添加调试地址": {
       "localizations": {
         "zh-Hans": {
@@ -5171,28 +5127,6 @@
         }
       }
     },
-    "应用信息刷新失败，请确认调试服务器可用后重试。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "应用信息刷新失败，请确认调试服务器可用后重试。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Could not refresh app information. Check that the debug server is available, then try again."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アプリ情報を更新できませんでした。デバッグサーバーに接続できることを確認して、もう一度お試しください。"
-          }
-        }
-      }
-    },
     "应用来源": {
       "localizations": {
         "zh-Hans": {
@@ -5237,24 +5171,24 @@
         }
       }
     },
-    "未获取版本": {
+    "目录版本": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "未获取版本"
+            "value": "目录版本"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Version unavailable"
+            "value": "Catalog version"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "バージョン未取得"
+            "value": "カタログのバージョン"
           }
         }
       }

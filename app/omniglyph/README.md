@@ -34,7 +34,7 @@ npm run check
 npm run debug:serve
 ```
 
-调试服务使用统一 `dist/`，构建后 `/app/omniglyph/` 与 `/app/sentra/` 同时可用。新宿主原生能力需要重新安装宿主，后续网页改动可直接刷新子应用。
+调试服务使用统一 `dist/`，构建后 `/snapshot/app/omniglyph/` 与 `/snapshot/app/sentra/` 同时可用。新宿主原生能力需要重新安装宿主，后续网页改动可直接刷新子应用。
 
 原生集成测试：`LingroveUITests/testOmniglyphNativeWritingAndHistory`，覆盖页内原生落笔、重启恢复笔迹、提交描摹评分、测试 Tab 和字母详情。运行时测试同时覆盖桥接与按会话回收。
 

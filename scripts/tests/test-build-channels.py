@@ -21,22 +21,17 @@ with tempfile.TemporaryDirectory(prefix='lingrove-channels-') as temporary:
     (root / 'modules.json').write_text('["sentra"]')
     (root / 'index.html').write_text('home')
     (root / 'source.txt').write_text('tag source')
-    (root / '.gitignore').write_text('dist/\nbin/\n')
-    (root / 'bin').mkdir()
-    npm = root / 'bin/npm'
-    npm.write_text('''#!/usr/bin/env python3
-from pathlib import Path
-import sys
-if sys.argv[1] == 'ci': sys.exit(0)
-assert sys.argv[1:3] == ['run', 'build']
-output = Path('dist/app/sentra')
-output.mkdir(parents=True)
-(output/'index.html').write_text(Path('source.txt').read_text())
+    (root / '.gitignore').write_text('dist/\nios/Lingrove/Resources/BuiltinModules/\n')
+    npm = root / 'compiler.cjs'
+    npm.write_text('''const fs = require('node:fs');
+if (process.argv[2] === 'ci') process.exit(0);
+if (process.argv[2] !== 'run' || process.argv[3] !== 'build') throw Error('Unexpected npm command');
+fs.mkdirSync('dist/app/sentra', {recursive: true});
+fs.writeFileSync('dist/app/sentra/index.html', fs.readFileSync('source.txt'));
 ''')
-    npm.chmod(0o755)
-    env = {**os.environ, 'MODULE_BUILD_VERSION': '20261020', 'PATH': str(root / 'bin') + os.pathsep + os.environ['PATH']}
-    def run(*args):
-        subprocess.run(args, cwd=root, env=env, check=True, stdout=subprocess.DEVNULL)
+    env = {**os.environ, 'MODULE_BUILD_VERSION': '20261020', 'npm_execpath': str(npm), 'GITHUB_REF_TYPE': 'branch', 'GITHUB_REF': 'refs/heads/master'}
+    def run(*args, extra_env=None):
+        subprocess.run(args, cwd=root, env={**env, **(extra_env or {})}, check=True, stdout=subprocess.DEVNULL)
     run('git', 'init', '-b', 'master')
     run('git', 'config', 'user.email', 'test@example.com')
     run('git', 'config', 'user.name', 'Test')
@@ -44,31 +39,40 @@ output.mkdir(parents=True)
     run('git', '-c', 'commit.gpgsign=false', 'commit', '-m', 'release source')
     run('node', 'scripts/build-channels.mjs')
     assert host_catalog.read_text() == 'host-only-catalog', 'Child build must not read or rewrite the host catalog'
-    assert (root / 'dist/catalog.snapshot.json').is_file()
+    assert (root / 'dist/snapshot/catalog.snapshot.json').is_file()
+    assert not (root / 'dist/catalog.snapshot.json').exists()
     assert not (root / 'dist/catalog.json').exists()
     assert not (root / 'dist/release').exists()
-    print('PASS no tags publishes Snapshot only')
+    assert not list((root / 'dist').rglob('*.zip'))
+    print('PASS master publishes debug catalog and HTML under snapshot/ without ZIPs')
     run('git', '-c', 'tag.gpgsign=false', 'tag', 'v1.0.0')
     (root / 'source.txt').write_text('master source')
     manifest_path = root / 'app/sentra/manifest.json'
     tag_manifest = json.loads(manifest_path.read_text())
-    master_manifest = json.loads(manifest_path.read_text())
-    master_manifest['localizedDescriptions']['en'] = 'Updated introduction on master.'
+    master_manifest = {**tag_manifest, 'localizedDescriptions': {**tag_manifest['localizedDescriptions'], 'en': 'Updated introduction on master.'}}
     manifest_path.write_text(json.dumps(master_manifest))
+    run('git', 'add', '.')
+    run('git', '-c', 'commit.gpgsign=false', 'commit', '-m', 'new master source')
     run('node', 'scripts/build-channels.mjs')
-    snapshot = json.loads((root / 'dist/catalog.snapshot.json').read_text())['modules'][0]
-    release = json.loads((root / 'dist/catalog.json').read_text())['modules'][0]
-    assert snapshot['version'] == release['version'] == '20261020'
-    assert snapshot['downloadUrl'].endswith('-20261020-snapshot.zip')
-    assert release['downloadUrl'].endswith('-20261020.zip')
-    assert '/release/packages/' in release['downloadUrl']
+    snapshot = json.loads((root / 'dist/snapshot/catalog.snapshot.json').read_text())['modules'][0]
+    assert all(key not in snapshot for key in ['downloadUrl', 'size', 'sha256'])
+    assert snapshot['webUrl'].endswith('/snapshot/app/sentra/')
     assert snapshot['localizedDescriptions'] == master_manifest['localizedDescriptions']
+    assert (root / 'dist/snapshot/app/sentra/index.html').read_bytes() == b'master source'
+    assert not (root / 'dist/release').exists(), 'master must not rebuild tags'
+    assert not (root / 'dist/catalog.json').exists()
+    run('git', 'checkout', '--detach', 'v1.0.0')
+    run('node', 'scripts/build-channels.mjs', extra_env={'GITHUB_REF_TYPE': 'tag', 'GITHUB_REF': 'refs/tags/v1.0.0'})
+    release = json.loads((root / 'dist/catalog.json').read_text())['modules'][0]
+    assert release['downloadUrl'].endswith('/packages/sentra-20261020.zip')
+    assert release['webUrl'].endswith('/app/sentra/')
     assert release['localizedDescriptions'] == tag_manifest['localizedDescriptions']
-    with zipfile.ZipFile(root / 'dist/packages' / snapshot['downloadUrl'].split('/')[-1]) as archive:
-        assert archive.read('index.html') == b'master source'
-        assert json.loads(archive.read('manifest.json'))['localizedDescriptions'] == snapshot['localizedDescriptions']
-    with zipfile.ZipFile(root / 'dist/release/packages' / release['downloadUrl'].split('/')[-1]) as archive:
+    assert (root / 'dist/app/sentra/index.html').read_bytes() == b'tag source'
+    assert not (root / 'dist/snapshot').exists(), 'tag must not produce debug outputs'
+    assert not (root / 'dist/release').exists(), 'formal outputs belong at root'
+    publication = json.loads((root / 'dist/publication.json').read_text())
+    assert publication['ref'] == 'refs/tags/v1.0.0'
+    with zipfile.ZipFile(root / 'dist/packages' / release['downloadUrl'].split('/')[-1]) as archive:
         assert archive.read('index.html') == b'tag source'
-        assert json.loads(archive.read('manifest.json'))['localizedDescriptions'] == release['localizedDescriptions']
-    print('PASS tagged release uses tag source; Snapshot uses master source; both catalogs and ZIPs verified')
-    print('PASS translated introductions follow their child-app channel in catalogs and ZIPs')
+        assert json.loads(archive.read('manifest.json'))['localizedDescriptions'] == tag_manifest['localizedDescriptions']
+    print('PASS master never rebuilds tags; tag emits matching HTML, JSON and ZIPs at the site root')

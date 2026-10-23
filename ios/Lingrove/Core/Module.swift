@@ -15,8 +15,7 @@ struct Module: Codable, Identifiable, Equatable {
     var size: Int?
     var sha256: String?
     var minimumAllowedVersion: String?
-    var isSnapshot: Bool { downloadUrl?.hasSuffix("-snapshot.zip") == true }
-    var resourceIdentity: String { "\(version)-\(isSnapshot ? "snapshot" : "release")-\(sha256 ?? "builtin")" }
+    var resourceIdentity: String { "\(version)-release-\(sha256 ?? "builtin")" }
     func description(for language: String) -> String? {
         localizedDescriptions?[language] ?? description
     }
@@ -65,7 +64,7 @@ struct Catalog: Codable {
     }
 }
 enum ChildAppResourceMode: String {
-    case bundled, snapshot, debug
+    case bundled, debug
 }
 struct HostConfiguration: Codable {
     static let currentVersion = "1.3.0"
@@ -73,7 +72,7 @@ struct HostConfiguration: Codable {
     var snapshotCatalogURL: String = ""
     func updateCatalogURL(defaults: UserDefaults = .standard) -> String {
         #if DEBUG
-        return Self.usesSnapshot(defaults: defaults) ? snapshotCatalogURL : ""
+        return Self.resourceMode(defaults: defaults) == .bundled ? catalogURL : snapshotCatalogURL
         #else
         return catalogURL
         #endif
@@ -83,12 +82,9 @@ struct HostConfiguration: Codable {
         guard DebugServer.available else { return .bundled }
         return ChildAppResourceMode(rawValue: defaults.string(forKey: resourceModePreferenceKey) ?? "") ?? .bundled
     }
-    static func usesSnapshot(defaults: UserDefaults = .standard) -> Bool {
-        resourceMode(defaults: defaults) == .snapshot
-    }
     static func usesBundledResources(defaults: UserDefaults = .standard) -> Bool {
-        // Debug has three exclusive modes. Production retains its release update channel.
-        DebugServer.available && !usesSnapshot(defaults: defaults)
+        // Only server debugging keeps local packages as a fallback.
+        resourceMode(defaults: defaults) == .debug
     }
     static var bundled: Self {
         guard let url = Bundle.main.url(forResource: "HostConfig", withExtension: "json"), let data = try? Data(contentsOf: url), let config = try? JSONDecoder().decode(Self.self, from: data) else { return .init(catalogURL: "") }
@@ -195,7 +191,7 @@ enum DebugServer {
     static var enabled: Bool {
         HostConfiguration.resourceMode() == .debug
     }
-    static var canRefresh: Bool { available && (enabled || HostConfiguration.usesSnapshot()) }
+    static var canRefresh: Bool { available && enabled }
     static var available: Bool {
         #if DEBUG
         return true
@@ -225,7 +221,7 @@ enum DebugServer {
         let session = URLSession(configuration: configuration, delegate: NoRedirect(), delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         let urls = modules.isEmpty ? [base] : modules.map {
-            base.appendingPathComponent("app").appendingPathComponent($0.id).appendingPathComponent($0.entry)
+            base.appendingPathComponent("snapshot/app").appendingPathComponent($0.id).appendingPathComponent($0.entry)
         }
         for url in urls {
             try Task.checkCancellation()
@@ -244,7 +240,7 @@ enum DebugServer {
     static func entryURL(for module: Module) -> URL? {
         guard enabled, let base = try? normalized(activeAddress ?? ""),
               !base.isEmpty, let url = URL(string: base) else { return nil }
-        return url.appendingPathComponent("app").appendingPathComponent(module.id).appendingPathComponent(module.entry)
+        return url.appendingPathComponent("snapshot/app").appendingPathComponent(module.id).appendingPathComponent(module.entry)
     }
     static func allows(_ url: URL, entry: URL) -> Bool {
         url.scheme == entry.scheme && url.host == entry.host && url.port == entry.port

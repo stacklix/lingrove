@@ -9,7 +9,7 @@ localized_update={**base,'version':'20260102','localizedDescriptions':{**base['l
 with zipfile.ZipFile(root/'localized-update.zip','w',compression=zipfile.ZIP_STORED) as archive:
     archive.writestr('manifest.json',json.dumps(localized_update))
     archive.writestr('index.html','localized update')
-for name,version in [('valid','20260102'),('newer','20260103'),('snapshot','20260102'),('snapshot-next','20260102')]:
+for name,version in [('valid','20260102'),('newer','20260103'),('rebuilt','20260102')]:
     with zipfile.ZipFile(root/f'{name}.zip','w',compression=zipfile.ZIP_STORED) as archive:
         archive.writestr('manifest.json',json.dumps({**base,'version':version}))
         archive.writestr('index.html',f'<!doctype html><html><head></head><body>{name}</body></html>')

@@ -1,57 +1,83 @@
-import { readFile, writeFile, mkdir, cp, rm } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, cp, rm, rename } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { moduleBuildVersion } from './build-version.mjs';
 const root = path.resolve(import.meta.dirname, '..');
-const base = (process.env.MODULE_BASE_URL || 'https://lingrove.stackli.me').replace(/\/$/, '');
-if (new URL(base).protocol !== 'https:') throw new Error('MODULE_BASE_URL must use HTTPS');
+const siteBase = (process.env.MODULE_BASE_URL || 'https://lingrove.stackli.me').replace(/\/$/, '');
+if (new URL(siteBase).protocol !== 'https:') throw new Error('MODULE_BASE_URL must use HTTPS');
 const names = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));
 const modules = [];
 const version = moduleBuildVersion();
-const snapshot = process.env.MODULE_CHANNEL === 'snapshot';
+const snapshot = process.env.MODULE_CHANNEL !== 'release';
+const outputRoot = path.join(root, 'dist', ...(snapshot ? ['snapshot'] : []));
+const base = snapshot ? `${siteBase}/snapshot` : siteBase;
+await mkdir(outputRoot, { recursive: true });
+if (snapshot) await rename(path.join(root, 'dist/app'), path.join(outputRoot, 'app'));
 await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
   recursive: true,
   force: true,
 });
-await mkdir(path.join(root, 'dist/packages'), { recursive: true });
+if (!snapshot) await mkdir(path.join(outputRoot, 'packages'), { recursive: true });
 for (const name of names) {
-  const manifest = JSON.parse(await readFile(path.join(root, 'app', name, 'manifest.json'), 'utf8'));
+  const manifest = JSON.parse(
+    await readFile(path.join(root, 'app', name, 'manifest.json'), 'utf8'),
+  );
   manifest.version = version;
-  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(manifest.id))
-    throw new Error('Invalid module identity');
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(manifest.id)) throw new Error('Invalid module identity');
   if (manifest.id !== name) throw new Error('Module ID must match its directory name');
-  const output = path.join(root, 'dist', 'app', name);
+  const output = path.join(outputRoot, 'app', name);
   await writeFile(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
-  const archive = `${manifest.id}-${manifest.version}${snapshot ? '-snapshot' : ''}.zip`;
-  const zipPath = path.join(root, 'dist/packages', archive);
-  const result = spawnSync(process.env.PYTHON || 'python3', [path.join(root, 'scripts/stored-zip.py'), output, zipPath], {
-    stdio: 'inherit',
-  });
-  if (result.status !== 0) throw new Error('ZIP packaging failed');
-  const data = await readFile(zipPath);
-  modules.push({
+  const metadata = {
     ...manifest,
     webUrl: `${base}/app/${name}/`,
-    downloadUrl: `${base}/packages/${archive}`,
-    size: data.length,
-    sha256: createHash('sha256').update(data).digest('hex'),
-  });
+  };
+  if (!snapshot) {
+    const archive = `${manifest.id}-${manifest.version}.zip`;
+    const zipPath = path.join(outputRoot, 'packages', archive);
+    const result = spawnSync(
+      process.env.PYTHON || 'python3',
+      [path.join(root, 'scripts/stored-zip.py'), output, zipPath],
+      {
+        stdio: 'inherit',
+      },
+    );
+    if (result.status !== 0) throw new Error('ZIP packaging failed');
+    const data = await readFile(zipPath);
+    Object.assign(metadata, {
+      downloadUrl: `${base}/packages/${archive}`,
+      size: data.length,
+      sha256: createHash('sha256').update(data).digest('hex'),
+    });
+  }
+  modules.push(metadata);
   const builtin = path.join(root, 'ios/Lingrove/Resources/BuiltinModules', manifest.id);
   await rm(builtin, { recursive: true, force: true });
   await mkdir(path.dirname(builtin), { recursive: true });
   await cp(output, builtin, { recursive: true });
 }
-await writeFile(path.join(root, snapshot ? 'dist/catalog.snapshot.json' : 'dist/catalog.json'), JSON.stringify({ modules }, null, 2));
+await writeFile(
+  path.join(outputRoot, snapshot ? 'catalog.snapshot.json' : 'catalog.json'),
+  JSON.stringify({ modules }, null, 2),
+);
 // Remove obsolete generated artifacts from builds using the old catalog format.
 await rm(path.join(root, 'dist/public-key.txt'), { force: true });
 await rm(path.join(root, 'dist/catalog.preview.json'), { force: true });
-await cp(path.join(root, 'index.html'), path.join(root, 'dist/index.html'));
+const homepage = await readFile(path.join(root, 'index.html'), 'utf8');
+await writeFile(
+  path.join(outputRoot, 'index.html'),
+  snapshot ? homepage.replaceAll('href="./ios/"', 'href="../ios/"') : homepage,
+);
+if (snapshot)
+  await writeFile(
+    path.join(root, 'dist/index.html'),
+    '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=./snapshot/"><title>Lingrove</title><a href="./snapshot/">Lingrove</a></html>\n',
+  );
 await writeFile(path.join(root, 'dist/.nojekyll'), '');
 // GitHub project domains use their default hostname; custom domains need CNAME.
 const hostname = new URL(base).hostname;
 if (!hostname.endsWith('.github.io'))
   await writeFile(path.join(root, 'dist/CNAME'), hostname + '\n');
 console.log(
-  `Built ${modules.length} module(s), static catalog, archives and native bundled resources.`,
+  `Built ${modules.length} module(s), static catalog${snapshot ? '' : ', release archives'} and native bundled resources.`,
 );
