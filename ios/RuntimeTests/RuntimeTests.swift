@@ -949,6 +949,16 @@ final class RuntimeTests: XCTestCase {
         await waitForBackground(0x20332f)
         page.restorePosition()
         await waitForBackground(0x20332f)
+        // Explicit theme colors must win over the inferred backing color and
+        // continue updating when the matching media query changes.
+        _ = try await page.webView.evaluateJavaScript("""
+            document.head.insertAdjacentHTML('beforeend',
+              '<meta name="theme-color" content="#f7f4fb" media="(prefers-color-scheme:light)">' +
+              '<meta name="theme-color" content="#201a29" media="(prefers-color-scheme:dark)">');
+            """)
+        await waitForBackground(0x201a29)
+        window.overrideUserInterfaceStyle = .light
+        await waitForBackground(0xf7f4fb)
     }
     @MainActor func testPagePreservesDOMAndJavaScriptAfterDetaching() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

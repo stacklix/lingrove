@@ -170,6 +170,7 @@ struct ModuleReloadRecord: Codable, Equatable {
     private(set) var runtime: Runtime!
     private(set) var webView: WKWebView!
     private var backgroundObservation: NSKeyValueObservation?
+    private var themeObservation: NSKeyValueObservation?
     private var offset: CGPoint?
     @Published private(set) var generation = UUID()
     #if DEBUG
@@ -340,15 +341,13 @@ struct ModuleReloadRecord: Codable, Equatable {
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
         webView.isOpaque = false
         webView.backgroundColor = backgroundColor
-        // WebKit derives this color from the document's html/body backgrounds.
-        // Keep native safe areas in sync with CSS, including appearance changes.
+        // Prefer the explicit page theme; WebKit's inferred under-page color can
+        // still reflect the native backing view while a transparent page loads.
         backgroundObservation = webView.observe(\.underPageBackgroundColor, options: [.initial, .new]) { [weak self] view, _ in
-            MainActor.assumeIsolated {
-                guard let self, self.webView === view,
-                      let color = view.underPageBackgroundColor,
-                      !self.backgroundColor.isEqual(color) else { return }
-                self.backgroundColor = color
-            }
+            MainActor.assumeIsolated { self?.updateBackground(from: view) }
+        }
+        themeObservation = webView.observe(\.themeColor, options: [.initial, .new]) { [weak self] view, _ in
+            MainActor.assumeIsolated { self?.updateBackground(from: view) }
         }
         webView.navigationDelegate = runtime
         runtime.webView = webView
@@ -365,6 +364,15 @@ struct ModuleReloadRecord: Codable, Equatable {
             currentWebView.load(request)
             currentRuntime.startWatchdog()
         }
+    }
+
+    private func updateBackground(from view: WKWebView) {
+        guard webView === view,
+              let color = view.themeColor ?? view.underPageBackgroundColor,
+              !backgroundColor.isEqual(color) else { return }
+        backgroundColor = color
+        view.backgroundColor = color
+        view.scrollView.backgroundColor = color
     }
 
     func matches(_ candidate: Module) -> Bool {
@@ -386,6 +394,8 @@ struct ModuleReloadRecord: Codable, Equatable {
     func close() {
         backgroundObservation?.invalidate()
         backgroundObservation = nil
+        themeObservation?.invalidate()
+        themeObservation = nil
         runtime.close()
         webView.stopLoading()
         webView.navigationDelegate = nil
@@ -410,6 +420,40 @@ struct ModuleScreen: View {
         _page = StateObject(wrappedValue: pages.page(for: module, store: store))
     }
     var body: some View {
+        ZStack {
+            // A full-screen sibling paints behind the status bar independently
+            // of the WKWebView's layout and the navigation container's insets.
+            Color(uiColor: page.backgroundColor).ignoresSafeArea()
+            content
+                .ignoresSafeArea(.container, edges: .bottom)
+        }
+        .overlay(alignment: .topLeading) {
+            homeButton
+        }
+        // This native edge stays above WebKit, including child dialogs and loading errors.
+        // It never depends on JavaScript or the child-controlled Home visibility.
+        .overlay(alignment: .leading) {
+            ModuleExitEdge(onExit: { dismiss() })
+                .frame(width: 24)
+                .ignoresSafeArea()
+        }
+        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarBackButtonHidden(true)
+        .onAppear {
+            if page.shouldReturnHome { dismiss() }
+            else { page.resumeIfNeeded(isActive: scenePhase == .active) }
+            store.begin(module, trackingStartup: store.remoteEntryURL(for: module) == nil)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { page.resumeIfNeeded(isActive: true) }
+        }
+        .onChange(of: page.shouldReturnHome) { _, returnHome in
+            if returnHome { dismiss() }
+        }
+        .onDisappear { store.end(module) }
+    }
+
+    @ViewBuilder private var content: some View {
         Group {
             if page.shouldReturnHome {
                 Color(uiColor: LingroveTheme.background)
@@ -441,50 +485,27 @@ struct ModuleScreen: View {
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: page.isLoading)
             }
         }
-        .ignoresSafeArea(.container, edges: .bottom)
-        .background(Color(uiColor: page.backgroundColor).ignoresSafeArea())
-        .overlay(alignment: .topLeading) {
-            HStack(spacing: 8) {
-                if page.isRootPage || page.failure != nil || page.isLoading {
-                    Button { dismiss() } label: {
-                        Image(systemName: "house")
-                            .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: Circle())
-                            .overlay(Circle().strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5))
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("返回 Lingrove")
-                    .accessibilityIdentifier("module-home")
-                }
+    }
 
+    private var homeButton: some View {
+        HStack(spacing: 8) {
+            if page.isRootPage || page.failure != nil || page.isLoading {
+                Button { dismiss() } label: {
+                    Image(systemName: "house")
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5))
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel("返回 Lingrove")
+                .accessibilityIdentifier("module-home")
             }
-            .font(.system(size: 18, weight: .medium))
-            .buttonStyle(.plain)
-            .foregroundStyle(Color(uiColor: LingroveTheme.accent))
-            .padding(.leading, 16)
-            .padding(.top, 8)
         }
-        // This native edge stays above WebKit, including child dialogs and loading errors.
-        // It never depends on JavaScript or the child-controlled Home visibility.
-        .overlay(alignment: .leading) {
-            ModuleExitEdge(onExit: { dismiss() })
-                .frame(width: 24)
-                .ignoresSafeArea()
-        }
-        .toolbar(.hidden, for: .navigationBar)
-        .navigationBarBackButtonHidden(true)
-        .onAppear {
-            if page.shouldReturnHome { dismiss() }
-            else { page.resumeIfNeeded(isActive: scenePhase == .active) }
-            store.begin(module, trackingStartup: store.remoteEntryURL(for: module) == nil)
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { page.resumeIfNeeded(isActive: true) }
-        }
-        .onChange(of: page.shouldReturnHome) { _, returnHome in
-            if returnHome { dismiss() }
-        }
-        .onDisappear { store.end(module) }
+        .font(.system(size: 18, weight: .medium))
+        .buttonStyle(.plain)
+        .foregroundStyle(Color(uiColor: LingroveTheme.accent))
+        .padding(.leading, 16)
+        .padding(.top, 8)
     }
 }
 

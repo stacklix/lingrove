@@ -1,6 +1,70 @@
 import XCTest
 import Network
+import UIKit
 final class LingroveUITests: XCTestCase {
+    func testModuleStatusBarMatchesPageInLightMode() throws { try checkModuleBackgrounds(appearance: "light") }
+    func testModuleStatusBarMatchesPageInDarkMode() throws { try checkModuleBackgrounds(appearance: "dark") }
+
+    private func checkModuleBackgrounds(appearance: String) throws {
+        let app = XCUIApplication()
+        app.launchArguments += ["-app.appearance", appearance, "-resources.mode", "bundled",
+                                "-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        defer { app.terminate() }
+        for name in ["Sentra", "Alphi", "Lexis", "Verso", "Polykeys"] {
+            let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch
+            waitForEnabled(entry)
+            entry.tap()
+            let webView = app.webViews.firstMatch
+            XCTAssertTrue(webView.waitForExistence(timeout: 20))
+            let statusBar = app.statusBars.firstMatch
+            guard statusBar.exists, statusBar.frame.height > 0 else { throw XCTSkip("A visible status bar is required") }
+            XCTAssertGreaterThanOrEqual(webView.frame.minY, statusBar.frame.maxY - 1,
+                                        "Page controls must remain below the status bar")
+            // Sample blank areas below the clock/camera and between the Home
+            // button and right-hand page actions, rather than glyph pixels.
+            let x = app.frame.minX + app.frame.width * 0.3
+            let statusPoint = CGPoint(x: x, y: statusBar.frame.maxY - 3)
+            let pagePoint = CGPoint(x: x, y: webView.frame.minY + 12)
+            var lastScreenshot: XCUIScreenshot?
+            var sampledColors: [[Int]] = []
+            let matching = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+                let screenshot = app.screenshot()
+                lastScreenshot = screenshot
+                guard let status = self.backgroundPixel(screenshot, at: statusPoint, frame: app.frame),
+                      let canvas = self.backgroundPixel(screenshot, at: pagePoint, frame: app.frame) else { return false }
+                sampledColors = [status, canvas]
+                return zip(status, canvas).allSatisfy { pair in abs(pair.0 - pair.1) <= 2 }
+            }, object: nil)
+            let result = XCTWaiter.wait(for: [matching], timeout: 10)
+            if let screenshot = lastScreenshot {
+                let attachment = XCTAttachment(screenshot: screenshot)
+                attachment.name = "\(name)-status-bar-background-\(appearance)"
+                attachment.lifetime = .keepAlways
+                add(attachment)
+            }
+            XCTAssertEqual(result, .completed, "\(name) \(appearance): status bar and page RGB \(sampledColors)")
+            app.buttons["module-home"].tap()
+        }
+    }
+
+    private func backgroundPixel(_ screenshot: XCUIScreenshot, at point: CGPoint, frame: CGRect) -> [Int]? {
+        guard let image = screenshot.image.cgImage, frame.width > 0, frame.height > 0 else { return nil }
+        let x = (point.x - frame.minX) * CGFloat(image.width) / frame.width
+        let y = (point.y - frame.minY) * CGFloat(image.height) / frame.height
+        guard let pixel = image.cropping(to: CGRect(x: x.rounded(.down), y: y.rounded(.down), width: 1, height: 1)) else { return nil }
+        var rgba = [UInt8](repeating: 0, count: 4)
+        let rendered = rgba.withUnsafeMutableBytes { bytes -> Bool in
+            guard let context = CGContext(data: bytes.baseAddress, width: 1, height: 1,
+                                          bitsPerComponent: 8, bytesPerRow: 4,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+            context.draw(pixel, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+            return true
+        }
+        return rendered ? rgba.prefix(3).map(Int.init) : nil
+    }
+
     func testModuleEditingAndDetails() { checkModuleEditingAndDetails(appearance: "light") }
     func testModuleDetailsDarkMode() { checkModuleEditingAndDetails(appearance: "dark") }
     private func checkModuleEditingAndDetails(appearance: String) {
