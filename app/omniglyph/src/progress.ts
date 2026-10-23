@@ -86,7 +86,7 @@ export async function loadProgress(): Promise<Progress> {
     !p.lastGroups ||
     Array.isArray(p.lastGroups) ||
     typeof p.lastGroups !== 'object' ||
-    !['ja', 'ru', 'el'].includes(p.language) ||
+    !['ja', 'ru', 'el', 'hy', 'ka', 'ko'].includes(p.language) ||
     !['study', 'tests', 'letters'].includes(p.tab) ||
     !Array.isArray(p.learned) ||
     !p.learned.every((id) => known.has(id)) ||
@@ -95,7 +95,10 @@ export async function loadProgress(): Promise<Progress> {
   )
     return invalid();
   for (const [lang, group] of Object.entries(p.lastGroups))
-    if (!['ja', 'ru', 'el'].includes(lang) || !groups(lang as Language).some((g) => g.id === group))
+    if (
+      !['ja', 'ru', 'el', 'hy', 'ka', 'ko'].includes(lang) ||
+      !groups(lang as Language).some((g) => g.id === group)
+    )
       return invalid();
   for (const [key, c] of Object.entries(p.cursors)) {
     const g = known.get(c?.id);
@@ -111,7 +114,7 @@ export async function loadProgress(): Promise<Progress> {
   }
   for (const [lang, d] of Object.entries(p.drafts)) {
     if (
-      !['ja', 'ru', 'el'].includes(lang) ||
+      !['ja', 'ru', 'el', 'hy', 'ka', 'ko'].includes(lang) ||
       !d ||
       typeof d.id !== 'string' ||
       !groups(lang as Language).some((g) => g.id === d.group) ||

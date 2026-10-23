@@ -1,4 +1,4 @@
-import { afterEach, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import { existsSync, readFileSync } from 'node:fs';
 import { URL as NodeURL } from 'node:url';
@@ -10,12 +10,16 @@ import sources from '../src/pronunciation-sources.json';
 import PronunciationButton from '../src/components/PronunciationButton.vue';
 import {
   playPronunciation,
+  loadPronunciations,
   stopPronunciation,
   speaking,
   playbackError,
   pronunciationFor,
 } from '../src/pronunciation';
 
+beforeEach(async () => {
+  await loadPronunciations();
+});
 afterEach(() => {
   stopPronunciation();
   vi.unstubAllGlobals();
@@ -23,16 +27,20 @@ afterEach(() => {
 });
 it('bundles each sample and shares pronunciation between both written forms', () => {
   for (const sample of samples) {
-    expect(existsSync(new NodeURL(`../audio-generated/${sample.id}.wav`, import.meta.url))).toBe(true);
+    expect(existsSync(new NodeURL(`../audio-generated/${sample.id}.wav`, import.meta.url))).toBe(
+      true,
+    );
     const bytes = readFileSync(new NodeURL(`../audio-generated/${sample.id}.wav`, import.meta.url));
-    expect(audioSources[sample.id as keyof typeof audioSources]).toBe(`data:audio/wav;base64,${bytes.toString('base64')}`);
+    expect(audioSources[sample.id as keyof typeof audioSources]).toBe(
+      `data:audio/wav;base64,${bytes.toString('base64')}`,
+    );
     for (const id of sample.glyphs) {
       expect(glyphs.some((g) => g.id === id)).toBe(true);
       expect(pronunciationFor(id)).toBe(sample);
     }
   }
-  expect(samples).toHaveLength(103);
-  expect(glyphs).toHaveLength(207);
+  expect(samples).toHaveLength(215);
+  expect(glyphs).toHaveLength(358);
   for (const glyph of glyphs) {
     expect(samples.filter((sample) => sample.glyphs.includes(glyph.id))).toHaveLength(1);
   }
@@ -43,7 +51,9 @@ it('bundles each sample and shares pronunciation between both written forms', ()
     expect('voice' in sample).toBe(false);
     const source = sources.find((source) => source.id === sample.id)!;
     expect(source.license).toBeTruthy();
-    const recording = readFileSync(new NodeURL(`../audio-sources/${sample.recording}`, import.meta.url));
+    const recording = readFileSync(
+      new NodeURL(`../audio-sources/${sample.recording}`, import.meta.url),
+    );
     expect(createHash('sha256').update(recording).digest('hex')).toBe(source.downloadSha256);
   }
 });
@@ -108,4 +118,19 @@ it('provides playback failure feedback and permits retry', async () => {
   expect(wrapper.get('button').classes()).not.toContain('failed');
   wrapper.unmount();
   expect(speaking.value).toBe('');
+});
+
+it('provides native letter names for the three reference alphabets', () => {
+  for (const language of ['hy', 'ka', 'ko']) {
+    const letters = glyphs.filter((g) => g.language === language);
+    expect(letters.length).toBeGreaterThan(0);
+    for (const glyph of letters) {
+      expect(glyph.hint).toBe('');
+      const sample = pronunciationFor(glyph.id)!;
+      expect(sample.recording).toBeTruthy();
+      expect(audioSources[sample.id as keyof typeof audioSources]).toMatch(
+        /^data:audio\/wav;base64,/,
+      );
+    }
+  }
 });

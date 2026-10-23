@@ -50,13 +50,13 @@ Logo 为此前确认的绿色 Alphi 图稿，原图保留在 `public/logo.png`�
 
 ## 发音资源
 
-103 个真人读音覆盖全部 207 个字形，同一字母的两种写法共用录音。日语使用 Tofugu，俄语和希腊语使用 Wikimedia Commons 来源；来源与许可见 [音频说明](public/audio/README.md)。
+215 个真人读音覆盖全部 358 个字形，同一字母的两种写法共用录音。日语使用 Tofugu，俄语和希腊语使用 Wikimedia Commons 来源；来源与许可见 [音频说明](public/audio/README.md)。
 
-- `audio-sources/`：当前生成流程使用的原始 MP3，日语位于 `tofugu/`，已清理旧日语录音。
+- `audio-sources/`：当前生成流程使用的原始录音，日语位于 `tofugu/`，已清理旧日语录音。
 - `src/pronunciation-samples.json`：字形、读音与裁剪位置配置。
 - `src/pronunciation-sources.json`：来源、作者和许可记录。
 - `audio-generated/`：生成的 WAV，供维护及校验使用，不进入发布包。
 - `public/audio/`：发布所需的来源与许可说明。
 - `src/pronunciation-audio.json`：实际播放使用的嵌入音频，支持宿主离线加载。
 
-从仓库根目录执行 `python3 scripts/generate-pronunciation-samples.py --recordings-only` 重新生成，然后执行 `npm run build` 同步网页与 iOS 内置资源。转换需要 macOS 的 `afconvert`。
+从仓库根目录执行 `python3 scripts/generate-pronunciation-samples.py --recordings-only` 重新生成，然后执行 `npm run build` 同步网页与 iOS 内置资源。转换使用 FFmpeg，可在 Windows 上执行；支持 `--ffmpeg <路径>`。

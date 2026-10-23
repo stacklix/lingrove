@@ -1675,10 +1675,6 @@
     "en": "Kana pronunciation",
     "ja": "仮名の発音"
   },
-  "字母名称": {
-    "en": "Letter name",
-    "ja": "文字の名称"
-  },
   "Alphi · 字母学习": {
     "en": "Alphi · Letter learning",
     "ja": "Alphi · 文字の学習"
@@ -1698,5 +1694,33 @@
   "加载失败": {
     "en": "Loading failed",
     "ja": "読み込み失敗"
+  },
+  "亚美尼亚语": {
+    "en": "Armenian",
+    "ja": "アルメニア語"
+  },
+  "格鲁吉亚语": {
+    "en": "Georgian",
+    "ja": "ジョージア語"
+  },
+  "韩语": {
+    "en": "Korean",
+    "ja": "韓国語"
+  },
+  "字母读音": {
+    "en": "Letter sound",
+    "ja": "文字の発音"
+  },
+  "字母名称与读音": {
+    "en": "Letter name and sound",
+    "ja": "文字名と発音"
+  },
+  "新增字母真人录音：亚美尼亚语由母语者 Vahagn Petrosyan 录制（CC BY-SA 3.0），已截取单字母并降噪，修改后的音频沿用该许可。格鲁吉亚语来自 Learn Kartuli 母语者录音；韩语来自 zKorean 字母教学录音，辅音包含名称与读音。后两者仅供个人学习，未确认公开再分发许可。": {
+    "en": "New human recordings: Armenian by native speaker Vahagn Petrosyan (CC BY-SA 3.0), excerpted and denoised under the same license. Georgian: Learn Kartuli native-speaker recordings. Korean: zKorean teaching recordings; consonants include names and sounds. The latter two are for personal study; public redistribution permission has not been verified.",
+    "ja": "追加した人の録音：アルメニア語は母語話者 Vahagn Petrosyan（CC BY-SA 3.0）。文字ごとに切り出し、ノイズを軽減し、同じライセンスで提供。ジョージア語は Learn Kartuli の母語話者録音、韓国語は zKorean の教材録音（子音は名称と発音）。後二者は個人学習用で、公開再配布の許諾は未確認です。"
+  },
+  "正在加载录音": {
+    "en": "Loading recordings",
+    "ja": "録音を読み込み中"
   }
 }

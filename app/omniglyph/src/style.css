@@ -1769,3 +1769,13 @@ main.learning-page {
   line-height: 1.2;
   color: var(--text);
 }
+
+.glyph-card-open.reference-letter:disabled {
+  opacity: 1;
+}
+.armenian-library .library-print-glyph {
+  font-size: clamp(10px, 21cqw, 24px);
+}
+.reference-letter small {
+  overflow-wrap: anywhere;
+}

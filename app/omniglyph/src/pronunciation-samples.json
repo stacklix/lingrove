@@ -1257,5 +1257,1247 @@
       20.77
     ],
     "kind": "字母名称"
+  },
+  {
+    "id": "hy-00",
+    "glyphs": [
+      "hy-ա",
+      "hy-Ա"
+    ],
+    "text": "ա",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      0.454,
+      1.007
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-01",
+    "glyphs": [
+      "hy-բ",
+      "hy-Բ"
+    ],
+    "text": "բ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      1.356,
+      1.931
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-02",
+    "glyphs": [
+      "hy-գ",
+      "hy-Գ"
+    ],
+    "text": "գ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      2.436,
+      2.991
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-03",
+    "glyphs": [
+      "hy-դ",
+      "hy-Դ"
+    ],
+    "text": "դ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      3.567,
+      4.085
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-04",
+    "glyphs": [
+      "hy-ե",
+      "hy-Ե"
+    ],
+    "text": "ե",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      4.448,
+      5.097
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-05",
+    "glyphs": [
+      "hy-զ",
+      "hy-Զ"
+    ],
+    "text": "զ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      5.331,
+      6.037
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-06",
+    "glyphs": [
+      "hy-է",
+      "hy-Է"
+    ],
+    "text": "է",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      6.486,
+      7.03
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-07",
+    "glyphs": [
+      "hy-ը",
+      "hy-Ը"
+    ],
+    "text": "ը",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      7.51,
+      8.055
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-08",
+    "glyphs": [
+      "hy-թ",
+      "hy-Թ"
+    ],
+    "text": "թ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      8.549,
+      9.174
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-09",
+    "glyphs": [
+      "hy-ժ",
+      "hy-Ժ"
+    ],
+    "text": "ժ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      9.525,
+      10.217
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-10",
+    "glyphs": [
+      "hy-ի",
+      "hy-Ի"
+    ],
+    "text": "ի",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      10.621,
+      11.167
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-11",
+    "glyphs": [
+      "hy-լ",
+      "hy-Լ"
+    ],
+    "text": "լ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      11.654,
+      12.31
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-12",
+    "glyphs": [
+      "hy-խ",
+      "hy-Խ"
+    ],
+    "text": "խ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      12.68,
+      13.356
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-13",
+    "glyphs": [
+      "hy-ծ",
+      "hy-Ծ"
+    ],
+    "text": "ծ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      13.921,
+      14.459
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-14",
+    "glyphs": [
+      "hy-կ",
+      "hy-Կ"
+    ],
+    "text": "կ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      14.977,
+      15.573
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-15",
+    "glyphs": [
+      "hy-հ",
+      "hy-Հ"
+    ],
+    "text": "հ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      16.119,
+      16.658
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-16",
+    "glyphs": [
+      "hy-ձ",
+      "hy-Ձ"
+    ],
+    "text": "ձ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      17.225,
+      17.837
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-17",
+    "glyphs": [
+      "hy-ղ",
+      "hy-Ղ"
+    ],
+    "text": "ղ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      18.199,
+      18.812
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-18",
+    "glyphs": [
+      "hy-ճ",
+      "hy-Ճ"
+    ],
+    "text": "ճ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      19.307,
+      19.907
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-19",
+    "glyphs": [
+      "hy-մ",
+      "hy-Մ"
+    ],
+    "text": "մ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      20.33,
+      20.987
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-20",
+    "glyphs": [
+      "hy-յ",
+      "hy-Յ"
+    ],
+    "text": "յ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      21.525,
+      22.199
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-21",
+    "glyphs": [
+      "hy-ն",
+      "hy-Ն"
+    ],
+    "text": "ն",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      22.548,
+      23.224
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-22",
+    "glyphs": [
+      "hy-շ",
+      "hy-Շ"
+    ],
+    "text": "շ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      23.679,
+      24.368
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-23",
+    "glyphs": [
+      "hy-ո",
+      "hy-Ո"
+    ],
+    "text": "ո",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      24.704,
+      25.391
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-24",
+    "glyphs": [
+      "hy-չ",
+      "hy-Չ"
+    ],
+    "text": "չ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      25.93,
+      26.541
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-25",
+    "glyphs": [
+      "hy-պ",
+      "hy-Պ"
+    ],
+    "text": "պ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      27.074,
+      27.62
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-26",
+    "glyphs": [
+      "hy-ջ",
+      "hy-Ջ"
+    ],
+    "text": "ջ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      28.207,
+      28.762
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-27",
+    "glyphs": [
+      "hy-ռ",
+      "hy-Ռ"
+    ],
+    "text": "ռ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      29.288,
+      29.961
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-28",
+    "glyphs": [
+      "hy-ս",
+      "hy-Ս"
+    ],
+    "text": "ս",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      30.641,
+      31.18
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-29",
+    "glyphs": [
+      "hy-վ",
+      "hy-Վ"
+    ],
+    "text": "վ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      31.834,
+      32.46
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-30",
+    "glyphs": [
+      "hy-տ",
+      "hy-Տ"
+    ],
+    "text": "տ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      33.045,
+      33.593
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-31",
+    "glyphs": [
+      "hy-ր",
+      "hy-Ր"
+    ],
+    "text": "ր",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      34.087,
+      34.789
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-32",
+    "glyphs": [
+      "hy-ց",
+      "hy-Ց"
+    ],
+    "text": "ց",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      35.253,
+      35.91
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-34",
+    "glyphs": [
+      "hy-փ",
+      "hy-Փ"
+    ],
+    "text": "փ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      37.432,
+      38.009
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-35",
+    "glyphs": [
+      "hy-ք",
+      "hy-Ք"
+    ],
+    "text": "ք",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      38.383,
+      39.022
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-36",
+    "glyphs": [
+      "hy-օ",
+      "hy-Օ"
+    ],
+    "text": "օ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      39.538,
+      40.098
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-37",
+    "glyphs": [
+      "hy-ֆ",
+      "hy-Ֆ"
+    ],
+    "text": "ֆ",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      40.663,
+      41.206
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-38",
+    "glyphs": [
+      "hy-ու",
+      "hy-Ու"
+    ],
+    "text": "ու",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      41.772,
+      42.323
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "hy-39",
+    "glyphs": [
+      "hy-և",
+      "hy-ԵՎ"
+    ],
+    "text": "և",
+    "recording": "hy-alphabet.ogg",
+    "kind": "字母读音",
+    "clip": [
+      42.752,
+      43.43
+    ],
+    "filter": "highpass=f=100,afftdn=nf=-20"
+  },
+  {
+    "id": "ka-00",
+    "glyphs": [
+      "ka-ა"
+    ],
+    "text": "ა",
+    "recording": "ka-ა.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-01",
+    "glyphs": [
+      "ka-ბ"
+    ],
+    "text": "ბ",
+    "recording": "ka-ბ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-02",
+    "glyphs": [
+      "ka-გ"
+    ],
+    "text": "გ",
+    "recording": "ka-გ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-03",
+    "glyphs": [
+      "ka-დ"
+    ],
+    "text": "დ",
+    "recording": "ka-დ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-04",
+    "glyphs": [
+      "ka-ე"
+    ],
+    "text": "ე",
+    "recording": "ka-ე.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-05",
+    "glyphs": [
+      "ka-ვ"
+    ],
+    "text": "ვ",
+    "recording": "ka-ვ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-06",
+    "glyphs": [
+      "ka-ზ"
+    ],
+    "text": "ზ",
+    "recording": "ka-ზ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-07",
+    "glyphs": [
+      "ka-თ"
+    ],
+    "text": "თ",
+    "recording": "ka-თ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-08",
+    "glyphs": [
+      "ka-ი"
+    ],
+    "text": "ი",
+    "recording": "ka-ი.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-09",
+    "glyphs": [
+      "ka-კ"
+    ],
+    "text": "კ",
+    "recording": "ka-კ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-10",
+    "glyphs": [
+      "ka-ლ"
+    ],
+    "text": "ლ",
+    "recording": "ka-ლ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-11",
+    "glyphs": [
+      "ka-მ"
+    ],
+    "text": "მ",
+    "recording": "ka-მ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-12",
+    "glyphs": [
+      "ka-ნ"
+    ],
+    "text": "ნ",
+    "recording": "ka-ნ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-13",
+    "glyphs": [
+      "ka-ო"
+    ],
+    "text": "ო",
+    "recording": "ka-ო.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-14",
+    "glyphs": [
+      "ka-პ"
+    ],
+    "text": "პ",
+    "recording": "ka-პ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-15",
+    "glyphs": [
+      "ka-ჟ"
+    ],
+    "text": "ჟ",
+    "recording": "ka-ჟ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-16",
+    "glyphs": [
+      "ka-რ"
+    ],
+    "text": "რ",
+    "recording": "ka-რ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-17",
+    "glyphs": [
+      "ka-ს"
+    ],
+    "text": "ს",
+    "recording": "ka-ს.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-18",
+    "glyphs": [
+      "ka-ტ"
+    ],
+    "text": "ტ",
+    "recording": "ka-ტ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-19",
+    "glyphs": [
+      "ka-უ"
+    ],
+    "text": "უ",
+    "recording": "ka-უ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-20",
+    "glyphs": [
+      "ka-ფ"
+    ],
+    "text": "ფ",
+    "recording": "ka-ფ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-21",
+    "glyphs": [
+      "ka-ქ"
+    ],
+    "text": "ქ",
+    "recording": "ka-ქ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-22",
+    "glyphs": [
+      "ka-ღ"
+    ],
+    "text": "ღ",
+    "recording": "ka-ღ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-23",
+    "glyphs": [
+      "ka-ყ"
+    ],
+    "text": "ყ",
+    "recording": "ka-ყ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-24",
+    "glyphs": [
+      "ka-შ"
+    ],
+    "text": "შ",
+    "recording": "ka-შ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-25",
+    "glyphs": [
+      "ka-ჩ"
+    ],
+    "text": "ჩ",
+    "recording": "ka-ჩ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-26",
+    "glyphs": [
+      "ka-ც"
+    ],
+    "text": "ც",
+    "recording": "ka-ც.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-27",
+    "glyphs": [
+      "ka-ძ"
+    ],
+    "text": "ძ",
+    "recording": "ka-ძ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-28",
+    "glyphs": [
+      "ka-წ"
+    ],
+    "text": "წ",
+    "recording": "ka-წ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-29",
+    "glyphs": [
+      "ka-ჭ"
+    ],
+    "text": "ჭ",
+    "recording": "ka-ჭ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-30",
+    "glyphs": [
+      "ka-ხ"
+    ],
+    "text": "ხ",
+    "recording": "ka-ხ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-31",
+    "glyphs": [
+      "ka-ჯ"
+    ],
+    "text": "ჯ",
+    "recording": "ka-ჯ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ka-32",
+    "glyphs": [
+      "ka-ჰ"
+    ],
+    "text": "ჰ",
+    "recording": "ka-ჰ.m4a",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-00",
+    "glyphs": [
+      "ko-ㄱ"
+    ],
+    "text": "ㄱ",
+    "recording": "ko-ㄱ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-01",
+    "glyphs": [
+      "ko-ㄲ"
+    ],
+    "text": "ㄲ",
+    "recording": "ko-ㄲ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-02",
+    "glyphs": [
+      "ko-ㄴ"
+    ],
+    "text": "ㄴ",
+    "recording": "ko-ㄴ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-03",
+    "glyphs": [
+      "ko-ㄷ"
+    ],
+    "text": "ㄷ",
+    "recording": "ko-ㄷ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-04",
+    "glyphs": [
+      "ko-ㄸ"
+    ],
+    "text": "ㄸ",
+    "recording": "ko-ㄸ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-05",
+    "glyphs": [
+      "ko-ㄹ"
+    ],
+    "text": "ㄹ",
+    "recording": "ko-ㄹ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-06",
+    "glyphs": [
+      "ko-ㅁ"
+    ],
+    "text": "ㅁ",
+    "recording": "ko-ㅁ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-07",
+    "glyphs": [
+      "ko-ㅂ"
+    ],
+    "text": "ㅂ",
+    "recording": "ko-ㅂ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-08",
+    "glyphs": [
+      "ko-ㅃ"
+    ],
+    "text": "ㅃ",
+    "recording": "ko-ㅃ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-09",
+    "glyphs": [
+      "ko-ㅅ"
+    ],
+    "text": "ㅅ",
+    "recording": "ko-ㅅ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-10",
+    "glyphs": [
+      "ko-ㅆ"
+    ],
+    "text": "ㅆ",
+    "recording": "ko-ㅆ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-11",
+    "glyphs": [
+      "ko-ㅇ"
+    ],
+    "text": "ㅇ",
+    "recording": "ko-ㅇ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-12",
+    "glyphs": [
+      "ko-ㅈ"
+    ],
+    "text": "ㅈ",
+    "recording": "ko-ㅈ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-13",
+    "glyphs": [
+      "ko-ㅉ"
+    ],
+    "text": "ㅉ",
+    "recording": "ko-ㅉ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-14",
+    "glyphs": [
+      "ko-ㅊ"
+    ],
+    "text": "ㅊ",
+    "recording": "ko-ㅊ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-15",
+    "glyphs": [
+      "ko-ㅋ"
+    ],
+    "text": "ㅋ",
+    "recording": "ko-ㅋ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-16",
+    "glyphs": [
+      "ko-ㅌ"
+    ],
+    "text": "ㅌ",
+    "recording": "ko-ㅌ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-17",
+    "glyphs": [
+      "ko-ㅍ"
+    ],
+    "text": "ㅍ",
+    "recording": "ko-ㅍ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-18",
+    "glyphs": [
+      "ko-ㅎ"
+    ],
+    "text": "ㅎ",
+    "recording": "ko-ㅎ.mp3",
+    "kind": "字母名称与读音"
+  },
+  {
+    "id": "ko-19",
+    "glyphs": [
+      "ko-ㅏ"
+    ],
+    "text": "ㅏ",
+    "recording": "ko-ㅏ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-20",
+    "glyphs": [
+      "ko-ㅐ"
+    ],
+    "text": "ㅐ",
+    "recording": "ko-ㅐ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-21",
+    "glyphs": [
+      "ko-ㅑ"
+    ],
+    "text": "ㅑ",
+    "recording": "ko-ㅑ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-22",
+    "glyphs": [
+      "ko-ㅒ"
+    ],
+    "text": "ㅒ",
+    "recording": "ko-ㅒ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-23",
+    "glyphs": [
+      "ko-ㅓ"
+    ],
+    "text": "ㅓ",
+    "recording": "ko-ㅓ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-24",
+    "glyphs": [
+      "ko-ㅔ"
+    ],
+    "text": "ㅔ",
+    "recording": "ko-ㅔ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-25",
+    "glyphs": [
+      "ko-ㅕ"
+    ],
+    "text": "ㅕ",
+    "recording": "ko-ㅕ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-26",
+    "glyphs": [
+      "ko-ㅖ"
+    ],
+    "text": "ㅖ",
+    "recording": "ko-ㅖ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-27",
+    "glyphs": [
+      "ko-ㅗ"
+    ],
+    "text": "ㅗ",
+    "recording": "ko-ㅗ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-28",
+    "glyphs": [
+      "ko-ㅘ"
+    ],
+    "text": "ㅘ",
+    "recording": "ko-ㅘ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-29",
+    "glyphs": [
+      "ko-ㅙ"
+    ],
+    "text": "ㅙ",
+    "recording": "ko-ㅙ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-30",
+    "glyphs": [
+      "ko-ㅚ"
+    ],
+    "text": "ㅚ",
+    "recording": "ko-ㅚ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-31",
+    "glyphs": [
+      "ko-ㅛ"
+    ],
+    "text": "ㅛ",
+    "recording": "ko-ㅛ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-32",
+    "glyphs": [
+      "ko-ㅜ"
+    ],
+    "text": "ㅜ",
+    "recording": "ko-ㅜ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-33",
+    "glyphs": [
+      "ko-ㅝ"
+    ],
+    "text": "ㅝ",
+    "recording": "ko-ㅝ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-34",
+    "glyphs": [
+      "ko-ㅞ"
+    ],
+    "text": "ㅞ",
+    "recording": "ko-ㅞ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-35",
+    "glyphs": [
+      "ko-ㅟ"
+    ],
+    "text": "ㅟ",
+    "recording": "ko-ㅟ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-36",
+    "glyphs": [
+      "ko-ㅠ"
+    ],
+    "text": "ㅠ",
+    "recording": "ko-ㅠ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-37",
+    "glyphs": [
+      "ko-ㅡ"
+    ],
+    "text": "ㅡ",
+    "recording": "ko-ㅡ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-38",
+    "glyphs": [
+      "ko-ㅢ"
+    ],
+    "text": "ㅢ",
+    "recording": "ko-ㅢ.mp3",
+    "kind": "字母读音"
+  },
+  {
+    "id": "ko-39",
+    "glyphs": [
+      "ko-ㅣ"
+    ],
+    "text": "ㅣ",
+    "recording": "ko-ㅣ.mp3",
+    "kind": "字母读音"
   }
 ]

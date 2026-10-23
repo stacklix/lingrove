@@ -114,7 +114,7 @@ it('keeps Greek references and scoring in the font, with separate animated strok
 });
 
 it('has one pen-down trajectory and one instruction per Russian or Greek animation step', () => {
-  for (const g of glyphs.filter((g) => g.language !== 'ja')) {
+  for (const g of glyphs.filter((g) => g.language === 'ru' || g.language === 'el')) {
     const paths = (g.language === 'ru' ? russianPaths : greekPaths)[g.text];
     expect(paths.length).toBeGreaterThan(0);
     expect(strokeSteps(g)).toHaveLength(paths.length);

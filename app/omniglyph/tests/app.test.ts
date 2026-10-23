@@ -159,24 +159,29 @@ it('opens paired progress cards and enters study directly with case and mode con
   expect(w.find('.print-glyph').text()).toBe('А а');
   w.unmount();
 });
-it.each(['ru', 'ja', 'el'])('switches the %s alphabet between print and handwriting', async (language) => {
-  const w = mountApp();
-  await flushPromises();
-  expect(w.findAll('.bottom-tabs button').map((b) => b.text())).toEqual(['字母', '学习', '测试']);
-  await w.get('select.lingrove-language-select').setValue(language);
-  await button(w, '字母').trigger('click');
-  const checkbox = w.get('.handwriting-toggle input');
-  expect((checkbox.element as HTMLInputElement).checked).toBe(false);
-  const printed = w.findAll('.library-print-glyph').map((g) => g.text());
-  expect(printed.length).toBeGreaterThan(0);
-  expect(w.find('.glyph-grid .handwritten, .glyph-grid .glyph-svg').exists()).toBe(false);
-  await checkbox.setValue(true);
-  expect(w.find('.library-print-glyph').exists()).toBe(false);
-  expect(w.findAll('.glyph-grid .handwritten, .glyph-grid .glyph-svg')).toHaveLength(printed.length);
-  await checkbox.setValue(false);
-  expect(w.findAll('.library-print-glyph').map((g) => g.text())).toEqual(printed);
-  w.unmount();
-});
+it.each(['ru', 'ja', 'el'])(
+  'switches the %s alphabet between print and handwriting',
+  async (language) => {
+    const w = mountApp();
+    await flushPromises();
+    expect(w.findAll('.bottom-tabs button').map((b) => b.text())).toEqual(['字母', '学习', '测试']);
+    await w.get('select.lingrove-language-select').setValue(language);
+    await button(w, '字母').trigger('click');
+    const checkbox = w.get('.handwriting-toggle input');
+    expect((checkbox.element as HTMLInputElement).checked).toBe(false);
+    const printed = w.findAll('.library-print-glyph').map((g) => g.text());
+    expect(printed.length).toBeGreaterThan(0);
+    expect(w.find('.glyph-grid .handwritten, .glyph-grid .glyph-svg').exists()).toBe(false);
+    await checkbox.setValue(true);
+    expect(w.find('.library-print-glyph').exists()).toBe(false);
+    expect(w.findAll('.glyph-grid .handwritten, .glyph-grid .glyph-svg')).toHaveLength(
+      printed.length,
+    );
+    await checkbox.setValue(false);
+    expect(w.findAll('.library-print-glyph').map((g) => g.text())).toEqual(printed);
+    w.unmount();
+  },
+);
 it('opens writing help from the library and practice from progress', async () => {
   const w = mountApp();
   await flushPromises();
@@ -499,5 +504,32 @@ it('locks study writing during and after scoring until retry, ignoring late ink'
   expect(vi.mocked(saveHistory).mock.calls.length).toBe(savedCount + 1);
   await button(w, '大写').trigger('click');
   expect(w.get('.stub-write').attributes('disabled')).toBeUndefined();
+  w.unmount();
+});
+
+it('limits reference languages to printed letters and pronunciation across language switches', async () => {
+  const w = mountApp();
+  await flushPromises();
+  for (const [language, count] of [
+    ['hy', 39],
+    ['ka', 33],
+    ['ko', 40],
+  ] as const) {
+    await w.find('select').setValue(language);
+    await flushPromises();
+    expect(w.findAll('.letter-card')).toHaveLength(count);
+    expect(w.findAll('.library-print-glyph')).toHaveLength(language === 'hy' ? 78 : count);
+    if (language === 'hy') {
+      expect(w.text()).toContain('Ու');
+      expect(w.text()).toContain('ԵՎ');
+    }
+    expect(w.findAll('nav button').map((b) => b.text())).toEqual(['字母']);
+    expect(w.find('.handwriting-toggle').exists()).toBe(false);
+    expect(w.findAll('.pronunciation-button')).toHaveLength(count);
+    expect(w.find('.writing-sheet').exists()).toBe(false);
+  }
+  await w.find('select').setValue('ru');
+  await flushPromises();
+  expect(w.findAll('nav button')).toHaveLength(3);
   w.unmount();
 });

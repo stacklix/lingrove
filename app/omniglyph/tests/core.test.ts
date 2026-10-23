@@ -5,7 +5,7 @@ import { assess, maskFromAlpha, similarity } from '../src/scoring';
 import type { Mask } from '../src/scoring';
 describe('curriculum', () => {
   it('contains complete distinct basic alphabets and kana stroke paths', () => {
-    expect(new Set(glyphs.map((g) => g.id)).size).toBe(207);
+    expect(new Set(glyphs.map((g) => g.id)).size).toBe(358);
     expect(poolFor('ja', 'hiragana')).toHaveLength(46);
     expect(poolFor('ja', 'katakana')).toHaveLength(46);
     expect(poolFor('ru', 'lower')).toHaveLength(33);

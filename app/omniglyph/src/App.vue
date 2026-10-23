@@ -5,6 +5,7 @@ import { computed, nextTick, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { ready, createID, isNative, setRootPage, installFocusMode } from '@lingrove/host-sdk';
 import {
   glyphs,
+  supportsWriting,
   languages,
   groups,
   poolFor,
@@ -20,7 +21,7 @@ import GlyphView from './components/GlyphView.vue';
 import WritingPad from './components/WritingPad.vue';
 import StrokeOrder from './components/StrokeOrder.vue';
 import PronunciationButton from './components/PronunciationButton.vue';
-import { stopPronunciation } from './pronunciation';
+import { loadPronunciations, stopPronunciation } from './pronunciation';
 import PronunciationCredits from './components/PronunciationCredits.vue';
 import { emptyProgress, loadProgress, saveProgress, type Tab } from './progress';
 const progress = ref(emptyProgress());
@@ -31,6 +32,12 @@ const learnParent = ref<'home' | 'progress' | 'library' | 'summary' | 'test-home
 const detail = ref<Glyph | null>(null);
 const reviewAnswer = ref<Answer | null>(null);
 function variants(current: Glyph): Glyph[] {
+  if (current.language === 'hy') {
+    return glyphs
+      .filter((g) => g.language === 'hy' && g.name === current.name)
+      .slice()
+      .reverse();
+  }
   if (current.language === 'ja') {
     return glyphs.filter((g) => g.language === 'ja' && g.name === current.name);
   }
@@ -110,6 +117,7 @@ function inkChanged(strokes: Strokes, drawing?: string) {
 function switchTab(value: Tab) {
   if (busy.value) return;
   capture();
+  if (!supportsWriting(language.value)) value = 'letters';
   tab.value = value;
   detail.value = null;
   page.value = value === 'study' ? 'home' : value === 'tests' ? 'test-home' : 'library';
@@ -226,7 +234,13 @@ const libraryCards = computed(() =>
       : letterCards.value,
 );
 function libraryPair(g: Glyph) {
-  return g.language === 'ja' ? [g] : g.language === 'el' && g.text !== 'ς' ? variants(g) : pair(g);
+  return g.language === 'hy'
+    ? variants(g)
+    : g.language === 'ja'
+      ? [g]
+      : g.language === 'el' && g.text !== 'ς'
+        ? variants(g)
+        : pair(g);
 }
 const libraryCells = computed(() => {
   if (language.value !== 'ja') return libraryCards.value;
@@ -384,6 +398,7 @@ function chooseLanguage(id: Language) {
   resetFeedback();
   page.value = 'home';
   language.value = id;
+  libraryHandwriting.value = false;
   group.value =
     id === 'ru' ? 'mixed' : (progress.value.lastGroups[id] ?? (id === 'ja' ? 'hiragana' : 'lower'));
   switchTab(tab.value);
@@ -604,6 +619,7 @@ onBeforeUnmount(() => {
 onMounted(async () => {
   removeFocusMode = installFocusMode();
   await ready().catch(() => {});
+  void loadPronunciations().catch(() => {});
   await initialize();
 });
 </script>
@@ -817,26 +833,31 @@ onMounted(async () => {
             <span>{{
               t(language === 'el' ? '24 个字母 · 含词尾 ς' : `${libraryCards.length} 个字母`)
             }}</span>
-            <label class="handwriting-toggle">
+            <label v-if="supportsWriting(language)" class="handwriting-toggle">
               <input v-model="libraryHandwriting" type="checkbox" />
               <span>{{ t('手写体') }}</span>
             </label>
           </div>
-          <div class="glyph-grid" :class="{ 'print-library': !libraryHandwriting }">
+          <div
+            class="glyph-grid"
+            :class="{ 'print-library': !libraryHandwriting, 'armenian-library': language === 'hy' }"
+          >
             <template v-for="(g, index) in libraryCells" :key="g?.id ?? `empty-${index}`">
               <span v-if="!g" class="kana-empty" aria-hidden="true"></span>
               <div
                 v-else
                 class="letter-card"
                 :class="{
-                  'greek-letter-card': language === 'el',
+                  'greek-letter-card': language === 'el' || !supportsWriting(language),
                   'russian-letter-card': language === 'ru',
                 }"
               >
                 <button
                   class="glyph-card-open"
-                  @click="detail = g"
-                  :aria-label="t(`查看 ${g.name} 的书写说明`)"
+                  :class="{ 'reference-letter': !supportsWriting(language) }"
+                  @click="supportsWriting(language) ? (detail = g) : undefined"
+                  :disabled="!supportsWriting(language)"
+                  :aria-label="supportsWriting(language) ? t(`查看 ${g.name} 的书写说明`) : g.name"
                 >
                   <span v-if="libraryHandwriting && language !== 'ja'" class="print-small">
                     {{
@@ -1101,7 +1122,7 @@ onMounted(async () => {
       </template>
       <footer>
         <span>Alphi</span><span>WRITE SLOWLY. LEARN DEEPLY.</span>
-        <details>
+        <details v-if="supportsWriting(language)">
           <summary>{{ t('字帖来源与评分说明') }}</summary>
           <p>
             {{
@@ -1131,7 +1152,7 @@ onMounted(async () => {
             icon: 'M4 5h6q2 0 2 2q0-2 2-2h6v14h-6q-2 0-2 2q0-2-2-2H4z M12 7v14',
           },
           { id: 'tests', name: '测试', icon: 'M8 4H5v17h14V4h-3 M8 3h8v4H8z M8 14l3 3 5-6' },
-        ]"
+        ].filter((item) => supportsWriting(language) || item.id === 'letters')"
         :key="item.id"
         :aria-current="tab === item.id ? 'page' : undefined"
         :class="{ active: tab === item.id }"

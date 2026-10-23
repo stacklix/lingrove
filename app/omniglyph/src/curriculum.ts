@@ -1,5 +1,5 @@
 import kana from './kana.json';
-export type Language = 'ja' | 'ru' | 'el';
+export type Language = 'ja' | 'ru' | 'el' | 'hy' | 'ka' | 'ko';
 export type Group = 'hiragana' | 'katakana' | 'lower' | 'upper' | 'mixed';
 export interface Glyph {
   id: string;
@@ -10,10 +10,14 @@ export interface Glyph {
   hint: string;
   paths?: string[];
 }
+export const supportsWriting = (language: Language) => ['ja', 'ru', 'el'].includes(language);
 export const languages = [
   { id: 'ja' as const, name: '日语', subtitle: '从五十音开始', sample: 'あ' },
   { id: 'ru' as const, name: '俄语', subtitle: '认识流畅的手写体', sample: 'д' },
   { id: 'el' as const, name: '希腊语', subtitle: '写下新的字母', sample: 'α' },
+  { id: 'hy' as const, name: '亚美尼亚语', subtitle: '', sample: 'ա' },
+  { id: 'ka' as const, name: '格鲁吉亚语', subtitle: '', sample: 'ა' },
+  { id: 'ko' as const, name: '韩语', subtitle: '', sample: 'ㄱ' },
 ];
 const hiragana =
   'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
@@ -39,7 +43,54 @@ const russianHints: Record<string, string> = {
   ь: '留意竖画与下方的环形。',
   ы: '注意两部分的间距与比例。',
 };
+export const referenceGlyphs: Glyph[] = [];
+function addLetters(language: Language, letters: string[], names: string[], capitals = false) {
+  letters.forEach((text, i) => {
+    referenceGlyphs.push({
+      id: `${language}-${text}`,
+      text,
+      language,
+      group: 'lower',
+      name: names[i],
+      hint: '',
+    });
+    if (capitals) {
+      const upper = text === 'և' ? 'ԵՎ' : text === 'ու' ? 'Ու' : text.toUpperCase();
+      referenceGlyphs.push({
+        id: `${language}-${upper}`,
+        text: upper,
+        language,
+        group: 'upper',
+        name: names[i],
+        hint: '',
+      });
+    }
+  });
+}
+addLetters(
+  'hy',
+  'ա բ գ դ ե զ է ը թ ժ ի լ խ ծ կ հ ձ ղ ճ մ յ ն շ ո չ պ ջ ռ ս վ տ ր ց ու փ ք և օ ֆ'.split(' '),
+  'ayb ben gim da yech za e yt to zhe ini lyun khe tsa ken ho dza ghat che men hi nu sha vo cha pe je ra se vev tyun re tso u pyur ke yev o fe'.split(
+    ' ',
+  ),
+  true,
+);
+addLetters(
+  'ka',
+  [...'აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ'],
+  'an ban gan don en vin zen tan in kan las man nar on par zhan rae san tar un phar khar ghan qar shin chin tsan dzil tsil char khan jhan hae'.split(
+    ' ',
+  ),
+);
+addLetters(
+  'ko',
+  [...'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ'],
+  'giyeok ssanggiyeok nieun digeut ssangdigeut rieul mieum bieup ssangbieup siot ssangsiot ieung jieut ssangjieut chieut kieuk tieut pieup hieut a ae ya yae eo e yeo ye o wa wae oe yo u wo we wi yu eu ui i'.split(
+    ' ',
+  ),
+);
 export const glyphs: Glyph[] = [
+  ...referenceGlyphs,
   ...[...hiragana].flatMap((c, i) =>
     [c, String.fromCharCode(c.charCodeAt(0) + 0x60)].map((text, j) => ({
       id: `ja-${text}`,

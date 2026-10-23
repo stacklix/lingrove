@@ -5,6 +5,8 @@ import { computed, onBeforeUnmount } from 'vue';
 import type { Glyph } from '../curriculum';
 import {
   pronunciationFor,
+  audioState,
+  loadPronunciations,
   speaking,
   playbackError,
   playPronunciation,
@@ -13,7 +15,10 @@ import {
 const props = defineProps<{ glyph: Glyph; compact?: boolean }>();
 const sample = computed(() => pronunciationFor(props.glyph.id));
 const playing = computed(() => !!sample.value && speaking.value === sample.value.id);
-const failed = computed(() => !!sample.value && playbackError.value === sample.value.id);
+const failed = computed(
+  () =>
+    !!sample.value && (audioState.value === 'failed' || playbackError.value === sample.value.id),
+);
 onBeforeUnmount(() => {
   if (playing.value) stopPronunciation();
 });
@@ -26,18 +31,31 @@ onBeforeUnmount(() => {
       :class="{ playing, failed }"
       :aria-label="
         t('{0} {1} 的{2}', [
-          t(failed ? '播放失败，重试' : playing ? '正在播放' : '播放'),
+          t(
+            audioState === 'loading'
+              ? '正在加载录音'
+              : failed
+                ? '播放失败，重试'
+                : playing
+                  ? '正在播放'
+                  : '播放',
+          ),
           glyph.text,
           t(sample.kind),
         ])
       "
-      :aria-busy="playing"
+      :aria-busy="playing || audioState === 'loading'"
+      :disabled="audioState === 'loading'"
       :title="
-        failed
-          ? t('播放失败，点击重试')
-          : `${playing ? t('正在播放：') : ''}${t(sample.kind)}: ${sample.text}`
+        audioState === 'loading'
+          ? t('正在加载录音')
+          : failed
+            ? t('播放失败，点击重试')
+            : `${playing ? t('正在播放：') : ''}${t(sample.kind)}: ${sample.text}`
       "
-      @click.stop="playPronunciation(glyph.id)"
+      @click.stop="
+        audioState === 'ready' ? playPronunciation(glyph.id) : loadPronunciations().catch(() => {})
+      "
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M11 5 6 9H3v6h3l5 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" />
