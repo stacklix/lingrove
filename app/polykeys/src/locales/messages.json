@@ -190,5 +190,21 @@
   "点按中央，向四周滑动选择假名；小゛゜切换浊音与小假名。支持键盘方向键，不提供汉字转换。": {
     "en": "Tap the center or flick toward a kana. 小゛゜ changes voiced and small kana. Arrow keys work too. No kanji conversion.",
     "ja": "中央をタップ、周囲へフリックして入力。小゛゜で濁音・小文字を切り替え。矢印キー対応、漢字変換なし。"
+  },
+  "格鲁吉亚语": {
+    "en": "Georgian",
+    "ja": "ジョージア語"
+  },
+  "亚美尼亚语": {
+    "en": "Armenian",
+    "ja": "アルメニア語"
+  },
+  "切换格鲁吉亚语扩展字母": {
+    "en": "Shift Georgian letters",
+    "ja": "ジョージア語の拡張文字に切り替え"
+  },
+  "格鲁吉亚语使用 Shift 输入扩展字母，输入后自动恢复；切换语言保留文字。": {
+    "en": "Use Shift for additional Georgian letters; it resets after typing. Switching languages keeps your text.",
+    "ja": "Shiftでジョージア語の拡張文字を入力できます。入力後は元に戻ります。言語を切り替えても入力は保持されます。"
   }
 }

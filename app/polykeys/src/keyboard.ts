@@ -15,8 +15,11 @@ export const layouts: Layout[] = [
   { id: 'ru', locale: 'ru', name: '俄语', rows: ['яшертыуиопэ', 'асдфгчйклжщ', 'зхцвбнмью'], extra: 'ёъ' },
   { id: 'uk', locale: 'uk', name: '乌克兰语', rows: ['йцукенгшщзхї', "фівапролджє'", 'ячсмитьбюґ'], extra: '' },
   { id: 'el', locale: 'el', name: '希腊语', rows: ['ερτυθιοπ΄', 'ασδφγηξκλ', 'ζχψωβνμ'], extra: 'ςάέήίόύώϊϋΐΰ' },
+  { id: 'ka', locale: 'ka', name: '格鲁吉亚语', rows: ['ქწერტყუიოპ', 'ასდფგჰჯკლ', 'ზხცვბნმ'], extra: '' },
+  { id: 'hy', locale: 'hy', name: '亚美尼亚语', rows: ['էթփձջևրչճժշ', 'քոեռտըւիօպխ', 'ասդֆգհյկլծ', 'զղցվբնմ'], extra: '' },
 ];
 export function letterCase(value: string, upper: boolean, language: string) {
+  if (language === 'ka') return upper ? ({ 'წ':'ჭ', 'რ':'ღ', 'ტ':'თ', 'ს':'შ', 'ჯ':'ჟ', 'ზ':'ძ', 'ც':'ჩ' } as Record<string, string>)[value] ?? value : value;
   if (language === 'ko') return upper ? ({ 'ㅂ':'ㅃ', 'ㅈ':'ㅉ', 'ㄷ':'ㄸ', 'ㄱ':'ㄲ', 'ㅅ':'ㅆ', 'ㅐ':'ㅒ', 'ㅔ':'ㅖ' } as Record<string, string>)[value] ?? value : value;
   return upper ? value.toLocaleUpperCase(language) : value;
 }

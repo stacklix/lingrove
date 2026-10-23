@@ -5,6 +5,43 @@ const { copyText } = vi.hoisted(() => ({ copyText: vi.fn().mockResolvedValue(und
 vi.mock('@lingrove/host-sdk', () => ({ copyText, ready: vi.fn().mockResolvedValue(undefined), installFocusMode: () => () => {}, setRootPage: vi.fn() }));
 vi.mock('@lingrove/host-sdk/vue', () => ({ useAppI18n: () => ({ t: (value: string) => value }) }));
 describe('keyboard interaction', () => {
+  it('types Georgian shift letters and Armenian uppercase without losing text or caret', async () => {
+    const wrapper = mount(App, { attachTo: document.body });
+    const press = async (char: string) => { await wrapper.findAll('button').find(button => button.text() === char)!.trigger('click'); };
+    await wrapper.get('#language').setValue('ka');
+    expect(wrapper.get('textarea').attributes('lang')).toBe('ka');
+    expect(wrapper.find('[aria-label="大写锁定"]').exists()).toBe(false);
+    await press('ქ');
+    for (const char of 'ჭღთშჟძჩ') {
+      await wrapper.get('[aria-label="切换格鲁吉亚语扩展字母"]').trigger('click');
+      await press(char);
+      expect(wrapper.get('[aria-label="切换格鲁吉亚语扩展字母"]').attributes('aria-pressed')).toBe('false');
+    }
+    const georgian = 'ქჭღთშჟძჩ';
+    expect(wrapper.get('textarea').element.value).toBe(georgian);
+    await wrapper.get('#language').setValue('hy');
+    expect(wrapper.get('textarea').attributes('lang')).toBe('hy');
+    expect(wrapper.findAll('.key-row')).toHaveLength(5);
+    for (const char of 'հայև') await press(char);
+    await wrapper.get('[aria-label="切换大小写"]').trigger('click');
+    await press('ԵՒ');
+    await wrapper.get('[aria-label="大写锁定"]').trigger('click');
+    await press('Ա'); await press('Բ');
+    await press('复制');
+    expect(copyText).toHaveBeenCalledWith(georgian + 'հայևԵՒԱԲ');
+    await wrapper.get('[aria-label="删除字符"]').trigger('click');
+    expect(wrapper.get('textarea').element.value).toBe(georgian + 'հայևԵՒԱ');
+    const area = wrapper.get('textarea');
+    area.element.setSelectionRange(0, 1); await area.trigger('select');
+    await press('Գ');
+    expect(area.element.value).toBe('Գ' + georgian.slice(1) + 'հայևԵՒԱ');
+    await wrapper.get('[aria-label="符号"]').trigger('click');
+    await press('1');
+    await wrapper.get('[aria-label="字母"]').trigger('click');
+    expect(wrapper.get('#language').element.value).toBe('hy');
+    expect(area.element.value).toBe('Գ1' + georgian.slice(1) + 'հայևԵՒԱ');
+    wrapper.unmount();
+  });
   it('switches Japanese input methods without losing text and modifies kana at the caret', async () => {
     const wrapper = mount(App, { attachTo: document.body });
     await wrapper.get('#language').setValue('ja');

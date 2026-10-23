@@ -1,6 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { deleteSelection, layouts, letterCase, replaceSelection } from '../src/keyboard';
 describe('multilingual text editing', () => {
+  it('matches both Georgian screenshot states and covers all 33 modern letters', () => {
+    const layout = layouts.find(item => item.id === 'ka')!;
+    expect(layout.rows).toEqual(['ქწერტყუიოპ', 'ასდფგჰჯკლ', 'ზხცვბნმ']);
+    const shifted = layout.rows.map(row => [...row].map(char => letterCase(char, true, 'ka')).join(''));
+    expect(shifted).toEqual(['ქჭეღთყუიოპ', 'აშდფგჰჟკლ', 'ძხჩვბნმ']);
+    expect([...new Set(layout.rows.join('') + shifted.join(''))].sort().join('')).toBe('აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ');
+    expect(layout.extra).toBe('');
+  });
+  it('keeps all Armenian letters in the four screenshot rows with their uppercase forms', () => {
+    const layout = layouts.find(item => item.id === 'hy')!;
+    expect(layout.rows).toEqual(['էթփձջևրչճժշ', 'քոեռտըւիօպխ', 'ասդֆգհյկլծ', 'զղցվբնմ']);
+    expect(layout.rows.map(row => [...row].map(char => letterCase(char, true, 'hy')).join('')))
+      .toEqual(['ԷԹՓՁՋԵՒՐՉՃԺՇ', 'ՔՈԵՌՏԸՒԻՕՊԽ', 'ԱՍԴՖԳՀՅԿԼԾ', 'ԶՂՑՎԲՆՄ']);
+    expect([...new Set(layout.rows.join(''))].sort().join('')).toBe('աբգդեզէըթժիլխծկհձղճմյնշոչպջռսվտրցւփքօֆև');
+    expect(layout.extra).toBe('');
+  });
   it('offers one iPhone layout per language, preferring existing QWERTY variants', () => {
     expect(new Set(layouts.map(item => item.locale)).size).toBe(layouts.length);
     expect(new Set(layouts.map(item => item.id)).size).toBe(layouts.length);
