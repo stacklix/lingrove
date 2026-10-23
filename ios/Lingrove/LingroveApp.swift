@@ -19,6 +19,11 @@ enum LingroveTheme {
 }
 
 extension View {
+    /// Match the Home app list surface while retaining native grouped row shapes.
+    func hostSettingsRowBackground() -> some View {
+        listRowBackground(Color(uiColor: LingroveTheme.surface))
+    }
+
     /// Shared canvas for native settings, including pushed pages and sheets.
     func hostSettingsBackground() -> some View {
         scrollContentBackground(.hidden)
@@ -242,6 +247,7 @@ struct HomeView: View {
                                     Text(store.notice).font(.footnote).foregroundStyle(.secondary)
                                 }
                             }
+                            .hostSettingsRowBackground()
                             HostAppUpdateSection()
                         }
                         Section {
@@ -266,6 +272,7 @@ struct HomeView: View {
                                 .accessibilityIdentifier("module-developer-details-\(module.id)")
                             }
                         }
+                        .hostSettingsRowBackground()
                         GitHubBuildStatusSection(isPresented: showingSettings)
                         #endif
                         Section("外观") {
@@ -278,6 +285,7 @@ struct HomeView: View {
                                 if showingSettings { UserDefaults.standard.set(value.rawValue, forKey: AppAppearance.preferenceKey) }
                             }
                         }
+                        .hostSettingsRowBackground()
                         Section("App 语言") {
                             Picker("App 语言", selection: $draftAppLanguage) {
                                 Text("跟随系统").tag("system")
@@ -291,6 +299,7 @@ struct HomeView: View {
                                 pages.updateLanguage()
                             }
                         }
+                        .hostSettingsRowBackground()
                         Section("模型服务") {
                             Button { showingLLMSettings = true } label: {
                                 HStack {
@@ -314,9 +323,11 @@ struct HomeView: View {
                                 }.contentShape(Rectangle())
                             }.buttonStyle(.plain)
                         }
+                        .hostSettingsRowBackground()
                         ModuleManagementSection(store: store, modules: $draftModules, editMode: $moduleEditMode)
                         NetworkAuthorizationSection(modules: store.modules).id(networkSummaryRevision)
                         Section("关于") { Text("Lingrove \(HostConfiguration.currentVersion)") }
+                            .hostSettingsRowBackground()
                     }
                     .hostSettingsBackground()
                     .environment(\.editMode, $moduleEditMode)
@@ -588,6 +599,7 @@ struct ModuleManagementSection: View {
                 Text("拖动排序，自动保存。")
             }
         }
+        .hostSettingsRowBackground()
         .onAppear { refreshModules() }
         .onChange(of: store.modules) { _, _ in refreshModules() }
     }
@@ -639,8 +651,10 @@ struct ModuleDetailsView: View {
                     ModuleInformationRow(title: "更新日期", value: updateDate(for: module))
                     ModuleInformationRow(title: "应用介绍", value: module.description(for: AppLanguage.current) ?? AppLanguage.text("学习应用"))
                 }
+                .hostSettingsRowBackground()
             } else {
                 Text("暂无已安装的应用").foregroundStyle(.secondary)
+                    .hostSettingsRowBackground()
             }
         }
         .hostSettingsBackground()
@@ -712,6 +726,7 @@ struct NetworkAuthorizationSection: View {
         } footer: {
             Text("撤销后，再次连接需重新授权。")
         }
+        .hostSettingsRowBackground()
         .onAppear(perform: refresh)
         .onChange(of: modules) { _, _ in refresh() }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in refresh() }

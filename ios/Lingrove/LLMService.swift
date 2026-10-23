@@ -125,6 +125,7 @@ struct LLMSettingsView: View {
                         .accessibilityLabel("API Key（服务商需要时填写）")
                 }
             } header: { Text("通用模型") } footer: { Text("此设置适用于所有应用。提交的内容会发送给所选服务商，API Key 仅安全保存在此设备上。") }
+            .hostSettingsRowBackground()
             Section {
                 Picker("推理强度", selection: $configuration.reasoningEffort) {
                     Text("默认（由模型决定）").tag(String?.none)
@@ -140,12 +141,14 @@ struct LLMSettingsView: View {
                      ? "仅适用于支持推理强度的模型；不确定时请选择默认。Kimi Code 的 k3 建议先选低；选择关闭会由服务端切换为非思考模型。"
                      : "推理强度设置仅用于 OpenAI 兼容接口，当前协议不会发送此参数。"))
             }
+            .hostSettingsRowBackground()
             Section {
                 Button("移除 API Key", role: .destructive) {
                     configuration.token = ""
                 }.disabled(!loaded)
                 if !message.isEmpty { Text(AppLanguage.text(message)).font(.footnote) }
             }
+            .hostSettingsRowBackground()
         }
         .hostSettingsBackground()
         .disabled(!loaded).navigationTitle("通用模型")
@@ -482,10 +485,14 @@ struct LLMUsageView: View {
                     Text("语音模型").tag(true)
                 }.pickerStyle(.segmented)
             }
+            .hostSettingsRowBackground()
             if speech {
                 TTSUsageSections()
             } else {
-                if let error = store.storageError { Section { Text(AppLanguage.text(error)).foregroundStyle(.red) } }
+                if let error = store.storageError {
+                    Section { Text(AppLanguage.text(error)).foregroundStyle(.red) }
+                        .hostSettingsRowBackground()
+                }
                 Section("用量总览") {
                     LLMUsageSummary(totals: store.total)
                     if !store.records.isEmpty {
@@ -495,8 +502,10 @@ struct LLMUsageView: View {
                         }.padding(.vertical, 8)
                     }
                 }
+                .hostSettingsRowBackground()
                 if store.records.isEmpty {
                     Section { Text("暂无使用记录，使用 AI 功能后将自动统计。").foregroundStyle(.secondary) }
+                        .hostSettingsRowBackground()
                 } else {
                     Section {
                         LLMUsageAppRows(groups: apps)
@@ -505,12 +514,14 @@ struct LLMUsageView: View {
                             LLMUsagePieChart(groups: apps)
                         }.padding(.vertical, 8)
                     } header: { Text("按应用") }
+                    .hostSettingsRowBackground()
 
                     Section {
                         ForEach(providers.sorted { $0.totals.tokens == $1.totals.tokens ? $0.id < $1.id : $0.totals.tokens > $1.totals.tokens }) { group in
                             NavigationLink {
                                 List {
                                     Section("服务商累计") { LLMUsageSummary(totals: group.totals) }
+                                        .hostSettingsRowBackground()
                                     Section("各应用用量") {
                                         LLMUsageAppRows(groups: store.groups(byProvider: false, provider: group.id))
                                         VStack(alignment: .leading, spacing: 4) {
@@ -518,6 +529,7 @@ struct LLMUsageView: View {
                                             LLMUsagePieChart(groups: store.groups(byProvider: false, provider: group.id))
                                         }.padding(.vertical, 8)
                                     }
+                                    .hostSettingsRowBackground()
                                 }.listStyle(.insetGrouped)
                                     .hostSettingsBackground()
                                     .navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
@@ -530,6 +542,7 @@ struct LLMUsageView: View {
                             LLMUsagePieChart(groups: providers)
                         }.padding(.vertical, 8)
                     } header: { Text("按服务提供商") }
+                    .hostSettingsRowBackground()
                 }
             }
         }
@@ -548,18 +561,23 @@ struct LLMUsageView: View {
                     Section("语音模型") {
                         Text("语音统计从启用后开始累计。请求数包含失败、取消、预加载和设置页试听；复用音频不重复计数。提交字符数按实际发送文本的字符数量记录，不代表服务商计费字符或 Token。")
                     }
+                    .hostSettingsRowBackground()
                     Section("累计用量") {
                         Text("从启用统计后开始累计，仅记录此设备的 AI 使用情况。请求数包含失败和取消；Token 用量以服务商返回为准，包含缓存输入与推理用量，未提供的部分不估算。")
                     }
+                    .hostSettingsRowBackground()
                     Section("每日字符用量") {
                         Text("按语音请求发起时的本地日期归集提交字符数。左右滑动可查看其他日期；此前未记录日期的累计用量不计入每日图表。")
                     }
+                    .hostSettingsRowBackground()
                     Section("每日 Token 用量") {
                         Text("按请求结束时的本地日期归集发送与接收 Token。左右滑动可查看其他日期。")
                     }
+                    .hostSettingsRowBackground()
                     Section("按服务提供商") {
                         Text("按 API 服务域名及端口归集。同一地址下的模型和接口协议合并统计；切换服务商后保留历史累计。")
                     }
+                    .hostSettingsRowBackground()
                 }
                 .hostSettingsBackground()
                 .navigationTitle("统计说明").navigationBarTitleDisplayMode(.inline)
@@ -746,28 +764,36 @@ struct TTSUsageSections: View {
     private var apps: [TTSUsageGroup] { store.groups(by: .app) }
     private var providers: [TTSUsageGroup] { store.groups(by: .provider) }
     var body: some View {
-        if let error = store.storageError { Section { Text(AppLanguage.text(error)).foregroundStyle(.red) } }
+        if let error = store.storageError {
+            Section { Text(AppLanguage.text(error)).foregroundStyle(.red) }
+                .hostSettingsRowBackground()
+        }
         Section("用量总览") {
             summary(requests: store.records.reduce(0) { $0 + $1.requests }, characters: store.records.reduce(0) { $0 + $1.characters })
             TTSDailyUsageChart(records: store.dailyRecords, groups: apps)
         }
+        .hostSettingsRowBackground()
         if store.records.isEmpty {
             Section { Text("暂无语音使用记录，使用语音合成后将自动统计。").foregroundStyle(.secondary) }
+                .hostSettingsRowBackground()
         } else {
             Section("按应用") {
                 ForEach(apps) { group in row(group, groups: apps) }
                 TTSUsagePieChart(groups: apps)
             }
+            .hostSettingsRowBackground()
             Section("按服务提供商") {
                 ForEach(providers) { group in
                     NavigationLink {
                         List {
                             Section("服务商累计") { summary(requests: group.requests, characters: group.characters) }
+                                .hostSettingsRowBackground()
                             Section("各应用用量") {
                                 let providerApps = store.groups(by: .app, provider: group.id)
                                 ForEach(providerApps) { app in row(app, groups: providerApps) }
                                 TTSUsagePieChart(groups: providerApps)
                             }
+                            .hostSettingsRowBackground()
                         }
                         .hostSettingsBackground()
                         .navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
@@ -775,6 +801,7 @@ struct TTSUsageSections: View {
                 }
                 TTSUsagePieChart(groups: providers)
             }
+            .hostSettingsRowBackground()
         }
     }
     private func summary(requests: Int, characters: Int) -> some View {

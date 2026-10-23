@@ -112,6 +112,7 @@ struct HostAppUpdateSection: View {
         } footer: {
             Text("更新 Lingrove 宿主 App。安装需系统确认，且设备必须已登记；安装期间请返回主屏幕等待完成。")
         }
+        .hostSettingsRowBackground()
         .task(id: updateCheckID) { await checkForUpdate() }
     }
 
@@ -287,6 +288,7 @@ struct ModuleDeveloperDetailsView: View {
                                 .accessibilityIdentifier("module-download-result")
                         }
                     }
+                    .hostSettingsRowBackground()
                 } else {
                     Section {
                         HStack(spacing: 12) {
@@ -306,6 +308,7 @@ struct ModuleDeveloperDetailsView: View {
                                 .accessibilityIdentifier("module-refresh-result")
                         }
                     }
+                    .hostSettingsRowBackground()
                 }
                 Section {
                     let source = resourceSource(module)
@@ -328,8 +331,10 @@ struct ModuleDeveloperDetailsView: View {
                         }
                     }
                 }
+                .hostSettingsRowBackground()
             } else {
                 Text("暂无已安装的应用").foregroundStyle(.secondary)
+                    .hostSettingsRowBackground()
             }
         }
         .hostSettingsBackground()
@@ -546,6 +551,7 @@ struct GitHubBuildStatusSection: View {
         } footer: {
             Text("Token 仅保存在本机 Keychain，清空后保存可删除 Token。未配置 Token 时，进入页面或切换构建流程读取一次，不自动刷新。配置 Token 后，仅设置页打开且 App 在前台时自动拉取：运行中每 5 秒刷新，结束后每 30 秒刷新，失败后每 120 秒重试。")
         }
+        .hostSettingsRowBackground()
     }
 }
 

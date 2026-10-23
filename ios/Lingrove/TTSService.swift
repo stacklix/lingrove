@@ -650,11 +650,13 @@ struct TTSSettingsView: View {
             } header: { Text("语音合成") } footer: {
                 Text("此语音合成设置适用于所有应用。文本将发送给所选服务商，密钥仅安全保存在此设备上。生成语音会消耗服务商额度。")
             }
+            .hostSettingsRowBackground()
             Section("默认语速") {
                 Slider(value: $configuration.speed, in: 0.5...2, step: 0.1)
                     .accessibilityLabel("默认语速")
                 Text(verbatim: String(format: "%.1f×", configuration.speed)).monospacedDigit()
             }
+            .hostSettingsRowBackground()
             Section {
                 Button("移除 API Key", role: .destructive) {
                     stopPreview()
@@ -663,6 +665,7 @@ struct TTSSettingsView: View {
                 }
 
             }
+            .hostSettingsRowBackground()
             Section {
                 Picker("试听语言", selection: $sampleLanguage) {
                     Text("默认音色").tag("")
@@ -699,7 +702,11 @@ struct TTSSettingsView: View {
                     Button("继续播放") { player?.resume() }
                 }
             } header: { Text("AI 语音试听") }
-            if !message.isEmpty { Section { Text(AppLanguage.text(message)).font(.footnote).accessibilityIdentifier("tts-message") } }
+            .hostSettingsRowBackground()
+            if !message.isEmpty {
+                Section { Text(AppLanguage.text(message)).font(.footnote).accessibilityIdentifier("tts-message") }
+                    .hostSettingsRowBackground()
+            }
         }
         .disabled(!loaded)
         .hostSettingsBackground()
@@ -743,6 +750,7 @@ struct TTSSettingsView: View {
             }, id: \.self) { language in
                 voicePicker(languageTitle(language), language: language, id: "tts-voice-\(language)")
             }
+            .hostSettingsRowBackground()
         }
         .hostSettingsBackground()
         .searchable(text: $languageSearch, prompt: "搜索语言")
