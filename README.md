@@ -120,9 +120,11 @@ gh-pages/
 
 目录为普通 `{ "modules": [...] }` JSON；两种目录均包含应用元数据、版本、ZIP 地址 `downloadUrl`、包大小、SHA-256 和 HTML 入口 `webUrl`。正式资源位于 `/packages/`、`/app/`；snapshot 资源位于 `/snapshot/packages/`、`/snapshot/app/`。`npm run verify:release` 对两种渠道都校验 ZIP、hash 和网页文件的一致性。
 
-每次运行还保存一份 `lingrove-channels` Actions artifact，保留 14 天。发布保留既有的单提交策略：只替换 `gh-pages` 产物分支，`master` 源码历史不变。仓库规则须允许 Actions 的 `GITHUB_TOKEN` 写入及强推 `gh-pages`；工作流同时申请 `pages: write` 以请求 Pages 构建。
+每次运行还保存一份 `lingrove-channels` Actions artifact，保留 14 天。发布保留既有的单提交策略：只替换 `gh-pages` 产物分支，`master` 源码历史不变。仓库规则须允许 Actions 的 `GITHUB_TOKEN` 写入及强推 `gh-pages`；部署任务申请 `pages: write` 和 `id-token: write`，使用 `github-pages` environment。
 
-仓库现有 GitHub Pages 配置为 `gh-pages` 分支根目录、自定义域名 `lingrove.stackli.me`。因为 `GITHUB_TOKEN` 推送不会自动触发分支式 Pages 构建，工作流推送后通过 [GitHub Pages 构建 API](https://docs.github.com/en/rest/pages/pages#request-a-github-pages-build) 显式触发构建，并等待本次产物提交构建成功；失败或超时会使工作流失败。无需切换 Pages 发布源，也不会修改 DNS 设置。
+首次使用新发布流程前，在仓库 **Settings → Pages → Build and deployment → Source** 中选择 **GitHub Actions**，保留自定义域名 `lingrove.stackli.me` 和现有 DNS。`github-pages` environment 的部署规则需允许 `master` 和正式发布 tag。
+
+Web 和 iOS 共用 `.github/actions/publish-pages`：先只读检查发布源，仍为分支发布时会在写入前失败并提示设置地址；之后读取最新远端文件树、合并本次渠道、更新 `gh-pages`，同时导出与本次产物提交完全一致的完整站点，再由 `actions/upload-pages-artifact` 上传、`actions/deploy-pages` 部署一次并等待成功。互斥锁覆盖合并、上传和部署全过程，失败或超时会使工作流失败。不再调用 Pages 构建 API，也不再依赖分支式自动部署。Web 和 iOS 各自更新时可以各部署一次，但同一次发布不会主动请求两次部署。
 
 新增子应用时，在 `app/<子应用ID>/` 下创建项目；根 `package.json` 已通过 `app/*` 自动识别工作区。在 `modules.json` 中加入子应用 ID（不带 `app/` 前缀），提供 `package.json` 中的 `build` 命令和 `manifest.json`，并将 Vite 的 `outDir` 设置为 `../../dist/app/<子应用ID>`；manifest 的 `id` 与子目录名保持一致。添加工作区后运行 `npm install` 更新锁文件。统一构建脚本会依次构建清单中的所有子应用并生成相应 ZIP、网页目录和原生内置资源。
 

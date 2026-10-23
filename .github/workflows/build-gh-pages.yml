@@ -21,6 +21,10 @@ jobs:
     permissions:
       contents: write
       pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
     steps:
       - name: Check out source
         uses: actions/checkout@v5
@@ -52,16 +56,9 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-      - name: Publish selected channel, preserving the other channel and iOS
+      - name: Publish selected channel and deploy the complete site
         id: publish
-        env:
-          SOURCE_SHA: ${{ github.sha }}
-          PUBLISH_CHANNEL: ${{ github.ref_type == 'tag' && 'release' || 'snapshot' }}
-        run: node scripts/publish-pages-tree.mjs "$PUBLISH_CHANNEL" dist
-
-      - name: Build and verify GitHub Pages
-        timeout-minutes: 9
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_COMMIT: ${{ steps.publish.outputs.commit }}
-        run: bash scripts/verify-pages-build.sh
+        uses: ./.github/actions/publish-pages
+        with:
+          channel: ${{ github.ref_type == 'tag' && 'release' || 'snapshot' }}
+          source: dist

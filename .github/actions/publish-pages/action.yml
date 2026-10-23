@@ -1,0 +1,52 @@
+name: Publish complete GitHub Pages site
+description: Merge one channel into gh-pages and deploy the complete site once.
+inputs:
+  channel:
+    description: snapshot, release or ios
+    required: true
+  source:
+    description: Directory containing the built channel files
+    required: true
+outputs:
+  page_url:
+    description: Deployed site URL
+    value: ${{ steps.deployment.outputs.page_url }}
+runs:
+  using: composite
+  steps:
+    # The calling job holds publish-gh-pages until deployment completes.
+    # Check the source before writing gh-pages, so branch publishing cannot race us.
+    - name: Verify GitHub Pages deployment source
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: node scripts/verify-pages-source.mjs
+
+    - name: Configure GitHub Pages
+      uses: actions/configure-pages@v5
+
+    - name: Merge and save the complete site
+      id: publish
+      shell: bash
+      env:
+        SOURCE_SHA: ${{ github.sha }}
+        PUBLISH_CHANNEL: ${{ inputs.channel }}
+        PUBLISH_SOURCE: ${{ inputs.source }}
+        PAGES_ARTIFACT_DIR: ${{ runner.temp }}/lingrove-pages-${{ github.run_id }}-${{ github.run_attempt }}
+      run: node scripts/publish-pages-tree.mjs "$PUBLISH_CHANNEL" "$PUBLISH_SOURCE"
+
+    - name: Upload complete Pages site
+      uses: actions/upload-pages-artifact@v4
+      with:
+        path: ${{ runner.temp }}/lingrove-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
+    - name: Deploy GitHub Pages once
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+    - name: Record successful publication
+      shell: bash
+      env:
+        PUBLISHED_COMMIT: ${{ steps.publish.outputs.commit }}
+        PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+      run: printf 'Pages published commit %s to %s.\n' "$PUBLISHED_COMMIT" "$PAGE_URL" >> "$GITHUB_STEP_SUMMARY"

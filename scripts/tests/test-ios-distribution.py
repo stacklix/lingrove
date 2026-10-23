@@ -118,6 +118,7 @@ class DistributionTests(unittest.TestCase):
             (ios / 'index.html').write_text('installer v1')
             (ios / 'app.ipa').write_bytes(b'test IPA')
             env = {**os.environ, 'SOURCE_SHA': first, 'GITHUB_OUTPUT': str(folder / 'outputs')}
+            publication_count = 0
             def prepare(channel, commit, version):
                 directory = web / 'snapshot' if channel == 'snapshot' else web
                 catalog = 'catalog.snapshot.json' if channel == 'snapshot' else 'catalog.json'
@@ -130,11 +131,25 @@ class DistributionTests(unittest.TestCase):
                 }))
                 if channel == 'release': (directory / 'packages/app.zip').write_bytes(b'release ZIP')
             def publish(mode, directory):
+                nonlocal publication_count
+                publication_count += 1
+                artifact = folder / f'pages-artifact-{publication_count}'
                 try:
-                    run('node', str(ROOT / 'scripts/publish-pages-tree.mjs'), mode, str(directory), cwd=source, env=env)
+                    run('node', str(ROOT / 'scripts/publish-pages-tree.mjs'), mode, str(directory),
+                        cwd=source, env={**env, 'PAGES_ARTIFACT_DIR': str(artifact)})
                 except subprocess.CalledProcessError as error:
                     error.add_note(error.stderr or '')
                     raise
+                # The deployment artifact must be byte-for-byte identical to the
+                # entire published tree, including untouched channels and hidden files.
+                files = run('git', '--git-dir', str(remote), 'ls-tree', '-r', '--name-only', 'gh-pages').splitlines()
+                self.assertEqual(sorted(files), sorted(
+                    item.relative_to(artifact).as_posix() for item in artifact.rglob('*') if item.is_file()))
+                for name in files:
+                    expected = subprocess.run(
+                        ['git', '--git-dir', str(remote), 'show', f'gh-pages:{name}'],
+                        check=True, capture_output=True).stdout
+                    self.assertEqual((artifact / name).read_bytes(), expected, name)
             def read(name):
                 return run('git', '--git-dir', str(remote), 'show', f'gh-pages:{name}')
             prepare('snapshot', first, 'debug v1')
@@ -179,6 +194,16 @@ class DistributionTests(unittest.TestCase):
             self.assertNotIn('\nrelease/', '\n' + files)
             self.assertNotIn('\ncatalog.snapshot.json', '\n' + files)
             self.assertEqual(run('git', '--git-dir', str(remote), 'rev-list', '--count', 'gh-pages'), '1')
+            previous = run('git', '--git-dir', str(remote), 'rev-parse', 'gh-pages')
+            stale_artifact = folder / 'stale-artifact'
+            stale_artifact.mkdir()
+            (stale_artifact / 'stale.txt').write_text('must not be deployed')
+            (ios / 'index.html').write_text('installer v2')
+            with self.assertRaises(subprocess.CalledProcessError):
+                run('node', str(ROOT / 'scripts/publish-pages-tree.mjs'), 'ios', str(ios),
+                    cwd=source, env={**env, 'PAGES_ARTIFACT_DIR': str(stale_artifact)})
+            self.assertEqual(run('git', '--git-dir', str(remote), 'rev-parse', 'gh-pages'), previous)
+            self.assertEqual((stale_artifact / 'stale.txt').read_text(), 'must not be deployed')
 
 if __name__ == '__main__':
     unittest.main()

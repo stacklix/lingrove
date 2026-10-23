@@ -16,7 +16,8 @@ on:
       - 'scripts/package-ios-ota.py'
       - 'scripts/publish-pages-tree.sh'
       - 'scripts/publish-pages-tree.mjs'
-      - 'scripts/verify-pages-build.sh'
+      - 'scripts/verify-pages-source.mjs'
+      - '.github/actions/publish-pages/**'
       - '.github/workflows/ios-adhoc.yml'
   workflow_dispatch:
 
@@ -130,7 +131,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     # Shared with the web publisher: read the latest tree only after acquiring this lock.
     concurrency:
       group: publish-gh-pages
@@ -138,6 +139,10 @@ jobs:
     permissions:
       contents: write
       pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -147,15 +152,12 @@ jobs:
         with:
           name: lingrove-ios-adhoc
           path: build/ios-ota
-      - name: Publish installation files, preserving web applications
+      - name: Publish installation files and deploy the complete site
         id: publish
-        env:
-          SOURCE_SHA: ${{ github.sha }}
-        run: bash scripts/publish-pages-tree.sh ios build/ios-ota
-      - name: Build and verify GitHub Pages
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_COMMIT: ${{ steps.publish.outputs.commit }}
+        uses: ./.github/actions/publish-pages
+        with:
+          channel: ios
+          source: build/ios-ota
+      - name: Record installation URL
         run: |
-          bash scripts/verify-pages-build.sh
           echo 'Install with Safari: https://lingrove.stackli.me/ios/' >> "$GITHUB_STEP_SUMMARY"

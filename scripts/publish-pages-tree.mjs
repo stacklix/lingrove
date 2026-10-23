@@ -25,6 +25,7 @@ export async function publishPages({
   sourceDir,
   repository = process.cwd(),
   env = process.env,
+  artifactDir = env.PAGES_ARTIFACT_DIR,
 }) {
   if (!['snapshot', 'release', 'ios'].includes(mode))
     throw new Error('Expected snapshot, release or ios');
@@ -39,6 +40,21 @@ export async function publishPages({
       maxBuffer: 100 * 1024 * 1024,
       ...options,
     });
+  const exportTree = async (revision, destination) => {
+    // Export canonical Git bytes, without checkout filters or platform EOL changes.
+    const entries = git(['ls-tree', '-rz', revision], { encoding: 'utf8' })
+      .split('\0')
+      .filter(Boolean);
+    for (const entry of entries) {
+      const [header, name] = entry.split('\t');
+      const [permissions, kind, object] = header.split(' ');
+      if (!['100644', '100755'].includes(permissions) || kind !== 'blob')
+        throw new Error('Unsupported published file type');
+      const target = inside(destination, name);
+      await mkdir(path.dirname(target), { recursive: true });
+      await writeFile(target, git(['cat-file', 'blob', object]));
+    }
+  };
   try {
     await mkdir(site);
     const remote = spawnSync('git', ['ls-remote', '--exit-code', 'origin', 'refs/heads/gh-pages'], {
@@ -50,19 +66,8 @@ export async function publishPages({
     if (remote.status === 0) {
       git(['fetch', '--no-tags', 'origin', '+refs/heads/gh-pages:refs/remotes/origin/gh-pages']);
       previous = git(['rev-parse', 'refs/remotes/origin/gh-pages'], { encoding: 'utf8' }).trim();
-      // Export regular files only; never materialize links from a publication tree.
-      const entries = git(['ls-tree', '-rz', previous], { encoding: 'utf8' })
-        .split('\0')
-        .filter(Boolean);
-      for (const entry of entries) {
-        const [header, name] = entry.split('\t');
-        const [permissions, kind, object] = header.split(' ');
-        if (!['100644', '100755'].includes(permissions) || kind !== 'blob')
-          throw new Error('Unsupported published file type');
-        const target = inside(site, name);
-        await mkdir(path.dirname(target), { recursive: true });
-        await writeFile(target, git(['cat-file', 'blob', object]));
-      }
+      // Never materialize links from a publication tree.
+      await exportTree(previous, site);
     } else if (remote.status !== 2) {
       throw new Error(remote.stderr || 'Cannot read gh-pages');
     }
@@ -155,6 +160,13 @@ export async function publishPages({
       ],
       { env: publicationEnv, encoding: 'utf8' },
     ).trim();
+    if (artifactDir) {
+      // Export the exact merged tree, including the other channels and iOS.
+      // Refuse an existing directory rather than upload stale leftover files.
+      const destination = path.resolve(artifactDir);
+      await mkdir(destination);
+      await exportTree(commit, destination);
+    }
     git([
       'push',
       `--force-with-lease=refs/heads/gh-pages:${previous}`,

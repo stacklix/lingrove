@@ -37,7 +37,7 @@ base64 -i /path/to/Lingrove-AdHoc.mobileprovision | pbcopy
 
 分别执行并粘贴到对应 Secret。无需提供 Apple ID 密码、App Store Connect API Key 或额外 PAT；临时钥匙串密码由工作流每次随机生成。不要将签名文件、密码或 UDID 清单提交到源码仓库。
 
-Pages 保持从 `gh-pages` 根目录发布，自定义域名为 `lingrove.stackli.me`，确保安装页、manifest 和 IPA 均可通过有效证书的公开 HTTPS 地址访问。当前域名经 Cloudflare 提供 HTTPS；GitHub 尚未签发源站证书，因此暂时无法开启 Pages 的 Enforce HTTPS 开关，工作流直接使用已可访问的 HTTPS 域名。仓库规则需要允许工作流写入、强推 `gh-pages`；流程通过内置 `GITHUB_TOKEN` 请求 Pages 构建。先成功运行一次现有 Web Pages 工作流，再发布 iOS 安装包。
+Pages 的 **Settings → Pages → Build and deployment → Source** 需选择 **GitHub Actions**，自定义域名保留 `lingrove.stackli.me`，确保安装页、manifest 和 IPA 均可通过有效证书的公开 HTTPS 地址访问。保留现有 DNS 和 HTTPS 配置；`github-pages` environment 的部署规则需允许 `master` 和正式发布 tag。`gh-pages` 仍保存完整产物，仓库规则需允许工作流写入、强推此分支。部署任务通过内置 `GITHUB_TOKEN` 的 `pages: write`、`id-token: write` 权限直接部署完整站点，不再请求分支式 Pages 构建。先成功运行一次 Web Pages 工作流，再发布 iOS 安装包。
 
 ## 打包与发布
 
@@ -58,7 +58,7 @@ Pages 保持从 `gh-pages` 根目录发布，自定义域名为 `lingrove.stackl
 
 导出后再从 IPA 读取版本及描述文件，生成 HTTPS OTA manifest、带哈希文件名的 IPA、图标和安装页。页面显示版本、大小、有效期及 SHA-256，不展示 UDID 清单。构建成功后保存 `lingrove-ios-adhoc` artifact（14 天），再发布 Pages；Pages 构建成功后在运行摘要给出安装地址。
 
-Web 与 iOS 发布共用 `publish-gh-pages` 互斥锁，并在获得锁后读取最新远端产物：Web 更新保留 `/ios/`；iOS 更新只替换 `/ios/`。仍保留 gh-pages 单提交策略，并使用 force-with-lease 防止覆盖其他写入者的更新。网页保留最新一份 IPA，旧版本可从尚未过期的 Actions artifact 获取。安装时请打开最新页面，已缓存的旧安装链接在下次发布后可能失效。
+Web 与 iOS 发布共用 `publish-gh-pages` 互斥锁，并在获得锁后读取最新远端产物：Web 更新保留 `/ios/`；iOS 更新只替换 `/ios/`。共用 `.github/actions/publish-pages`，导出完整的合并站点后上传 Pages artifact，每次发布只调用一次 `actions/deploy-pages`，锁一直持有到部署结束。仍保留 gh-pages 单提交策略，并使用 force-with-lease 防止覆盖其他写入者的更新。网页保留最新一份 IPA，旧版本可从尚未过期的 Actions artifact 获取。安装时请打开最新页面，已缓存的旧安装链接在下次发布后可能失效。
 
 首次尚未发布 IPA 时，首页安装入口展示“安装包尚未发布”。签名或打包失败不会发布新的安装包。IPA 达到 100 MiB 会提前失败，因为此方案将文件直接推送到 GitHub 分支。
 

@@ -14,7 +14,8 @@ on:
       - 'scripts/tests/make-fixtures.py'
       - 'scripts/publish-pages-tree.sh'
       - 'scripts/publish-pages-tree.mjs'
-      - 'scripts/verify-pages-build.sh'
+      - 'scripts/verify-pages-source.mjs'
+      - '.github/actions/publish-pages/**'
       - '.github/workflows/ios*.yml'
       - 'scripts/tests/release-isolation.test.mjs'
   workflow_dispatch:

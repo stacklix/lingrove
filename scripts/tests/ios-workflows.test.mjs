@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
+import { format } from 'prettier';
 
 const workflow = async (name) =>
   readFile(new URL(`../../.github/workflows/${name}`, import.meta.url), 'utf8');
@@ -17,6 +18,16 @@ function block(source, indentation, key) {
 function steps(job) {
   return job.split(/^      - /m).slice(1);
 }
+
+test('publishing workflows and the shared action are valid YAML', async () => {
+  for (const file of ['ios.yml', 'ios-adhoc.yml', 'build-gh-pages.yml']) {
+    await format(await workflow(file), { parser: 'yaml' });
+  }
+  await format(
+    await readFile(new URL('../../.github/actions/publish-pages/action.yml', import.meta.url), 'utf8'),
+    { parser: 'yaml' },
+  );
+});
 
 test('PR and master check Release isolation while the signed master artifact remains Debug', async () => {
   const simulator = await workflow('ios.yml');
@@ -72,8 +83,32 @@ test('rapid-development publishing builds and verifies artifacts without running
       /npm (?:test|run (?:test|check|typecheck))|node --test|scripts\/tests\/|scripts\/test-native\.sh/,
     );
     assert.match(source, /run: npm ci/);
-    assert.match(source, /verify-(?:ios-modules|pages-build)/);
+    assert.match(source, /verify-ios-modules|uses: \.\/\.github\/actions\/publish-pages/);
   }
+});
+
+test('web and iOS use one shared publisher while holding the same lock through deployment', async () => {
+  const web = await workflow('build-gh-pages.yml');
+  const ios = await workflow('ios-adhoc.yml');
+  const webJob = block(web, 2, 'build-and-publish');
+  const iosJob = block(ios, 2, 'publish');
+  for (const scope of [web, iosJob]) {
+    assert.match(block(scope, scope === web ? 0 : 4, 'concurrency'), /group: publish-gh-pages/);
+    assert.match(scope, /cancel-in-progress: false/);
+  }
+  for (const job of [webJob, iosJob]) {
+    const permissions = block(job, 4, 'permissions');
+    assert.match(permissions, /contents: write/);
+    assert.match(permissions, /pages: write/);
+    assert.match(permissions, /id-token: write/);
+    const environment = block(job, 4, 'environment');
+    assert.match(environment, /name: github-pages/);
+    assert.match(environment, /steps\.publish\.outputs\.page_url/);
+    assert.equal(job.match(/uses: \.\/\.github\/actions\/publish-pages/g)?.length, 1);
+    assert.doesNotMatch(job, /verify-pages-build|pages\/builds|actions\/deploy-pages@/);
+  }
+  assert.match(webJob, /github\.ref_type == 'tag' && 'release' \|\| 'snapshot'/);
+  assert.match(iosJob, /channel: ios/);
 });
 
 test('signed publishing still requires a successful archive and artifact upload', async () => {
