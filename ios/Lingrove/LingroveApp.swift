@@ -28,6 +28,10 @@ extension View {
     func hostSettingsBackground() -> some View {
         scrollContentBackground(.hidden)
             .background(Color(uiColor: LingroveTheme.background).ignoresSafeArea())
+            // Settings has its own navigation bar; do not inherit Home's hidden
+            // bar or rely on automatic large-title layout over a custom canvas.
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.visible, for: .navigationBar)
             .toolbarBackground(Color(uiColor: LingroveTheme.background), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
     }
