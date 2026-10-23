@@ -516,7 +516,7 @@ main.native-host {
   }
 }
 
-/* Match Omniglyph's secondary toolbar geometry and back control. */
+/* Match Alphi's secondary toolbar geometry and back control. */
 main.result-page,
 main.native-host.result-page {
   padding-top: 0;

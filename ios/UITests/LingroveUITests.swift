@@ -154,9 +154,9 @@ final class LingroveUITests: XCTestCase {
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true"), object: element)
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 40), .completed)
     }
-    func testOmniglyphNativeWritingAndHistory() throws {
+    func testAlphiNativeWritingAndHistory() throws {
         let app = XCUIApplication(); app.launch()
-        let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Omniglyph")).firstMatch
+        let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Alphi")).firstMatch
         waitForEnabled(entry); entry.tap()
         let studyTab = app.webViews.buttons["学习"]
         XCTAssertTrue(studyTab.waitForExistence(timeout:25)); studyTab.tap()
@@ -180,13 +180,13 @@ final class LingroveUITests: XCTestCase {
         waitForEnabled(submit)
         app.webViews.buttons["学习"].tap()
         app.terminate(); app.launch()
-        let reopened = app.buttons.matching(NSPredicate(format:"label CONTAINS %@", "Omniglyph")).firstMatch
+        let reopened = app.buttons.matching(NSPredicate(format:"label CONTAINS %@", "Alphi")).firstMatch
         waitForEnabled(reopened); reopened.tap()
         XCTAssertTrue(app.webViews.buttons["学习"].waitForExistence(timeout:25)); app.webViews.buttons["学习"].tap()
         resumeStudy()
         waitForEnabled(submit)
         XCTAssertTrue(canvas.waitForExistence(timeout:5))
-        let screenshot = XCTAttachment(screenshot:app.screenshot()); screenshot.name = "Omniglyph-inline-resumed"; screenshot.lifetime = .keepAlways; add(screenshot)
+        let screenshot = XCTAttachment(screenshot:app.screenshot()); screenshot.name = "Alphi-inline-resumed"; screenshot.lifetime = .keepAlways; add(screenshot)
         submit.tap()
         let independent = app.webViews.buttons.matching(NSPredicate(format:"label CONTAINS %@", "独立书写 →")).firstMatch
         XCTAssertTrue(independent.waitForExistence(timeout:10))
@@ -363,7 +363,7 @@ final class LingroveUITests: XCTestCase {
         }
         app.buttons["settings-back"].tap()
         app.terminate(); app.launch()
-        for name in ["Omniglyph", "Lexis", "Verso", "Sentra"] {
+        for name in ["Alphi", "Lexis", "Verso", "Sentra"] {
             waitForEnabled(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch)
         }
     }

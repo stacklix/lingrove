@@ -1,4 +1,4 @@
-Omniglyph reference resources
+Alphi reference resources
 
 Japanese kana paths: KanjiVG, copyright Ulrich Apel and contributors.
 https://kanjivg.tagaini.net/  https://github.com/KanjiVG/kanjivg

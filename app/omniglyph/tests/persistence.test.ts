@@ -3,7 +3,7 @@ import { moduleStorage } from '@lingrove/host-sdk';
 const storage = moduleStorage('sentra');
 import { loadHistory, saveHistory } from '../src/persistence';
 beforeEach(() => localStorage.clear());
-it('keeps Omniglyph browser data separate from Sentra', async () => {
+it('keeps Alphi browser data separate from Sentra', async () => {
   await storage.set('history', { sentra: true });
   await saveHistory({ practices: [], rounds: [] });
   expect(await storage.get('history')).toEqual({ sentra: true });

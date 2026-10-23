@@ -1100,7 +1100,7 @@ onMounted(async () => {
         </template>
       </template>
       <footer>
-        <span>Omniglyph</span><span>WRITE SLOWLY. LEARN DEEPLY.</span>
+        <span>Alphi</span><span>WRITE SLOWLY. LEARN DEEPLY.</span>
         <details>
           <summary>{{ t('字帖来源与评分说明') }}</summary>
           <p>
