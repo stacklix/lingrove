@@ -332,6 +332,7 @@ struct ModuleDeveloperDetailsView: View {
                 Text("暂无已安装的应用").foregroundStyle(.secondary)
             }
         }
+        .hostSettingsBackground()
         .navigationTitle(module?.name ?? moduleID)
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -18,6 +18,16 @@ enum LingroveTheme {
         : UIColor(red: 40/255, green: 112/255, blue: 82/255, alpha: 1) }
 }
 
+extension View {
+    /// Shared canvas for native settings, including pushed pages and sheets.
+    func hostSettingsBackground() -> some View {
+        scrollContentBackground(.hidden)
+            .background(Color(uiColor: LingroveTheme.background).ignoresSafeArea())
+            .toolbarBackground(Color(uiColor: LingroveTheme.background), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+    }
+}
+
 
 enum AppAppearance: String, CaseIterable, Identifiable {
     static let preferenceKey = "app.appearance"
@@ -308,6 +318,7 @@ struct HomeView: View {
                         NetworkAuthorizationSection(modules: store.modules).id(networkSummaryRevision)
                         Section("关于") { Text("Lingrove \(HostConfiguration.currentVersion)") }
                     }
+                    .hostSettingsBackground()
                     .environment(\.editMode, $moduleEditMode)
                     .navigationDestination(isPresented: $showingLLMSettings) {
                         LLMSettingsView()
@@ -328,6 +339,7 @@ struct HomeView: View {
                         }
                     }
                 }
+                .presentationBackground(Color(uiColor: LingroveTheme.background))
             }
             .task { guard !didCheck else { return }; didCheck = true; do { _ = try LLMStore.load() } catch { modelError = error.localizedDescription }; await store.checkForUpdates() }
             .alert("通用模型设置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(AppLanguage.text(modelError)) }
@@ -631,6 +643,7 @@ struct ModuleDetailsView: View {
                 Text("暂无已安装的应用").foregroundStyle(.secondary)
             }
         }
+        .hostSettingsBackground()
         .navigationTitle(module?.name ?? moduleID)
         .navigationBarTitleDisplayMode(.inline)
     }

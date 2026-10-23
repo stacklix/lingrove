@@ -146,7 +146,9 @@ struct LLMSettingsView: View {
                 }.disabled(!loaded)
                 if !message.isEmpty { Text(AppLanguage.text(message)).font(.footnote) }
             }
-        }.disabled(!loaded).navigationTitle("通用模型")
+        }
+        .hostSettingsBackground()
+        .disabled(!loaded).navigationTitle("通用模型")
         .task {
             guard !loaded else { return }
             do { configuration = try LLMStore.load(); loaded = true }
@@ -517,6 +519,7 @@ struct LLMUsageView: View {
                                         }.padding(.vertical, 8)
                                     }
                                 }.listStyle(.insetGrouped)
+                                    .hostSettingsBackground()
                                     .navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
                             } label: {
                                 LLMUsageGroupRow(group: group, groups: providers)
@@ -531,6 +534,7 @@ struct LLMUsageView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .hostSettingsBackground()
         .navigationTitle("模型使用统计").navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -556,9 +560,12 @@ struct LLMUsageView: View {
                     Section("按服务提供商") {
                         Text("按 API 服务域名及端口归集。同一地址下的模型和接口协议合并统计；切换服务商后保留历史累计。")
                     }
-                }.navigationTitle("统计说明").navigationBarTitleDisplayMode(.inline)
-                    .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { showingNotes = false } } }
+                }
+                .hostSettingsBackground()
+                .navigationTitle("统计说明").navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { showingNotes = false } } }
             }
+            .presentationBackground(Color(uiColor: LingroveTheme.background))
         }
     }
 }
@@ -761,7 +768,9 @@ struct TTSUsageSections: View {
                                 ForEach(providerApps) { app in row(app, groups: providerApps) }
                                 TTSUsagePieChart(groups: providerApps)
                             }
-                        }.navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
+                        }
+                        .hostSettingsBackground()
+                        .navigationTitle(group.name).navigationBarTitleDisplayMode(.inline)
                     } label: { groupLabel(group, groups: providers) }
                 }
                 TTSUsagePieChart(groups: providers)

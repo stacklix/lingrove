@@ -702,6 +702,7 @@ struct TTSSettingsView: View {
             if !message.isEmpty { Section { Text(AppLanguage.text(message)).font(.footnote).accessibilityIdentifier("tts-message") } }
         }
         .disabled(!loaded)
+        .hostSettingsBackground()
         .navigationTitle("语音合成")
         .navigationDestination(isPresented: $showingLanguageVoices) { languageVoicesPage }
         .task {
@@ -743,6 +744,7 @@ struct TTSSettingsView: View {
                 voicePicker(languageTitle(language), language: language, id: "tts-voice-\(language)")
             }
         }
+        .hostSettingsBackground()
         .searchable(text: $languageSearch, prompt: "搜索语言")
         .navigationTitle("按语言设置音色")
         .navigationBarTitleDisplayMode(.inline)
