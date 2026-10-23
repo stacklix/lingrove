@@ -60,3 +60,7 @@ Logo 为此前确认的绿色 Alphi 图稿，原图保留在 `public/logo.png`�
 - `src/pronunciation-audio.json`：实际播放使用的嵌入音频，支持宿主离线加载。
 
 从仓库根目录执行 `python3 scripts/generate-pronunciation-samples.py --recordings-only` 重新生成，然后执行 `npm run build` 同步网页与 iOS 内置资源。转换使用 FFmpeg，可在 Windows 上执行；支持 `--ffmpeg <路径>`。
+
+## 语言介绍
+
+六种语言均有“介绍”Tab：语言概况、语系与使用地区、文字特点、历史时间线、学习提示和可点击资料来源。正文离线打包，并随 App 语言在中文、英文、日文间切换。内容位于 `src/language-introductions.ts`，译文位于本应用词库；链接仅用于查阅原始资料。介绍页为一级页，顶部保留 Home 区域，切换语言保留介绍 Tab，学习与测试记录照常保存。亚美尼亚语、格鲁吉亚语和韩语显示“字母、介绍”，其余语言显示“字母、学习、测试、介绍”。

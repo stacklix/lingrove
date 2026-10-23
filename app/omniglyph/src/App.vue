@@ -23,6 +23,7 @@ import StrokeOrder from './components/StrokeOrder.vue';
 import PronunciationButton from './components/PronunciationButton.vue';
 import { loadPronunciations, stopPronunciation } from './pronunciation';
 import PronunciationCredits from './components/PronunciationCredits.vue';
+import LanguageIntroduction from './components/LanguageIntroduction.vue';
 import { emptyProgress, loadProgress, saveProgress, type Tab } from './progress';
 const progress = ref(emptyProgress());
 const progressWritable = ref(false);
@@ -117,10 +118,18 @@ function inkChanged(strokes: Strokes, drawing?: string) {
 function switchTab(value: Tab) {
   if (busy.value) return;
   capture();
-  if (!supportsWriting(language.value)) value = 'letters';
+  if (!supportsWriting(language.value) && (value === 'study' || value === 'tests'))
+    value = 'letters';
   tab.value = value;
   detail.value = null;
-  page.value = value === 'study' ? 'home' : value === 'tests' ? 'test-home' : 'library';
+  page.value =
+    value === 'study'
+      ? 'home'
+      : value === 'tests'
+        ? 'test-home'
+        : value === 'about'
+          ? 'about'
+          : 'library';
   resetFeedback();
   void persistProgress();
 }
@@ -159,11 +168,13 @@ function resumeRound() {
 }
 
 const page = ref<
-  'home' | 'library' | 'learn' | 'test' | 'summary' | 'history' | 'test-home' | 'progress'
+  'home' | 'library' | 'learn' | 'test' | 'summary' | 'history' | 'test-home' | 'progress' | 'about'
 >('home');
 const isRootPage = computed(
   () =>
-    ['home', 'library', 'test-home'].includes(page.value) && !detail.value && !reviewAnswer.value,
+    ['home', 'library', 'test-home', 'about'].includes(page.value) &&
+    !detail.value &&
+    !reviewAnswer.value,
 );
 watch(
   isRootPage,
@@ -602,7 +613,7 @@ watch(
   },
 );
 watch(group, () => {
-  if (!loading.value && ['home', 'library', 'test-home'].includes(page.value))
+  if (!loading.value && ['home', 'library', 'test-home', 'about'].includes(page.value))
     void persistProgress();
 });
 watch([page, activeID, questionIndex], async () => {
@@ -675,7 +686,8 @@ onMounted(async () => {
         </button>
       </div>
       <template v-if="!loading && fontsReady">
-        <template v-if="page === 'home'">
+        <LanguageIntroduction v-if="page === 'about'" :language="language" />
+        <template v-else-if="page === 'home'">
           <section class="study-card">
             <div>
               <span class="eyebrow">{{
@@ -1142,7 +1154,11 @@ onMounted(async () => {
         <PronunciationCredits :language="language" />
       </footer>
     </main>
-    <nav class="bottom-tabs" :aria-label="t('主导航')" :inert="!!detail || !!reviewAnswer">
+    <nav
+      class="bottom-tabs lingrove-bottom-tabs"
+      :aria-label="t('主导航')"
+      :inert="!!detail || !!reviewAnswer"
+    >
       <button
         v-for="item in [
           { id: 'letters', name: '字母', icon: 'M4 20L11 4h2l7 16 M7 14h10' },
@@ -1152,7 +1168,14 @@ onMounted(async () => {
             icon: 'M4 5h6q2 0 2 2q0-2 2-2h6v14h-6q-2 0-2 2q0-2-2-2H4z M12 7v14',
           },
           { id: 'tests', name: '测试', icon: 'M8 4H5v17h14V4h-3 M8 3h8v4H8z M8 14l3 3 5-6' },
-        ].filter((item) => supportsWriting(language) || item.id === 'letters')"
+          {
+            id: 'about',
+            name: '介绍',
+            icon: 'M12 11v6 M12 7h.01 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
+          },
+        ].filter(
+          (item) => supportsWriting(language) || item.id === 'letters' || item.id === 'about',
+        )"
         :key="item.id"
         :aria-current="tab === item.id ? 'page' : undefined"
         :class="{ active: tab === item.id }"

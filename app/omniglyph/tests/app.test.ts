@@ -164,7 +164,12 @@ it.each(['ru', 'ja', 'el'])(
   async (language) => {
     const w = mountApp();
     await flushPromises();
-    expect(w.findAll('.bottom-tabs button').map((b) => b.text())).toEqual(['字母', '学习', '测试']);
+    expect(w.findAll('.bottom-tabs button').map((b) => b.text())).toEqual([
+      '字母',
+      '学习',
+      '测试',
+      '介绍',
+    ]);
     await w.get('select.lingrove-language-select').setValue(language);
     await button(w, '字母').trigger('click');
     const checkbox = w.get('.handwriting-toggle input');
@@ -523,13 +528,50 @@ it('limits reference languages to printed letters and pronunciation across langu
       expect(w.text()).toContain('Ու');
       expect(w.text()).toContain('ԵՎ');
     }
-    expect(w.findAll('nav button').map((b) => b.text())).toEqual(['字母']);
+    expect(w.findAll('nav button').map((b) => b.text())).toEqual(['字母', '介绍']);
     expect(w.find('.handwriting-toggle').exists()).toBe(false);
     expect(w.findAll('.pronunciation-button')).toHaveLength(count);
     expect(w.find('.writing-sheet').exists()).toBe(false);
   }
   await w.find('select').setValue('ru');
   await flushPromises();
-  expect(w.findAll('nav button')).toHaveLength(3);
+  expect(w.findAll('nav button')).toHaveLength(4);
+  w.unmount();
+});
+
+it('keeps the introduction as a root page across all learning languages', async () => {
+  const { setRootPage } = await import('@lingrove/host-sdk');
+  const { introductions } = await import('../src/language-introductions');
+  const { saveProgress } = await import('../src/progress');
+  const w = mountApp();
+  await flushPromises();
+  await button(w, '介绍').trigger('click');
+  for (const language of ['ja', 'ru', 'el', 'hy', 'ka', 'ko'] as const) {
+    await w.get('select.lingrove-language-select').setValue(language);
+    await flushPromises();
+    expect(w.get('.language-introduction h1').text()).toBe(introductions[language].nativeName);
+    expect(w.findAll('.introduction-timeline li')).toHaveLength(3);
+    expect(w.get('.bottom-tabs [aria-current="page"]').text()).toBe('介绍');
+    expect(w.find('.page-back').exists()).toBe(false);
+    expect(vi.mocked(setRootPage).mock.lastCall?.[0]).toBe(true);
+    expect(vi.mocked(saveProgress).mock.lastCall?.[0]).toMatchObject({ language, tab: 'about' });
+  }
+  await button(w, '字母').trigger('click');
+  expect(w.find('.language-introduction').exists()).toBe(false);
+  expect(w.findAll('.letter-card')).toHaveLength(40);
+  w.unmount();
+});
+
+it('restores the introduction tab for a reference language', async () => {
+  const { emptyProgress, loadProgress } = await import('../src/progress');
+  vi.mocked(loadProgress).mockResolvedValueOnce({
+    ...emptyProgress(),
+    language: 'ka',
+    tab: 'about',
+  });
+  const w = mountApp();
+  await flushPromises();
+  expect(w.get('.language-introduction h1').text()).toBe('ქართული');
+  expect(w.findAll('.bottom-tabs button').map((b) => b.text())).toEqual(['字母', '介绍']);
   w.unmount();
 });

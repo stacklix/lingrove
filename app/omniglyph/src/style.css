@@ -1779,3 +1779,112 @@ main.learning-page {
 .reference-letter small {
   overflow-wrap: anywhere;
 }
+
+.language-introduction {
+  max-width: 720px;
+  margin: 0 auto;
+  overflow-wrap: anywhere;
+}
+.language-introduction p {
+  color: var(--text);
+  line-height: 1.85;
+}
+.introduction-header h1 {
+  margin: 12px 0 18px;
+  font-size: clamp(28px, 7vw, 40px);
+  font-weight: 600;
+}
+.introduction-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 26px 0;
+}
+.introduction-facts > div {
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.introduction-facts dt {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 9px;
+}
+.introduction-facts dd {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.6;
+}
+.introduction-section {
+  margin: 32px 0;
+}
+.language-introduction h2 {
+  margin: 0 0 14px;
+  color: var(--accent);
+  font-size: 19px;
+}
+.introduction-timeline {
+  padding: 0;
+  margin: 22px 0 0 6px;
+  list-style: none;
+}
+.introduction-timeline li {
+  position: relative;
+  padding: 0 0 26px 24px;
+  border-left: 2px solid var(--line);
+}
+.introduction-timeline li:last-child {
+  padding-bottom: 0;
+}
+.introduction-timeline li::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.introduction-period {
+  color: var(--muted);
+  font-size: 13px;
+}
+.introduction-timeline h3 {
+  margin: 8px 0;
+  font-size: 17px;
+}
+.introduction-timeline p {
+  margin: 0;
+}
+.introduction-tip {
+  padding: 22px;
+  border-radius: 14px;
+  background: var(--soft);
+}
+.introduction-tip p {
+  margin-bottom: 0;
+}
+.introduction-sources ul {
+  padding-left: 20px;
+  margin: 0;
+}
+.introduction-sources li {
+  margin: 10px 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.introduction-sources a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+@media (max-width: 560px) {
+  .introduction-facts {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .introduction-facts > div {
+    padding: 13px 16px;
+  }
+}

@@ -73,3 +73,14 @@ it('requires current progress fields and cursor keys', async () => {
   await store.set('progress', p);
   await expect(loadProgress()).rejects.toThrow('进度格式异常');
 });
+
+it('round trips the introduction tab without changing learning records', async () => {
+  const p = emptyProgress();
+  p.language = 'ko';
+  p.tab = 'about';
+  p.lastGroups = { ru: 'mixed', ko: 'lower' };
+  p.learned = ['ru-а'];
+  p.cursors['ru:mixed'] = { id: 'ru-Б', stage: 'trace', strokes: [], feedback: null };
+  await saveProgress(p);
+  expect(await loadProgress()).toEqual(p);
+});

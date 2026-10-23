@@ -2,7 +2,7 @@ import { moduleStorage } from '@lingrove/host-sdk';
 import { glyphs, groups, type Language, type Group } from './curriculum';
 import type { Strokes, Assessment } from './scoring';
 import { validAnswer, type Answer, type Question } from './session';
-export type Tab = 'study' | 'tests' | 'letters';
+export type Tab = 'study' | 'tests' | 'letters' | 'about';
 export type Stage = 'observe' | 'trace' | 'write';
 export interface StudyCursor {
   id: string;
@@ -87,7 +87,7 @@ export async function loadProgress(): Promise<Progress> {
     Array.isArray(p.lastGroups) ||
     typeof p.lastGroups !== 'object' ||
     !['ja', 'ru', 'el', 'hy', 'ka', 'ko'].includes(p.language) ||
-    !['study', 'tests', 'letters'].includes(p.tab) ||
+    !['study', 'tests', 'letters', 'about'].includes(p.tab) ||
     !Array.isArray(p.learned) ||
     !p.learned.every((id) => known.has(id)) ||
     !p.cursors ||

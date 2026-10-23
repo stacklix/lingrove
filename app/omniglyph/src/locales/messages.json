@@ -1722,5 +1722,393 @@
   "正在加载录音": {
     "en": "Loading recordings",
     "ja": "録音を読み込み中"
+  },
+  "日语属于日琉语系，主要在日本使用。句子通常以谓语收尾，助词标示词语的作用，敬语则体现说话人与听话人的关系。": {
+    "en": "Japanese belongs to the Japonic family and is used mainly in Japan. Predicates usually come last; particles mark grammatical roles, while honorific forms express social relationships.",
+    "ja": "日本語は日琉語族に属し、主に日本で使われます。述語は通常文末に置かれ、助詞が語の役割を示し、敬語が相手との関係を表します。"
+  },
+  "日琉语系": {
+    "en": "Japonic",
+    "ja": "日琉語族"
+  },
+  "日本及海外日语社群": {
+    "en": "Japan and overseas communities",
+    "ja": "日本と海外の日本語話者社会"
+  },
+  "汉字、平假名与片假名": {
+    "en": "Kanji, hiragana and katakana",
+    "ja": "漢字・平仮名・片仮名"
+  },
+  "现代日语混用三种文字。汉字多承载词义，平假名常写助词、词尾等，片假名常写外来语和拟声词。假名主要表示拍，长音、促音和拗音也参与词语的节奏。": {
+    "en": "Modern Japanese combines three scripts. Kanji often carry lexical meaning, hiragana mark particles and endings, and katakana commonly represent loanwords and sound symbolism. Kana mainly represent morae; long vowels, geminates and contracted sounds affect rhythm.",
+    "ja": "現代日本語は三つの文字を併用します。漢字は語の意味、平仮名は助詞や語尾、片仮名は外来語や擬音語などに使われます。仮名は主に拍を表し、長音・促音・拗音にも注意が必要です。"
+  },
+  "8 世纪": {
+    "en": "8th century",
+    "ja": "8世紀"
+  },
+  "以汉字记录日语": {
+    "en": "Recording Japanese with kanji",
+    "ja": "漢字による日本語の記録"
+  },
+  "《古事记》和《万叶集》等早期文献留下上代日语的记录，万叶假名借用汉字的读音来记音。": {
+    "en": "Early works such as the Kojiki and Man’yōshū preserve Old Japanese; man’yōgana used Chinese characters for their sounds.",
+    "ja": "『古事記』『万葉集』などに上代日本語が残され、万葉仮名は漢字の音を借りて日本語を記しました。"
+  },
+  "9—10 世纪": {
+    "en": "9th–10th centuries",
+    "ja": "9〜10世紀"
+  },
+  "两种假名逐渐成形": {
+    "en": "The kana scripts take shape",
+    "ja": "二つの仮名の成立"
+  },
+  "平假名从汉字的草写演变，片假名多取自汉字的一部分，逐渐形成与汉字并用的书写方式。": {
+    "en": "Hiragana evolved from cursive characters and katakana largely from character fragments, leading to mixed-script writing.",
+    "ja": "平仮名は漢字の草書から、片仮名は主に漢字の一部から生まれ、漢字と併用されるようになりました。"
+  },
+  "19—20 世纪": {
+    "en": "19th–20th centuries",
+    "ja": "19〜20世紀"
+  },
+  "现代书面语与教育普及": {
+    "en": "Modern prose and wider education",
+    "ja": "現代の書き言葉と教育"
+  },
+  "言文一致运动推动书面语接近口语，学校教育、出版和媒体促进了现代标准日语的传播。": {
+    "en": "The genbun itchi movement brought written prose closer to speech; education, publishing and media spread modern standard Japanese.",
+    "ja": "言文一致運動で文章が話し言葉に近づき、学校教育・出版・メディアが現代標準語の普及を支えました。"
+  },
+  "先把平假名和片假名的字形与读音配对，再用短词练习长音、促音和拗音。本应用的字母页各收录 46 个基本假名。": {
+    "en": "Pair each kana form with its sound, then practise long vowels, geminates and contracted sounds in short words. The library includes 46 basic forms for each kana script.",
+    "ja": "まず平仮名・片仮名の形と音を結び付け、短い語で長音・促音・拗音を練習しましょう。字母一覧には各46字の基本仮名を収録しています。"
+  },
+  "俄语属于印欧语系斯拉夫语族的东斯拉夫语支。它主要在俄罗斯使用，也在许多跨地区社群中承担交流功能；名词变格、动词体和重音是学习重点。": {
+    "en": "Russian is an East Slavic language within Indo-European. It is used mainly in Russia and for communication across many communities. Noun case, verbal aspect and stress are central learning topics.",
+    "ja": "ロシア語は印欧語族スラヴ語派の東スラヴ語群に属します。主にロシアで使われ、各地の共通語としても機能します。名詞の格・動詞の体・アクセントが学習の要点です。"
+  },
+  "印欧语系 · 东斯拉夫语支": {
+    "en": "Indo-European · East Slavic",
+    "ja": "印欧語族・東スラヴ語群"
+  },
+  "俄罗斯及跨地区俄语社群": {
+    "en": "Russia and Russian-speaking communities elsewhere",
+    "ja": "ロシアと各地のロシア語話者社会"
+  },
+  "西里尔字母 · 33 个字母": {
+    "en": "Cyrillic · 33 letters",
+    "ja": "キリル文字・33字"
+  },
+  "俄语字母有大小写，印刷体与手写体的差异较明显。软音符 ь 和硬音符 ъ 本身不表示独立元音；重音位置还会影响元音的实际读法。": {
+    "en": "Russian has upper- and lowercase forms, with marked differences between print and handwriting. The soft sign ь and hard sign ъ are not independent vowels; stress also affects vowel pronunciation.",
+    "ja": "ロシア語には大文字と小文字があり、活字体と筆記体の違いが目立ちます。軟音符ь・硬音符ъは独立した母音を表さず、アクセントの位置も母音の発音に影響します。"
+  },
+  "10—11 世纪": {
+    "en": "10th–11th centuries",
+    "ja": "10〜11世紀"
+  },
+  "东斯拉夫书面传统发展": {
+    "en": "East Slavic written traditions",
+    "ja": "東スラヴの書き言葉"
+  },
+  "随着基督教传播，西里尔文字和教会斯拉夫语书面传统进入东斯拉夫地区，并与当地语言相互影响。": {
+    "en": "Christianization brought Cyrillic writing and the Church Slavonic literary tradition to East Slavic regions, where they interacted with local speech.",
+    "ja": "キリスト教の伝播に伴い、キリル文字と教会スラヴ語の文語的伝統が東スラヴ地域に広がり、地域の言語と影響し合いました。"
+  },
+  "18—19 世纪": {
+    "en": "18th–19th centuries",
+    "ja": "18〜19世紀"
+  },
+  "现代文学语言形成": {
+    "en": "The modern literary language",
+    "ja": "近代文学語の形成"
+  },
+  "彼得一世时期的民用字体改革改变了世俗印刷面貌，随后文学、教育和出版共同塑造现代标准俄语。": {
+    "en": "Peter I’s civil-script reform changed secular printing; literature, education and publishing subsequently shaped modern standard Russian.",
+    "ja": "ピョートル1世期の民用字体改革で世俗の印刷が変化し、その後の文学・教育・出版が現代標準ロシア語を形作りました。"
+  },
+  "1917—1918 年": {
+    "en": "1917–1918",
+    "ja": "1917〜1918年"
+  },
+  "正字法改革": {
+    "en": "Orthographic reform",
+    "ja": "正書法改革"
+  },
+  "改革移除部分旧字母，并取消词末辅音后常写的硬音符，使书写规则进一步简化。": {
+    "en": "The reform removed several older letters and the routine word-final hard sign after consonants, simplifying spelling.",
+    "ja": "一部の旧字母と、子音で終わる語の末尾に慣習的に書かれていた硬音符が廃止され、綴りが簡素化されました。"
+  },
+  "不要只按外形猜读音：例如 В 的读音与拉丁字母 B 不同。先熟悉印刷体，再对照手写体，并尽早连同重音一起记词。": {
+    "en": "Avoid guessing sounds from familiar shapes: Cyrillic В differs from Latin B. Learn print forms, compare handwriting, and memorise words with their stress.",
+    "ja": "見慣れた形だけで発音を推測せず、例えばВとラテン文字Bの違いに注意しましょう。活字体と筆記体を対照し、単語はアクセントと一緒に覚えましょう。"
+  },
+  "希腊语是印欧语系中的独立分支，拥有延续数千年的文字记录。现代希腊语主要用于希腊和塞浦路斯，经历了古希腊语、通用希腊语和中世纪希腊语等发展阶段。": {
+    "en": "Greek forms its own branch of Indo-European, with written records spanning millennia. Modern Greek is used mainly in Greece and Cyprus and developed through ancient, Koine and medieval stages.",
+    "ja": "ギリシャ語は印欧語族の独立した一派で、数千年に及ぶ文字記録があります。主にギリシャとキプロスで使われる現代語は、古代・コイネー・中世の段階を経て発展しました。"
+  },
+  "印欧语系 · 希腊语支": {
+    "en": "Indo-European · Hellenic",
+    "ja": "印欧語族・ギリシャ語派"
+  },
+  "希腊、塞浦路斯及海外社群": {
+    "en": "Greece, Cyprus and overseas communities",
+    "ja": "ギリシャ・キプロスと海外の話者社会"
+  },
+  "希腊字母 · 24 个字母": {
+    "en": "Greek alphabet · 24 letters",
+    "ja": "ギリシャ文字・24字"
+  },
+  "希腊字母有大小写，小写 σ 在词尾通常写作 ς。现代读音与古代读音有明显差异，字母组合也会共同表示一个音；本应用录音采用现代希腊语。": {
+    "en": "Greek has upper- and lowercase forms; lowercase σ normally becomes ς at word endings. Modern and ancient pronunciation differ, and letter combinations can represent a single sound. Alphi uses Modern Greek recordings.",
+    "ja": "大文字・小文字があり、小文字σは通常語末でςになります。現代語と古代語の発音は異なり、複数字母で一つの音を表す場合もあります。本アプリは現代ギリシャ語の録音を使います。"
+  },
+  "约公元前 8 世纪": {
+    "en": "Around the 8th century BCE",
+    "ja": "紀元前8世紀頃"
+  },
+  "字母体系出现": {
+    "en": "The alphabet emerges",
+    "ja": "アルファベットの成立"
+  },
+  "希腊人改造腓尼基字母，明确用字母表示元音。早期各地区字形并不完全统一。": {
+    "en": "Greeks adapted Phoenician writing and assigned letters to vowels; early regional alphabets differed.",
+    "ja": "フェニキア文字を改変して母音を字母で表す体系が生まれました。当初は地域ごとに字形が異なりました。"
+  },
+  "希腊化时代": {
+    "en": "Hellenistic era",
+    "ja": "ヘレニズム時代"
+  },
+  "通用希腊语传播": {
+    "en": "The spread of Koine",
+    "ja": "コイネーの広がり"
+  },
+  "亚历山大征服之后，以阿提卡语为重要基础的通用希腊语在更广阔地区传播，并成为后续语言演变的重要基础。": {
+    "en": "After Alexander’s conquests, Koine, based substantially on Attic Greek, spread widely and became a major foundation for later developments.",
+    "ja": "アレクサンドロスの征服後、アッティカ方言を重要な基盤とするコイネーが広がり、その後の言語発展の土台となりました。"
+  },
+  "1976 年": {
+    "en": "1976",
+    "ja": "1976年"
+  },
+  "现代标准语确立": {
+    "en": "Modern standardisation",
+    "ja": "現代標準語の確立"
+  },
+  "经过长期书面语争论，以民众日常语言为基础的现代希腊语确立为官方和教育语言。": {
+    "en": "After a long language debate, Modern Greek based on the vernacular became the official and educational language.",
+    "ja": "長年の言語問題を経て、日常の民衆語を基盤とする現代ギリシャ語が公用・教育の言語として確立しました。"
+  },
+  "先练习大小写配对和词尾 ς，再把字母放入短词中学习。数学、物理里熟悉的字母名称，不一定与现代希腊语的实际读法相同。": {
+    "en": "Start with case pairs and final ς, then read short words. Letter names familiar from mathematics and physics may differ from Modern Greek usage.",
+    "ja": "大文字・小文字の対応と語末ςを覚えてから短い語を読みましょう。数学や物理で親しんだ字母名が、現代語の読み方と一致するとは限りません。"
+  },
+  "亚美尼亚语在印欧语系中自成一支。它是亚美尼亚的重要日常与文化语言，海外社群也长期使用；现代书面语主要有东亚美尼亚语和西亚美尼亚语两种标准。": {
+    "en": "Armenian is an independent branch of Indo-European. Used in Armenia and long-established overseas communities, it has two main modern literary standards: Eastern and Western Armenian.",
+    "ja": "アルメニア語は印欧語族の独立した一派です。アルメニアと海外の話者社会で使われ、現代の文語には主に東アルメニア語と西アルメニア語の二つの標準があります。"
+  },
+  "印欧语系 · 亚美尼亚语支": {
+    "en": "Indo-European · Armenian",
+    "ja": "印欧語族・アルメニア語派"
+  },
+  "亚美尼亚及海外亚美尼亚社群": {
+    "en": "Armenia and Armenian communities abroad",
+    "ja": "アルメニアと海外のアルメニア人社会"
+  },
+  "亚美尼亚字母 · 本应用收录 39 项": {
+    "en": "Armenian script · 39 entries in Alphi",
+    "ja": "アルメニア文字・本アプリは39項目"
+  },
+  "亚美尼亚字母有大小写。现代教学中常把 ու 和 և 作为独立项目排列；传统正字法与改革正字法存在差别，字母计数也可能因口径不同而变化。": {
+    "en": "Armenian has upper- and lowercase forms. Modern teaching often lists ու and և as separate entries. Traditional and reformed orthographies differ, and letter counts depend on the convention used.",
+    "ja": "大文字・小文字があります。現代の教材ではուとևを独立項目として並べることが多く、伝統正書法と改革正書法の違いや数え方によって字母数も異なります。"
+  },
+  "约 405 年": {
+    "en": "Around 405 CE",
+    "ja": "405年頃"
+  },
+  "马什托茨创制字母": {
+    "en": "Mashtots creates the alphabet",
+    "ja": "マシュトツによる文字の創製"
+  },
+  "梅斯罗普·马什托茨创制最初的 36 个字母，为翻译、教育和古典亚美尼亚语文学的发展提供基础。": {
+    "en": "Mesrop Mashtots created an initial alphabet of 36 letters, supporting translation, education and Classical Armenian literature.",
+    "ja": "メスロプ・マシュトツが最初の36字を創製し、翻訳・教育・古典アルメニア語文学の基盤を築きました。"
+  },
+  "中世纪": {
+    "en": "Middle Ages",
+    "ja": "中世"
+  },
+  "文字持续扩充": {
+    "en": "The script expands",
+    "ja": "文字の拡充"
+  },
+  "օ 和 ֆ 等字母在后来的使用中加入，书体也逐步发展为多种抄写与印刷传统。": {
+    "en": "Letters including օ and ֆ were added later, while different manuscript and printing styles developed.",
+    "ja": "後にօやֆなどが加わり、写本や印刷に用いられる多様な書体も発展しました。"
+  },
+  "现代标准与正字法分化": {
+    "en": "Modern standards and spelling",
+    "ja": "現代標準語と正書法"
+  },
+  "东、西两种现代书面标准逐渐发展；20 世纪的正字法改革又使部分社群采用不同拼写传统。": {
+    "en": "Eastern and Western literary standards developed; twentieth-century spelling reforms led communities to follow different orthographic traditions.",
+    "ja": "東西の現代文語が発展し、20世紀の正書法改革により、話者社会ごとに異なる綴りの伝統が用いられるようになりました。"
+  },
+  "先成对认识大小写，注意 ու 是由两个字符组成的字母项目。本应用的真人录音采用东亚美尼亚语，西部标准的部分辅音读法有所不同。": {
+    "en": "Learn case pairs and note that ու is a two-character alphabet entry. The recordings use Eastern Armenian; some consonants differ in the Western standard.",
+    "ja": "大文字・小文字を対で覚え、ուが二つの文字からなる項目であることに注意しましょう。録音は東アルメニア語で、西部標準とは一部子音の発音が異なります。"
+  },
+  "格鲁吉亚语属于卡特维尔语系，是格鲁吉亚的主要公共生活语言。它拥有独立的书写传统，辅音组合丰富，动词形式能表达多层语法信息。": {
+    "en": "Georgian belongs to the Kartvelian family and is the main language of public life in Georgia. It has its own writing tradition, rich consonant clusters and complex verbal morphology.",
+    "ja": "ジョージア語はカルトヴェリ語族に属し、ジョージアの公共生活で中心となる言語です。独自の文字、豊かな子音連続、複雑な動詞の形態を持ちます。"
+  },
+  "卡特维尔语系": {
+    "en": "Kartvelian",
+    "ja": "カルトヴェリ語族"
+  },
+  "格鲁吉亚及海外格鲁吉亚社群": {
+    "en": "Georgia and Georgian communities abroad",
+    "ja": "ジョージアと海外のジョージア人社会"
+  },
+  "现代骑士体 · 33 个字母": {
+    "en": "Modern Mkhedruli · 33 letters",
+    "ja": "現代ムヘドルリ文字・33字"
+  },
+  "现代常用的骑士体（Mkhedruli）包含 33 个字母，基本按语音拼写。日常文字使用单一套字形；排版中也会见到 Mtavruli 大写形式。本应用展示常用骑士体。": {
+    "en": "Modern Mkhedruli has 33 letters and largely phonemic spelling. Everyday writing uses one case; Mtavruli capitals also appear in typography. Alphi shows everyday Mkhedruli forms.",
+    "ja": "現代のムヘドルリ文字は33字で、おおむね音に沿って綴ります。日常文では一組の字形を使い、見出しなどにはムタヴルリ大文字も現れます。本アプリでは通常のムヘドルリを扱います。"
+  },
+  "5 世纪": {
+    "en": "5th century",
+    "ja": "5世紀"
+  },
+  "早期文字记录": {
+    "en": "Early written evidence",
+    "ja": "初期の文字記録"
+  },
+  "现存早期格鲁吉亚语铭文可追溯到 5 世纪，古老的圆体字母见证了书写传统的形成。": {
+    "en": "Early surviving Georgian inscriptions date to the fifth century; the old rounded script marks the beginnings of its written tradition.",
+    "ja": "現存する初期の碑文は5世紀にさかのぼり、古い丸みのある文字が書記伝統の成立を伝えています。"
+  },
+  "三种书体演进": {
+    "en": "Three scripts develop",
+    "ja": "三つの書体の発展"
+  },
+  "圆体、教会小写体和骑士体在不同阶段发展，并分别延续于宗教、文化和日常书写之中。": {
+    "en": "Asomtavruli, Nuskhuri and Mkhedruli developed at different stages and continue in religious, cultural and everyday contexts.",
+    "ja": "アソムタヴルリ・ヌスフリ・ムヘドルリが異なる時期に発展し、宗教・文化・日常の場面で受け継がれています。"
+  },
+  "2016 年": {
+    "en": "2016",
+    "ja": "2016年"
+  },
+  "书写文化列入非遗": {
+    "en": "Writing culture recognised by UNESCO",
+    "ja": "文字文化のユネスコ登録"
+  },
+  "格鲁吉亚字母三种书写体系的活态文化列入联合国教科文组织人类非物质文化遗产代表作名录。": {
+    "en": "The living culture of the three Georgian writing systems was inscribed on UNESCO’s Representative List of Intangible Cultural Heritage.",
+    "ja": "三つの文字体系の生きた文化が、ユネスコ無形文化遺産の代表一覧表に登録されました。"
+  },
+  "先把字母与录音逐个对应，再区分送气音、浊音和挤喉音。遇到连续辅音时放慢分解练习，不要自行插入元音。": {
+    "en": "Match each letter with its recording, then distinguish aspirated, voiced and ejective consonants. Practise clusters slowly without inserting extra vowels.",
+    "ja": "文字と録音を一つずつ結び付け、有気音・有声音・放出音を聞き分けましょう。子音連続はゆっくり分解し、余分な母音を挟まないよう練習します。"
+  },
+  "韩语属于朝鲜语系，主要在朝鲜半岛及海外社群中使用。它通常把谓语放在句末，用词尾变化和敬语表达时间、语气以及人际关系。": {
+    "en": "Korean belongs to the Koreanic family and is used across the Korean Peninsula and in overseas communities. Predicates usually come last; endings and honorific forms express tense, mood and social relationships.",
+    "ja": "韓国語は朝鮮語族に属し、朝鮮半島と海外の話者社会で使われます。述語を通常文末に置き、語尾や敬語で時制・話し手の態度・人間関係を表します。"
+  },
+  "朝鲜语系": {
+    "en": "Koreanic",
+    "ja": "朝鮮語族"
+  },
+  "朝鲜半岛及海外韩语社群": {
+    "en": "Korean Peninsula and overseas communities",
+    "ja": "朝鮮半島と海外の韓国語話者社会"
+  },
+  "谚文 · 24 个基本字母": {
+    "en": "Hangeul · 24 basic letters",
+    "ja": "ハングル・24の基本字母"
+  },
+  "谚文是字母文字，字母按音节组合成方块，而不是沿直线逐个排列。例如 한 由 ㅎ、ㅏ、ㄴ 组成。本应用列出 19 个辅音和 21 个元音，共 40 项，包含双辅音和复合元音。": {
+    "en": "Hangeul is alphabetic, with letters arranged into syllable blocks. For example, 한 combines ㅎ, ㅏ and ㄴ. Alphi lists 19 consonants and 21 vowels: 40 entries including doubled consonants and compound vowels.",
+    "ja": "ハングルは字母を音節単位のブロックに組み合わせる文字です。例えば한はㅎ・ㅏ・ㄴから成ります。本アプリは二重子音・複合母音を含む子音19・母音21の計40項目を収録します。"
+  },
+  "15 世纪以前": {
+    "en": "Before the 15th century",
+    "ja": "15世紀以前"
+  },
+  "汉字与借字书写": {
+    "en": "Chinese characters and adapted writing",
+    "ja": "漢字と借字表記"
+  },
+  "正式书面活动长期使用汉文，也发展出借用汉字记录本地语言的方式，但学习门槛较高。": {
+    "en": "Classical Chinese long served formal writing, alongside systems adapting Chinese characters to local speech; literacy required substantial study.",
+    "ja": "公的な文章には長く漢文が使われ、漢字を借りて地域の言語を記す方式も発達しましたが、習得には多くの学習が必要でした。"
+  },
+  "1443 年": {
+    "en": "1443",
+    "ja": "1443年"
+  },
+  "世宗创制新文字": {
+    "en": "Sejong creates a new script",
+    "ja": "世宗による文字の創製"
+  },
+  "世宗创制用于记录本地语言的新文字，最初有 28 个字母，旨在让更多人能够读写。": {
+    "en": "King Sejong created a script for the local language, originally with 28 letters, to make literacy more accessible.",
+    "ja": "世宗は人々が読み書きを学びやすくするため、当初28字からなる新しい文字を創製しました。"
+  },
+  "1446 年至今": {
+    "en": "From 1446 onward",
+    "ja": "1446年から現代へ"
+  },
+  "公布与逐步普及": {
+    "en": "Publication and wider adoption",
+    "ja": "公布と普及"
+  },
+  "《训民正音》公布并解释造字原理。经过长期传播与近现代规范化，谚文成为日常教育、出版和数字交流的主要文字。": {
+    "en": "Hunminjeongeum introduced the script and explained its principles. Gradual adoption and modern standardisation made Hangeul central to education, publishing and digital communication.",
+    "ja": "『訓民正音』で文字と原理が公に示されました。長い普及と近現代の標準化を経て、教育・出版・デジタル交流の中心的な文字となりました。"
+  },
+  "先认基本辅音和元音，再练习组装音节。辅音名称与词中的发音用途不同；本应用辅音录音保留名称和发音示范，后续还需结合收音与音变练习。": {
+    "en": "Learn basic consonants and vowels, then build syllables. Letter names serve a different purpose from sounds in words; the consonant recordings include names and demonstrations. Later, practise final consonants and sound changes in context.",
+    "ja": "基本子音・母音を覚え、音節を組み立てましょう。字母名と語中の音は用途が異なります。子音の録音には名称と発音例が入り、次の段階ではパッチムや音変化も練習します。"
+  },
+  "介绍": {
+    "en": "About",
+    "ja": "紹介"
+  },
+  "语言概况": {
+    "en": "At a glance",
+    "ja": "言語の概要"
+  },
+  "语系": {
+    "en": "Language family",
+    "ja": "語族"
+  },
+  "主要使用地区": {
+    "en": "Where it is used",
+    "ja": "主な使用地域"
+  },
+  "文字系统": {
+    "en": "Writing system",
+    "ja": "文字体系"
+  },
+  "文字与读音": {
+    "en": "Script and sounds",
+    "ja": "文字と発音"
+  },
+  "发展历史": {
+    "en": "Historical development",
+    "ja": "発展の歴史"
+  },
+  "学习提示": {
+    "en": "Learning tips",
+    "ja": "学習のヒント"
+  },
+  "资料来源": {
+    "en": "Sources and further reading",
+    "ja": "参考資料"
   }
 }
