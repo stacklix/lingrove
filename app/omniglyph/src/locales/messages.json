@@ -1,0 +1,1702 @@
+{
+  "记录": {
+    "en": "History",
+    "ja": "履歴"
+  },
+  "页面工具": {
+    "en": "Page tools",
+    "ja": "ページ操作"
+  },
+  "重试保存": {
+    "en": "Retry saving",
+    "ja": "保存を再試行"
+  },
+  "保存失败": {
+    "en": "Save failed",
+    "ja": "保存失敗"
+  },
+  "清空": {
+    "en": "Clear",
+    "ja": "クリア"
+  },
+  "主导航": {
+    "en": "Main navigation",
+    "ja": "メインナビゲーション"
+  },
+  "日语": {
+    "en": "Japanese",
+    "ja": "日本語"
+  },
+  "假名": {
+    "en": "Kana",
+    "ja": "仮名"
+  },
+  "保存": {
+    "en": "Save",
+    "ja": "保存"
+  },
+  "俄语": {
+    "en": "Russian",
+    "ja": "ロシア語"
+  },
+  "希腊语": {
+    "en": "Greek",
+    "ja": "ギリシャ語"
+  },
+  "下一个": {
+    "en": "Next",
+    "ja": "次へ"
+  },
+  "书写方法 ↗": {
+    "en": "Writing guide ↗",
+    "ja": "書き方 ↗"
+  },
+  "学习": {
+    "en": "Learn",
+    "ja": "学習"
+  },
+  "测试": {
+    "en": "Test",
+    "ja": "テスト"
+  },
+  "字母": {
+    "en": "Letters",
+    "ja": "文字"
+  },
+  "练习语言": {
+    "en": "Practice language",
+    "ja": "練習する言語"
+  },
+  "练习语言：{0}": {
+    "en": "Practice language: {0}",
+    "ja": "練習する言語：{0}"
+  },
+  "正在准备离线字帖…": {
+    "en": "Preparing offline letter guides…",
+    "ja": "オフラインの手本を準備中…"
+  },
+  "重新加载资源": {
+    "en": "Reload resources",
+    "ja": "リソースを再読み込み"
+  },
+  "已完成全部学习": {
+    "en": "All letters completed",
+    "ja": "すべて学習済み"
+  },
+  "下一个未学字形": {
+    "en": "Next unlearned letter",
+    "ja": "次の未学習文字"
+  },
+  "已学习": {
+    "en": "Learned",
+    "ja": "学習済み"
+  },
+  "个字母": {
+    "en": "letters",
+    "ja": "文字"
+  },
+  "查看进度": {
+    "en": "View progress",
+    "ja": "進捗を見る"
+  },
+  "查看学习进度": {
+    "en": "View learning progress",
+    "ja": "学習の進捗を見る"
+  },
+  "继续学习 →": {
+    "en": "Continue learning →",
+    "ja": "学習を続ける →"
+  },
+  "查看书写方法，临摹后切换测试并评分，记录学习进度。进度与笔迹自动保存。": {
+    "en": "Study the writing guide, trace, then test and score your writing. Progress and strokes are saved automatically.",
+    "ja": "書き方を確認してなぞり書きし、テストで採点します。進捗と筆跡は自動保存されます。"
+  },
+  "学习进度": {
+    "en": "Learning progress",
+    "ja": "学習の進捗"
+  },
+  "未学习": {
+    "en": "Not learned",
+    "ja": "未学習"
+  },
+  "TEST / 检验进步": {
+    "en": "TEST / Check your progress",
+    "ja": "TEST / 進歩を確かめる"
+  },
+  "看看记住了多少。": {
+    "en": "See how much you remember.",
+    "ja": "どれだけ覚えたか確かめよう。"
+  },
+  "· 10 道题，书写和选择交替进行。": {
+    "en": "· 10 questions, alternating writing and multiple choice.",
+    "ja": "· 全10問、筆記と選択を交互に出題。"
+  },
+  "测试范围": {
+    "en": "Test range",
+    "ja": "出題範囲"
+  },
+  "已学字母（": {
+    "en": "Learned letters (",
+    "ja": "学習済みの文字（"
+  },
+  "全部字母（": {
+    "en": "All letters (",
+    "ja": "すべての文字（"
+  },
+  "当前字母组还没有学习记录。先去学习，或选择全部字母测试。": {
+    "en": "No learning history for this group. Learn first or test all letters.",
+    "ja": "このグループの学習履歴はありません。先に学習するか、すべての文字を選んでください。"
+  },
+  "已学字母不足 10 个，本轮会重复抽取；选择题干扰项来自同组字母。": {
+    "en": "Fewer than 10 letters learned: some will repeat. Distractors come from the same group.",
+    "ja": "学習済みの文字が10個未満のため重複出題します。選択肢は同じグループから選びます。"
+  },
+  "继续本轮 · 第": {
+    "en": "Resume · Question",
+    "ja": "再開 · 第"
+  },
+  "/ 10 题 →": {
+    "en": "/ 10 →",
+    "ja": "/ 10 問 →"
+  },
+  "开始测试 →": {
+    "en": "Start test →",
+    "ja": "テスト開始 →"
+  },
+  "最近成绩": {
+    "en": "Latest score",
+    "ja": "前回の得点"
+  },
+  "最佳成绩": {
+    "en": "Best score",
+    "ja": "最高得点"
+  },
+  "完成轮数": {
+    "en": "Tests completed",
+    "ja": "完了した回数"
+  },
+  "测试记录": {
+    "en": "Test history",
+    "ja": "テスト履歴"
+  },
+  "总分 / 100": {
+    "en": "Total / 100",
+    "ja": "合計 / 100"
+  },
+  "还没有完成的测试。你的第一份成绩，会出现在这里。": {
+    "en": "No completed tests yet. Your first score will appear here.",
+    "ja": "まだ完了したテストはありません。最初の得点がここに表示されます。"
+  },
+  "书写": {
+    "en": "Writing",
+    "ja": "筆記"
+  },
+  "选择": {
+    "en": "Choice",
+    "ja": "選択"
+  },
+  "分": {
+    "en": "points",
+    "ja": "点"
+  },
+  "24 个字母 · 含词尾 ς": {
+    "en": "24 letters · including final ς",
+    "ja": "24文字 · 語末の ς を含む"
+  },
+  "{0} 个字母": {
+    "en": "{0} letters",
+    "ja": "{0} 文字"
+  },
+  "查看 {0} 的书写说明": {
+    "en": "View writing guide for {0}",
+    "ja": "{0} の書き方を見る"
+  },
+  "PRACTICE / 小小测验": {
+    "en": "PRACTICE / Quick test",
+    "ja": "PRACTICE / ミニテスト"
+  },
+  "写出对应的手写体": {
+    "en": "Write the handwritten form",
+    "ja": "対応する手書き文字を書こう"
+  },
+  "选出对应的手写体": {
+    "en": "Choose the handwritten form",
+    "ja": "対応する手書き文字を選ぼう"
+  },
+  "题目字形": {
+    "en": "Question letter",
+    "ja": "問題の文字"
+  },
+  "印刷体": {
+    "en": "Print",
+    "ja": "活字体"
+  },
+  "手写体": {
+    "en": "Handwriting",
+    "ja": "手書き体"
+  },
+  "观察印刷体，用手写体作答。": {
+    "en": "Look at the printed letter and write its handwritten form.",
+    "ja": "活字体を見て、手書き体で答えてください。"
+  },
+  "从右侧四个手写字形中选择。": {
+    "en": "Choose from the four handwritten forms.",
+    "ja": "4つの手書き文字から選んでください。"
+  },
+  "沿着范字描摹": {
+    "en": "Trace the guide",
+    "ja": "手本をなぞる"
+  },
+  "轮到你来写": {
+    "en": "Your turn to write",
+    "ja": "書いてみよう"
+  },
+  "正在比对字形…": {
+    "en": "Comparing letter shapes…",
+    "ja": "字形を比較中…"
+  },
+  "落笔 · 观察 · 再试一次": {
+    "en": "Write · Observe · Try again",
+    "ja": "書く · 観察する · もう一度"
+  },
+  "临摹": {
+    "en": "Trace",
+    "ja": "なぞり書き"
+  },
+  "练习模式": {
+    "en": "Practice mode",
+    "ja": "練習モード"
+  },
+  "书写假名": {
+    "en": "Kana to write",
+    "ja": "書く仮名"
+  },
+  "书写大小写": {
+    "en": "Letter case",
+    "ja": "大文字・小文字"
+  },
+  "选项 {0}": {
+    "en": "Option {0}",
+    "ja": "選択肢 {0}"
+  },
+  "回答正确": {
+    "en": "Correct",
+    "ja": "正解"
+  },
+  "再记一次": {
+    "en": "Try to remember again",
+    "ja": "もう一度覚えよう"
+  },
+  "描摹练习分": {
+    "en": "Tracing score",
+    "ja": "なぞり書きの得点"
+  },
+  "字形练习分": {
+    "en": "Letter shape score",
+    "ja": "字形の得点"
+  },
+  "· 本地相似度估计，不代表笔顺或书法等级。": {
+    "en": "· Local similarity estimate, not a stroke-order or calligraphy grade.",
+    "ja": "· 端末内の類似度推定です。筆順や書道の評価ではありません。"
+  },
+  "收起对照": {
+    "en": "Hide overlay",
+    "ja": "重ね表示を閉じる"
+  },
+  "叠加对照范字": {
+    "en": "Overlay guide",
+    "ja": "手本を重ねる"
+  },
+  "浅色范字": {
+    "en": "Light guide",
+    "ja": "薄い色の手本"
+  },
+  "本次书写": {
+    "en": "Your writing",
+    "ja": "今回の筆跡"
+  },
+  "浅色：范字 · 深色：你的书写": {
+    "en": "Light: guide · Dark: your writing",
+    "ja": "薄い色：手本 · 濃い色：あなたの筆跡"
+  },
+  "正确范字": {
+    "en": "Correct form",
+    "ja": "正しい手本"
+  },
+  "再写一次": {
+    "en": "Write again",
+    "ja": "もう一度書く"
+  },
+  "独立书写 →": {
+    "en": "Write independently →",
+    "ja": "手本なしで書く →"
+  },
+  "重新书写": {
+    "en": "Rewrite",
+    "ja": "書き直す"
+  },
+  "跳过此题（记 0 分）": {
+    "en": "Skip (0 points)",
+    "ja": "スキップ（0点）"
+  },
+  "查看本轮结果": {
+    "en": "View test results",
+    "ja": "今回の結果を見る"
+  },
+  "下一题 →": {
+    "en": "Next question →",
+    "ja": "次の問題 →"
+  },
+  "当前组各写法的测试均需达到 80 分，临摹分数不计入。": {
+    "en": "Score 80 or more on each form in this group. Tracing scores do not count.",
+    "ja": "このグループの各字形で80点以上が必要です。なぞり書きは対象外です。"
+  },
+  "又熟悉了一点。": {
+    "en": "A little more familiar.",
+    "ja": "また少し、身についた。"
+  },
+  "十次小小的练习，都是留下的进步。": {
+    "en": "Ten small exercises, ten steps forward.",
+    "ja": "10回の小さな練習が、確かな一歩に。"
+  },
+  "书写平均分 / 100": {
+    "en": "Writing average / 100",
+    "ja": "筆記平均点 / 100"
+  },
+  "选择题答对": {
+    "en": "Correct choices",
+    "ja": "選択問題の正解数"
+  },
+  "继续未完成测试 →": {
+    "en": "Resume unfinished test →",
+    "ja": "未完了のテストを再開 →"
+  },
+  "再练一轮 →": {
+    "en": "Practice again →",
+    "ja": "もう一度練習 →"
+  },
+  "回到学习": {
+    "en": "Back to learning",
+    "ja": "学習に戻る"
+  },
+  "本轮回顾": {
+    "en": "Test review",
+    "ja": "今回の振り返り"
+  },
+  "点击查看作答与范字": {
+    "en": "Tap to compare your answer and the guide",
+    "ja": "タップして解答と手本を確認"
+  },
+  "书写题": {
+    "en": "Writing question",
+    "ja": "筆記問題"
+  },
+  "选择题": {
+    "en": "Multiple choice",
+    "ja": "選択問題"
+  },
+  "已跳过": {
+    "en": "Skipped",
+    "ja": "スキップ済み"
+  },
+  "已匹配": {
+    "en": "Matched",
+    "ja": "一致"
+  },
+  "待复习": {
+    "en": "Review needed",
+    "ja": "要復習"
+  },
+  "字帖来源与评分说明": {
+    "en": "Guide sources and scoring",
+    "ja": "手本の出典と採点について"
+  },
+  "字形评分是离线模板相似度估计，尚未经过大规模真实手写样本校准。合理变体可能无法识别；不评判书法水平，不将字形相似度当作笔顺正确性。": {
+    "en": "Scores estimate similarity to offline templates and have not been calibrated on large handwriting datasets. Valid variants may be missed. Scores do not judge calligraphy or stroke order.",
+    "ja": "採点はオフラインの手本との類似度推定であり、大規模な筆跡データでの調整は未実施です。正しい別字形を認識できない場合があります。書道や筆順の評価ではありません。"
+  },
+  "日语笔顺：KanjiVG / Ulrich Apel，CC BY-SA 3.0。俄语：Bad Script / The Bad Script Project Authors，SIL OFL。希腊语：Playpen Sans / The Playpen Sans Project Authors，SIL OFL。范字是一种参考写法。": {
+    "en": "Japanese strokes: KanjiVG / Ulrich Apel, CC BY-SA 3.0. Russian: Bad Script / The Bad Script Project Authors, SIL OFL. Greek: Playpen Sans / The Playpen Sans Project Authors, SIL OFL. Guides show one possible form.",
+    "ja": "日本語の筆順：KanjiVG / Ulrich Apel、CC BY-SA 3.0。ロシア語：Bad Script / The Bad Script Project Authors、SIL OFL。ギリシャ語：Playpen Sans / The Playpen Sans Project Authors、SIL OFL。手本は参考の一例です。"
+  },
+  "关闭": {
+    "en": "Close",
+    "ja": "閉じる"
+  },
+  "ANSWER / 作答回顾": {
+    "en": "ANSWER / Review",
+    "ja": "ANSWER / 解答を振り返る"
+  },
+  "正确的手写范字": {
+    "en": "Correct handwritten form",
+    "ja": "正しい手書きの手本"
+  },
+  "当时的书写": {
+    "en": "Your submitted writing",
+    "ja": "解答時の筆跡"
+  },
+  "本题未书写。": {
+    "en": "No writing for this question.",
+    "ja": "この問題は未記入です。"
+  },
+  "你的选择：": {
+    "en": "Your choice:",
+    "ja": "あなたの選択："
+  },
+  "未作答": {
+    "en": "Unanswered",
+    "ja": "未解答"
+  },
+  "建议再练习这个字母": {
+    "en": "Practice this letter again",
+    "ja": "この文字をもう一度練習しましょう"
+  },
+  "练习这个字母 →": {
+    "en": "Practice this letter →",
+    "ja": "この文字を練習 →"
+  },
+  "书写说明假名": {
+    "en": "Kana writing guide",
+    "ja": "仮名の書き方"
+  },
+  "书写说明大小写": {
+    "en": "Letter case guide",
+    "ja": "大文字・小文字の書き方"
+  },
+  "作答回顾": {
+    "en": "Answer review",
+    "ja": "解答の振り返り"
+  },
+  "书写方法与动画": {
+    "en": "Writing guide and animation",
+    "ja": "書き方とアニメーション"
+  },
+  "大写": {
+    "en": "Uppercase",
+    "ja": "大文字"
+  },
+  "小写": {
+    "en": "Lowercase",
+    "ja": "小文字"
+  },
+  "平假名": {
+    "en": "Hiragana",
+    "ja": "平仮名"
+  },
+  "片假名": {
+    "en": "Katakana",
+    "ja": "片仮名"
+  },
+  "进度保存失败：{0}": {
+    "en": "Could not save progress: {0}",
+    "ja": "進捗の保存に失敗：{0}"
+  },
+  "字母学习": {
+    "en": "Learn letters",
+    "ja": "文字の学習"
+  },
+  "字母测试": {
+    "en": "Letter test",
+    "ja": "文字のテスト"
+  },
+  "测试结果": {
+    "en": "Test results",
+    "ja": "テスト結果"
+  },
+  "返回学习首页": {
+    "en": "Back to learning home",
+    "ja": "学習トップに戻る"
+  },
+  "返回测试": {
+    "en": "Back to test",
+    "ja": "テストに戻る"
+  },
+  "保存并返回测试": {
+    "en": "Save and return to test",
+    "ja": "保存してテストに戻る"
+  },
+  "保存并返回": {
+    "en": "Save and go back",
+    "ja": "保存して戻る"
+  },
+  "操作暂时失败，请重试。": {
+    "en": "Operation failed. Please retry.",
+    "ja": "操作に失敗しました。再試行してください。"
+  },
+  "历史记录未成功读取，本次结果仅保留在当前页面。": {
+    "en": "History could not be loaded. This result is kept only on this page.",
+    "ja": "履歴を読み込めませんでした。今回の結果はこのページにのみ保持されます。"
+  },
+  "记录保存失败：{0}。请点击重试保存。": {
+    "en": "Could not save history: {0}. Retry saving.",
+    "ja": "履歴の保存に失敗：{0}。保存を再試行してください。"
+  },
+  "选择正确，记住这个字形。": {
+    "en": "Correct choice. Remember this form.",
+    "ja": "正解です。この字形を覚えましょう。"
+  },
+  "这不是对应的字形。下面是正确的手写范字。": {
+    "en": "This is not the matching form. The correct guide is below.",
+    "ja": "対応する字形ではありません。下に正しい手本を表示します。"
+  },
+  "字形匹配": {
+    "en": "Shape matched",
+    "ja": "字形が一致"
+  },
+  "需要再练习": {
+    "en": "More practice needed",
+    "ja": "もう少し練習"
+  },
+  "暂无法判断": {
+    "en": "Unable to assess",
+    "ja": "判定できません"
+  },
+  "手写范字 {0}": {
+    "en": "Handwriting guide {0}",
+    "ja": "手書きの手本 {0}"
+  },
+  "{0} {1} 的{2}": {
+    "en": "{2} for {0} {1}",
+    "ja": "{0} {1} の{2}"
+  },
+  "播放失败，重试": {
+    "en": "Playback failed. Retry",
+    "ja": "再生失敗、再試行"
+  },
+  "正在播放": {
+    "en": "Playing",
+    "ja": "再生中"
+  },
+  "播放": {
+    "en": "Play",
+    "ja": "再生"
+  },
+  "播放失败，点击重试": {
+    "en": "Playback failed. Tap to retry",
+    "ja": "再生できません。タップして再試行"
+  },
+  "正在播放：": {
+    "en": "Playing:",
+    "ja": "再生中："
+  },
+  "发音来源与许可": {
+    "en": "Audio sources and licenses",
+    "ja": "音声の出典とライセンス"
+  },
+  "日语录音来自": {
+    "en": "Japanese recordings from",
+    "ja": "日本語音声の出典："
+  },
+  "的假名教学音频。本地个人学习使用，保留原站来源信息。": {
+    "en": "'s kana teaching audio. For local personal study; original source credits retained.",
+    "ja": "の仮名学習用音声。個人学習用として使用し、出典情報を保持しています。"
+  },
+  "俄语录音：Cherus / Wikimedia Commons，": {
+    "en": "Russian recordings: Cherus / Wikimedia Commons,",
+    "ja": "ロシア語音声：Cherus / Wikimedia Commons、"
+  },
+  "。 转换格式并裁去首尾空白；修改后的音频继续按 CC BY-SA 3.0 提供。": {
+    "en": ". Converted format and trimmed silence; modified audio remains under CC BY-SA 3.0.",
+    "ja": "。形式変換と前後の無音部分の削除を実施。編集後も CC BY-SA 3.0 で提供します。"
+  },
+  "现代希腊语录音：CuteHappyBrute / Wikimedia Commons，RoB 降噪及均衡处理，公有领域（PD-self）。 从完整字母表朗读中截取各字母；σ 与词尾 ς 共用字母名称。": {
+    "en": "Modern Greek: CuteHappyBrute / Wikimedia Commons, denoising and EQ by RoB, public domain (PD-self). Letters clipped from the alphabet recording; σ and final ς share a name.",
+    "ja": "現代ギリシャ語音声：CuteHappyBrute / Wikimedia Commons。RoB によるノイズ除去と音質調整。パブリックドメイン（PD-self）。全字母の朗読から抽出し、σ と語末の ς は同じ名称を使用します。"
+  },
+  "音频已转换为离线格式，部分截取单次发音；未调整语速或音高。各录音的原始页面：": {
+    "en": "Audio converted for offline use; some single pronunciations clipped. Speed and pitch unchanged. Original pages:",
+    "ja": "音声はオフライン用に変換し、一部は単音を抽出しました。速度と音程は変更していません。元のページ："
+  },
+  "{0} 第 {1} 笔": {
+    "en": "{0}, stroke {1}",
+    "ja": "{0}、第 {1} 画"
+  },
+  "动画为一种手写笔顺示意，连笔与字帖字体可有差异。": {
+    "en": "Animation shows one writing order; joins may differ from the guide font.",
+    "ja": "アニメーションは筆順の一例です。続け字は手本の字体と異なる場合があります。"
+  },
+  "一种参考书写顺序；实际连笔与起收笔可有合理变体。下方逐步说明笔的走向。": {
+    "en": "One reference stroke order. Joins and stroke endings may vary. Steps below show the pen direction.",
+    "ja": "参考の筆順です。続け字や起筆・終筆には別の書き方もあります。下に運筆を順番に示します。"
+  },
+  "暂停": {
+    "en": "Pause",
+    "ja": "一時停止"
+  },
+  "上一笔": {
+    "en": "Previous stroke",
+    "ja": "前の画"
+  },
+  "下一笔": {
+    "en": "Next stroke",
+    "ja": "次の画"
+  },
+  "手写练习区域": {
+    "en": "Handwriting practice area",
+    "ja": "手書き練習エリア"
+  },
+  "撤销": {
+    "en": "Undo",
+    "ja": "元に戻す"
+  },
+  "切换为笔": {
+    "en": "Switch to pen",
+    "ja": "ペンに切り替え"
+  },
+  "橡皮": {
+    "en": "Eraser",
+    "ja": "消しゴム"
+  },
+  "允许手指": {
+    "en": "Allow finger input",
+    "ja": "指での入力を許可"
+  },
+  "评分": {
+    "en": "Score",
+    "ja": "採点"
+  },
+  "直接用 Apple Pencil 在格内书写；可在画板外滑动页面。": {
+    "en": "Write in the grid with Apple Pencil. Scroll outside the pad.",
+    "ja": "Apple Pencil で枠内に書いてください。枠外ではページをスクロールできます。"
+  },
+  "笔画较多，请清空后重新书写。": {
+    "en": "Too many strokes. Clear and write again.",
+    "ja": "筆画が多すぎます。クリアして書き直してください。"
+  },
+  "从五十音开始": {
+    "en": "Start with kana",
+    "ja": "五十音から始める"
+  },
+  "认识流畅的手写体": {
+    "en": "Discover flowing handwriting",
+    "ja": "流れるような手書き体を学ぶ"
+  },
+  "写下新的字母": {
+    "en": "Write new letters",
+    "ja": "新しい文字を書く"
+  },
+  "注意手写体的环形与下伸部分，不要照抄印刷体。": {
+    "en": "Notice the loops and descender. Do not copy the printed form.",
+    "ja": "輪と下に伸びる部分に注目し、活字体をそのまま写さないでください。"
+  },
+  "当前范字采用短横加下行笔的写法；拱形连笔也是常见变体。": {
+    "en": "This guide uses a short horizontal and downstrokes; joined arches are another common form.",
+    "ja": "この手本は短い横線と下向きの線で書きます。アーチ状の続け字も一般的です。"
+  },
+  "留意起笔与拱形，不要与 т、и 混淆。": {
+    "en": "Watch the start and arch; distinguish it from т and и.",
+    "ja": "起筆とアーチに注意し、т や и と区別しましょう。"
+  },
+  "留意两侧笔画与中间连接的走向。": {
+    "en": "Watch the sides and the direction of the connecting stroke.",
+    "ja": "両側の線と中央のつなぎ方に注意しましょう。"
+  },
+  "数清连续起伏，注意与 и、щ 的区别。": {
+    "en": "Count the arches; distinguish it from и and щ.",
+    "ja": "山の数を確認し、и や щ と区別しましょう。"
+  },
+  "末端有下伸部分，注意与 ш 区分。": {
+    "en": "The ending descends below the line; distinguish it from ш.",
+    "ja": "末尾は下に伸びます。ш と区別しましょう。"
+  },
+  "上方短弧是字母的一部分，不要漏写。": {
+    "en": "The short arc above is part of the letter. Do not omit it.",
+    "ja": "上の短い弧も文字の一部です。忘れずに書きましょう。"
+  },
+  "上方两点是字母的一部分，不要漏写。": {
+    "en": "The two dots above are part of the letter. Do not omit them.",
+    "ja": "上の2点も文字の一部です。忘れずに書きましょう。"
+  },
+  "留意竖画与下方的环形。": {
+    "en": "Watch the vertical stroke and the lower loop.",
+    "ja": "縦線と下の輪に注意しましょう。"
+  },
+  "注意两部分的间距与比例。": {
+    "en": "Watch the spacing and proportion of the two parts.",
+    "ja": "2つの部分の間隔と比率に注意しましょう。"
+  },
+  "观察笔画的先后、方向与位置，再独立书写。": {
+    "en": "Observe stroke order, direction and position, then write independently.",
+    "ja": "筆順、方向、位置を観察してから自分で書きましょう。"
+  },
+  "对照手写范字，留意转折、连接与整体比例。": {
+    "en": "Compare the guide, noting turns, joins and overall proportions.",
+    "ja": "手本と比べて、曲がり方、つなぎ方、全体の比率に注意しましょう。"
+  },
+  "sigma · 词尾形式": {
+    "en": "sigma · final form",
+    "ja": "sigma · 語末形"
+  },
+  "ς 是小写 sigma 位于词尾时的形式。": {
+    "en": "ς is the lowercase sigma used at the end of a word.",
+    "ja": "ς は小文字 sigma の語末形です。"
+  },
+  "观察手写字形的弧线、开口与上下伸展。": {
+    "en": "Observe curves, openings, ascenders and descenders.",
+    "ja": "曲線、開き方、上下への伸びに注目しましょう。"
+  },
+  "大小写混合": {
+    "en": "Mixed case",
+    "ja": "大文字・小文字混合"
+  },
+  "练习记录格式异常，暂不写入新记录。": {
+    "en": "Invalid practice history. New saves are paused.",
+    "ja": "練習履歴の形式が無効です。新しい記録の保存を停止しました。"
+  },
+  "学习进度格式异常，原始记录已保留。": {
+    "en": "Invalid progress format. Original records are preserved.",
+    "ja": "進捗の形式が無効です。元の記録は保持されています。"
+  },
+  "还没有写下字形，请先书写。": {
+    "en": "Write a letter first.",
+    "ja": "先に文字を書いてください。"
+  },
+  "字形与范字较接近。可叠加对照，继续留意比例与转折。": {
+    "en": "Your shape is close to the guide. Use the overlay to check proportions and turns.",
+    "ja": "手本に近い字形です。重ね表示で比率や曲がり方を確認しましょう。"
+  },
+  "与目标范字差异较大。请检查是否写成其他字母，或遗漏了笔画。": {
+    "en": "This differs from the guide. Check for a different letter or missing strokes.",
+    "ja": "手本と大きく異なります。別の文字や書き忘れた画がないか確認してください。"
+  },
+  "暂时无法可靠判断。请对照范字重写；合理的手写变体也可能出现这种情况。": {
+    "en": "Unable to assess reliably. Compare the guide and retry; valid variants may also cause this.",
+    "ja": "正確に判定できません。手本を見て書き直してください。正しい別字形でも起こる場合があります。"
+  },
+  "请先学习字母，或选择全部字母测试": {
+    "en": "Learn letters first or choose all letters for the test",
+    "ja": "先に文字を学ぶか、すべての文字を選んでください"
+  },
+  "至少需要四个字形作为选项": {
+    "en": "At least four letter forms are required",
+    "ja": "選択肢には4つ以上の字形が必要です"
+  },
+  "识别": {
+    "en": "Identification",
+    "ja": "見分け方"
+  },
+  "查看{0} ↗": {
+    "en": "View {0} ↗",
+    "ja": "{0}を見る ↗"
+  },
+  "关闭{0}": {
+    "en": "Close {0}",
+    "ja": "{0}を閉じる"
+  },
+  "字": {
+    "en": "characters",
+    "ja": "文字"
+  },
+  "字 ·": {
+    "en": "characters ·",
+    "ja": "文字 ·"
+  },
+  "次": {
+    "en": "times",
+    "ja": "回"
+  },
+  "已完成": {
+    "en": "Completed",
+    "ja": "完了"
+  },
+  "连接": {
+    "en": "Linking",
+    "ja": "接続"
+  },
+  "从右上向左绕过左侧与底部，回到起点闭合椭圆。": {
+    "en": "From upper right, curve left around the left and bottom, returning to close the oval.",
+    "ja": "右上から左側と下側を回り、始点に戻って楕円を閉じます。"
+  },
+  "从右上沿椭圆右侧下行，在基线处向右弯出。": {
+    "en": "Descend along the oval's right side and curve right at the baseline.",
+    "ja": "右上から楕円の右側を下り、基線で右へ曲げます。"
+  },
+  "从下部向上绕出长环，在中腰向右绕出下部圆腹，回到左侧收笔。": {
+    "en": "Loop upward from below, curve right at mid-height into the lower bowl, and finish left.",
+    "ja": "下から上へ長い輪を描き、中ほどから右へ下の丸みを作って左で終えます。"
+  },
+  "从左上弯向右下，越过基线绕出窄环，再向右上收笔。": {
+    "en": "Curve from upper left to lower right, loop below the baseline, then finish up-right.",
+    "ja": "左上から右下へ曲げ、基線の下で細い輪を作り、右上で終えます。"
+  },
+  "从顶部右侧向左弯入，再向右下绕过字身右侧和底部，沿左侧回到字身上沿闭合。": {
+    "en": "Curve left from top right, around the right and bottom, then up the left to close.",
+    "ja": "右上から左へ入り、右側と下側を回り、左側を上がって閉じます。"
+  },
+  "从右上向左绕出上半弧，回到中部，再向左下绕出下半弧，在右下收笔。": {
+    "en": "Curve left through the upper arc, return to center, then make a lower arc and finish lower right.",
+    "ja": "右上から左へ上の弧を作り、中央に戻り、左下へ下の弧を描いて右下で終えます。"
+  },
+  "从左向右写顶横，转向左下，再向右绕出下部弧线，末端向左弯成下伸钩。": {
+    "en": "Draw the top bar rightward, turn down-left, curve right below, then hook down-left.",
+    "ja": "上の横線を右へ、左下へ折れ、下で右へ回り、末尾を左下へ鉤状にします。"
+  },
+  "从字身上沿向下写左竖。": {
+    "en": "Draw the left vertical down from the body top.",
+    "ja": "字の上端から左の縦線を下へ書きます。"
+  },
+  "从左竖中部向右上拱起，再沿右侧向下越过基线。": {
+    "en": "Arch up-right from the left vertical's midpoint, then descend past the baseline.",
+    "ja": "左縦線の中ほどから右上へ山を作り、右側を基線の下まで下ろします。"
+  },
+  "从顶部向左下绕出狭长椭圆，经底部与右侧回到起点。": {
+    "en": "Curve down-left into a narrow oval, returning along the bottom and right.",
+    "ja": "上から左下へ細長い楕円を描き、下と右を通って始点に戻ります。"
+  },
+  "抬笔，从左向右写中横。": {
+    "en": "Lift, then draw the middle bar left to right.",
+    "ja": "ペンを上げ、中央の横線を左から右へ書きます。"
+  },
+  "从上方向下写短竖，在基线处向右轻弯收笔，不加点。": {
+    "en": "Draw a short downstroke, curving right at the baseline; no dot.",
+    "ja": "短い縦線を下ろし、基線で軽く右へ曲げます。点は付けません。"
+  },
+  "先写左侧短竖。": {
+    "en": "First draw the short left vertical.",
+    "ja": "まず左の短い縦線を書きます。"
+  },
+  "从右上斜向左侧中腰，再折向右下。": {
+    "en": "Slant from upper right to left midpoint, then turn down-right.",
+    "ja": "右上から左の中ほどへ斜めに引き、右下へ折ります。"
+  },
+  "从左上向右绕出顶部弧线，再沿右侧向下写长竖。": {
+    "en": "Curve right from upper left, then draw a long downstroke on the right.",
+    "ja": "左上から右へ上の弧を描き、右側を長く下ろします。"
+  },
+  "从右侧中部向左绕出拱形，沿左侧下行收笔。": {
+    "en": "Arch left from the right midpoint and finish downward on the left.",
+    "ja": "右の中ほどから左へアーチを描き、左側を下りて終えます。"
+  },
+  "从字身上沿向下写越过基线的长竖。": {
+    "en": "Draw a long downstroke from the body top past the baseline.",
+    "ja": "字の上端から基線を越える長い縦線を書きます。"
+  },
+  "回到字身上沿，下行后圆转向右上，再沿右侧下行并向右收笔。": {
+    "en": "Return to the body top, descend and round up-right, descend again and finish right.",
+    "ja": "字の上端に戻り、下りて丸く右上へ返し、右側を下りて右で終えます。"
+  },
+  "从左上向下略弯，到底部后转向右上。": {
+    "en": "Curve slightly down from upper left, then turn up-right at the bottom.",
+    "ja": "左上から少し曲げて下り、下端で右上へ返します。"
+  },
+  "从左向右写顶部短弧，回绕出中部弧线，再回绕出下部弧线，末端向下弯出。": {
+    "en": "Draw a short top arc rightward, loop through middle and lower arcs, then curve down.",
+    "ja": "上の短い弧を右へ書き、中央、下の弧へ回り、末尾を下へ曲げます。"
+  },
+  "从右上向左绕过左侧与底部，经右侧回到起点闭合。": {
+    "en": "Curve left from upper right, around the bottom, then up the right to close.",
+    "ja": "右上から左と下を回り、右側を上がって始点で閉じます。"
+  },
+  "从左向右写顶横。": {
+    "en": "Draw the top bar left to right.",
+    "ja": "上の横線を左から右へ書きます。"
+  },
+  "从顶横左部向下写左侧笔画。": {
+    "en": "Draw the left stroke down from the top bar.",
+    "ja": "上の横線の左側から下へ書きます。"
+  },
+  "从顶横右部下行，在底部向右轻弯。": {
+    "en": "Descend from the top bar's right side, curving gently right at the bottom.",
+    "ja": "上の横線の右側から下り、下端で軽く右へ曲げます。"
+  },
+  "从字身中部向下写越过基线的长竖。": {
+    "en": "Draw a long vertical from mid-body below the baseline.",
+    "ja": "字の中ほどから基線を越えて長く下ろします。"
+  },
+  "从竖画上端向上绕出完整圆腹，经右侧与底部回到起点。": {
+    "en": "Loop upward from the vertical's top into a full bowl, returning via right and bottom.",
+    "ja": "縦線の上端から上へ丸みを描き、右と下を通って戻ります。"
+  },
+  "从右上向左绕出圆腹，经底部与右侧回到起点，再向右写顶部短横。": {
+    "en": "Loop left into a bowl, return around bottom and right, then add a short top bar rightward.",
+    "ja": "右上から左へ丸みを描き、下と右を通って戻り、上に短い横線を右へ書きます。"
+  },
+  "从右上向左绕过圆腹，转向右下写弯尾，末端向左收笔。": {
+    "en": "Curve left around the bowl, turn down-right for the tail, then finish left.",
+    "ja": "右上から左へ丸みを回り、右下へ尾を曲げ、左で終えます。"
+  },
+  "从顶横中部向下，在底部向右轻弯。": {
+    "en": "Descend from the top bar's midpoint, curving right at the bottom.",
+    "ja": "上の横線の中央から下り、下で軽く右へ曲げます。"
+  },
+  "从左上向下弯到基线，再圆转向右上，形成开口向上的字形。": {
+    "en": "Curve down to the baseline then round up-right, leaving the top open.",
+    "ja": "左上から基線まで曲げて下り、丸く右上へ返して上を開けます。"
+  },
+  "先从顶部向下写越过基线的长竖。": {
+    "en": "First draw a long vertical from the top past the baseline.",
+    "ja": "まず上から基線を越える長い縦線を書きます。"
+  },
+  "从长竖与字身上沿的交点向左绕出椭圆，经底部与右侧闭合。": {
+    "en": "At the body-top intersection, loop left into an oval, closing via bottom and right.",
+    "ja": "長い縦線と字の上端の交点から左へ楕円を描き、下と右で閉じます。"
+  },
+  "从左上斜向右下，越过基线。": {
+    "en": "Slant upper left to lower right, past the baseline.",
+    "ja": "左上から右下へ、基線を越えて斜めに書きます。"
+  },
+  "抬笔，从右上斜向左下，与第一笔相交。": {
+    "en": "Lift, then slant upper right to lower left across the first stroke.",
+    "ja": "ペンを上げ、右上から左下へ1画目と交差させます。"
+  },
+  "从左上向下绕成杯形，再沿右侧回升到字身上沿。": {
+    "en": "Curve down into a cup, rising on the right to the body top.",
+    "ja": "左上から下へカップ状に描き、右側を字の上端まで上がります。"
+  },
+  "抬笔，从中间向下写越过基线的长竖。": {
+    "en": "Lift, then draw a central vertical below the baseline.",
+    "ja": "ペンを上げ、中央から基線を越えて長く下ろします。"
+  },
+  "从左上向下绕出左侧圆腹，向上回转形成中间短竖，再绕出右侧圆腹，向右上收笔。": {
+    "en": "Curve down into the left bowl, rise for the central short stem, loop the right bowl and finish up-right.",
+    "ja": "左の丸みを下へ描き、上へ返して中央の短い縦線を作り、右の丸みを描いて右上で終えます。"
+  },
+  "从左下斜向顶点，再斜向右下。": {
+    "en": "Slant from lower left to the apex, then down-right.",
+    "ja": "左下から頂点へ斜めに上がり、右下へ下ろします。"
+  },
+  "抬笔，从左向右补中横。": {
+    "en": "Lift and add the middle bar left to right.",
+    "ja": "ペンを上げ、中央の横線を左から右へ加えます。"
+  },
+  "从上到下写左侧主干。": {
+    "en": "Draw the left stem from top to bottom.",
+    "ja": "左の主軸を上から下へ書きます。"
+  },
+  "从主干顶部向右依次绕出上、下两个圆腹。": {
+    "en": "From the stem top, loop right to form upper and lower bowls.",
+    "ja": "主軸の上端から右へ、上と下の丸みを順に描きます。"
+  },
+  "从上到下写左竖。": {
+    "en": "Draw the left vertical top to bottom.",
+    "ja": "左の縦線を上から下へ書きます。"
+  },
+  "抬笔，从左上向右写顶横。": {
+    "en": "Lift and draw the top bar rightward from upper left.",
+    "ja": "ペンを上げ、左上から右へ上の横線を書きます。"
+  },
+  "从顶点斜向左下，再向右写底边，最后斜回顶点闭合三角形。": {
+    "en": "Slant from apex down-left, draw the base rightward, then return to close the triangle.",
+    "ja": "頂点から左下へ、底辺を右へ書き、頂点へ戻って三角形を閉じます。"
+  },
+  "从左向右写中横。": {
+    "en": "Draw the middle bar left to right.",
+    "ja": "中央の横線を左から右へ書きます。"
+  },
+  "从左向右写底横。": {
+    "en": "Draw the bottom bar left to right.",
+    "ja": "下の横線を左から右へ書きます。"
+  },
+  "从左向右写顶横，斜向左下，再向右写底横。": {
+    "en": "Draw the top bar rightward, slant down-left, then draw the bottom bar rightward.",
+    "ja": "上の横線を右へ、左下へ斜めに引き、下の横線を右へ書きます。"
+  },
+  "从上到下写右竖。": {
+    "en": "Draw the right vertical top to bottom.",
+    "ja": "右の縦線を上から下へ書きます。"
+  },
+  "从左向右补中横。": {
+    "en": "Add the middle bar left to right.",
+    "ja": "中央の横線を左から右へ加えます。"
+  },
+  "从顶部向左绕出大椭圆，经底部与右侧回到起点。": {
+    "en": "Loop left from the top into a large oval, returning via bottom and right.",
+    "ja": "上から左へ大きな楕円を描き、下と右を通って戻ります。"
+  },
+  "从顶部向下写直竖；这里采用不加上下短横的写法。": {
+    "en": "Draw a straight downstroke; this form has no top or bottom bars.",
+    "ja": "上からまっすぐ縦線を書きます。この形では上下の短い横線は付けません。"
+  },
+  "先从上到下写左竖。": {
+    "en": "First draw the left vertical top to bottom.",
+    "ja": "まず左の縦線を上から下へ書きます。"
+  },
+  "从左下斜向顶点，再斜向右下，不加中横。": {
+    "en": "Slant lower left to apex and down-right, without a middle bar.",
+    "ja": "左下から頂点へ、右下へ斜めに書き、中央の横線は付けません。"
+  },
+  "从左下向上写左竖，斜向中部低点，再斜向右上，最后下行写右竖。": {
+    "en": "Rise on the left, slant to the low midpoint, up-right, then down the right.",
+    "ja": "左下から上へ、中央の低い点へ斜めに下り、右上へ上がって右の縦線を下ろします。"
+  },
+  "从左下向上写左竖，斜向右下，再向上写右竖。": {
+    "en": "Rise on the left, slant down-right, then rise on the right.",
+    "ja": "左の縦線を上へ、右下へ斜めに下り、右の縦線を上へ書きます。"
+  },
+  "抬笔，从左向右写较短的中横。": {
+    "en": "Lift and draw a short middle bar left to right.",
+    "ja": "ペンを上げ、中央の短い横線を左から右へ書きます。"
+  },
+  "抬笔，从左向右写底横。": {
+    "en": "Lift and draw the bottom bar left to right.",
+    "ja": "ペンを上げ、下の横線を左から右へ書きます。"
+  },
+  "从右上向左绕过顶部、左侧和底部，沿右侧回升，顶部保留字体中的小开口。": {
+    "en": "Loop from upper right around top, left and bottom, rising right; leave the font's small opening at the top.",
+    "ja": "右上から上・左・下を回り、右側を上がります。上には字体にある小さな隙間を残します。"
+  },
+  "从左上向右写顶横，再向下写右竖。": {
+    "en": "Draw the top bar rightward, then the right vertical downward.",
+    "ja": "左上から上の横線を右へ、右の縦線を下へ書きます。"
+  },
+  "从左竖顶部向右绕出圆腹，回到中腰。": {
+    "en": "Loop right from the left vertical's top and return to mid-height.",
+    "ja": "左の縦線の上端から右へ丸みを描き、中ほどに戻ります。"
+  },
+  "从右向左写顶横，斜向中部，再斜向左下，最后向右写底横。": {
+    "en": "Draw the top bar right to left, slant to center then lower left, and finish the bottom bar rightward.",
+    "ja": "上の横線を右から左へ、中央、左下へ斜めに引き、下の横線を右へ書きます。"
+  },
+  "从顶横中间向下写主干。": {
+    "en": "Draw the stem down from the top bar's midpoint.",
+    "ja": "上の横線の中央から主軸を下へ書きます。"
+  },
+  "从左上斜向中部交汇点，再斜向右上。": {
+    "en": "Slant upper left to the central junction, then up-right.",
+    "ja": "左上から中央の交点へ、さらに右上へ斜めに書きます。"
+  },
+  "从交汇点向下写竖画。": {
+    "en": "Draw a vertical down from the junction.",
+    "ja": "交点から縦線を下へ書きます。"
+  },
+  "先从顶部向下写长竖。": {
+    "en": "First draw a long downstroke from the top.",
+    "ja": "まず上から長い縦線を書きます。"
+  },
+  "从长竖上部向左绕出椭圆，经底部与右侧闭合。": {
+    "en": "Loop left from the upper stem into an oval, closing through bottom and right.",
+    "ja": "長い縦線の上部から左へ楕円を描き、下と右で閉じます。"
+  },
+  "从左上斜向右下。": {
+    "en": "Slant from upper left to lower right.",
+    "ja": "左上から右下へ斜めに書きます。"
+  },
+  "抬笔，从右上斜向左下。": {
+    "en": "Lift and slant from upper right to lower left.",
+    "ja": "ペンを上げ、右上から左下へ斜めに書きます。"
+  },
+  "从左上向下绕成杯形，再沿右侧回升到顶部。": {
+    "en": "Curve down into a cup and rise on the right to the top.",
+    "ja": "左上から下へカップ状に描き、右側を上端まで上がります。"
+  },
+  "从中间顶部向下写长竖，穿过杯形底部。": {
+    "en": "Draw a central vertical from the top through the cup's bottom.",
+    "ja": "中央上部からカップの底を通る長い縦線を書きます。"
+  },
+  "从圆圈顶部向左绕过左侧与底部，再沿右侧回到起点，闭合圆圈。": {
+    "en": "Loop left from the circle top, around bottom and right, closing at the start.",
+    "ja": "円の上から左・下・右を回って始点で閉じます。"
+  },
+  "抬笔，在圆圈下方从左向右写一横，与圆圈留出间隙。": {
+    "en": "Lift and draw a bar below the circle, leaving a gap.",
+    "ja": "ペンを上げ、円の下に隙間を空けて横線を左から右へ書きます。"
+  },
+  "从右上向左绕出小椭圆，回到起点。": {
+    "en": "Loop left from upper right into a small oval, returning to the start.",
+    "ja": "右上から左へ小さな楕円を描き、始点に戻ります。"
+  },
+  "沿右侧下行至基线，向右上轻挑收笔。": {
+    "en": "Descend on the right to the baseline, then flick up-right.",
+    "ja": "右側を基線まで下り、軽く右上へ払います。"
+  },
+  "从上方起笔，弯向左下形成字身。": {
+    "en": "Start above and curve down-left to form the body.",
+    "ja": "上から書き始め、左下へ曲げて字の胴体を作ります。"
+  },
+  "顺势围出下部椭圆，顶部保留向右的短钩。": {
+    "en": "Continue around the lower oval, leaving a short right hook at the top.",
+    "ja": "続けて下の楕円を囲み、上に右向きの短い鉤を残します。"
+  },
+  "从基线向上绕出长环，再回到字身。": {
+    "en": "Loop upward from the baseline and return to the body.",
+    "ja": "基線から上へ長い輪を描き、字の胴体に戻ります。"
+  },
+  "接写下方的小圆腹，向右收笔。": {
+    "en": "Continue with the small lower bowl and finish right.",
+    "ja": "続けて下の小さな丸みを描き、右で終えます。"
+  },
+  "从左上向右写圆弧肩部。": {
+    "en": "Draw a rounded shoulder rightward from upper left.",
+    "ja": "左上から右へ丸い肩の部分を描きます。"
+  },
+  "斜向左下回转，在基线向右弯出。": {
+    "en": "Turn down-left and curve right at the baseline.",
+    "ja": "左下へ斜めに戻り、基線で右へ曲げます。"
+  },
+  "先写字身的小椭圆。": {
+    "en": "First draw the body's small oval.",
+    "ja": "まず字の小さな楕円を描きます。"
+  },
+  "右侧向下越过基线，绕出下伸环并向右上收笔。": {
+    "en": "Descend past the baseline on the right, loop below and finish up-right.",
+    "ja": "右側を基線の下まで下り、下の輪を描いて右上で終えます。"
+  },
+  "从中部向右上起笔，绕出小环。": {
+    "en": "Start at the middle, move up-right into a small loop.",
+    "ja": "中央から右上へ書き始め、小さな輪を描きます。"
+  },
+  "向左下转成圆腹，向右开口收笔。": {
+    "en": "Turn down-left into a bowl, ending open on the right.",
+    "ja": "左下へ丸みを作り、右側を開けて終えます。"
+  },
+  "先按 е 的走向写好字身。": {
+    "en": "First write the body as for е.",
+    "ja": "まず е と同じ運筆で胴体を書きます。"
+  },
+  "抬笔，在上方加左点。": {
+    "en": "Lift and add the left dot above.",
+    "ja": "ペンを上げ、上に左の点を加えます。"
+  },
+  "抬笔，在上方加右点。": {
+    "en": "Lift and add the right dot above.",
+    "ja": "ペンを上げ、上に右の点を加えます。"
+  },
+  "先写左侧弯曲支臂，到中部连接。": {
+    "en": "First curve the left arm into the center.",
+    "ja": "まず左の曲がった枝を中央へつなげます。"
+  },
+  "抬笔，从上向下写中间主干。": {
+    "en": "Lift and draw the central stem downward.",
+    "ja": "ペンを上げ、中央の主軸を上から下へ書きます。"
+  },
+  "抬笔，从右上弯向中部，再绕向右下。": {
+    "en": "Lift, curve from upper right into the center, then lower right.",
+    "ja": "ペンを上げ、右上から中央へ曲げ、右下へ回します。"
+  },
+  "由左上向右绕出上半圆。": {
+    "en": "Curve right from upper left into the upper semicircle.",
+    "ja": "左上から右へ上の半円を描きます。"
+  },
+  "回到中腰，再向右下绕出下半圆并收笔。": {
+    "en": "Return to mid-height and loop down-right through the lower semicircle.",
+    "ja": "中ほどに戻り、右下へ下の半円を描いて終えます。"
+  },
+  "从左上斜下到基线，圆转向右上。": {
+    "en": "Slant down to the baseline and round up-right.",
+    "ja": "左上から基線へ斜めに下り、丸く右上へ返します。"
+  },
+  "从第二个高点下行，再向右上挑出。": {
+    "en": "Descend from the second peak and flick up-right.",
+    "ja": "2つ目の頂点から下り、右上へ払います。"
+  },
+  "先写 и 的两个下行笔和连接。": {
+    "en": "First write и's two downstrokes and join.",
+    "ja": "まず и の2本の下向きの線とつなぎを書きます。"
+  },
+  "抬笔，在上方从左到右加短弧。": {
+    "en": "Lift and add a short arc above, left to right.",
+    "ja": "ペンを上げ、上に短い弧を左から右へ加えます。"
+  },
+  "先写左侧下行笔。": {
+    "en": "First write the left downstroke.",
+    "ja": "まず左の下向きの線を書きます。"
+  },
+  "从右上接向中腰，再从中腰弯向右下。": {
+    "en": "Join upper right to mid-height, then curve down-right.",
+    "ja": "右上から中ほどへつなぎ、そこから右下へ曲げます。"
+  },
+  "从基线写小入笔钩，上行至尖顶。": {
+    "en": "Start with a small baseline hook and rise to a peak.",
+    "ja": "基線に小さな入りの鉤を書き、尖った頂点へ上がります。"
+  },
+  "斜下到基线，向右上挑出。": {
+    "en": "Slant down to the baseline and flick up-right.",
+    "ja": "基線へ斜めに下り、右上へ払います。"
+  },
+  "从基线入笔，上行到第一个尖顶，再回到基线。": {
+    "en": "Start at the baseline, rise to the first peak and return down.",
+    "ja": "基線から最初の頂点へ上がり、基線へ戻ります。"
+  },
+  "接写第二个尖顶，末端向右上挑出。": {
+    "en": "Continue to a second peak and finish with an up-right flick.",
+    "ja": "続けて2つ目の頂点を書き、末尾を右上へ払います。"
+  },
+  "写左侧下行笔。": {
+    "en": "Write the left downstroke.",
+    "ja": "左の下向きの線を書きます。"
+  },
+  "抬笔，从中部向右写连接横画。": {
+    "en": "Lift and draw a joining bar rightward from the middle.",
+    "ja": "ペンを上げ、中央から右へつなぎの横線を書きます。"
+  },
+  "抬笔，写右侧下行笔，在基线向右挑出。": {
+    "en": "Lift, write the right downstroke and flick right at the baseline.",
+    "ja": "ペンを上げ、右側を下り、基線で右へ払います。"
+  },
+  "从右上向左逆时针绕出椭圆。": {
+    "en": "Draw a counterclockwise oval from upper right.",
+    "ja": "右上から左へ反時計回りに楕円を描きます。"
+  },
+  "回到顶部闭合，留出向右的连接。": {
+    "en": "Close at the top, leaving a rightward join.",
+    "ja": "上で閉じ、右へのつなぎを残します。"
+  },
+  "先下行写左竖，再沿竖回到上部。": {
+    "en": "Draw the left vertical down, then retrace upward.",
+    "ja": "左の縦線を下ろし、同じ線に沿って上へ戻ります。"
+  },
+  "向右拱起，下行写右竖，基线处挑出。": {
+    "en": "Arch right, descend on the right and flick at the baseline.",
+    "ja": "右へ山を作り、右の縦線を下ろして基線で払います。"
+  },
+  "从字身上沿向下，写越过基线的长竖。": {
+    "en": "From the body top, draw a long vertical below the baseline.",
+    "ja": "字の上端から基線を越えて長く縦線を書きます。"
+  },
+  "回到字身上部，向右拱起，下行并收笔。": {
+    "en": "Return to the upper body, arch right, descend and finish.",
+    "ja": "字の上部に戻り、右へ山を作って下り、終えます。"
+  },
+  "从右上向左弯入。": {
+    "en": "Curve in leftward from upper right.",
+    "ja": "右上から左へ曲げて入ります。"
+  },
+  "绕过左侧与底部，在右侧开口收笔。": {
+    "en": "Curve around left and bottom, ending open on the right.",
+    "ja": "左と下を回り、右側を開けて終えます。"
+  },
+  "从左向右写略带倾斜的短横。": {
+    "en": "Draw a slightly slanted short bar left to right.",
+    "ja": "少し傾いた短い横線を左から右へ書きます。"
+  },
+  "从横画中部斜向下写主干，到基线轻挑收笔。": {
+    "en": "Slant the stem down from the bar's center, flicking at the baseline.",
+    "ja": "横線の中央から主軸を斜めに下ろし、基線で軽く払います。"
+  },
+  "先写左侧下行弧，回升到右上。": {
+    "en": "First curve down the left and rise to upper right.",
+    "ja": "まず左を弧状に下り、右上へ上がります。"
+  },
+  "沿右侧向下越过基线，绕出下伸环。": {
+    "en": "Descend on the right past the baseline and make a lower loop.",
+    "ja": "右側を基線の下まで下り、下に輪を描きます。"
+  },
+  "从中部先绕出左侧小椭圆。": {
+    "en": "From the middle, first loop a small oval on the left.",
+    "ja": "中央からまず左の小さな楕円を描きます。"
+  },
+  "抬笔，从上到下写中间长竖。": {
+    "en": "Lift and draw the long central vertical downward.",
+    "ja": "ペンを上げ、中央の長い縦線を上から下へ書きます。"
+  },
+  "抬笔，绕出右侧小椭圆。": {
+    "en": "Lift and loop a small oval on the right.",
+    "ja": "ペンを上げ、右の小さな楕円を描きます。"
+  },
+  "从左上弯向中间，再到左下。": {
+    "en": "Curve from upper left through the middle to lower left.",
+    "ja": "左上から中央へ曲げ、左下へ続けます。"
+  },
+  "抬笔，从右上经过中间弯到右下。": {
+    "en": "Lift and curve upper right through the middle to lower right.",
+    "ja": "ペンを上げ、右上から中央を通って右下へ曲げます。"
+  },
+  "先按 и 写出两个下行笔。": {
+    "en": "First write two downstrokes as for и.",
+    "ja": "まず и のように2本の下向きの線を書きます。"
+  },
+  "末端向下越过基线，补一个短尾钩。": {
+    "en": "Extend below the baseline and add a short tail hook.",
+    "ja": "末尾を基線の下へ伸ばし、短い尾の鉤を加えます。"
+  },
+  "从左上写短下行弧，弯向右上。": {
+    "en": "Draw a short downward arc from upper left and curve up-right.",
+    "ja": "左上から短い弧を下へ描き、右上へ曲げます。"
+  },
+  "从右上向下写右竖，在基线挑出。": {
+    "en": "Draw the right vertical down and flick at the baseline.",
+    "ja": "右上から右の縦線を下ろし、基線で払います。"
+  },
+  "连续写三个下行笔，笔间从基线回升。": {
+    "en": "Write three downstrokes, rising from the baseline between them.",
+    "ja": "3本の下向きの線を続け、間は基線から上へ戻ります。"
+  },
+  "第三笔在基线圆转，向右上收笔。": {
+    "en": "Round the third stroke at the baseline and finish up-right.",
+    "ja": "3本目は基線で丸く返し、右上で終えます。"
+  },
+  "先写 ш 的三个下行笔。": {
+    "en": "First write ш's three downstrokes.",
+    "ja": "まず ш の3本の下向きの線を書きます。"
+  },
+  "末端补越过基线的短尾钩。": {
+    "en": "Add a short tail hook below the baseline.",
+    "ja": "末尾に基線を越える短い鉤を加えます。"
+  },
+  "从左上向右写短肩部。": {
+    "en": "Draw a short shoulder rightward from upper left.",
+    "ja": "左上から右へ短い肩の部分を書きます。"
+  },
+  "向下写主干，在下部向右绕出圆腹。": {
+    "en": "Draw the stem down and loop a bowl to the right below.",
+    "ja": "主軸を下ろし、下部で右へ丸みを描きます。"
+  },
+  "先写左侧竖与下部圆腹，形成 ь。": {
+    "en": "First draw the left stem and lower bowl to form ь.",
+    "ja": "まず左の縦線と下の丸みで ь を作ります。"
+  },
+  "向右上连接，再写右侧下行笔。": {
+    "en": "Join up-right, then draw the right downstroke.",
+    "ja": "右上へつなぎ、右の下向きの線を書きます。"
+  },
+  "从上方下行到基线。": {
+    "en": "Descend from above to the baseline.",
+    "ja": "上から基線まで下ろします。"
+  },
+  "向右绕出下部圆腹，再接回主干。": {
+    "en": "Loop the lower bowl rightward and rejoin the stem.",
+    "ja": "右へ下の丸みを描き、主軸につなぎます。"
+  },
+  "从左上向右绕出向左开口的弧形。": {
+    "en": "Curve right from upper left into a left-open arc.",
+    "ja": "左上から右へ、左が開いた弧を描きます。"
+  },
+  "抬笔，从中部向右补短横。": {
+    "en": "Lift and add a short rightward bar at the middle.",
+    "ja": "ペンを上げ、中央から右へ短い横線を加えます。"
+  },
+  "抬笔，在中部从左向右写连接横画。": {
+    "en": "Lift and draw the middle joining bar left to right.",
+    "ja": "ペンを上げ、中央のつなぎの横線を左から右へ書きます。"
+  },
+  "抬笔，在右侧绕出椭圆并闭合。": {
+    "en": "Lift and draw a closed oval on the right.",
+    "ja": "ペンを上げ、右に楕円を描いて閉じます。"
+  },
+  "从右上向左绕出上部圆腹。": {
+    "en": "Loop the upper bowl leftward from upper right.",
+    "ja": "右上から左へ上の丸みを描きます。"
+  },
+  "从中腰斜向左下写支腿。": {
+    "en": "Slant the leg from mid-height to lower left.",
+    "ja": "中ほどから左下へ斜めに脚を書きます。"
+  },
+  "抬笔，从右上写下行主干，在基线向右挑出。": {
+    "en": "Lift, draw the stem down from upper right and flick right at the baseline.",
+    "ja": "ペンを上げ、右上から主軸を下ろし、基線で右へ払います。"
+  },
+  "从左下斜向上到顶点，再斜向右下。": {
+    "en": "Slant from lower left to the apex, then down-right.",
+    "ja": "左下から頂点へ斜めに上がり、右下へ下ろします。"
+  },
+  "抬笔，在中部从左到右加横。": {
+    "en": "Lift and add a middle bar left to right.",
+    "ja": "ペンを上げ、中央に横線を左から右へ加えます。"
+  },
+  "从左上向下写主干。": {
+    "en": "Draw the stem down from upper left.",
+    "ja": "左上から主軸を下へ書きます。"
+  },
+  "抬笔，回到顶部向右写帽檐。": {
+    "en": "Lift, return to the top and draw the cap rightward.",
+    "ja": "ペンを上げ、上に戻って帽子のつばを右へ書きます。"
+  },
+  "抬笔，从中腰向右绕出下部圆腹。": {
+    "en": "Lift and loop the lower bowl rightward from mid-height.",
+    "ja": "ペンを上げ、中ほどから右へ下の丸みを描きます。"
+  },
+  "先从顶部下行写左侧主干。": {
+    "en": "First draw the left stem down from the top.",
+    "ja": "まず上から左の主軸を下ろします。"
+  },
+  "从上方向右依次绕出上、下两个圆腹。": {
+    "en": "From above, loop the upper and lower bowls rightward in order.",
+    "ja": "上から右へ、上と下の丸みを順に描きます。"
+  },
+  "先写从上到下的左侧主干。": {
+    "en": "First write the left stem from top to bottom.",
+    "ja": "まず左の主軸を上から下へ書きます。"
+  },
+  "从顶部斜向左下，形成左侧支撑。": {
+    "en": "Slant down-left from the top to form the left support.",
+    "ja": "上から左下へ斜めに書き、左の支えを作ります。"
+  },
+  "抬笔，从顶部向右弯下形成字身，绕向左下收笔。": {
+    "en": "Lift, curve right and down from the top to form the body, finishing lower left.",
+    "ja": "ペンを上げ、上から右下へ胴体を曲げ、左下へ回って終えます。"
+  },
+  "抬笔，在下方补向右弯出的连接。": {
+    "en": "Lift and add a right-curving join below.",
+    "ja": "ペンを上げ、下に右へ曲がるつなぎを加えます。"
+  },
+  "先写左侧从上到下的主干。": {
+    "en": "First draw the left stem top to bottom.",
+    "ja": "まず左の主軸を上から下へ書きます。"
+  },
+  "抬笔，从左向右写顶横。": {
+    "en": "Lift and draw the top bar left to right.",
+    "ja": "ペンを上げ、上の横線を左から右へ書きます。"
+  },
+  "先写中间主干。": {
+    "en": "First draw the central stem.",
+    "ja": "まず中央の主軸を書きます。"
+  },
+  "抬笔，写左侧上下两支，经过中腰。": {
+    "en": "Lift and draw both left arms through the midpoint.",
+    "ja": "ペンを上げ、中ほどを通る左の上下の枝を書きます。"
+  },
+  "抬笔，写右侧上下两支，经过中腰。": {
+    "en": "Lift and draw both right arms through the midpoint.",
+    "ja": "ペンを上げ、中ほどを通る右の上下の枝を書きます。"
+  },
+  "从左上向右写上半圆。": {
+    "en": "Draw the upper semicircle rightward from upper left.",
+    "ja": "左上から右へ上の半円を描きます。"
+  },
+  "顺势写下半圆，左下收笔。": {
+    "en": "Continue through the lower semicircle and finish lower left.",
+    "ja": "続けて下の半円を描き、左下で終えます。"
+  },
+  "从左上写下行笔。": {
+    "en": "Draw a downstroke from upper left.",
+    "ja": "左上から下向きの線を書きます。"
+  },
+  "由左下斜向右上，再下行到右下。": {
+    "en": "Slant from lower left to upper right, then descend lower right.",
+    "ja": "左下から右上へ斜めに引き、右下へ下ろします。"
+  },
+  "先写 И。": {
+    "en": "First write И.",
+    "ja": "まず И を書きます。"
+  },
+  "抬笔，在顶部加从左到右的短弧。": {
+    "en": "Lift and add a short arc above, left to right.",
+    "ja": "ペンを上げ、上に短い弧を左から右へ加えます。"
+  },
+  "先写左侧主干。": {
+    "en": "First draw the left stem.",
+    "ja": "まず左の主軸を書きます。"
+  },
+  "从右上写到中腰，再由中腰向右下展开。": {
+    "en": "Draw from upper right to mid-height, then extend down-right.",
+    "ja": "右上から中ほどへ書き、そこから右下へ広げます。"
+  },
+  "从左下上行至顶部。": {
+    "en": "Rise from lower left to the top.",
+    "ja": "左下から上端へ上がります。"
+  },
+  "从顶部斜向右下，在基线处收笔。": {
+    "en": "Slant from top to lower right, ending at the baseline.",
+    "ja": "上から右下へ斜めに書き、基線で終えます。"
+  },
+  "从左下向上，再斜向中部低点。": {
+    "en": "Rise from lower left, then slant to the low midpoint.",
+    "ja": "左下から上がり、中央の低い点へ斜めに下ろします。"
+  },
+  "上行到右侧高点，再下行至右下。": {
+    "en": "Rise to the right peak, then descend to lower right.",
+    "ja": "右の高い点へ上がり、右下へ下ろします。"
+  },
+  "抬笔，从上到下写右侧主干。": {
+    "en": "Lift and draw the right stem downward.",
+    "ja": "ペンを上げ、右の主軸を上から下へ書きます。"
+  },
+  "抬笔，从左到右补中横。": {
+    "en": "Lift and add the middle bar left to right.",
+    "ja": "ペンを上げ、中央の横線を左から右へ加えます。"
+  },
+  "从右上向左绕过顶端与左侧。": {
+    "en": "Curve left from upper right around the top and left side.",
+    "ja": "右上から左へ、上端と左側を回ります。"
+  },
+  "经底部返回右上，闭合椭圆。": {
+    "en": "Return via the bottom to upper right, closing the oval.",
+    "ja": "下を通って右上へ戻り、楕円を閉じます。"
+  },
+  "写左侧下行主干。": {
+    "en": "Draw the left stem downward.",
+    "ja": "左の主軸を下へ書きます。"
+  },
+  "从左上向右写顶横，再写右侧下行主干。": {
+    "en": "Draw the top bar rightward, then the right stem downward.",
+    "ja": "左上から上の横線を右へ、右の主軸を下へ書きます。"
+  },
+  "回到顶部，向右绕出上部圆腹并接回中腰。": {
+    "en": "Return to the top, loop the upper bowl rightward and rejoin at mid-height.",
+    "ja": "上に戻り、右へ上の丸みを描いて中ほどにつなぎます。"
+  },
+  "经左侧和底部，在右下开口收笔。": {
+    "en": "Curve around left and bottom, ending open at lower right.",
+    "ja": "左と下を通り、右下を開けて終えます。"
+  },
+  "从左到右写顶部横画。": {
+    "en": "Draw the top horizontal left to right.",
+    "ja": "上の横線を左から右へ書きます。"
+  },
+  "从顶部中间向下写主干。": {
+    "en": "Draw the stem down from the top center.",
+    "ja": "上の中央から主軸を下へ書きます。"
+  },
+  "从左上斜向中间。": {
+    "en": "Slant from upper left to the center.",
+    "ja": "左上から中央へ斜めに書きます。"
+  },
+  "从右上斜下经过交汇点，再延伸至左下。": {
+    "en": "Slant down from upper right through the junction to lower left.",
+    "ja": "右上から交点を通って左下へ斜めに伸ばします。"
+  },
+  "先写中间长竖。": {
+    "en": "First draw the long central vertical.",
+    "ja": "まず中央の長い縦線を書きます。"
+  },
+  "抬笔，围绕中部写左右对称的椭圆。": {
+    "en": "Lift and draw a symmetric oval around the middle.",
+    "ja": "ペンを上げ、中央を囲む左右対称の楕円を描きます。"
+  },
+  "从左上写到右下。": {
+    "en": "Write from upper left to lower right.",
+    "ja": "左上から右下へ書きます。"
+  },
+  "抬笔，从右上写到左下。": {
+    "en": "Lift and write from upper right to lower left.",
+    "ja": "ペンを上げ、右上から左下へ書きます。"
+  },
+  "先写左侧下行笔，沿基线连向右侧。": {
+    "en": "First draw the left downstroke, joining right along the baseline.",
+    "ja": "まず左を下り、基線に沿って右へつなぎます。"
+  },
+  "写右侧下行笔，末端补短尾。": {
+    "en": "Draw the right downstroke and add a short tail.",
+    "ja": "右の下向きの線を書き、末尾に短い尾を加えます。"
+  },
+  "从左上写下弯，到中腰向右连接。": {
+    "en": "Curve down from upper left and join right at mid-height.",
+    "ja": "左上から下へ曲げ、中ほどで右へつなぎます。"
+  },
+  "从右上写到底部，形成右侧主干。": {
+    "en": "Draw from upper right to the bottom for the right stem.",
+    "ja": "右上から下まで書き、右の主軸を作ります。"
+  },
+  "连续写左、中、右三个下行笔，底部相连。": {
+    "en": "Write left, middle and right downstrokes, joined at the bottom.",
+    "ja": "左・中央・右の下向きの線を続け、下部でつなぎます。"
+  },
+  "最后在右下向右收笔。": {
+    "en": "Finish rightward at lower right.",
+    "ja": "最後に右下で右へ終えます。"
+  },
+  "先写 Ш。": {
+    "en": "First write Ш.",
+    "ja": "まず Ш を書きます。"
+  },
+  "右下补越过基线的短尾。": {
+    "en": "Add a short tail below the baseline at lower right.",
+    "ja": "右下に基線を越える短い尾を加えます。"
+  },
+  "从左向右写顶部肩部，再向下写主干。": {
+    "en": "Draw the top shoulder left to right, then the stem downward.",
+    "ja": "上の肩を左から右へ書き、主軸を下ろします。"
+  },
+  "在下部向右绕出圆腹。": {
+    "en": "Loop the lower bowl rightward.",
+    "ja": "下部で右へ丸みを描きます。"
+  },
+  "先写左侧主干及下部圆腹。": {
+    "en": "First draw the left stem and lower bowl.",
+    "ja": "まず左の主軸と下の丸みを書きます。"
+  },
+  "在右侧另写下行主干。": {
+    "en": "Draw a separate right downstem.",
+    "ja": "右側に別の下向きの主軸を書きます。"
+  },
+  "从中腰向右绕出下部圆腹。": {
+    "en": "Loop the lower bowl rightward from mid-height.",
+    "ja": "中ほどから右へ下の丸みを描きます。"
+  },
+  "从左上向右写半圆，回到左下。": {
+    "en": "Draw a semicircle rightward from upper left to lower left.",
+    "ja": "左上から右へ半円を描き、左下へ戻ります。"
+  },
+  "抬笔，补中间向右的横画。": {
+    "en": "Lift and add the middle rightward bar.",
+    "ja": "ペンを上げ、中央に右向きの横線を加えます。"
+  },
+  "抬笔，在中部向右写连接横画。": {
+    "en": "Lift and draw a rightward joining bar at the middle.",
+    "ja": "ペンを上げ、中央に右向きのつなぎの横線を書きます。"
+  },
+  "抬笔，在右侧绕出闭合椭圆。": {
+    "en": "Lift and draw a closed oval on the right.",
+    "ja": "ペンを上げ、右側に閉じた楕円を描きます。"
+  },
+  "从右上向左绕写上部圆腹。": {
+    "en": "Loop the upper bowl leftward from upper right.",
+    "ja": "右上から左へ上の丸みを描きます。"
+  },
+  "从右上向下写右侧主干。": {
+    "en": "Draw the right stem down from upper right.",
+    "ja": "右上から右の主軸を下へ書きます。"
+  },
+  "抬笔，从中腰斜向左下写支腿。": {
+    "en": "Lift and slant the leg from mid-height to lower left.",
+    "ja": "ペンを上げ、中ほどから左下へ斜めに脚を書きます。"
+  },
+  "第 {0} 笔：沿高亮轨迹，从圆点起笔，跟随动画方向书写。": {
+    "en": "Stroke {0}: start at the dot and follow the highlighted animated path.",
+    "ja": "第 {0} 画：丸い点から始め、強調された軌跡をアニメーションの方向へ書きます。"
+  },
+  "浅色": {
+    "en": "Light",
+    "ja": "ライト"
+  },
+  "深色": {
+    "en": "Dark",
+    "ja": "ダーク"
+  },
+  "完成": {
+    "en": "Done",
+    "ja": "完了"
+  },
+  "好": {
+    "en": "OK",
+    "ja": "OK"
+  },
+  "允许": {
+    "en": "Allow",
+    "ja": "許可"
+  },
+  "重新加载": {
+    "en": "Reload",
+    "ja": "再読み込み"
+  },
+  "高": {
+    "en": "High",
+    "ja": "高"
+  },
+  "练习": {
+    "en": "Practice",
+    "ja": "練習"
+  },
+  "来": {
+    "en": "Come",
+    "ja": "来ること"
+  },
+  "假名读音": {
+    "en": "Kana pronunciation",
+    "ja": "仮名の発音"
+  },
+  "字母名称": {
+    "en": "Letter name",
+    "ja": "文字の名称"
+  },
+  "Omniglyph · 字母学习": {
+    "en": "Omniglyph · Letter learning",
+    "ja": "Omniglyph · 文字の学習"
+  },
+  "书写区域加载失败，请重新打开。": {
+    "en": "Could not load the writing area. Please reopen the app.",
+    "ja": "書き取りエリアを読み込めませんでした。開き直してください。"
+  },
+  "范字加载失败，请重新打开。": {
+    "en": "Could not load the sample characters. Please reopen the app.",
+    "ja": "お手本を読み込めませんでした。開き直してください。"
+  },
+  "来源": {
+    "en": "Source",
+    "ja": "提供元"
+  },
+  "加载失败": {
+    "en": "Loading failed",
+    "ja": "読み込み失敗"
+  }
+}

@@ -107,7 +107,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         let metadataStore = ModuleStore(root: metadataRoot, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: metadataDefaults)
         let metadataBuiltin = metadataStore.modules[0]
         var renamedDebugModule = module
-        renamedDebugModule.name = "Morphora"
+        renamedDebugModule.name = "Lexis"
         renamedDebugModule.description = "Debug handbook"
         renamedDebugModule.localizedDescriptions = ["en": "Debug English introduction", "ja": "Debug Japanese introduction"]
         renamedDebugModule.version = "20260104"
@@ -116,7 +116,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         var metadataRequests: [URLRequest] = []
         MockProtocol.intercept = { request in metadataRequests.append(request.request); return false }
         let metadataSucceeded = await metadataStore.checkForUpdates()
-        check(metadataSucceeded && metadataStore.modules[0].name == "Morphora", "debug catalog refresh updates home-screen names")
+        check(metadataSucceeded && metadataStore.modules[0].name == "Lexis", "debug catalog refresh updates home-screen names")
         check(metadataStore.modules[0].description(for: "en") == "Debug English introduction" && metadataStore.modules[0].description(for: "ja") == "Debug Japanese introduction", "debug catalog refresh updates translated introductions")
         check(metadataStore.modules[0].resourceIdentity == metadataBuiltin.resourceIdentity && metadataStore.modules[0].allowedOrigins == metadataBuiltin.allowedOrigins, "debug display metadata cannot replace installed resources or permissions")
         let debugEntry = URL(string: "http://debug.test/preview/")!.appendingPathComponent("app").appendingPathComponent(metadataBuiltin.id).appendingPathComponent(metadataBuiltin.entry)

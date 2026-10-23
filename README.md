@@ -11,7 +11,7 @@ SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立
 ```sh
 npm ci
 npm run dev                  # 浏览器预览 Sentra
-npm run dev -w @lingrove/glyphora # 浏览器预览 Glyphora
+npm run dev -w @lingrove/omniglyph # 浏览器预览 Omniglyph
 npm run build                # Debug 网页、ZIP、目录及 iOS 内置资源
 npm run debug:serve          # 自动构建并监听源码，启动调试服务（端口 8000）
 npm run build:watch          # 只监听并自动构建，配合已经运行的调试服务
@@ -102,9 +102,9 @@ gh-pages/
 ├── release/                      # 最新 tag 网页与 packages/*.zip（有 tag 时）
 ├── packages/
 │   ├── sentra-20261020-snapshot.zip  # master 快照包
-│   └── glyphora-20261020-snapshot.zip
+│   └── omniglyph-20261020-snapshot.zip
 └── app/                          # 子应用网页及资源
-    ├── glyphora/
+    ├── omniglyph/
     └── sentra/
         ├── index.html            # 浏览器可直接访问
         ├── manifest.json
@@ -117,7 +117,7 @@ gh-pages/
 - 正式版更新目录：`https://lingrove.stackli.me/catalog.json`
 - Sentra ZIP：`https://lingrove.stackli.me/release/packages/sentra-20261020.zip`（版本变化后文件名相应变化）
 - Sentra 网页：`https://lingrove.stackli.me/app/sentra/`
-- Glyphora 网页：`https://lingrove.stackli.me/app/glyphora/`
+- Omniglyph 网页：`https://lingrove.stackli.me/app/omniglyph/`
 
 目录为普通 `{ "modules": [...] }` JSON；模块记录包含 `webUrl`、`downloadUrl`、版本、包大小和 SHA-256。原生根据 `downloadUrl` 下载；`webUrl` 供浏览器访问。`npm run verify:release` 验证目录与所有包一一对应、哈希及大小正确、ZIP 与网页目录一致、HTML 引用的资源存在。
 
@@ -218,7 +218,7 @@ try {
 
 音频由 `AVAudioEngine` 增量排队播放，不经 JavaScript 拼接音频文件；桥接方法为 `tts.play`、`tts.pause`、`tts.resume`、`tts.stop`，状态通过已有 chunk 通道按请求 ID 分发。MiniMax 请求排除末包聚合音频，且宿主不重复播放末包的整段数据。断流、业务错误、非法分片和样本字节不完整都会中止播放。流式 PCM 上限 24 MiB，传输上限 49 MiB，网络空闲超时 120 秒、总传输超时 600 秒。
 
-同一宿主同时仅有一个流式播放会话；开始新播放会停止上一会话。暂停保留播放位置，网络可继续接收（仍受大小及超时限制）；停止会立即清空播放队列并取消网络。返回宿主首页、子应用关闭或重载、进入后台、音频中断或拔下耳机会停止播放，不自动恢复。`finished` 在暂停时保持未完成，须继续或停止。设置页试听使用相同实现。Lector 阅读页提供朗读与位置滑块：按文本长度比例定位到句子，松手后取消旧请求，从目标句子重新流式生成并顺序朗读后文；百分比代表文本位置，并非音频时间。
+同一宿主同时仅有一个流式播放会话；开始新播放会停止上一会话。暂停保留播放位置，网络可继续接收（仍受大小及超时限制）；停止会立即清空播放队列并取消网络。返回宿主首页、子应用关闭或重载、进入后台、音频中断或拔下耳机会停止播放，不自动恢复。`finished` 在暂停时保持未完成，须继续或停止。设置页试听使用相同实现。Verso 阅读页提供朗读与位置滑块：按文本长度比例定位到句子，松手后取消旧请求，从目标句子重新流式生成并顺序朗读后文；百分比代表文本位置，并非音频时间。
 
 ## 多域名网络桥
 
@@ -277,6 +277,6 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 语音合成设置可选择默认音色，并进入可搜索的“按语言设置音色”页面，为中文、英语、日语、俄语、希腊语分别选择音色；各语言可选择“使用默认音色”。MiniMax 优先列出对应语言的系统音色，没有专属音色的语言可选择多语言系统音色。模型和 API Key 共用，切换服务商仍保留各自的表单草稿，点击右上角“保存”后生效。
 
-`tts.play()` 与 `tts.synthesize()` 共用可选 `language` 参数，传入朗读文本的 BCP 47 语言代码（如 `ja`、`ja-JP`、`zh-CN`、`en-US`），不要传界面语言。宿主按上述五种语言选择音色；省略、未单独设置或其他语言使用默认音色，不自动猜测文本语言。混合语言内容由子应用按语言分段请求。Lector 使用文章语言为每个朗读分段传参。子应用不能通过该参数覆盖密钥、模型或音色 ID。
+`tts.play()` 与 `tts.synthesize()` 共用可选 `language` 参数，传入朗读文本的 BCP 47 语言代码（如 `ja`、`ja-JP`、`zh-CN`、`en-US`），不要传界面语言。宿主按上述五种语言选择音色；省略、未单独设置或其他语言使用默认音色，不自动猜测文本语言。混合语言内容由子应用按语言分段请求。Verso 使用文章语言为每个朗读分段传参。子应用不能通过该参数覆盖密钥、模型或音色 ID。
 
 试听可选择语言，切换时自动填入对应语言的示例文本并停止当前播放，使用当前对应音色设置；选择默认音色时，示例文本跟随界面语言。切换模型会保留支持的音色；不受新模型支持的语言音色改为使用默认音色。

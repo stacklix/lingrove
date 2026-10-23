@@ -154,9 +154,9 @@ final class LingroveUITests: XCTestCase {
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true"), object: element)
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 40), .completed)
     }
-    func testGlyphoraNativeWritingAndHistory() throws {
+    func testOmniglyphNativeWritingAndHistory() throws {
         let app = XCUIApplication(); app.launch()
-        let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Glyphora")).firstMatch
+        let entry = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Omniglyph")).firstMatch
         waitForEnabled(entry); entry.tap()
         let studyTab = app.webViews.buttons["学习"]
         XCTAssertTrue(studyTab.waitForExistence(timeout:25)); studyTab.tap()
@@ -180,13 +180,13 @@ final class LingroveUITests: XCTestCase {
         waitForEnabled(submit)
         app.webViews.buttons["学习"].tap()
         app.terminate(); app.launch()
-        let reopened = app.buttons.matching(NSPredicate(format:"label CONTAINS %@", "Glyphora")).firstMatch
+        let reopened = app.buttons.matching(NSPredicate(format:"label CONTAINS %@", "Omniglyph")).firstMatch
         waitForEnabled(reopened); reopened.tap()
         XCTAssertTrue(app.webViews.buttons["学习"].waitForExistence(timeout:25)); app.webViews.buttons["学习"].tap()
         resumeStudy()
         waitForEnabled(submit)
         XCTAssertTrue(canvas.waitForExistence(timeout:5))
-        let screenshot = XCTAttachment(screenshot:app.screenshot()); screenshot.name = "Glyphora-inline-resumed"; screenshot.lifetime = .keepAlways; add(screenshot)
+        let screenshot = XCTAttachment(screenshot:app.screenshot()); screenshot.name = "Omniglyph-inline-resumed"; screenshot.lifetime = .keepAlways; add(screenshot)
         submit.tap()
         let independent = app.webViews.buttons.matching(NSPredicate(format:"label CONTAINS %@", "独立书写 →")).firstMatch
         XCTAssertTrue(independent.waitForExistence(timeout:10))
@@ -322,8 +322,8 @@ final class LingroveUITests: XCTestCase {
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         app.buttons["settings-back"].tap()
         XCTAssertFalse(app.buttons["重新加载子应用"].exists)
-        let lector = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Lector")).firstMatch
-        waitForEnabled(lector); lector.tap()
+        let verso = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Verso")).firstMatch
+        waitForEnabled(verso); verso.tap()
         XCTAssertTrue(app.webViews.buttons["导入文章"].waitForExistence(timeout: 20))
     }
     func testDebugConnectionFormLightMode() { checkDebugConnectionForm(appearance: "light") }
@@ -356,12 +356,12 @@ final class LingroveUITests: XCTestCase {
         add(screenshot)
         app.buttons["debug-settings-disclosure"].tap()
         XCTAssertEqual(debugFields(app).count, 0)
-        for id in ["glyphora", "morphora", "lector", "sentra"] {
+        for id in ["omniglyph", "lexis", "verso", "sentra"] {
             XCTAssertTrue(app.buttons["module-developer-details-\(id)"].exists)
         }
         app.buttons["settings-back"].tap()
         app.terminate(); app.launch()
-        for name in ["Glyphora", "Morphora", "Lector", "Sentra"] {
+        for name in ["Omniglyph", "Lexis", "Verso", "Sentra"] {
             waitForEnabled(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch)
         }
     }
