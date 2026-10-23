@@ -6,10 +6,17 @@ import sys
 root = Path(__file__).resolve().parent.parent
 bundle = Path(sys.argv[1]) / 'BuiltinModules'
 names = json.loads((root / 'modules.json').read_text())
+catalog_path = root / 'dist/catalog.json'
+if not catalog_path.is_file():
+    catalog_path = root / 'dist/snapshot/catalog.snapshot.json'
+assert catalog_path.is_file(), 'Missing built catalog; run the child-app build first'
+source_root = catalog_path.parent / 'app'
+assert source_root.is_dir(), f'Missing built application directory: {source_root}'
+assert {p.name for p in source_root.iterdir()} == set(names), 'Built modules differ from modules.json'
 assert bundle.is_dir(), 'Missing BuiltinModules in iOS product'
 assert {p.name for p in bundle.iterdir()} == set(names), 'Bundled modules differ from modules.json'
 for name in names:
-    source = root / 'dist' / 'app' / name
+    source = source_root / name
     embedded = bundle / name
     def files(directory):
         return {p.relative_to(directory): p.read_bytes() for p in directory.rglob('*') if p.is_file()}

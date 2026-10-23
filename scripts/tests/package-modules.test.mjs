@@ -15,6 +15,7 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
       'package-modules.mjs',
       'stored-zip.py',
       'verify-release.py',
+      'verify-ios-modules.py',
     ]) {
       await cp(new URL(`../${name}`, import.meta.url), path.join(root, 'scripts', name));
     }
@@ -63,6 +64,21 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
       'example',
     );
     run('python3', ['scripts/verify-release.py', '--snapshot']);
+    const debugProduct = path.join(root, 'debug-product');
+    await cp(
+      path.join(root, 'ios/Lingrove/Resources/BuiltinModules'),
+      path.join(debugProduct, 'BuiltinModules'),
+      { recursive: true },
+    );
+    run('python3', ['scripts/verify-ios-modules.py', debugProduct]);
+    await writeFile(path.join(debugProduct, 'BuiltinModules/example/index.html'), 'stale HTML');
+    const stale = spawnSync('python3', ['scripts/verify-ios-modules.py', debugProduct], {
+      cwd: root,
+      env,
+      encoding: 'utf8',
+    });
+    assert.notEqual(stale.status, 0);
+    assert.match(stale.stderr, /stale or missing bundled files/);
     run(process.execPath, ['scripts/build-modules.mjs', '--release']);
     const release = (await json('dist/catalog.json')).modules[0];
     assert.equal(release.downloadUrl.endsWith('/packages/example-20261020.zip'), true);
@@ -74,6 +90,13 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
       '<p>Example</p>',
     );
     run('python3', ['scripts/verify-release.py']);
+    const releaseProduct = path.join(root, 'release-product');
+    await cp(
+      path.join(root, 'ios/Lingrove/Resources/BuiltinModules'),
+      path.join(releaseProduct, 'BuiltinModules'),
+      { recursive: true },
+    );
+    run('python3', ['scripts/verify-ios-modules.py', releaseProduct]);
     // A later debug rebuild must discard old archives and the old release catalog.
     run(process.execPath, ['scripts/build-modules.mjs']);
     await assert.rejects(readdir(path.join(root, 'dist/release')), { code: 'ENOENT' });
