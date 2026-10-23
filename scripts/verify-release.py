@@ -23,6 +23,7 @@ assert [module['id'] for module in catalog['modules']] == expected, 'Catalog doe
 assert (output / 'index.html').is_file() and (site / '.nojekyll').is_file()
 for module in catalog['modules']:
     name = module['id']
+    assert module['name'].lower() == name, f'{name}: display name and module ID differ'
     assert re.fullmatch(r'[0-9]{8}', module['version']), f'{name}: invalid build-date version'
     assert datetime.strptime(module['version'], '%Y%m%d').strftime('%Y%m%d') == module['version']
     directory = output / 'app' / name
@@ -32,9 +33,9 @@ for module in catalog['modules']:
     assert web_url.scheme == 'https'
     assert web_url.path.endswith(f'{"/snapshot" if snapshot else ""}/app/{name}/{module["entry"]}')
     files = {file.relative_to(directory).as_posix(): file.read_bytes() for file in directory.rglob('*') if file.is_file()}
-    if name == 'omniglyph':
-        assert not any(file.endswith('.wav') for file in files), 'omniglyph: standalone WAV duplicates embedded audio'
-        assert 'audio/SOURCES.json' in files and 'audio/README.md' in files, 'omniglyph: missing audio attribution'
+    if name == 'alphi':
+        assert not any(file.endswith('.wav') for file in files), 'alphi: standalone WAV duplicates embedded audio'
+        assert 'audio/SOURCES.json' in files and 'audio/README.md' in files, 'alphi: missing audio attribution'
     if 'downloadUrl' in module:
         zip_url = urlparse(module['downloadUrl'])
         assert zip_url.scheme == 'https' and web_url.netloc == zip_url.netloc

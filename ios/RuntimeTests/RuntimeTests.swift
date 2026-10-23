@@ -357,7 +357,7 @@ final class RuntimeTests: XCTestCase {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
-        let assets = try XCTUnwrap(Bundle.main.resourceURL).appendingPathComponent("BuiltinModules/omniglyph/assets")
+        let assets = try XCTUnwrap(Bundle.main.resourceURL).appendingPathComponent("BuiltinModules/alphi/assets")
         let scripts = try FileManager.default.contentsOfDirectory(at: assets, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "js" }
             .map { try String(contentsOf: $0, encoding: .utf8) }.joined()

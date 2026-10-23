@@ -6,7 +6,7 @@
 | --- | --- | --- | --- | --- |
 | Lingrove | 三片叶子组成展开的书，寓意语言学习与成长 | `#287052` | `#AAD5BC` | [Logo.svg](../ios/Lingrove/Resources/Assets.xcassets/Logo.imageset/Logo.svg) |
 | Sentra | 对话与句子，气泡中以负形留出两行文字 | `#3264B4` | `#9FBEF4` | [logo.svg](../app/sentra/public/logo.svg) |
-| Alphi | 字母 A，右下笔画化为书写笔尖 | `#A95524` | `#F0B283` | [logo.svg](../app/omniglyph/public/logo.svg) |
+| Alphi | 字母 A，右下笔画化为书写笔尖 | `#A95524` | `#F0B283` | [logo.svg](../app/alphi/public/logo.svg) |
 | Lexis | 语法树，从词类分支到不同词形 | `#7652A6` | `#C6A5ED` | [logo.svg](../app/lexis/public/logo.svg) |
 | Verso | 展开的书，负形文字与中缝 | `#18776F` | `#87D1C4` | [logo.svg](../app/verso/public/logo.svg) |
 | Polykeys | 多语言输入键盘与空格键 | `#AC4969` | `#F0A4BF` | [logo.svg](../app/polykeys/public/logo.svg) |

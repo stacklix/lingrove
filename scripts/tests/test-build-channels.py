@@ -15,6 +15,8 @@ with tempfile.TemporaryDirectory(prefix='lingrove-channels-') as temporary:
         shutil.copy(repository / 'scripts' / name, root / 'scripts' / name)
     (root / 'app/sentra').mkdir(parents=True)
     (root / 'app/sentra/manifest.json').write_text((repository / 'app/sentra/manifest.json').read_text())
+    (root / 'app/sentra/package.json').write_text('{"name":"@lingrove/sentra"}')
+    (root / 'app/sentra/index.html').write_text('<title>Sentra</title>')
     (root / 'ios/Lingrove/Resources').mkdir(parents=True)
     host_catalog = root / 'ios/Lingrove/Resources/Localizable.xcstrings'
     host_catalog.write_text('host-only-catalog')

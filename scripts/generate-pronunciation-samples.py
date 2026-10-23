@@ -13,12 +13,12 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--recordings-only', action='store_true', help='All current samples are human recordings')
 parser.add_argument('--ffmpeg', default='ffmpeg', help='FFmpeg executable path')
 args = parser.parse_args()
-samples = json.loads((root / 'app/omniglyph/src/pronunciation-samples.json').read_text(encoding='utf-8'))
-output = root / 'app/omniglyph/audio-generated'
+samples = json.loads((root / 'app/alphi/src/pronunciation-samples.json').read_text(encoding='utf-8'))
+output = root / 'app/alphi/audio-generated'
 output.mkdir(parents=True, exist_ok=True)
-with tempfile.TemporaryDirectory(prefix='omniglyph-speech-') as temporary:
+with tempfile.TemporaryDirectory(prefix='alphi-speech-') as temporary:
     for sample in samples:
-        raw = root / 'app/omniglyph/audio-sources' / sample['recording']
+        raw = root / 'app/alphi/audio-sources' / sample['recording']
         wav = Path(temporary) / (sample['id'] + '.wav')
         command = [args.ffmpeg, '-v', 'error', '-y', '-i', str(raw)]
         if 'filter' in sample:
@@ -40,5 +40,5 @@ with tempfile.TemporaryDirectory(prefix='omniglyph-speech-') as temporary:
 
 encoded = {sample['id']: 'data:audio/wav;base64,' + base64.b64encode(
     (output / (sample['id'] + '.wav')).read_bytes()).decode('ascii') for sample in samples}
-(root / 'app/omniglyph/src/pronunciation-audio.json').write_text(json.dumps(encoded, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-(root / 'app/omniglyph/public/audio/SOURCES.json').write_bytes((root / 'app/omniglyph/src/pronunciation-sources.json').read_bytes())
+(root / 'app/alphi/src/pronunciation-audio.json').write_text(json.dumps(encoded, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+(root / 'app/alphi/public/audio/SOURCES.json').write_bytes((root / 'app/alphi/src/pronunciation-sources.json').read_bytes())

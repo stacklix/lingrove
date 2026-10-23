@@ -24,6 +24,8 @@ test('both channels publish matching ZIP and HTML resources with bundled package
     await mkdir(path.join(root, 'app/example'), { recursive: true });
     await writeFile(path.join(root, 'modules.json'), '["example"]');
     await writeFile(path.join(root, 'index.html'), 'home');
+    await writeFile(path.join(root, 'app/example/package.json'), '{"name":"@lingrove/example"}');
+    await writeFile(path.join(root, 'app/example/index.html'), '<title>Example</title>');
     await writeFile(
       path.join(root, 'app/example/manifest.json'),
       JSON.stringify({

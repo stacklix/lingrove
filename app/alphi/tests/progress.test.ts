@@ -31,9 +31,9 @@ it('rejects corrupt cursors and leaves the stored data untouched', async () => {
     strokes: [[{ x: Infinity, y: 0 }]],
     feedback: null,
   };
-  await moduleStorage('omniglyph').set('progress', p);
+  await moduleStorage('alphi').set('progress', p);
   await expect(loadProgress()).rejects.toThrow('进度格式异常');
-  expect(await moduleStorage('omniglyph').get('progress')).not.toBeNull();
+  expect(await moduleStorage('alphi').get('progress')).not.toBeNull();
 });
 it('serializes snapshots in save order', async () => {
   const p = emptyProgress();
@@ -63,7 +63,7 @@ it('has ordered instructions for every supported letter', () => {
 });
 
 it('requires current progress fields and cursor keys', async () => {
-  const store = moduleStorage('omniglyph');
+  const store = moduleStorage('alphi');
   const missing = { ...emptyProgress() } as any;
   delete missing.lastGroups;
   await store.set('progress', missing);

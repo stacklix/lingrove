@@ -19,7 +19,7 @@ export interface History {
   practices: Practice[];
   rounds: RoundRecord[];
 }
-const store = moduleStorage('omniglyph');
+const store = moduleStorage('alphi');
 export async function loadHistory(): Promise<History> {
   const data = await store.get<History>('history');
   if (!data) return { practices: [], rounds: [] };

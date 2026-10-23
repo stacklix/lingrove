@@ -11,7 +11,7 @@ SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立
 ```sh
 npm ci
 npm run dev                  # 浏览器预览 Sentra
-npm run dev -w @lingrove/omniglyph # 浏览器预览 Alphi
+npm run dev -w @lingrove/alphi # 浏览器预览 Alphi
 npm run build                # Debug 网页、ZIP、调试目录及 iOS 内置资源
 npm run debug:serve          # 自动构建并监听源码，启动调试服务（端口 8000）
 npm run build:watch          # 只监听并自动构建，配合已经运行的调试服务
@@ -116,7 +116,7 @@ gh-pages/
 - 正式版更新目录：`https://lingrove.stackli.me/catalog.json`
 - Sentra ZIP：`https://lingrove.stackli.me/packages/sentra-20261020.zip`（版本变化后文件名相应变化）
 - Sentra 网页：`https://lingrove.stackli.me/snapshot/app/sentra/`
-- Alphi 网页：`https://lingrove.stackli.me/snapshot/app/omniglyph/`
+- Alphi 网页：`https://lingrove.stackli.me/snapshot/app/alphi/`
 
 目录为普通 `{ "modules": [...] }` JSON；两种目录均包含应用元数据、版本、ZIP 地址 `downloadUrl`、包大小、SHA-256 和 HTML 入口 `webUrl`。正式资源位于 `/packages/`、`/app/`；snapshot 资源位于 `/snapshot/packages/`、`/snapshot/app/`。`npm run verify:release` 对两种渠道都校验 ZIP、hash 和网页文件的一致性。
 

@@ -150,6 +150,11 @@ test('child build requires no native translations and leaves existing native res
     path.join(directory, 'app/independent/manifest.json'),
     JSON.stringify({ id: 'independent', name: 'Independent', entry: 'index.html' }),
   );
+  await writeFile(
+    path.join(directory, 'app/independent/package.json'),
+    '{"name":"@lingrove/independent"}',
+  );
+  await writeFile(path.join(directory, 'app/independent/index.html'), '<title>Independent</title>');
   const childCatalog = path.join(directory, 'app/independent/src/locales/messages.json');
   await writeFile(childCatalog, '{"child-only text":{"en":"Child","ja":"子アプリ"}}');
   // Exercise the real build and packaging scripts; replace only the external compiler and ZIP tool.

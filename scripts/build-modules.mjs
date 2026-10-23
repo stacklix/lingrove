@@ -18,6 +18,22 @@ if (
 ) {
   throw new Error('modules.json must contain unique module directory names');
 }
+// Validate the entire source inventory before cleaning or compiling any outputs.
+const initials = new Set();
+for (const id of modules) {
+  const directory = path.join(root, 'app', id);
+  const manifest = JSON.parse(await readFile(path.join(directory, 'manifest.json'), 'utf8'));
+  const pkg = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'));
+  if (manifest.id !== id || manifest.name?.toLowerCase() !== id || pkg.name !== `@lingrove/${id}`)
+    throw new Error(`${id}: display name, module ID, directory and npm package name must match`);
+  const initial = id[0];
+  if (initials.has(initial)) throw new Error(`${id}: app name initials must be unique`);
+  initials.add(initial);
+  const html = await readFile(path.join(directory, manifest.entry), 'utf8');
+  const title = /<title>([^<]*)<\/title>/i.exec(html)?.[1].trim();
+  if (title !== manifest.name && !title?.startsWith(`${manifest.name} · `))
+    throw new Error(`${id}: page title must use the display name ${manifest.name}`);
+}
 // Build from a clean directory so retired modules/assets cannot leak into a release.
 await rm(path.join(root, 'dist'), { recursive: true, force: true });
 for (const module of modules) {

@@ -38,7 +38,7 @@ export const emptyProgress = (): Progress => ({
   cursors: {},
   drafts: {},
 });
-const store = moduleStorage('omniglyph');
+const store = moduleStorage('alphi');
 const known = new Map(glyphs.map((g) => [g.id, g]));
 function validInk(value: unknown): boolean {
   return (

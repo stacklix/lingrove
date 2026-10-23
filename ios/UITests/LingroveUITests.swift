@@ -422,7 +422,7 @@ final class LingroveUITests: XCTestCase {
         add(screenshot)
         app.buttons["debug-settings-disclosure"].tap()
         XCTAssertEqual(debugFields(app).count, 0)
-        for id in ["omniglyph", "lexis", "verso", "sentra"] {
+        for id in ["alphi", "lexis", "verso", "sentra"] {
             XCTAssertTrue(app.buttons["module-developer-details-\(id)"].exists)
         }
         app.buttons["settings-back"].tap()

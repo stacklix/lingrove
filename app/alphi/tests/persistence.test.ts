@@ -10,7 +10,7 @@ it('keeps Alphi browser data separate from Sentra', async () => {
   expect(await loadHistory()).toEqual({ practices: [], rounds: [] });
 });
 it('protects unreadable history instead of silently replacing it', async () => {
-  const store = moduleStorage('omniglyph');
+  const store = moduleStorage('alphi');
   const original = { practices: [], rounds: [{ answers: null }] };
   await store.set('history', original);
   await expect(loadHistory()).rejects.toThrow('记录格式异常');
@@ -29,7 +29,7 @@ it('bounds saved practice history and rejects impossible scores', async () => {
     rounds: [],
   });
   expect((await loadHistory()).practices).toHaveLength(500);
-  await moduleStorage('omniglyph').set('history', {
+  await moduleStorage('alphi').set('history', {
     practices: [{ ...practice, score: 200 }],
     rounds: [],
   });
@@ -37,7 +37,7 @@ it('bounds saved practice history and rejects impossible scores', async () => {
 });
 
 it('round-trips current answers and rejects missing group, ink or choice data', async () => {
-  const store = moduleStorage('omniglyph');
+  const store = moduleStorage('alphi');
   const data = {
     practices: [],
     rounds: [

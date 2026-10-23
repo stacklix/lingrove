@@ -14,15 +14,15 @@
 - 俄语：Cherus，CC BY-SA 3.0（https://creativecommons.org/licenses/by-sa/3.0/）。裁去首尾空白并转换格式；修改后的录音继续按 CC BY-SA 3.0 提供。
 - 希腊语：CuteHappyBrute，RoB 降噪及均衡处理。Public domain（PD-self）。按字母顺序从完整现代希腊语字母表朗读中截取；截取边界记录于配置。
 
-原始录音保存于 `app/omniglyph/audio-sources/`，当前日语来源位于其 `tofugu/` 子目录。已移除不再使用的旧日语来源。文件转换为 24 kHz 单声道 16-bit PCM WAV，保留原始语速和音高。名称读音不是字母在单词中的全部发音规则。发音及截取仍可继续接受母语者校对。
+原始录音保存于 `app/alphi/audio-sources/`，当前日语来源位于其 `tofugu/` 子目录。已移除不再使用的旧日语来源。文件转换为 24 kHz 单声道 16-bit PCM WAV，保留原始语速和音高。名称读音不是字母在单词中的全部发音规则。发音及截取仍可继续接受母语者校对。
 
 ## 重新生成
 
-配置：`app/omniglyph/src/pronunciation-samples.json`，来源元数据：`app/omniglyph/src/pronunciation-sources.json`（生成时同步至公开的 `SOURCES.json`）。
+配置：`app/alphi/src/pronunciation-samples.json`，来源元数据：`app/alphi/src/pronunciation-sources.json`（生成时同步至公开的 `SOURCES.json`）。
 
-安装 FFmpeg 后，在 Windows、macOS 或 Linux 上运行 `python3 scripts/generate-pronunciation-samples.py --recordings-only`，从本地来源文件重新转换、按配置裁剪，并更新 `app/omniglyph/src/pronunciation-audio.json`。不需要联网；音频解码服务可能需要沙箱外运行。
+安装 FFmpeg 后，在 Windows、macOS 或 Linux 上运行 `python3 scripts/generate-pronunciation-samples.py --recordings-only`，从本地来源文件重新转换、按配置裁剪，并更新 `app/alphi/src/pronunciation-audio.json`。不需要联网；音频解码服务可能需要沙箱外运行。
 
-生成的 WAV 保存在非发布目录 `app/omniglyph/audio-generated/`，用于维护和校验。运行时仅打包嵌入数据，避免依赖 iOS 自定义地址加载媒体；来源与许可说明仍随应用发布。生成器检查时长和非静音数据；这不能替代发音校对。课程覆盖、字形映射、来源文件和嵌入数据由测试检查。
+生成的 WAV 保存在非发布目录 `app/alphi/audio-generated/`，用于维护和校验。运行时仅打包嵌入数据，避免依赖 iOS 自定义地址加载媒体；来源与许可说明仍随应用发布。生成器检查时长和非静音数据；这不能替代发音校对。课程覆盖、字形映射、来源文件和嵌入数据由测试检查。
 
 新增语言：亚美尼亚语 39 个字母（大小写共用）、格鲁吉亚语 33 个字母、韩语 40 个字母，只提供印刷体字母表和离线真人发音。
 

@@ -28,19 +28,19 @@ Lingrove 的离线字母学习子应用，结合字形认知、书写练习与�
 ## 开发与验证
 
 ```sh
-npm run dev -w @lingrove/omniglyph
-npm run test -w @lingrove/omniglyph
+npm run dev -w @lingrove/alphi
+npm run test -w @lingrove/alphi
 npm run check
 npm run debug:serve
 ```
 
-调试服务使用统一 `dist/`，构建后 `/snapshot/app/omniglyph/` 与 `/snapshot/app/sentra/` 同时可用。新宿主原生能力需要重新安装宿主，后续网页改动可直接刷新子应用。
+调试服务使用统一 `dist/`，构建后 `/snapshot/app/alphi/` 与 `/snapshot/app/sentra/` 同时可用。新宿主原生能力需要重新安装宿主，后续网页改动可直接刷新子应用。
 
 原生集成测试：`LingroveUITests/testAlphiNativeWritingAndHistory`，覆盖页内原生落笔、重启恢复笔迹、提交描摹评分、测试 Tab 和字母详情。运行时测试同时覆盖桥接与按会话回收。
 
 ## 素材
 
-Logo 为此前确认的绿色 Alphi 图稿，原图保留在 `public/logo.png`。使用内置 imagegen 生成；最终编辑提示为保留米白手写 g 的轮廓、大小与位置，将背景改为主题绿 #304E3E，去除光晕与透明伪影。
+Logo 为统一几何网格下的字母 A，右下笔画化为书写笔尖，使用 Alphi 橙色主题。矢量原稿位于 `public/logo.svg`，`public/logo.png` 为同图形的 512 × 512 浅底导出，详见 [图标与主题](../../docs/branding.md)。
 
 所有第三方字形的署名和许可在 `public/fonts/THIRD-PARTY.txt`。`src/kana.json` 是 KanjiVG SVG 路径的格式转换，仍按 CC BY-SA 3.0 提供。
 
