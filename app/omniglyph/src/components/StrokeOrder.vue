@@ -84,14 +84,14 @@ const start = computed(() => {
           :key="`${step}-${cycle}`"
           :d="paths[step]"
           fill="none"
-          stroke="#ae6745"
+          stroke="var(--accent)"
           stroke-width="3"
           stroke-linecap="round"
           pathLength="1"
           :class="{ 'order-active': hasAnimation }"
           :style="{ animationPlayState: playing ? 'running' : 'paused' }"
         />
-        <circle v-if="start" :cx="start.x" :cy="start.y" r="2.5" fill="#ae6745" />
+        <circle v-if="start" :cx="start.x" :cy="start.y" r="2.5" fill="var(--accent)" />
       </svg>
       <GlyphView v-else :glyph="glyph" />
     </div>

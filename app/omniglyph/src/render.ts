@@ -14,8 +14,8 @@ export function template(g: Glyph): HTMLCanvasElement {
   canvas.width = 256;
   canvas.height = 256;
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#304e3e';
-  ctx.strokeStyle = '#304e3e';
+  ctx.fillStyle = '#A95524';
+  ctx.strokeStyle = '#A95524';
   if (g.paths) {
     ctx.scale(256 / 109, 256 / 109);
     ctx.lineWidth = 2.5;
@@ -51,7 +51,7 @@ export function raster(strokes: Strokes): HTMLCanvasElement {
   canvas.width = 256;
   canvas.height = 256;
   const ctx = canvas.getContext('2d')!;
-  ctx.strokeStyle = '#304e3e';
+  ctx.strokeStyle = '#A95524';
   ctx.lineWidth = 5;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';

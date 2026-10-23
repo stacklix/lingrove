@@ -3,6 +3,10 @@ import PencilKit
 
 // Embedded in the WKWebView's scroll content, so the writing surface moves with the page.
 @MainActor final class InlineHandwriting: UIView, PKCanvasViewDelegate {
+    // Alphi's writing surface uses the same warm ink as its Web content.
+    private static let inkColor = UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(red: 240/255, green: 178/255, blue: 131/255, alpha: 1)
+        : UIColor(red: 169/255, green: 85/255, blue: 36/255, alpha: 1) }
     let sessionID: String
     private let canvas = PKCanvasView()
     private let guide = UIImageView()
@@ -21,7 +25,7 @@ import PencilKit
         canvas.minimumZoomScale = 1; canvas.maximumZoomScale = 1
         canvas.drawingPolicy = .pencilOnly; canvas.delegate = self
         canvas.accessibilityIdentifier = "inline-handwriting-canvas"
-        canvas.tool = PKInkingTool(.pen, color: LingroveTheme.accent.resolvedColor(with: traitCollection), width:4)
+        canvas.tool = PKInkingTool(.pen, color: Self.inkColor.resolvedColor(with: traitCollection), width:4)
         guide.contentMode = .scaleAspectFit; guide.alpha = 0.18; guide.isUserInteractionEnabled = false
         addSubview(guide); addSubview(canvas)
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (view: InlineHandwriting, _: UITraitCollection) in
@@ -61,12 +65,12 @@ import PencilKit
         isHidden = hidden
         canvas.drawingPolicy = finger ? .anyInput : .pencilOnly
         canvas.isUserInteractionEnabled = !locked
-        canvas.tool = eraser ? PKEraserTool(.vector) : PKInkingTool(.pen, color:LingroveTheme.accent.resolvedColor(with: traitCollection), width:4)
+        canvas.tool = eraser ? PKEraserTool(.vector) : PKInkingTool(.pen, color:Self.inkColor.resolvedColor(with: traitCollection), width:4)
     }
     func restore(_ encoded: String?, reference: UIImage?, strokes: [[[String:Double]]]?) throws {
         restoring = true; defer { restoring = false }
         guide.image = reference?.withRenderingMode(.alwaysTemplate)
-        guide.tintColor = LingroveTheme.accent
+        guide.tintColor = Self.inkColor
         if let encoded {
             guard encoded.utf8.count < 2_000_000, let data = Data(base64Encoded:encoded) else { throw ModuleError.invalid("笔迹数据无效") }
             let drawing = try PKDrawing(data:data)
@@ -75,7 +79,7 @@ import PencilKit
         }
         if encoded == nil, let strokes {
             guard strokes.count <= 128 else { throw ModuleError.invalid("笔迹数量过多") }
-            let ink = PKInk(.pen, color:LingroveTheme.accent.resolvedColor(with: traitCollection))
+            let ink = PKInk(.pen, color:Self.inkColor.resolvedColor(with: traitCollection))
             canvas.drawing = PKDrawing(strokes:try strokes.map { points in
                 guard !points.isEmpty, points.count <= 2048 else { throw ModuleError.invalid("笔迹数据无效") }
                 let controls = try points.enumerated().map { index,p -> PKStrokePoint in
@@ -92,7 +96,7 @@ import PencilKit
         let wasRestoring = restoring
         restoring = true
         defer { restoring = wasRestoring }
-        let color = LingroveTheme.accent.resolvedColor(with: traitCollection)
+        let color = Self.inkColor.resolvedColor(with: traitCollection)
         if canvas.tool is PKInkingTool { canvas.tool = PKInkingTool(.pen, color: color, width: 4) }
         canvas.drawing = PKDrawing(strokes: canvas.drawing.strokes.map { stroke in
             var updated = stroke

@@ -14,7 +14,7 @@
   border: 1px solid var(--line);
   border-bottom: 0;
   border-radius: 18px 18px 0 0;
-  box-shadow: 0 -4px 24px #293e3608;
+  box-shadow: 0 -4px 24px color-mix(in srgb, var(--accent) 6%, transparent);
 }
 .lingrove-bottom-tabs button {
   flex: 1;

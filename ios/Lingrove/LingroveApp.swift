@@ -14,8 +14,8 @@ enum LingroveTheme {
         ? UIColor(red: 32/255, green: 42/255, blue: 36/255, alpha: 1)
         : UIColor(red: 1, green: 254/255, blue: 249/255, alpha: 1) }
     static let accent = UIColor { $0.userInterfaceStyle == .dark
-        ? UIColor(red: 179/255, green: 211/255, blue: 164/255, alpha: 1)
-        : UIColor(red: 0.20, green: 0.32, blue: 0.25, alpha: 1) }
+        ? UIColor(red: 170/255, green: 213/255, blue: 188/255, alpha: 1)
+        : UIColor(red: 40/255, green: 112/255, blue: 82/255, alpha: 1) }
 }
 
 
@@ -134,6 +134,11 @@ struct HomeView: View {
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaInset(edge: .top, spacing: 0) {
                 HStack(spacing: 8) {
+                    Image("Logo")
+                        .resizable().scaledToFit()
+                        .frame(width: 32, height: 32)
+                        .foregroundStyle(Color(uiColor: LingroveTheme.accent))
+                        .accessibilityHidden(true)
                     Text("Lingrove").font(.title2.weight(.semibold)).accessibilityAddTraits(.isHeader)
                     Spacer(minLength: 8)
                     #if DEBUG
