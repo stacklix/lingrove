@@ -30,14 +30,12 @@ for module in catalog['modules']:
     assert all(module[key] == value for key, value in manifest.items()), f'{name}: manifest mismatch'
     web_url = urlparse(module['webUrl'])
     assert web_url.scheme == 'https'
-    assert web_url.path.endswith(f'{"/snapshot" if snapshot else ""}/app/{name}/')
+    assert web_url.path.endswith(f'{"/snapshot" if snapshot else ""}/app/{name}/{module["entry"]}')
     files = {file.relative_to(directory).as_posix(): file.read_bytes() for file in directory.rglob('*') if file.is_file()}
     if name == 'omniglyph':
         assert not any(file.endswith('.wav') for file in files), 'omniglyph: standalone WAV duplicates embedded audio'
         assert 'audio/SOURCES.json' in files and 'audio/README.md' in files, 'omniglyph: missing audio attribution'
-    if snapshot:
-        assert not any(key in module for key in ('downloadUrl', 'size', 'sha256')), f'{name}: debug catalog must not advertise ZIP packages'
-    else:
+    if 'downloadUrl' in module:
         zip_url = urlparse(module['downloadUrl'])
         assert zip_url.scheme == 'https' and web_url.netloc == zip_url.netloc
         assert zip_url.path.endswith(f'/packages/{name}-{module["version"]}.zip')
@@ -52,13 +50,18 @@ for module in catalog['modules']:
             for entry in archive.infolist():
                 assert entry.compress_type == zipfile.ZIP_STORED
                 assert archive.read(entry.filename) == files[entry.filename]
+    else:
+        assert snapshot, f'{name}: release requires ZIP metadata'
+        assert 'sha256' not in module and 'size' not in module, f'{name}: incomplete ZIP metadata'
     html = (directory / module['entry']).read_text()
     for asset in re.findall(r'(?:src|href)="([^"#]+)"', html):
         assert not asset.startswith(('http:', 'https:', '/')), f'{name}: entry asset must be relative: {asset}'
         assert (directory / asset).is_file(), f'{name}: missing entry asset: {asset}'
-    print(f'PASS {name}: {"debug catalog and browser assets" if snapshot else "catalog, ZIP integrity, identical browser files and entry assets"}')
+    print(f'PASS {name}: catalog, {"ZIP integrity and " if "downloadUrl" in module else ""}browser files and entry assets')
 if snapshot:
-    assert not list(site.rglob('*.zip')), 'Debug builds must not produce ZIP packages'
+    assert not (site / 'packages').exists(), 'Debug ZIP packages belong under snapshot/'
+    if not any('downloadUrl' in module for module in catalog['modules']):
+        assert not list(output.rglob('*.zip')), 'Local HTML-only snapshot must not retain ZIP packages'
     assert not (site / 'catalog.snapshot.json').exists(), 'Debug catalog belongs under snapshot/'
 else:
     assert not (site / 'release').exists(), 'Release artifacts belong at the site root'

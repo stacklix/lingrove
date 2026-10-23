@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 
-test('debug builds publish a metadata-only catalog; release builds keep verified ZIP packages', async () => {
+test('both channels publish matching ZIP and HTML resources with bundled package hashes', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'lingrove-packaging-'));
   try {
     await mkdir(path.join(root, 'scripts'));
@@ -16,6 +17,7 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
       'stored-zip.py',
       'verify-release.py',
       'verify-ios-modules.py',
+      'serve-debug.py',
     ]) {
       await cp(new URL(`../${name}`, import.meta.url), path.join(root, 'scripts', name));
     }
@@ -53,12 +55,18 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
     const debug = (await json('dist/snapshot/catalog.snapshot.json')).modules[0];
     assert.equal(debug.name, 'Example');
     for (const key of ['downloadUrl', 'sha256', 'size'])
-      assert.equal(Object.hasOwn(debug, key), false);
-    await assert.rejects(readdir(path.join(root, 'dist/snapshot/packages')), { code: 'ENOENT' });
+      assert.equal(Object.hasOwn(debug, key), true);
+    assert.deepEqual(await readdir(path.join(root, 'dist/snapshot/packages')), [
+      'example-20261020.zip',
+    ]);
+    assert.equal(debug.downloadUrl.endsWith('/snapshot/packages/example-20261020.zip'), true);
+    assert.deepEqual(await json('ios/Lingrove/Resources/BuiltinModuleHashes.json'), {
+      example: debug.sha256,
+    });
     await assert.rejects(readFile(path.join(root, 'dist/app/example/index.html')), {
       code: 'ENOENT',
     });
-    assert.equal(debug.webUrl.endsWith('/snapshot/app/example/'), true);
+    assert.equal(debug.webUrl.endsWith('/snapshot/app/example/index.html'), true);
     assert.equal(
       (await json('ios/Lingrove/Resources/BuiltinModules/example/manifest.json')).id,
       'example',
@@ -69,6 +77,10 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
       path.join(root, 'ios/Lingrove/Resources/BuiltinModules'),
       path.join(debugProduct, 'BuiltinModules'),
       { recursive: true },
+    );
+    await cp(
+      path.join(root, 'ios/Lingrove/Resources/BuiltinModuleHashes.json'),
+      path.join(debugProduct, 'BuiltinModuleHashes.json'),
     );
     run('python3', ['scripts/verify-ios-modules.py', debugProduct]);
     await writeFile(path.join(debugProduct, 'BuiltinModules/example/index.html'), 'stale HTML');
@@ -82,7 +94,7 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
     run(process.execPath, ['scripts/build-modules.mjs', '--release']);
     const release = (await json('dist/catalog.json')).modules[0];
     assert.equal(release.downloadUrl.endsWith('/packages/example-20261020.zip'), true);
-    assert.equal(release.webUrl.endsWith('/app/example/'), true);
+    assert.equal(release.webUrl.endsWith('/app/example/index.html'), true);
     assert.equal(release.webUrl.includes('/release/'), false);
     assert.deepEqual(await readdir(path.join(root, 'dist/packages')), ['example-20261020.zip']);
     assert.equal(
@@ -96,12 +108,73 @@ test('debug builds publish a metadata-only catalog; release builds keep verified
       path.join(releaseProduct, 'BuiltinModules'),
       { recursive: true },
     );
+    await cp(
+      path.join(root, 'ios/Lingrove/Resources/BuiltinModuleHashes.json'),
+      path.join(releaseProduct, 'BuiltinModuleHashes.json'),
+    );
     run('python3', ['scripts/verify-ios-modules.py', releaseProduct]);
     // A later debug rebuild must discard old archives and the old release catalog.
     run(process.execPath, ['scripts/build-modules.mjs']);
     await assert.rejects(readdir(path.join(root, 'dist/release')), { code: 'ENOENT' });
     await assert.rejects(readdir(path.join(root, 'dist/packages')), { code: 'ENOENT' });
     await assert.rejects(readFile(path.join(root, 'dist/catalog.json')), { code: 'ENOENT' });
+    // The local watcher must be able to build without invoking the ZIP tool.
+    await rm(path.join(root, 'scripts/stored-zip.py'));
+    run(process.execPath, ['scripts/build-modules.mjs', '--no-zip']);
+    const local = (await json('dist/snapshot/catalog.snapshot.json')).modules[0];
+    for (const key of ['downloadUrl', 'sha256', 'size'])
+      assert.equal(Object.hasOwn(local, key), false);
+    assert.equal(local.webUrl.endsWith('/snapshot/app/example/index.html'), true);
+    assert.deepEqual(await json('ios/Lingrove/Resources/BuiltinModuleHashes.json'), {});
+    await assert.rejects(readdir(path.join(root, 'dist/snapshot/packages')), { code: 'ENOENT' });
+    run('python3', ['scripts/verify-release.py', '--snapshot']);
+    run('python3', ['scripts/verify-ios-modules.py', 'ios/Lingrove/Resources']);
+    const invalid = spawnSync(
+      process.execPath,
+      ['scripts/build-modules.mjs', '--release', '--no-zip'],
+      { cwd: root, env, encoding: 'utf8' },
+    );
+    assert.notEqual(invalid.status, 0);
+    assert.match(invalid.stderr, /only supported for local snapshot/);
+    const server = spawn('python3', ['scripts/serve-debug.py', '--port', '0'], {
+      cwd: root,
+      env: { ...env, PYTHONUTF8: '1' },
+    });
+    try {
+      const origin = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(
+          () => reject(new Error('Debug server startup timed out')),
+          10000,
+        );
+        let output = '';
+        server.once('error', reject);
+        server.once('exit', (code) => {
+          clearTimeout(timeout);
+          reject(new Error(`Debug server exited: ${code}`));
+        });
+        server.stdout.on('data', (chunk) => {
+          output += chunk;
+          const port = /http:\/\/localhost:(\d+)/.exec(output)?.[1];
+          if (port) {
+            clearTimeout(timeout);
+            resolve(`http://127.0.0.1:${port}`);
+          }
+        });
+      });
+      const catalog = await fetch(`${origin}/snapshot/catalog.snapshot.json`).then((response) =>
+        response.json(),
+      );
+      assert.equal(Object.hasOwn(catalog.modules[0], 'downloadUrl'), false);
+      const html = await fetch(`${origin}/snapshot/app/example/index.html`);
+      assert.equal(html.status, 200);
+      assert.equal(await html.text(), '<p>Example</p>');
+    } finally {
+      if (server.exitCode === null && server.signalCode === null) {
+        const closed = once(server, 'close');
+        server.kill();
+        await closed;
+      }
+    }
   } finally {
     assert.equal(path.dirname(root), path.resolve(tmpdir()));
     assert.equal(path.basename(root).startsWith('lingrove-packaging-'), true);

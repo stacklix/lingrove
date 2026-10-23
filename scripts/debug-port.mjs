@@ -18,6 +18,37 @@ export function isPortFree(port) {
 }
 
 export async function findPortProcesses(port) {
+  if (process.platform === 'win32') {
+    if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid TCP port');
+    const script = `
+      $ErrorActionPreference = 'Stop'
+      [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+      $listeners = @(Get-NetTCPConnection -State Listen | Where-Object LocalPort -eq ${port} | Select-Object -ExpandProperty OwningProcess -Unique)
+      $records = @(foreach ($listenerId in $listeners) {
+        $processInfo = Get-CimInstance Win32_Process -Filter "ProcessId=$listenerId"
+        if ($null -eq $processInfo) { continue }
+        $owner = Invoke-CimMethod -InputObject $processInfo -MethodName GetOwner
+        if ($owner.ReturnValue -ne 0 -or -not $processInfo.CommandLine) { throw "Cannot identify PID $listenerId" }
+        [PSCustomObject]@{
+          pid = [int]$listenerId
+          user = "$($owner.Domain)\\$($owner.User)"
+          started = $processInfo.CreationDate.ToUniversalTime().ToString('o')
+          command = $processInfo.CommandLine
+        }
+      })
+      ConvertTo-Json -InputObject $records -Compress
+    `;
+    try {
+      const { stdout } = await execute(
+        'powershell.exe',
+        ['-NoProfile', '-NonInteractive', '-Command', script],
+        { windowsHide: true },
+      );
+      return JSON.parse(stdout.trim());
+    } catch (error) {
+      throw new Error(`无法查询端口 ${port} 的占用进程：${error.message}`);
+    }
+  }
   let stdout;
   try {
     ({ stdout } = await execute('lsof', ['-nP', `-iTCP:${port}`, '-sTCP:LISTEN', '-Fp']));

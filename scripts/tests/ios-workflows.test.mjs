@@ -18,7 +18,7 @@ function steps(job) {
   return job.split(/^      - /m).slice(1);
 }
 
-test('automatic simulator checks run on PRs, while master uses the signed build workflow', async () => {
+test('PR and master check Release isolation while the signed master artifact remains Debug', async () => {
   const simulator = await workflow('ios.yml');
   const adhoc = await workflow('ios-adhoc.yml');
   const simulatorEvents = block(simulator, 0, 'on');
@@ -30,7 +30,14 @@ test('automatic simulator checks run on PRs, while master uses the signed build 
   assert.doesNotMatch(adhocEvents, /^  pull_request:/m);
   assert.match(adhocEvents, /^  workflow_dispatch:/m);
   assert.match(simulator, /-sdk iphonesimulator/);
-  assert.doesNotMatch(adhoc, /iphonesimulator/);
+  const signedBuild = block(adhoc, 2, 'build');
+  assert.doesNotMatch(signedBuild, /iphonesimulator/);
+  assert.match(signedBuild, /CONFIGURATION: Debug/);
+  for (const release of [block(adhoc, 2, 'release-check'), block(simulator, 2, 'release')]) {
+    assert.match(release, /-configuration Release/);
+    assert.match(release, /verify-ios-release.py/);
+    assert.doesNotMatch(release, /continue-on-error/);
+  }
 });
 
 test('PR checks keep application and native tests before the simulator build', async () => {
@@ -54,7 +61,12 @@ test('PR checks keep application and native tests before the simulator build', a
 
 test('rapid-development publishing builds and verifies artifacts without running tests', async () => {
   for (const file of ['ios-adhoc.yml', 'build-gh-pages.yml']) {
-    const source = await workflow(file);
+    const workflowSource = await workflow(file);
+    // Release isolation runs independently; the publishing path keeps its fast checks.
+    const source =
+      file === 'ios-adhoc.yml'
+        ? block(workflowSource, 2, 'build') + block(workflowSource, 2, 'publish')
+        : workflowSource;
     assert.doesNotMatch(
       source,
       /npm (?:test|run (?:test|check|typecheck))|node --test|scripts\/tests\/|scripts\/test-native\.sh/,

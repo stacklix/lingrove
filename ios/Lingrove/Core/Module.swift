@@ -12,6 +12,7 @@ struct Module: Codable, Identifiable, Equatable {
     var stateSchemaVersion: Int
     var allowedOrigins: [String]
     var downloadUrl: String?
+    var webUrl: String?
     var size: Int?
     var sha256: String?
     var minimumAllowedVersion: String?
@@ -27,6 +28,13 @@ struct Module: Codable, Identifiable, Equatable {
         if let sha256, sha256.range(of: "^[a-f0-9]{64}$", options: .regularExpression) == nil { throw ModuleError.invalid("安装包哈希无效") }
         if let minimumAllowedVersion, ModuleVersion(minimumAllowedVersion) == nil { throw ModuleError.invalid("最低版本无效") }
         for origin in allowedOrigins { guard NetworkPolicy.origin(origin) == origin else { throw ModuleError.invalid("域名配置无效") } }
+        if downloadUrl != nil {
+            guard let size, size > 0, size <= 50 * 1024 * 1024, sha256 != nil else { throw ModuleError.invalid("下载元数据无效") }
+        }
+        if let webUrl {
+            guard let url = URL(string: webUrl), ["https", "http"].contains(url.scheme ?? ""),
+                  url.host != nil, url.user == nil, url.password == nil else { throw ModuleError.invalid("网页地址无效") }
+        }
     }
 }
 // Child-app versions are Gregorian build dates; host versions remain semantic versions.
@@ -64,27 +72,33 @@ struct Catalog: Codable {
     }
 }
 enum ChildAppResourceMode: String {
-    case bundled, debug
+    case bundled
+    #if DEBUG
+    case debug
+    #endif
 }
 struct HostConfiguration: Codable {
     static let currentVersion = "1.3.0"
     var catalogURL: String
+    #if DEBUG
     var snapshotCatalogURL: String = ""
+    #endif
     func updateCatalogURL(defaults: UserDefaults = .standard) -> String {
         #if DEBUG
-        return Self.resourceMode(defaults: defaults) == .bundled ? catalogURL : snapshotCatalogURL
+        return Self.resourceMode(defaults: defaults) == .bundled ? catalogURL : (DebugServer.catalogURL(defaults: defaults)?.absoluteString ?? snapshotCatalogURL)
         #else
         return catalogURL
         #endif
     }
+    #if DEBUG
     static let resourceModePreferenceKey = "resources.mode"
+    #endif
     static func resourceMode(defaults: UserDefaults = .standard) -> ChildAppResourceMode {
-        guard DebugServer.available else { return .bundled }
+        #if DEBUG
         return ChildAppResourceMode(rawValue: defaults.string(forKey: resourceModePreferenceKey) ?? "") ?? .bundled
-    }
-    static func usesBundledResources(defaults: UserDefaults = .standard) -> Bool {
-        // Only server debugging keeps local packages as a fallback.
-        resourceMode(defaults: defaults) == .debug
+        #else
+        return .bundled
+        #endif
     }
     static var bundled: Self {
         guard let url = Bundle.main.url(forResource: "HostConfig", withExtension: "json"), let data = try? Data(contentsOf: url), let config = try? JSONDecoder().decode(Self.self, from: data) else { return .init(catalogURL: "") }
@@ -92,6 +106,11 @@ struct HostConfiguration: Codable {
     }
 }
 enum NetworkPolicy {
+    static func allowsPage(_ url: URL, entry: URL) -> Bool {
+        url.scheme == entry.scheme && url.host == entry.host && url.port == entry.port
+            && url.user == nil && url.password == nil
+            && url.standardized.path == entry.standardized.path
+    }
     static func origin(_ raw: String) -> String? {
         guard let u = URLComponents(string: raw), u.scheme == "https", let host = u.host, !host.isEmpty, u.user == nil, u.password == nil else { return nil }
         let wrapped = host.contains(":") && !host.hasPrefix("[") ? "[\(host)]" : host
@@ -131,6 +150,7 @@ struct NetworkAccessDomain: Identifiable, Equatable {
         }
         add(catalogURL, source: "更新目录")
         if let modelURL { add(modelURL, source: "通用模型") }
+        #if DEBUG
         if let debugURL, let normalized = try? DebugServer.normalized(debugURL),
            !normalized.isEmpty, var components = URLComponents(string: normalized) {
             components.path = ""
@@ -140,111 +160,7 @@ struct NetworkAccessDomain: Identifiable, Equatable {
             }
             if let origin = components.string { record(origin, source: "调试资源") }
         }
-        return domains.values.sorted { $0.origin == $1.origin ? $0.id < $1.id : $0.origin < $1.origin }
-    }
-}
-
-struct DebugServerAddress: Codable, Equatable, Identifiable {
-    var id = UUID().uuidString
-    var url = ""
-}
-
-struct DebugServerSettings: Codable, Equatable {
-    var addresses: [DebugServerAddress] = []
-    var activeID: String?
-    var activeAddress: String? { addresses.first { $0.id == activeID }?.url }
-
-    static func load(defaults: UserDefaults = .standard) -> Self {
-        guard let json = defaults.string(forKey: DebugServer.preferenceKey),
-              let data = json.data(using: .utf8),
-              let settings = try? JSONDecoder().decode(Self.self, from: data) else { return Self() }
-        return settings
-    }
-    func save(defaults: UserDefaults = .standard) {
-        var saved = self
-        saved.addresses = addresses.compactMap { address in
-            let url = address.url.trimmingCharacters(in: .whitespacesAndNewlines)
-            return url.isEmpty ? nil : DebugServerAddress(id: address.id, url: url)
-        }
-        if !saved.addresses.contains(where: { $0.id == saved.activeID }) { saved.activeID = nil }
-        guard !saved.addresses.isEmpty else {
-            defaults.removeObject(forKey: DebugServer.preferenceKey)
-            return
-        }
-        guard let data = try? JSONEncoder().encode(saved), let json = String(data: data, encoding: .utf8) else { return }
-        defaults.set(json, forKey: DebugServer.preferenceKey)
-    }
-    mutating func updateAddress(id: String, url: String) {
-        guard let index = addresses.firstIndex(where: { $0.id == id }), addresses[index].url != url else { return }
-        addresses[index].url = url
-    }
-    mutating func removeAddress(id: String) {
-        if activeID == id { activeID = nil }
-        addresses.removeAll { $0.id == id }
-    }
-}
-
-// Only Debug builds can load executable child-app resources from a server.
-enum DebugServer {
-    static let preferenceKey = "debug.servers"
-    static var activeAddress: String? { enabled ? DebugServerSettings.load().activeAddress : nil }
-    static var enabled: Bool {
-        HostConfiguration.resourceMode() == .debug
-    }
-    static var canRefresh: Bool { available && enabled }
-    static var available: Bool {
-        #if DEBUG
-        return true
-        #else
-        return false
         #endif
-    }
-    static func normalized(_ raw: String) throws -> String {
-        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if value.isEmpty { return "" }
-        guard let components = URLComponents(string: value),
-              ["http", "https"].contains(components.scheme ?? ""),
-              let host = components.host, !host.isEmpty,
-              components.user == nil, components.password == nil,
-              components.query == nil, components.fragment == nil,
-              let url = components.url else { throw ModuleError.invalid("请输入完整的 HTTP 或 HTTPS 服务器根地址，不含账号、查询参数或片段。") }
-        return url.absoluteString.hasSuffix("/") ? url.absoluteString : url.absoluteString + "/"
-    }
-    static func testConnection(_ raw: String, modules: [Module]) async throws -> String {
-        let address = try normalized(raw)
-        guard !address.isEmpty, let base = URL(string: address) else {
-            throw ModuleError.invalid("请先填写调试服务器地址。")
-        }
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 5
-        configuration.timeoutIntervalForResource = 8
-        let session = URLSession(configuration: configuration, delegate: NoRedirect(), delegateQueue: nil)
-        defer { session.invalidateAndCancel() }
-        let urls = modules.isEmpty ? [base] : modules.map {
-            base.appendingPathComponent("snapshot/app").appendingPathComponent($0.id).appendingPathComponent($0.entry)
-        }
-        for url in urls {
-            try Task.checkCancellation()
-            var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
-            request.httpMethod = "HEAD"
-            let (_, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse else {
-                throw ModuleError.invalid("服务器未返回有效的 HTTP 响应。")
-            }
-            guard (200..<300).contains(http.statusCode) else {
-                throw ModuleError.invalid("\(url.path) 返回 HTTP \(http.statusCode)，请确认服务已启动且已运行 npm run build。")
-            }
-        }
-        return modules.isEmpty ? "连接成功，服务器可访问。" : "连接成功，\(modules.count) 个子应用入口均可访问。"
-    }
-    static func entryURL(for module: Module) -> URL? {
-        guard enabled, let base = try? normalized(activeAddress ?? ""),
-              !base.isEmpty, let url = URL(string: base) else { return nil }
-        return url.appendingPathComponent("snapshot/app").appendingPathComponent(module.id).appendingPathComponent(module.entry)
-    }
-    static func allows(_ url: URL, entry: URL) -> Bool {
-        url.scheme == entry.scheme && url.host == entry.host && url.port == entry.port
-            && url.user == nil && url.password == nil
-            && url.standardized.path == entry.standardized.path
+        return domains.values.sorted { $0.origin == $1.origin ? $0.id < $1.id : $0.origin < $1.origin }
     }
 }

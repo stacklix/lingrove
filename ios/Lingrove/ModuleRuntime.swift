@@ -25,49 +25,57 @@ enum AppLanguage {
 }
 
 enum ModuleResourceSource: Equatable {
-    case loading(URL?), debugServer(URL), local, failed
+    case loading(URL?), web(URL), local, failed
 
     var remoteURL: URL? {
         switch self {
         case let .loading(address): return address
-        case let .debugServer(address): return address
+        case let .web(address): return address
         case .local, .failed: return nil
         }
     }
 }
 
-enum ModuleReloadState: String, Codable { case loading, succeeded, failed }
+enum ModuleLoadState: String, Codable { case loading, succeeded, failed }
 
+#if DEBUG
 struct ModuleReloadRecord: Codable, Equatable {
-    let state: ModuleReloadState
+    let state: ModuleLoadState
     let message: String
     let completedAt: Date?
 
-    func listState(at date: Date) -> ModuleReloadState? {
+    func listState(at date: Date) -> ModuleLoadState? {
         if state == .loading { return .loading }
         guard let completedAt, date < completedAt.addingTimeInterval(5) else { return nil }
         return state
     }
 }
 
+#endif
+
 @MainActor final class ModulePageCache: ObservableObject {
     private var pages: [String: ModulePage] = [:]
+    @Published private(set) var resourceSources: [String: ModuleResourceSource] = [:]
+    #if DEBUG
     private static let historyKey = "modules.reloadHistory"
     private let defaults: UserDefaults
     private var completedRecords: [String: ModuleReloadRecord]
-    @Published private(set) var resourceSources: [String: ModuleResourceSource] = [:]
     @Published private(set) var reloadRecords: [String: ModuleReloadRecord]
-    var reloadStates: [String: ModuleReloadState] { reloadRecords.mapValues(\.state) }
+    var reloadStates: [String: ModuleLoadState] { reloadRecords.mapValues(\.state) }
+    #endif
 
     init(defaults: UserDefaults = .standard) {
+        #if DEBUG
         self.defaults = defaults
         let saved = defaults.data(forKey: Self.historyKey)
             .flatMap { try? JSONDecoder().decode([String: ModuleReloadRecord].self, from: $0) } ?? [:]
         completedRecords = saved
         reloadRecords = saved
+        #endif
     }
 
-    private func recordReload(_ id: String, message: String, state: ModuleReloadState) {
+    #if DEBUG
+    private func recordReload(_ id: String, message: String, state: ModuleLoadState) {
         let record = ModuleReloadRecord(state: state, message: message,
                                        completedAt: state == .loading ? completedRecords[id]?.completedAt : Date())
         reloadRecords[id] = record
@@ -79,9 +87,12 @@ struct ModuleReloadRecord: Codable, Equatable {
         }
     }
 
+    #endif
+
     func page(for module: Module, store: ModuleStore, refreshing: Bool = false) -> ModulePage {
         if let page = pages[module.id], page.matches(module), page.failure == nil, !page.shouldReturnHome,
-           page.directory == store.directory(for: module) {
+           page.directory == store.directory(for: module),
+           page.requestedRemoteEntryURL == store.remoteEntryURL(for: module) {
             if refreshing { page.reload() }
             return page
         }
@@ -91,11 +102,14 @@ struct ModuleReloadRecord: Codable, Equatable {
                               onFailure: { [weak store] _ in store?.clearLaunchMarker(module) },
                               onStartupFailure: { [weak store] in store?.rollback(module) },
                               onReloadResult: { [weak self] message, state in
+                                  #if DEBUG
                                   self?.recordReload(module.id, message: message, state: state)
+                                  #endif
                               },
                               onResourceSource: { [weak self] source in
                                   self?.resourceSources[module.id] = source
                               },
+                              remoteEntryURL: { [weak store] in store?.remoteEntryURL(for: module) },
                               refreshing: refreshing)
         pages[module.id] = page
         return page
@@ -110,6 +124,7 @@ struct ModuleReloadRecord: Codable, Equatable {
         }
     }
 
+    #if DEBUG
     func reloadAll(store: ModuleStore) {
         reconcile(modules: store.modules, blocked: store.blocked)
         reloadRecords = Dictionary(uniqueKeysWithValues: store.modules.map {
@@ -125,15 +140,18 @@ struct ModuleReloadRecord: Codable, Equatable {
         }
     }
 
+    #endif
     func reconcile(modules: [Module], blocked: Set<String>) {
         for id in Array(pages.keys) {
             guard let page = pages[id] else { continue }
             if blocked.contains(id) || !modules.contains(where: { page.matches($0) }) {
                 pages.removeValue(forKey: id)?.close()
                 resourceSources.removeValue(forKey: id)
+                #if DEBUG
                 if reloadStates[id] == .loading {
                     recordReload(id, message: "刷新已中断，应用已更新或停用，请重新刷新。", state: .failed)
                 }
+                #endif
             }
         }
     }
@@ -152,14 +170,20 @@ struct ModuleReloadRecord: Codable, Equatable {
     private(set) var webView: WKWebView!
     private var offset: CGPoint?
     @Published private(set) var generation = UUID()
+    #if DEBUG
     @Published var reloadMessage: String?
+    #endif
     private var awaitingReloadResult = false
     var isReloading: Bool { awaitingReloadResult }
     private let onResourceSource: (ModuleResourceSource) -> Void
-    private let onReloadResult: (String, ModuleReloadState) -> Void
+    private let onReloadResult: (String, ModuleLoadState) -> Void
+    private let remoteEntryURL: () -> URL?
+    private(set) var requestedRemoteEntryURL: URL?
 
-    private func reportReload(_ message: String, state: ModuleReloadState = .loading) {
+    private func reportReload(_ message: String, state: ModuleLoadState = .loading) {
+        #if DEBUG
         if DebugServer.canRefresh { reloadMessage = message }
+        #endif
         onReloadResult(message, state)
     }
     private func finishReload(_ message: String, succeeded: Bool) {
@@ -171,7 +195,8 @@ struct ModuleReloadRecord: Codable, Equatable {
     private var onFailure: (String) -> Void
     private var onStartupFailure: () -> Void
 
-    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, onStartupFailure: @escaping () -> Void = {}, onReloadResult: @escaping (String, ModuleReloadState) -> Void = { _, _ in }, onResourceSource: @escaping (ModuleResourceSource) -> Void = { _ in }, refreshing: Bool = false) {
+    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, onStartupFailure: @escaping () -> Void = {}, onReloadResult: @escaping (String, ModuleLoadState) -> Void = { _, _ in }, onResourceSource: @escaping (ModuleResourceSource) -> Void = { _ in }, remoteEntryURL: (() -> URL?)? = nil, refreshing: Bool = false) {
+        self.remoteEntryURL = remoteEntryURL ?? { nil }
         self.onResourceSource = onResourceSource
         self.onReloadResult = onReloadResult
         self.module = module
@@ -224,22 +249,25 @@ struct ModuleReloadRecord: Codable, Equatable {
         recoveryPending = false
         isLoading = false
         awaitingReloadResult = false
+        #if DEBUG
         reloadMessage = nil
+        #endif
         onFailure("页面进程恢复失败")
         shouldReturnHome = true
     }
 
     private func load(usingLocalFallback: Bool = false) {
-        let remote = usingLocalFallback ? nil : DebugServer.entryURL(for: module)
+        if !usingLocalFallback { requestedRemoteEntryURL = remoteEntryURL() }
+        let remote = usingLocalFallback ? nil : requestedRemoteEntryURL
         let loadGeneration = generation
         onResourceSource(.loading(remote))
         runtime = Runtime(module: module, directory: directory,
                           onReady: { [weak self] in
                               guard let self, self.generation == loadGeneration else { return }
                               self.isLoading = false
-                              self.onResourceSource(remote.map(ModuleResourceSource.debugServer) ?? .local)
+                              self.onResourceSource(remote.map(ModuleResourceSource.web) ?? .local)
                               self.isRecovering = false
-                              self.finishReload(usingLocalFallback ? "服务器不可用，已加载本地资源" : (remote == nil ? "本地资源重新加载成功" : "服务器资源刷新成功"), succeeded: !usingLocalFallback)
+                              self.finishReload(usingLocalFallback ? "网页不可用，已加载本地资源" : (remote == nil ? "本地资源重新加载成功" : "网页资源刷新成功"), succeeded: !usingLocalFallback)
                               if remote == nil { self.onReady() }
                           },
                           onFailure: { [weak self] message in
@@ -257,11 +285,11 @@ struct ModuleReloadRecord: Codable, Equatable {
                               if self.isRecovering { self.abandonRecovery(); return }
                               self.failure = message
                               self.isLoading = false
-                              self.finishReload((remote == nil ? "本地资源重新加载失败：" : "服务器资源刷新失败：") + message, succeeded: false)
+                              self.finishReload((remote == nil ? "本地资源重新加载失败：" : "网页资源刷新失败：") + message, succeeded: false)
                               if remote == nil { self.onFailure(message) }
                           },
                           onStartupFailure: { [weak self] in if remote == nil, self?.isRecovering == false { self?.onStartupFailure() } },
-                          debugEntryURL: remote, onReload: { [weak self] in self?.reload() },
+                          remoteEntryURL: remote, onReload: { [weak self] in self?.reload() },
                           onProcessTermination: { [weak self] in
                               guard let self, self.generation == loadGeneration else { return }
                               self.processTerminated()
@@ -270,10 +298,10 @@ struct ModuleReloadRecord: Codable, Equatable {
                               guard let self, self.generation == loadGeneration else { return }
                               self.isRootPage = isRoot
                           })
-        configureWebView(remote: remote)
+        configureWebView(entryURL: remote ?? URL(string: "lingrove://\(module.id)/\(module.entry)")!)
     }
 
-    private func configureWebView(remote: URL?) {
+    private func configureWebView(entryURL: URL) {
 
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
@@ -315,7 +343,7 @@ struct ModuleReloadRecord: Codable, Equatable {
         #if DEBUG
         webView.isInspectable = DebugServer.enabled
         #endif
-        let request = URLRequest(url: remote ?? URL(string: "lingrove://\(module.id)/\(module.entry)")!, cachePolicy: .reloadIgnoringLocalCacheData)
+        let request = URLRequest(url: entryURL, cachePolicy: .reloadIgnoringLocalCacheData)
         // Give SwiftUI a turn to present the loading shell before starting page work.
         let currentWebView = webView!
         let currentRuntime = runtime!
@@ -355,7 +383,9 @@ struct ModuleScreen: View {
     let module: Module
     @ObservedObject var store: ModuleStore
     @StateObject private var page: ModulePage
+    #if DEBUG
     @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
+    #endif
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -370,7 +400,12 @@ struct ModuleScreen: View {
             if page.shouldReturnHome {
                 Color(uiColor: LingroveTheme.background)
             } else if let failure = page.failure {
-                ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: { if DebugServer.available && resourceMode != .bundled { Button("重新加载") { page.reload() } }; Button("返回应用列表") { dismiss() } }
+                ContentUnavailableView { Label("暂时无法打开此应用。", systemImage: "exclamationmark.triangle") } description: { Text(failure) } actions: {
+                    #if DEBUG
+                    if resourceMode != .bundled { Button("重新加载") { page.reload() } }
+                    #endif
+                    Button("返回应用列表") { dismiss() }
+                }
             } else {
                 ZStack {
                     ModuleWebView(page: page).id(page.generation)
@@ -427,7 +462,7 @@ struct ModuleScreen: View {
         .onAppear {
             if page.shouldReturnHome { dismiss() }
             else { page.resumeIfNeeded(isActive: scenePhase == .active) }
-            store.begin(module, trackingStartup: DebugServer.entryURL(for: module) == nil)
+            store.begin(module, trackingStartup: store.remoteEntryURL(for: module) == nil)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { page.resumeIfNeeded(isActive: true) }
@@ -505,7 +540,7 @@ struct ModuleWebView: UIViewRepresentable {
     private var ttsPreload: (owner: String, request: TTSRequestIdentity, audio: Task<Data, Error>)?
     private var watchdog: Task<Void, Never>?
     private var inlineHandwriting: InlineHandwriting?
-    private let debugEntryURL: URL?
+    private let remoteEntryURL: URL?
     private let onReload: () -> Void
     private let onNavigation: (Bool) -> Void
     private let onProcessTermination: (() -> Void)?
@@ -524,8 +559,8 @@ struct ModuleWebView: UIViewRepresentable {
         config.httpCookieStorage = nil; config.httpShouldSetCookies = false; config.urlCache = nil
         return URLSession(configuration: config, delegate: NoRedirect(), delegateQueue: nil)
     }()
-    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, ttsConfiguration: @escaping () throws -> TTSConfiguration = { try TTSStore.load() }, onStartupFailure: @escaping () -> Void = {}, debugEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onProcessTermination: (() -> Void)? = nil, onNavigation: @escaping (Bool) -> Void = { _ in }) {
-        self.debugEntryURL = DebugServer.enabled ? debugEntryURL : nil
+    init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, ttsConfiguration: @escaping () throws -> TTSConfiguration = { try TTSStore.load() }, onStartupFailure: @escaping () -> Void = {}, remoteEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onProcessTermination: (() -> Void)? = nil, onNavigation: @escaping (Bool) -> Void = { _ in }) {
+        self.remoteEntryURL = remoteEntryURL
         self.onProcessTermination = onProcessTermination
         self.onReload = onReload
         self.onNavigation = onNavigation
@@ -540,7 +575,15 @@ struct ModuleWebView: UIViewRepresentable {
         extraOrigins = networkDefaults.stringArray(forKey: "origins.\(module.id)") ?? []
     }
     func startWatchdog() {
-        watchdog = Task { try? await Task.sleep(for: .seconds(20)); guard !Task.isCancelled, !ready, !closed else { return }; fail(debugEntryURL == nil ? "页面启动超时；如果是下载版本，已尝试回退。" : "调试页面启动超时，请检查服务器地址、资源和宿主桥接初始化。") }
+        watchdog = Task {
+            try? await Task.sleep(for: .seconds(20))
+            guard !Task.isCancelled, !ready, !closed else { return }
+            if remoteEntryURL != nil {
+                fail("网页启动超时，请检查资源地址和页面初始化。")
+                return
+            }
+            fail("页面启动超时；如果是下载版本，已尝试回退。")
+        }
     }
     func stopTTSPlayback() {
         ttsPreload?.audio.cancel(); ttsPreload = nil
@@ -569,11 +612,11 @@ struct ModuleWebView: UIViewRepresentable {
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) { fail(error.localizedDescription) }
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { fail(error.localizedDescription) }
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-        if debugEntryURL != nil, navigationResponse.isForMainFrame,
+        if remoteEntryURL != nil, navigationResponse.isForMainFrame,
            let response = navigationResponse.response as? HTTPURLResponse,
            !(200..<300).contains(response.statusCode) {
             decisionHandler(.cancel)
-            fail("调试服务器返回 HTTP \(response.statusCode)")
+            fail("网页资源返回 HTTP \(response.statusCode)")
             return
         }
         decisionHandler(.allow)
@@ -583,7 +626,7 @@ struct ModuleWebView: UIViewRepresentable {
         decisionHandler(url.map { accepts($0) } == true ? .allow : .cancel)
     }
     func accepts(_ url: URL) -> Bool {
-        if let debugEntryURL { return DebugServer.allows(url, entry: debugEntryURL) }
+        if let remoteEntryURL { return NetworkPolicy.allowsPage(url, entry: remoteEntryURL) }
         return url.scheme == "lingrove" && url.host == module.id
     }
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {

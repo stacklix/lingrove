@@ -10,3 +10,5 @@ node_modules/
 xcuserdata/
 DerivedData/
 ios/Lingrove/Resources/BuiltinModules/
+
+ios/Lingrove/Resources/BuiltinModuleHashes.json

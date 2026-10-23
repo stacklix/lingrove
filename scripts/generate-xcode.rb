@@ -12,12 +12,12 @@ resources = group.new_group('Resources', 'Resources')
 %w[HostConfig.json BuiltinModules Assets.xcassets].each do |name|
   ref = resources.new_file(name)
   ref.last_known_file_type = 'folder' if name == 'BuiltinModules'
-  target.resources_build_phase.add_file_reference(ref) unless name == 'BuiltinModules'
+  target.resources_build_phase.add_file_reference(ref) unless ['BuiltinModules', 'HostConfig.json'].include?(name)
 end
 embed = target.new_shell_script_build_phase('Build and Embed Child Apps')
 embed.shell_script = '"/bin/sh" "$SRCROOT/../scripts/embed-ios-modules.sh"'
 embed.always_out_of_date = '1'
-embed.output_paths = ['$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/BuiltinModules']
+embed.output_paths = ['$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/BuiltinModules', '$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/HostConfig.json', '$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/BuiltinModuleHashes.json']
 target.build_configurations.each do |config|
   config.build_settings.merge!({
     'PRODUCT_BUNDLE_IDENTIFIER' => 'me.stackli.lingrove', 'SWIFT_VERSION' => '5.0',
@@ -50,6 +50,7 @@ end
 project.build_configuration_list.default_configuration_name = 'Debug'
 target.build_configuration_list.default_configuration_name = 'Debug'
 target.build_configurations.find { |config| config.name == 'Debug' }.build_settings['INFOPLIST_FILE'] = 'Lingrove/Resources/DebugInfo.plist'
+target.build_configurations.find { |config| config.name == 'Release' }.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] = ['DebugServer.swift', 'DebugViews.swift']
 project.save
 scheme = Xcodeproj::XCScheme.new
 scheme.add_build_target(target)

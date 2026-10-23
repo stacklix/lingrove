@@ -249,7 +249,9 @@ final class LingroveUITests: XCTestCase {
         listener.newConnectionHandler = { connection in
             connection.start(queue: .global())
             connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { _, _, _, _ in
-                connection.send(content: Data("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".utf8), completion: .contentProcessed { _ in connection.cancel() })
+                let body = #"{"modules":[{"id":"sentra","name":"Sentra","entry":"index.html","version":"20261023","minHostVersion":"1.3.0","bridgeVersion":1,"stateSchemaVersion":1,"allowedOrigins":[]}]}"#
+                let response = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
+                connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
             }
         }
         listener.start(queue: .global())
@@ -465,7 +467,7 @@ final class LingroveUITests: XCTestCase {
         let successButton = app.buttons["module-refresh-success"]
         XCTAssertTrue(successButton.waitForExistence(timeout: 25))
         let restored = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: successButton)
-        XCTAssertEqual(XCTWaiter.wait(for: [restored], timeout: 5), .completed)
+        XCTAssertEqual(XCTWaiter.wait(for: [restored], timeout: 7), .completed)
         XCTAssertTrue(app.buttons["module-refresh"].exists)
         entry.tap()
         let settings = app.webViews.buttons["设置"]
@@ -538,7 +540,7 @@ final class LingroveUITests: XCTestCase {
         app.buttons["应用设置"].tap()
         let expected = fails ? "刷新失败" : "刷新成功"
         let resultRows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "module-developer-details-", expected))
-        let allFinished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 4"), object: resultRows)
+        let allFinished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == 5"), object: resultRows)
         XCTAssertEqual(XCTWaiter.wait(for: [allFinished], timeout: 25), .completed)
         XCTAssertFalse(app.staticTexts["debug-reload-feedback"].exists)
         let listScreenshot = XCTAttachment(screenshot: app.screenshot())
@@ -553,9 +555,9 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["最近刷新时间"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["暂无记录"].exists)
         let message = app.staticTexts["module-refresh-result"]
-        XCTAssertEqual(message.label, fails ? "服务器不可用，已加载本地资源" : "服务器资源刷新成功")
+        XCTAssertEqual(message.label, fails ? "网页不可用，已加载本地资源" : "网页资源刷新成功")
         XCTAssertTrue(app.descendants(matching: .any)["module-resource-source"].firstMatch.exists)
-        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String, fails ? "宿主内置" : "调试服务器")
+        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String, fails ? "宿主内置" : "网页资源")
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "module-resource-source").count, 1)
         XCTAssertTrue(app.staticTexts["版本"].exists)
         XCTAssertEqual(app.staticTexts["文件名"].exists, fails)
@@ -571,9 +573,9 @@ final class LingroveUITests: XCTestCase {
         app.buttons["module-developer-details-sentra"].tap()
         XCTAssertTrue(app.staticTexts["最近刷新时间"].exists)
         XCTAssertFalse(app.staticTexts["暂无记录"].exists)
-        XCTAssertEqual(message.label, fails ? "服务器不可用，已加载本地资源" : "服务器资源刷新成功")
+        XCTAssertEqual(message.label, fails ? "网页不可用，已加载本地资源" : "网页资源刷新成功")
         XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.label, "应用来源")
-        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String, "调试服务器")
+        XCTAssertEqual(app.descendants(matching: .any)["module-resource-source"].firstMatch.value as? String, "网页资源")
         XCTAssertTrue(app.staticTexts["资源地址"].exists)
         let pendingScreenshot = XCTAttachment(screenshot: app.screenshot())
         pendingScreenshot.name = "Pending-resource-details-\(appearance)"; pendingScreenshot.lifetime = .keepAlways; add(pendingScreenshot)

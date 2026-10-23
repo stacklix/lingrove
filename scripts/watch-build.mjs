@@ -141,9 +141,9 @@ async function main() {
   }
   const queue = createBuildQueue(
     async () => {
-      log('开始执行 npm run build…');
+      log('开始执行 npm run build -- --no-zip…');
       await new Promise((resolve, reject) => {
-        const child = start(npm[0], [...npm.slice(1), 'run', 'build']);
+        const child = start(npm[0], [...npm.slice(1), 'run', 'build', '--', '--no-zip']);
         child.once('error', reject);
         child.once('close', (code, signal) =>
           code === 0

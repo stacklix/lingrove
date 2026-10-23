@@ -11,6 +11,8 @@ if not catalog_path.is_file():
     catalog_path = root / 'dist/snapshot/catalog.snapshot.json'
 assert catalog_path.is_file(), 'Missing built catalog; run the child-app build first'
 source_root = catalog_path.parent / 'app'
+expected_hashes = {module['id']: module['sha256'] for module in json.loads(catalog_path.read_text())['modules'] if 'sha256' in module}
+assert json.loads((Path(sys.argv[1]) / 'BuiltinModuleHashes.json').read_text()) == expected_hashes, 'Bundled package hashes differ from catalog'
 assert source_root.is_dir(), f'Missing built application directory: {source_root}'
 assert {p.name for p in source_root.iterdir()} == set(names), 'Built modules differ from modules.json'
 assert bundle.is_dir(), 'Missing BuiltinModules in iOS product'

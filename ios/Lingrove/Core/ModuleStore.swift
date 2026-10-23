@@ -218,6 +218,7 @@ struct ModuleDownloadRecord: Codable, Equatable {
         var minimumAllowedVersion: String?
         var updatedAt: Date? = nil
         var previousUpdatedAt: Date? = nil
+        var catalogURL: String? = nil
     }
     @Published var modules: [Module] = []
     @Published var checking = false
@@ -243,8 +244,7 @@ struct ModuleDownloadRecord: Codable, Equatable {
     private let defaults: UserDefaults
     private var downloadHistoryURL: URL { root.appendingPathComponent("module-download-history.json") }
     private var registryURL: URL { root.appendingPathComponent("registry.json") }
-    private var catalogsURL: URL { root.appendingPathComponent("catalogs.json") }
-    init(root: URL? = nil, config: HostConfiguration = .bundled, session: URLSession? = nil, builtinRoot: URL? = nil, defaults: UserDefaults = .standard) {
+    init(root: URL? = nil, config: HostConfiguration = .bundled, session: URLSession? = nil, builtinRoot: URL? = nil, builtinHashes: [String: String]? = nil, defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.session = ModuleDownloadSession(configuration: session?.configuration ?? .ephemeral)
         self.builtinRoot = builtinRoot ?? Bundle.main.resourceURL?.appendingPathComponent("BuiltinModules")
@@ -252,9 +252,6 @@ struct ModuleDownloadRecord: Codable, Equatable {
         self.root = root ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Lingrove")
         do {
             try FileManager.default.createDirectory(at: self.root, withIntermediateDirectories: true)
-            if let saved = try? JSONDecoder().decode([String: Catalog].self, from: Data(contentsOf: catalogsURL)) {
-                catalogs = saved.filter { (try? $0.value.validate()) != nil }
-            }
             completedDownloads = (try? JSONDecoder().decode([String: ModuleDownloadRecord].self, from: Data(contentsOf: downloadHistoryURL))) ?? [:]
             downloadRecords = completedDownloads
             if let builtinRoot = self.builtinRoot, let dirs = try? FileManager.default.contentsOfDirectory(at: builtinRoot, includingPropertiesForKeys: nil) {
@@ -273,6 +270,10 @@ struct ModuleDownloadRecord: Codable, Equatable {
                     notice = "应用安装记录格式无效或无法读取，已保留原文件；暂时使用内置应用，自动更新已暂停。"
                 }
             }
+            let hashes = builtinHashes ?? self.builtinRoot.flatMap {
+                try? JSONDecoder().decode([String: String].self, from: Data(contentsOf: $0.deletingLastPathComponent().appendingPathComponent("BuiltinModuleHashes.json")))
+            } ?? [:]
+            for (id, hash) in hashes where builtins[id] != nil { builtins[id]?.sha256 = hash }
             // A newly installed host may bundle a newer module than its persisted registry.
             var adoptedBuiltin = false
             for (id, builtin) in builtins {
@@ -286,16 +287,20 @@ struct ModuleDownloadRecord: Codable, Equatable {
             if adoptedBuiltin && registryReadable { try persist() }
             rejectedVersions = (try? JSONDecoder().decode([String: String].self, from: Data(contentsOf: self.root.appendingPathComponent("rejected.json")))) ?? [:]
             refresh()
-            if !HostConfiguration.usesBundledResources(defaults: defaults) {
-                for install in registry.values where !install.healthy && UserDefaults.standard.bool(forKey: "launching.\(install.active.id).\(install.active.resourceIdentity)") { rollback(install.active) }
-            }
+            for install in registry.values where !install.healthy && UserDefaults.standard.bool(forKey: "launching.\(install.active.id).\(install.active.resourceIdentity)") { rollback(install.active) }
         } catch { notice = "本地模块读取失败：\(error.localizedDescription)"; refresh() }
     }
     private func refresh() {
         var all = builtins
-        let bundledOnly = HostConfiguration.usesBundledResources(defaults: defaults)
+        let bundledOnly = catalogs[config.updateCatalogURL(defaults: defaults)] == nil
         if !bundledOnly {
-            for (id, install) in registry { all[id] = install.active }
+            let catalogURL = config.updateCatalogURL(defaults: defaults)
+            for (id, install) in registry {
+                let remoteHash = catalogs[catalogURL]?.modules.first { $0.id == id }?.sha256
+                if install.catalogURL == catalogURL || (remoteHash != nil && remoteHash == install.active.sha256) {
+                    all[id] = install.active
+                }
+            }
         }
         if let catalog = catalogs[config.updateCatalogURL(defaults: defaults)] {
             // The catalog owns list membership; retained packages and user data are not deleted.
@@ -321,6 +326,23 @@ struct ModuleDownloadRecord: Codable, Equatable {
     func catalogVersion(for module: Module) -> String {
         catalogs[config.updateCatalogURL(defaults: defaults)]?.modules.first { $0.id == module.id }?.version ?? module.version
     }
+    func remoteEntryURL(for module: Module) -> URL? {
+        guard let remote = catalogs[config.updateCatalogURL(defaults: defaults)]?.modules.first(where: { $0.id == module.id }),
+              remote.downloadUrl == nil, let raw = remote.webUrl, let url = URL(string: raw),
+              allowsResource(url) else { return nil }
+        return url
+    }
+    private func allowsResource(_ url: URL) -> Bool {
+        if NetworkPolicy.origin(url.absoluteString) != nil { return true }
+        #if DEBUG
+        if HostConfiguration.resourceMode(defaults: defaults) == .debug,
+           let catalogURL = URL(string: config.updateCatalogURL(defaults: defaults)) {
+            return DebugServer.allowsResource(url, catalogURL: catalogURL)
+        }
+        #endif
+        return false
+    }
+    #if DEBUG
     func resourceModeChanged() {
         updateTask?.cancel()
         updateTask = nil
@@ -330,11 +352,12 @@ struct ModuleDownloadRecord: Codable, Equatable {
         downloadProgress.removeAll()
         downloadStatusOwners.removeAll()
         downloadRecords = completedDownloads
+        catalogs.removeAll()
         if registryReadable { notice = "" }
         refresh()
     }
+    #endif
     private func recordDownload(_ moduleID: String, state: ModuleDownloadState, message: String) {
-        guard HostConfiguration.resourceMode(defaults: defaults) != .debug else { return }
         let record = ModuleDownloadRecord(state: state, message: message, completedAt: state.isInProgress ? nil : Date())
         downloadRecords[moduleID] = record
         if !state.isInProgress {
@@ -360,7 +383,7 @@ struct ModuleDownloadRecord: Codable, Equatable {
     }
     private func persist() throws { try JSONEncoder().encode(registry).write(to: registryURL, options: .atomic); refresh() }
     func isDownloaded(_ module: Module) -> Bool {
-        guard !HostConfiguration.usesBundledResources(defaults: defaults) else { return false }
+        guard catalogs[config.updateCatalogURL(defaults: defaults)] != nil else { return false }
         let manifest = root.appendingPathComponent("Modules/\(module.id)/\(module.resourceIdentity)/manifest.json")
         return FileManager.default.fileExists(atPath: manifest.path)
     }
@@ -381,14 +404,12 @@ struct ModuleDownloadRecord: Codable, Equatable {
         UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.resourceIdentity)")
     }
     func markHealthy(_ module: Module) {
-        guard !HostConfiguration.usesBundledResources(defaults: defaults) else { return }
         guard registry[module.id]?.active.resourceIdentity == module.resourceIdentity else { return }
         registry[module.id]?.healthy = true
         UserDefaults.standard.removeObject(forKey: "launching.\(module.id).\(module.resourceIdentity)")
         do { try persist() } catch { notice = "模块状态保存失败" }
     }
     func rollback(_ module: Module) {
-        guard !HostConfiguration.usesBundledResources(defaults: defaults) else { return }
         guard let install = registry[module.id], install.active.resourceIdentity == module.resourceIdentity, !install.healthy else { return }
         clearLaunchMarker(module)
         rejectedVersions[module.id] = module.resourceIdentity
@@ -397,15 +418,19 @@ struct ModuleDownloadRecord: Codable, Equatable {
             let fallback = install.previous ?? builtins[module.id]
             if let fallback, fallback.resourceIdentity != module.resourceIdentity, rejectedVersions[module.id] != fallback.resourceIdentity, install.minimumAllowedVersion.flatMap(ModuleVersion.init).map({ ModuleVersion(fallback.version)! >= $0 }) ?? true {
                 registry[module.id] = Installed(active: fallback, previous: nil, healthy: true, minimumAllowedVersion: install.minimumAllowedVersion,
-                                                 updatedAt: install.previousUpdatedAt, previousUpdatedAt: nil)
+                                                 updatedAt: install.previousUpdatedAt, previousUpdatedAt: nil, catalogURL: install.catalogURL)
                 try persist(); statuses[module.id] = "启动失败，已回退至 \(fallback.version)"
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
     nonisolated private static func fetch(session: ModuleDownloadSession, url: URL, limit: Int, forceRefresh: Bool = false,
-                                          timeout: TimeInterval = ModuleTransferTimeout.catalog,
+                                          timeout: TimeInterval = ModuleTransferTimeout.catalog, sourceURL: URL? = nil,
                                           onProgress: (@Sendable (Int) -> Void)? = nil) async throws -> Data {
-        guard NetworkPolicy.origin(url.absoluteString) != nil else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
+        var allowed = NetworkPolicy.origin(url.absoluteString) != nil
+        #if DEBUG
+        if let sourceURL { allowed = allowed || DebugServer.allowsResource(url, catalogURL: sourceURL) }
+        #endif
+        guard allowed else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
         if forceRefresh { components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "_refresh", value: UUID().uuidString)] }
         var request = URLRequest(url: components.url!)
@@ -438,41 +463,75 @@ struct ModuleDownloadRecord: Codable, Equatable {
         for module in modules { recordDownload(module.id, state: .checking, message: "正在检查更新…") }
         let catalogURL = config.updateCatalogURL(defaults: defaults)
         guard !catalogURL.isEmpty, let url = URL(string: catalogURL) else {
+            catalogs.removeValue(forKey: catalogURL)
+            refresh()
             notice = "当前使用内置模块；尚未配置更新目录。"
             finishPendingDownloadChecks(state: .failed, message: notice)
             return false
         }
+        #if DEBUG
+        let sourceURL = HostConfiguration.resourceMode(defaults: defaults) == .debug ? url : nil
+        #else
+        let sourceURL: URL? = nil
+        #endif
+        var receivedCatalog = false
         do {
-            let catalogData = try await Self.fetch(session: session, url: url, limit: 1024 * 1024, forceRefresh: forceRefresh)
-            let catalog = try JSONDecoder().decode(Catalog.self, from: catalogData)
+            let catalogData = try await Self.fetch(session: session, url: url, limit: 1024 * 1024, forceRefresh: forceRefresh, sourceURL: sourceURL)
+            var catalog = try JSONDecoder().decode(Catalog.self, from: catalogData)
             try Task.checkCancellation()
             try catalog.validate()
+            #if DEBUG
+            if HostConfiguration.resourceMode(defaults: defaults) == .debug {
+                catalog = try DebugServer.resolve(catalog, relativeTo: url)
+            }
+            #endif
             // A settings change during a request must not install the previous channel.
             guard catalogURL == config.updateCatalogURL(defaults: defaults) else { return false }
             guard updateID == id else { return false }
-            var updatedCatalogs = catalogs
-            updatedCatalogs[catalogURL] = catalog
-            try JSONEncoder().encode(updatedCatalogs).write(to: catalogsURL, options: .atomic)
-            catalogs = updatedCatalogs
+            catalogs[catalogURL] = catalog
+            receivedCatalog = true
             refresh()
-            guard registryReadable || HostConfiguration.resourceMode(defaults: defaults) == .debug else { return false }
             notice = ""
-            // Server debugging uses the snapshot catalog for the list, and the selected
-            // development server for HTML/JS/CSS. It does not install packages.
-            if HostConfiguration.resourceMode(defaults: defaults) == .debug { return true }
+            guard registryReadable else { return false }
             var pending: [Module] = []
             var complete = true
             for remote in catalog.modules {
                 try Task.checkCancellation()
-                if let current = registry[remote.id]?.active ?? builtins[remote.id] {
-                    var installed = registry[remote.id] ?? Installed(active: current, healthy: true)
-                    installed.minimumAllowedVersion = remote.minimumAllowedVersion; registry[remote.id] = installed
+                let previousInstall = registry[remote.id]
+                if let current = modules.first(where: { $0.id == remote.id }),
+                   isDownloaded(current) || builtins[current.id]?.resourceIdentity == current.resourceIdentity {
+                    var installed = registry[remote.id].flatMap { $0.active.resourceIdentity == current.resourceIdentity ? $0 : nil }
+                        ?? Installed(active: current, healthy: true)
+                    installed.catalogURL = catalogURL
+                    installed.minimumAllowedVersion = remote.minimumAllowedVersion
+                    registry[remote.id] = installed
                     try persist()
                 }
                 guard Version(remote.minHostVersion)! <= Version(HostConfiguration.currentVersion)! else { statuses[remote.id] = "请更新 Lingrove 后使用新版"; recordDownload(remote.id, state: .deferred, message: statuses[remote.id]!); complete = false; continue }
-                if let current = registry[remote.id]?.active ?? builtins[remote.id],
-                   isDownloaded(current) || builtins[current.id]?.resourceIdentity == current.resourceIdentity,
-                   ModuleVersion(current.version)! > ModuleVersion(remote.version)! || (current.version == remote.version && current.sha256 == remote.sha256) { statuses[remote.id] = "已是最新版本"; recordDownload(remote.id, state: .unchanged, message: "已是最新版本"); continue }
+                guard remote.downloadUrl != nil else {
+                    if remoteEntryURL(for: remote) == nil && builtins[remote.id] == nil { complete = false }
+                    recordDownload(remote.id, state: .unchanged, message: "无需下载")
+                    continue
+                }
+                if let hash = remote.sha256,
+                   let current = [previousInstall?.active, previousInstall?.previous, builtins[remote.id]].compactMap({ $0 }).first(where: {
+                       $0.sha256 == hash && (isDownloaded($0) || builtins[$0.id]?.resourceIdentity == $0.resourceIdentity)
+                   }) {
+                    var accepted = previousInstall.flatMap { $0.active.resourceIdentity == current.resourceIdentity ? $0 : nil }
+                        ?? Installed(active: current, previous: previousInstall?.active, healthy: true,
+                                     updatedAt: previousInstall?.previous?.resourceIdentity == current.resourceIdentity ? previousInstall?.previousUpdatedAt : nil,
+                                     previousUpdatedAt: previousInstall?.updatedAt)
+                    accepted.active.downloadUrl = remote.downloadUrl
+                    accepted.active.webUrl = remote.webUrl
+                    accepted.active.size = remote.size
+                    accepted.minimumAllowedVersion = remote.minimumAllowedVersion
+                    accepted.catalogURL = catalogURL
+                    registry[remote.id] = accepted
+                    try persist()
+                    statuses[remote.id] = "已是最新版本"
+                    recordDownload(remote.id, state: .unchanged, message: "已是最新版本")
+                    continue
+                }
                 guard rejectedVersions[remote.id] != remote.resourceIdentity else { statuses[remote.id] = "此版本曾启动失败，等待后续版本"; recordDownload(remote.id, state: .deferred, message: statuses[remote.id]!); complete = false; continue }
                 if activeSessions.contains(remote.id) { statuses[remote.id] = "发现更新，退出模块后再检查"; recordDownload(remote.id, state: .deferred, message: statuses[remote.id]!); complete = false; continue }
                 recordDownload(remote.id, state: .waiting, message: "等待下载…")
@@ -485,7 +544,11 @@ struct ModuleDownloadRecord: Codable, Equatable {
             return complete && installed && !Task.isCancelled && updateID == id
         } catch {
             if Task.isCancelled || updateID != id { return false }
-            notice = "更新检查失败，继续使用可用本地模块：\(error.localizedDescription)"
+            if !receivedCatalog {
+                catalogs.removeValue(forKey: catalogURL)
+                refresh()
+            }
+            notice = "更新检查失败，\(receivedCatalog ? "继续使用可用本地模块" : "使用宿主内置应用")：\(error.localizedDescription)"
             finishPendingDownloadChecks(state: .failed, message: notice)
             return false
         }
@@ -494,6 +557,11 @@ struct ModuleDownloadRecord: Codable, Equatable {
         guard !modules.isEmpty else { return true }
         var succeeded = true
         let session = self.session
+        #if DEBUG
+        let sourceURL = HostConfiguration.resourceMode(defaults: defaults) == .debug ? URL(string: catalogURL) : nil
+        #else
+        let sourceURL: URL? = nil
+        #endif
         func clearOwnedDownloads() {
             for module in modules where downloadStatusOwners[module.id] == id {
                 if statuses[module.id]?.hasPrefix("正在下载") == true {
@@ -525,7 +593,7 @@ struct ModuleDownloadRecord: Codable, Equatable {
                     }
                     do {
                         let data = try await Self.fetch(session: session, url: url, limit: size, forceRefresh: forceRefresh,
-                                                        timeout: ModuleTransferTimeout.package) { received in
+                                                        timeout: ModuleTransferTimeout.package, sourceURL: sourceURL) { received in
                             Task { @MainActor [weak self] in
                                 guard let self, self.updateID == id,
                                       self.downloadStatusOwners[module.id] == id,
@@ -617,7 +685,7 @@ struct ModuleDownloadRecord: Codable, Equatable {
         let previousUpdatedAt = sameIdentity ? existing?.previousUpdatedAt : existing?.updatedAt
         let oldRegistry = registry
         registry[module.id] = Installed(active: module, previous: previous, healthy: false, minimumAllowedVersion: module.minimumAllowedVersion,
-                                         updatedAt: Date(), previousUpdatedAt: previousUpdatedAt)
+                                         updatedAt: Date(), previousUpdatedAt: previousUpdatedAt, catalogURL: catalogURL)
         do { try persist() } catch { registry = oldRegistry; refresh(); throw error }
         // Keep at most the active and rollback versions; never remove state files.
         let retained = Set([module.resourceIdentity, previous?.resourceIdentity].compactMap { $0 })

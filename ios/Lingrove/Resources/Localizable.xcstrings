@@ -1519,72 +1519,6 @@
         }
       }
     },
-    "服务器不可用，已加载本地资源": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "服务器不可用，已加载本地资源"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Server unavailable; local resources loaded"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "サーバーを利用できないためローカル資源を読み込みました"
-          }
-        }
-      }
-    },
-    "服务器资源刷新失败：": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "服务器资源刷新失败："
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Server reload failed:"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "サーバー資源の再読み込み失敗："
-          }
-        }
-      }
-    },
-    "服务器资源刷新成功": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "服务器资源刷新成功"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Server resources reloaded"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "サーバー資源を再読み込みしました"
-          }
-        }
-      }
-    },
     "未授权此域名": {
       "localizations": {
         "zh-Hans": {
@@ -2131,28 +2065,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "リクエスト数または識別子が無効です"
-          }
-        }
-      }
-    },
-    "调试页面启动超时，请检查服务器地址、资源和宿主桥接初始化。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "调试页面启动超时，请检查服务器地址、资源和宿主桥接初始化。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Debug page startup timed out. Check the server URL, resources and host bridge initialization."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "デバッグページの起動がタイムアウトしました。サーバー、資源、ホスト連携の初期化を確認してください。"
           }
         }
       }
@@ -4203,28 +4115,6 @@
         }
       }
     },
-    "Release 下载": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Release 下载"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Release download"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Release ダウンロード"
-          }
-        }
-      }
-    },
     "宿主内置": {
       "localizations": {
         "zh-Hans": {
@@ -4709,28 +4599,6 @@
         }
       }
     },
-    "调试服务器": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "调试服务器"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Debug server"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "デバッグサーバー"
-          }
-        }
-      }
-    },
     "下载状态": {
       "localizations": {
         "zh-Hans": {
@@ -5189,6 +5057,204 @@
           "stringUnit": {
             "state": "translated",
             "value": "カタログのバージョン"
+          }
+        }
+      }
+    },
+    "网页不可用，已加载本地资源": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页不可用，已加载本地资源"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web resources unavailable; loaded local resources."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webリソースを利用できないため、ローカルリソースを読み込みました。"
+          }
+        }
+      }
+    },
+    "网页资源刷新成功": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页资源刷新成功"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web resources refreshed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webリソースを更新しました"
+          }
+        }
+      }
+    },
+    "网页资源刷新失败：": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页资源刷新失败："
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to refresh web resources: "
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webリソースの更新に失敗しました："
+          }
+        }
+      }
+    },
+    "网页启动超时，请检查资源地址和页面初始化。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页启动超时，请检查资源地址和页面初始化。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page startup timed out. Check the resource URL and page initialization."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ページの起動がタイムアウトしました。リソースURLとページの初期化を確認してください。"
+          }
+        }
+      }
+    },
+    "网页资源返回 HTTP {0}": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页资源返回 HTTP {0}"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web resources returned HTTP {0}"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webリソースが HTTP {0} を返しました"
+          }
+        }
+      }
+    },
+    "网页资源": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页资源"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web resources"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webリソース"
+          }
+        }
+      }
+    },
+    "下载包": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载包"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloaded package"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダウンロード済みパッケージ"
+          }
+        }
+      }
+    },
+    "无需下载": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需下载"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download not required"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダウンロード不要"
+          }
+        }
+      }
+    },
+    "网页地址无效": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网页地址无效"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid web address"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webアドレスが無効です"
           }
         }
       }

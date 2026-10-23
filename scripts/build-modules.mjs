@@ -5,6 +5,8 @@ import { moduleBuildVersion } from './build-version.mjs';
 process.env.MODULE_BUILD_VERSION = moduleBuildVersion();
 const mode = process.argv.includes('--release') ? 'production' : 'debug';
 process.env.MODULE_CHANNEL ||= mode === 'production' ? 'release' : 'snapshot';
+if (process.argv.includes('--no-zip') && process.env.MODULE_CHANNEL === 'release')
+  throw new Error('--no-zip is only supported for local snapshot builds');
 const root = path.resolve(import.meta.dirname, '..');
 const npm = process.env.npm_execpath ? [process.execPath, process.env.npm_execpath] : ['npm'];
 const modules = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8'));

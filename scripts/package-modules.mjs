@@ -10,6 +10,8 @@ const names = JSON.parse(await readFile(path.join(root, 'modules.json'), 'utf8')
 const modules = [];
 const version = moduleBuildVersion();
 const snapshot = process.env.MODULE_CHANNEL !== 'release';
+const packageZip = !process.argv.includes('--no-zip');
+if (!snapshot && !packageZip) throw new Error('Release builds require ZIP packages');
 const outputRoot = path.join(root, 'dist', ...(snapshot ? ['snapshot'] : []));
 const base = snapshot ? `${siteBase}/snapshot` : siteBase;
 await mkdir(outputRoot, { recursive: true });
@@ -18,7 +20,8 @@ await rm(path.join(root, 'ios/Lingrove/Resources/BuiltinModules'), {
   recursive: true,
   force: true,
 });
-if (!snapshot) await mkdir(path.join(outputRoot, 'packages'), { recursive: true });
+if (packageZip) await mkdir(path.join(outputRoot, 'packages'), { recursive: true });
+const builtinHashes = {};
 for (const name of names) {
   const manifest = JSON.parse(
     await readFile(path.join(root, 'app', name, 'manifest.json'), 'utf8'),
@@ -30,9 +33,9 @@ for (const name of names) {
   await writeFile(path.join(output, 'manifest.json'), JSON.stringify(manifest, null, 2));
   const metadata = {
     ...manifest,
-    webUrl: `${base}/app/${name}/`,
+    webUrl: `${base}/app/${name}/${manifest.entry}`,
   };
-  if (!snapshot) {
+  if (packageZip) {
     const archive = `${manifest.id}-${manifest.version}.zip`;
     const zipPath = path.join(outputRoot, 'packages', archive);
     const result = spawnSync(
@@ -50,12 +53,17 @@ for (const name of names) {
       sha256: createHash('sha256').update(data).digest('hex'),
     });
   }
+  if (packageZip) builtinHashes[manifest.id] = metadata.sha256;
   modules.push(metadata);
   const builtin = path.join(root, 'ios/Lingrove/Resources/BuiltinModules', manifest.id);
   await rm(builtin, { recursive: true, force: true });
   await mkdir(path.dirname(builtin), { recursive: true });
   await cp(output, builtin, { recursive: true });
 }
+await writeFile(
+  path.join(root, 'ios/Lingrove/Resources/BuiltinModuleHashes.json'),
+  JSON.stringify(builtinHashes, null, 2),
+);
 await writeFile(
   path.join(outputRoot, snapshot ? 'catalog.snapshot.json' : 'catalog.json'),
   JSON.stringify({ modules }, null, 2),
@@ -79,5 +87,5 @@ const hostname = new URL(base).hostname;
 if (!hostname.endsWith('.github.io'))
   await writeFile(path.join(root, 'dist/CNAME'), hostname + '\n');
 console.log(
-  `Built ${modules.length} module(s), static catalog${snapshot ? '' : ', release archives'} and native bundled resources.`,
+  `Built ${modules.length} module(s), static catalog${packageZip ? ', ZIP archives' : ''} and native bundled resources.`,
 );

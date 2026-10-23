@@ -26,8 +26,16 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         UserDefaults.standard.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         defer { UserDefaults.standard.set(originalMode, forKey: HostConfiguration.resourceModePreferenceKey) }
         #endif
+        func hostConfiguration(catalogURL: String, snapshotCatalogURL: String) -> HostConfiguration {
+            #if DEBUG
+            return HostConfiguration(catalogURL: catalogURL, snapshotCatalogURL: snapshotCatalogURL)
+            #else
+            return HostConfiguration(catalogURL: catalogURL)
+            #endif
+        }
         func check(_ condition: @autoclosure () -> Bool, _ message: String) { precondition(condition(), message); print("PASS \(message)") }
         func rejects(_ message: String, _ operation: () throws -> Void) { do { try operation(); fatalError("Expected rejection: \(message)") } catch { print("PASS \(message)") } }
+        #if DEBUG
         let debugSettingsSuite = "debug-addresses-\(UUID().uuidString)"
         let debugSettingsDefaults = UserDefaults(suiteName: debugSettingsSuite)!
         defer { debugSettingsDefaults.removePersistentDomain(forName: debugSettingsSuite) }
@@ -51,6 +59,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         debugSettings = .init(addresses: [.init(id: "empty", url: "  ")], activeID: "empty")
         debugSettings.save(defaults: debugSettingsDefaults)
         check(debugSettingsDefaults.object(forKey: DebugServer.preferenceKey) == nil, "no debug configuration is saved when every row is empty")
+        #endif
         check(Version("1.10.0")! > Version("1.2.0")!, "semantic version ordering")
         check(Version("../1") == nil && Version("1.2") == nil, "invalid versions rejected")
         check(ModuleVersion("20261231")! < ModuleVersion("20270101")!, "build-date versions sort across years")
@@ -77,9 +86,14 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
             catalogURL: "https://updates.test/catalog.json", modelURL: "https://model.test/v1/chat/completions",
             debugURL: "http://192.168.1.10:8000/apps/"
         )
-        check(domainSummary.map(\.origin) == ["http://192.168.1.10:8000", "https://api.example.com", "https://custom.test:8443", "https://model.test", "https://updates.test"], "network summary includes configured services and deduplicates origins")
+        #if DEBUG
+        let debugOrigins = ["http://192.168.1.10:8000"]
+        #else
+        let debugOrigins: [String] = []
+        #endif
+        check(domainSummary.map(\.origin) == debugOrigins + ["https://api.example.com", "https://custom.test:8443", "https://model.test", "https://updates.test"], "network summary includes only services available in this build")
         check(domainSummary.first(where: { $0.origin == "https://api.example.com" })?.sources.count == 2, "network summary retains manifest and custom authorization sources")
-        check(domainSummary.filter { $0.moduleID == nil }.map(\.origin) == ["http://192.168.1.10:8000", "https://model.test", "https://updates.test"], "host model and update destinations belong to public group")
+        check(domainSummary.filter { $0.moduleID == nil }.map(\.origin) == debugOrigins + ["https://model.test", "https://updates.test"], "host model and update destinations belong to public group")
         check(domainSummary.filter { $0.moduleID == module.id }.map(\.origin) == ["https://api.example.com", "https://custom.test:8443"], "child app domains retain their owner")
         let sharedSummary = NetworkAccessDomain.snapshot(modules: [networkModule], customOrigins: [module.id: ["https://api.example.com", "https://custom.test:8443"]], catalogURL: "", modelURL: "https://API.example.com:443/v1", debugURL: nil)
         let modelDomains = sharedSummary.filter { $0.origin == "https://api.example.com" }
@@ -102,14 +116,16 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         let metadataDefaults = UserDefaults(suiteName: metadataSuite)!
         defer { metadataDefaults.removePersistentDomain(forName: metadataSuite) }
         metadataDefaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
-        let metadataConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/snapshot/catalog.snapshot.json")
+        let metadataConfig = hostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/snapshot/catalog.snapshot.json")
         let metadataRoot = fixtures.appendingPathComponent("debug-metadata")
         let metadataStore = ModuleStore(root: metadataRoot, config: metadataConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: metadataDefaults)
         var renamedDebugModule = module
         renamedDebugModule.name = "Lexis"
         renamedDebugModule.localizedDescriptions = ["en": "English introduction", "ja": "Japanese introduction"]
+        renamedDebugModule.webUrl = "https://updates.test/snapshot/app/sentra/index.html"
         var added = module
         added.id = "new-app"; added.name = "New App"
+        added.webUrl = "https://updates.test/snapshot/app/new-app/index.html"
         MockProtocol.responses = ["/snapshot/catalog.snapshot.json": (200, try JSONEncoder().encode(Catalog(modules: [renamedDebugModule, added])))]
         var metadataRequests: [URLRequest] = []
         MockProtocol.intercept = { request in metadataRequests.append(request.request); return false }
@@ -120,10 +136,10 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(metadataStore.modules.first { $0.id == module.id }?.description(for: "ja") == "Japanese introduction", "catalog refreshes translated descriptions")
         check(metadataRequests.count == 1 && metadataRequests[0].url?.path == "/snapshot/catalog.snapshot.json", "debug mode fetches snapshot catalog without downloading ZIPs")
         let metadataRestart = ModuleStore(root: metadataRoot, config: metadataConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: metadataDefaults)
-        check(metadataRestart.modules == metadataStore.modules, "catalog list survives restart")
+        check(metadataRestart.modules == [module], "debug restart starts with local builtins until snapshot catalog succeeds")
         MockProtocol.responses["/snapshot/catalog.snapshot.json"] = (503, Data())
         let metadataFailed = await metadataStore.checkForUpdates()
-        check(!metadataFailed && metadataStore.modules == metadataRestart.modules, "failed catalog refresh retains cached applications")
+        check(!metadataFailed && metadataStore.modules == metadataRestart.modules, "failed snapshot catalog uses local builtins")
         MockProtocol.responses["/snapshot/catalog.snapshot.json"] = (200, try catalog(added))
         await metadataStore.checkForUpdates()
         check(metadataStore.modules.map(\.id) == [added.id], "catalog removes retired apps from the displayed list")
@@ -151,22 +167,24 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         localizedUpdate.downloadUrl = "https://updates.test/localized-update.zip"
         localizedUpdate.size = localizedArchive.count
         localizedUpdate.sha256 = SHA256.hash(data: localizedArchive).map { String(format: "%02x", $0) }.joined()
-        let localizedConfig = HostConfiguration(catalogURL: "https://updates.test/localized-catalog.json", snapshotCatalogURL: "https://updates.test/localized-catalog.json")
+        let localizedConfig = hostConfiguration(catalogURL: "https://updates.test/localized-catalog.json", snapshotCatalogURL: "https://updates.test/localized-catalog.json")
         let localizedRoot = fixtures.appendingPathComponent("localized-state")
         let localizedStore = ModuleStore(root: localizedRoot, config: localizedConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         MockProtocol.responses = ["/localized-catalog.json": (200, try catalog(localizedUpdate)), "/localized-update.zip": (200, localizedArchive)]
         await localizedStore.checkForUpdates()
         check(localizedStore.modules.first?.description(for: "en") == "Updated description delivered by the child app.", "child-app update replaces introduction without a host translation")
         let localizedRestart = ModuleStore(root: localizedRoot, config: localizedConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
-        check(localizedRestart.modules.first?.localizedDescriptions == localizedUpdate.localizedDescriptions, "updated introductions persist across host restart")
-        let hostConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/catalog.json")
+        check(localizedRestart.modules.first?.localizedDescriptions == module.localizedDescriptions, "restart initially uses builtin introductions")
+        await localizedRestart.checkForUpdates()
+        check(localizedRestart.modules.first?.localizedDescriptions == localizedUpdate.localizedDescriptions, "fresh catalog restores updated introductions")
+        let hostConfig = hostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/catalog.json")
         let store = ModuleStore(root: root, config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         check(store.modules.first?.version == "20260101", "bundled module available offline")
         let archive = try Data(contentsOf: fixtures.appendingPathComponent("valid.zip"))
         module.version = "20260102"; module.downloadUrl = "https://updates.test/module.zip"; module.size = archive.count
         module.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
         MockProtocol.responses = ["/catalog.json": (200, try catalog(module)), "/module.zip": (200, archive)]
-        let insecureStore = ModuleStore(root: fixtures.appendingPathComponent("http-state"), config: HostConfiguration(catalogURL: "http://updates.test/catalog.json", snapshotCatalogURL: "http://updates.test/catalog.json"), session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
+        let insecureStore = ModuleStore(root: fixtures.appendingPathComponent("http-state"), config: hostConfiguration(catalogURL: "http://updates.test/catalog.json", snapshotCatalogURL: "http://updates.test/catalog.json"), session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
         await insecureStore.checkForUpdates()
         check(insecureStore.modules.first?.version == "20260101" && insecureStore.notice.contains("HTTPS"), "HTTP catalog rejected before download")
         let bundledModule = store.modules[0]
@@ -199,7 +217,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         concurrentModule.downloadUrl = "https://updates.test/module.zip"
         concurrentModule.size = archive.count
         concurrentModule.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
-        let concurrentConfig = HostConfiguration(catalogURL: "https://updates.test/concurrent-catalog.json", snapshotCatalogURL: "https://updates.test/concurrent-catalog.json")
+        let concurrentConfig = hostConfiguration(catalogURL: "https://updates.test/concurrent-catalog.json", snapshotCatalogURL: "https://updates.test/concurrent-catalog.json")
         let concurrentStore = ModuleStore(root: fixtures.appendingPathComponent("concurrent/state"), config: concurrentConfig, session: session,
                                           builtinRoot: fixtures.appendingPathComponent("concurrent/builtin"))
         MockProtocol.responses["/concurrent-catalog.json"] = (200, try JSONEncoder().encode(Catalog(modules: [concurrentModule, parallel])))
@@ -232,7 +250,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         store.rollback(module)
         check(store.modules.first?.version == module.version && !store.blocked.contains(module.id), "healthy version is never rejected after a runtime failure")
         let restarted = ModuleStore(root: root, config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
-        check(restarted.modules.first?.version == "20260102", "active version survives restart")
+        check(restarted.modules.first?.version == "20260101", "restart uses bundled version before a fresh catalog succeeds")
         let rejectedRoot = fixtures.appendingPathComponent("rejected-state")
         try FileManager.default.copyItem(at: root, to: rejectedRoot)
         try JSONEncoder().encode(["sentra": module.version]).write(to: rejectedRoot.appendingPathComponent("rejected.json"))
@@ -266,13 +284,13 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         MockProtocol.responses["/catalog.json"] = (500, Data())
         let offlineSucceeded = await store.checkForUpdates()
         check(!offlineSucceeded, "offline update must not report refresh success")
-        check(store.modules.first?.version == "20260102", "offline update failure preserves available module")
+        check(store.modules.first?.version == "20260101", "failed formal catalog uses builtin version")
         module.minimumAllowedVersion = "20260103"
         MockProtocol.responses["/catalog.json"] = (200, try catalog(module))
         await store.checkForUpdates()
         check(store.blocked.contains("sentra"), "mandatory minimum blocks retired fallback")
         let blockedRestart = ModuleStore(root: root, config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"))
-        check(blockedRestart.blocked.contains("sentra"), "minimum version enforced while offline after restart")
+        check(!blockedRestart.blocked.contains("sentra"), "offline builtin fallback does not inherit downloaded-package blocking")
         module.version = "20260105"; module.minHostVersion = "2.0.0"
         MockProtocol.responses["/catalog.json"] = (200, try catalog(module))
         await store.checkForUpdates()
@@ -285,7 +303,9 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         await brokenStore.checkForUpdates()
         check(try! String(contentsOf: brokenRoot.appendingPathComponent("registry.json"), encoding: .utf8) == "broken", "corrupt registry preserved without overwrite")
         let releaseDefaults = UserDefaults(suiteName: "release-date-tests-\(UUID().uuidString)")!
+        #if DEBUG
         releaseDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        #endif
         let releaseStore = ModuleStore(root: fixtures.appendingPathComponent("release-dates"), config: hostConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: releaseDefaults)
         var sameDayRelease = bundledModule
         sameDayRelease.version = "20260102"
@@ -306,7 +326,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         let channelSuite = "channel-tests-\(UUID().uuidString)"
         let channelDefaults = UserDefaults(suiteName: channelSuite)!
         defer { channelDefaults.removePersistentDomain(forName: channelSuite) }
-        let channelConfig = HostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/snapshot/catalog.snapshot.json")
+        let channelConfig = hostConfiguration(catalogURL: "https://updates.test/catalog.json", snapshotCatalogURL: "https://updates.test/snapshot/catalog.snapshot.json")
         check(channelConfig.updateCatalogURL(defaults: channelDefaults).hasSuffix("/catalog.json"), "normal mode selects release catalog")
         let channelRoot = fixtures.appendingPathComponent("channels")
         let channelStore = ModuleStore(root: channelRoot, config: channelConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
@@ -329,7 +349,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         check(downloadRecord.isVisible(at: downloadRecord.completedAt!.addingTimeInterval(4.999)), "download result is visible for five seconds")
         check(!downloadRecord.isVisible(at: downloadRecord.completedAt!.addingTimeInterval(5)), "download result expires after five seconds")
         let restartedNormal = ModuleStore(root: channelRoot, config: channelConfig, session: session, builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: channelDefaults)
-        check(restartedNormal.modules == channelStore.modules && restartedNormal.downloadRecords[release.id] == downloadRecord, "normal list and download history survive restart")
+        check(restartedNormal.modules == [bundledModule] && restartedNormal.downloadRecords[release.id] == downloadRecord, "restart uses builtins and preserves download history")
         channelRequests.removeAll()
         await channelStore.checkForUpdates(forceRefresh: true)
         check(channelRequests.count == 1 && channelRequests[0].url?.path == "/catalog.json", "manual normal refresh fetches catalog and skips identical ZIP")
@@ -348,28 +368,29 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         MockProtocol.intercept = nil
         MockProtocol.responses["/catalog.json"] = (503, Data())
         await channelStore.checkForUpdates()
-        check(channelStore.downloadRecords[release.id]?.state == .failed && channelStore.lastUpdatedAt(for: release) == firstDownloadTime, "failed catalog refresh preserves installed resources and download time")
+        check(channelStore.downloadRecords[release.id]?.state == .failed && channelStore.modules == [bundledModule] && channelStore.lastUpdatedAt(for: release) == nil, "failed catalog refresh uses builtin resources without deleting downloads")
         #if DEBUG
         channelDefaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         channelStore.resourceModeChanged()
         var debugModule = module
         debugModule.id = "debug-app"; debugModule.name = "Debug App"
         debugModule.downloadUrl = nil; debugModule.size = nil; debugModule.sha256 = nil
+        debugModule.webUrl = "https://updates.test/snapshot/app/debug-app/index.html"
         MockProtocol.responses["/snapshot/catalog.snapshot.json"] = (200, try catalog(debugModule))
         channelRequests.removeAll()
         MockProtocol.intercept = { request in channelRequests.append(request.request); return false }
         await channelStore.checkForUpdates(forceRefresh: true)
-        check(channelRequests.count == 1 && channelRequests[0].url?.path == "/snapshot/catalog.snapshot.json", "manual debug refresh fetches metadata-only snapshot catalog without ZIPs")
+        check(channelRequests.count == 1 && channelRequests[0].url?.path == "/snapshot/catalog.snapshot.json", "manual debug refresh fetches an HTML-only snapshot without ZIPs")
         check(channelRequests[0].url?.query?.contains("_refresh=") == true && channelRequests[0].value(forHTTPHeaderField: "Cache-Control") == "no-cache", "manual debug refresh bypasses cached catalog responses")
         check(channelStore.modules.map(\.id) == [debugModule.id], "debug catalog owns list independently of normal catalog")
-        check(HostConfiguration.usesBundledResources(defaults: channelDefaults), "debug mode retains builtin fallback for server resources")
+        check(channelStore.remoteEntryURL(for: debugModule) != nil, "HTML-only snapshot uses the shared remote loader")
         MockProtocol.responses["/snapshot/catalog.snapshot.json"] = (503, Data())
         channelRequests.removeAll()
         await channelStore.checkForUpdates()
-        check(channelRequests.map { $0.url!.path } == ["/snapshot/catalog.snapshot.json"] && channelStore.modules.map(\.id) == [debugModule.id], "failed debug catalog never falls back to release channel")
+        check(channelRequests.map { $0.url!.path } == ["/snapshot/catalog.snapshot.json"] && channelStore.modules == [bundledModule], "failed snapshot catalog uses local resources without consulting release channel")
         channelDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         channelStore.resourceModeChanged()
-        check(channelStore.modules.first?.resourceIdentity == release.resourceIdentity, "leaving debug restores cached normal list")
+        check(channelStore.modules == [bundledModule], "leaving debug uses builtins until formal catalog refresh succeeds")
         MockProtocol.intercept = nil
         let cancellationSuite = "cancel-tests-\(UUID().uuidString)"
         let cancellationDefaults = UserDefaults(suiteName: cancellationSuite)!
@@ -380,7 +401,7 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         cancellableModule.downloadUrl = "https://updates.test/cancel-module.zip"
         cancellableModule.size = archive.count
         cancellableModule.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
-        let cancellationConfig = HostConfiguration(
+        let cancellationConfig = hostConfiguration(
             catalogURL: "https://updates.test/cancel-catalog.json",
             snapshotCatalogURL: "https://updates.test/cancel-snapshot-catalog.json"
         )
@@ -424,6 +445,79 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         #else
         check(channelConfig.updateCatalogURL(defaults: channelDefaults).hasSuffix("/catalog.json"), "Release always uses formal catalog")
         #endif
+        #if DEBUG
+        let sharedModes: [ChildAppResourceMode] = [.bundled, .debug]
+        #else
+        let sharedModes: [ChildAppResourceMode] = [.bundled]
+        #endif
+        for mode in sharedModes {
+            let suite = "shared-resources-\(UUID().uuidString)"
+            let defaults = UserDefaults(suiteName: suite)!
+            defer { defaults.removePersistentDomain(forName: suite) }
+            #if DEBUG
+            defaults.set(mode.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+            if mode == .debug {
+                DebugServerSettings(addresses: [.init(id: "local", url: "http://localhost:8000/dev")], activeID: "local").save(defaults: defaults)
+            }
+            #endif
+            let config = hostConfiguration(catalogURL: "https://updates.test/shared-catalog.json",
+                                           snapshotCatalogURL: "https://updates.test/snapshot/catalog.snapshot.json")
+            let catalogURL = URL(string: config.updateCatalogURL(defaults: defaults))!
+            let sharedRoot = fixtures.appendingPathComponent("shared-\(mode.rawValue)")
+            let builtin = sharedRoot.appendingPathComponent("builtin/sentra")
+            try FileManager.default.createDirectory(at: builtin, withIntermediateDirectories: true)
+            try StoredZIP.extract(archive, to: builtin)
+            var remote = try JSONDecoder().decode(Module.self, from: Data(contentsOf: builtin.appendingPathComponent("manifest.json")))
+            remote.downloadUrl = "https://updates.test/packages/sentra-\(remote.version).zip"
+            remote.webUrl = "https://updates.test/app/sentra/index.html"
+            remote.size = archive.count
+            remote.sha256 = SHA256.hash(data: archive).map { String(format: "%02x", $0) }.joined()
+            #if DEBUG
+            let resolved = mode == .debug ? (try DebugServer.resolve(Catalog(modules: [remote]), relativeTo: catalogURL).modules[0]) : remote
+            #else
+            let resolved = remote
+            #endif
+            let zipURL = URL(string: resolved.downloadUrl!)!
+            MockProtocol.responses = [catalogURL.path: (200, try catalog(remote)), zipURL.path: (200, archive)]
+            var requests: [URLRequest] = []
+            MockProtocol.intercept = { request in requests.append(request.request); return false }
+            defer { MockProtocol.intercept = nil }
+            let identicalBuiltin = ModuleStore(root: sharedRoot.appendingPathComponent("same"), config: config, session: session,
+                builtinRoot: builtin.deletingLastPathComponent(), builtinHashes: [remote.id: remote.sha256!], defaults: defaults)
+            let builtinSucceeded = await identicalBuiltin.checkForUpdates()
+            check(builtinSucceeded && requests.map { $0.url!.path } == [catalogURL.path], "\(mode.rawValue): identical builtin ZIP hash skips download")
+            check(identicalBuiltin.remoteEntryURL(for: remote) == nil, "\(mode.rawValue): ZIP takes priority over advertised HTML")
+            requests.removeAll()
+            let downloaded = ModuleStore(root: sharedRoot.appendingPathComponent("download"), config: config, session: session,
+                builtinRoot: fixtures.appendingPathComponent("builtin"), defaults: defaults)
+            let installed = await downloaded.checkForUpdates()
+            check(installed && requests.map { $0.url!.path } == [catalogURL.path, zipURL.path], "\(mode.rawValue): catalog is fetched before ZIP using the shared installer")
+            check(downloaded.isDownloaded(downloaded.modules[0]), "\(mode.rawValue): ZIP resources are active")
+            downloaded.markHealthy(downloaded.modules[0])
+            requests.removeAll()
+            let unchanged = await downloaded.checkForUpdates()
+            check(unchanged && requests.map { $0.url!.path } == [catalogURL.path], "\(mode.rawValue): installed ZIP hash skips a repeat download")
+            let originalHash = remote.sha256
+            let rebuiltArchive = try Data(contentsOf: fixtures.appendingPathComponent("rebuilt.zip"))
+            remote.sha256 = SHA256.hash(data: rebuiltArchive).map { String(format: "%02x", $0) }.joined()
+            remote.size = rebuiltArchive.count
+            MockProtocol.responses[catalogURL.path] = (200, try catalog(remote))
+            MockProtocol.responses[zipURL.path] = (200, rebuiltArchive)
+            let replaced = await downloaded.checkForUpdates()
+            check(replaced && downloaded.modules[0].sha256 == remote.sha256, "\(mode.rawValue): changed hash installs even on the same build date")
+            downloaded.markHealthy(downloaded.modules[0])
+            remote.sha256 = originalHash; remote.size = archive.count
+            MockProtocol.responses[catalogURL.path] = (200, try catalog(remote))
+            requests.removeAll()
+            let reused = await downloaded.checkForUpdates()
+            check(reused && requests.map { $0.url!.path } == [catalogURL.path] && downloaded.modules[0].sha256 == originalHash,
+                  "\(mode.rawValue): matching retained ZIP is reused without downloading")
+            remote.downloadUrl = nil; remote.size = nil; remote.sha256 = nil
+            MockProtocol.responses[catalogURL.path] = (200, try catalog(remote))
+            requests.removeAll()
+            let htmlOnly = await downloaded.checkForUpdates()
+            check(htmlOnly && downloaded.remoteEntryURL(for: remote) != nil && requests.count == 1, "\(mode.rawValue): absent ZIP selects shared HTML loading")
+        }
         print("All native core checks passed")
     }
 }

@@ -2,7 +2,7 @@
 
 Lingrove 的第一个 Vue 3 + TypeScript + Vite 子应用。提供翻译（直译/地道表达）、原句语法分析、同语言表达优化、流式展示、学习历史的搜索/打开/删除，以及学习偏好设置。
 
-从仓库根目录运行 `npm ci`、`npm run dev`。`npm run build` 生成 `dist/snapshot/app/sentra/`、调试目录和 iOS 内置资源，不生成 ZIP；`npm run build:release` 在 `dist/` 根目录生成正式网页、`packages/` ZIP 和正式目录。
+从仓库根目录运行 `npm ci`、`npm run dev`。`npm run build` 生成 `dist/snapshot/app/sentra/`、调试目录、`dist/snapshot/packages/` ZIP 和 iOS 内置资源；`npm run build:release` 在 `dist/` 根目录生成正式网页、`packages/` ZIP 和正式目录。
 
 - 三个 Tab 独立保留草稿和结果。
 - 翻译目标为英语、日语、俄语、希腊语；解释语言与翻译目标独立。

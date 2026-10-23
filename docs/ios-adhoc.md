@@ -4,6 +4,14 @@
 
 Ad Hoc 只允许描述文件列出的设备安装，不是任意访客都能安装。Pages 上的安装包公开可下载；IPA 内的描述文件包含已登记的设备 UDID。新增测试设备后必须更新描述文件并重新打包。
 
+## Debug 与 Release 隔离
+
+Ad Hoc 安装包继续使用 Debug 配置，包含调试服务器、snapshot catalog、开发者详情和构建状态查询。`Core/DebugServer.swift`、`DebugViews.swift` 的完整实现由 `#if DEBUG` 包围，并从 Release 的源文件列表排除；调试地址选择和刷新历史只在 Debug 中编译；ZIP 下载、hash 比较、安装、本地加载及没有 ZIP 时的 HTML 加载和回退由两个构建共用。Release 的远程资源仍只允许 HTTPS。
+
+Xcode 的资源构建阶段按配置复制 `HostConfig.json`：Debug 使用包含两种目录地址的配置，Release 使用 `HostConfig.release.json`，只保留正式目录。Release 使用 `ReleaseInfo.plist`，不包含调试用 HTTP 放行和本地网络配置。
+
+PR 检查与 master 的 Ad Hoc 工作流都会独立编译 Release 模拟器应用，并执行 `scripts/verify-ios-release.py`，检查实际可执行文件、配置和 Info.plist。该检查不会改变 Ad Hoc 的 Debug 产物。新增调试功能时，应同步维护 `scripts/tests/release-isolation.test.mjs` 和产物校验器中的禁止项。
+
 ## 一次性配置
 
 需要有效的 Apple Developer Program 会员资格。

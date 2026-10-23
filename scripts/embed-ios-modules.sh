@@ -14,10 +14,14 @@ if [ ! -d node_modules ]; then
 fi
 if [ "${CONFIGURATION:-Debug}" = "Release" ]; then
   npm run build:release
+  host_config=ios/Lingrove/Resources/HostConfig.release.json
 else
   npm run build
+  host_config=ios/Lingrove/Resources/HostConfig.json
 fi
 npm run verify:release
+cp "$host_config" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/HostConfig.json"
+cp ios/Lingrove/Resources/BuiltinModuleHashes.json "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/BuiltinModuleHashes.json"
 
 # Copy directly into the product, including on a clean checkout with no generated resources.
 # Replacing the directory also removes modules retired from modules.json.

@@ -16,6 +16,7 @@ on:
       - 'scripts/publish-pages-tree.mjs'
       - 'scripts/verify-pages-build.sh'
       - '.github/workflows/ios*.yml'
+      - 'scripts/tests/release-isolation.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -42,3 +43,15 @@ jobs:
       - run: rm -rf dist ios/Lingrove/Resources/BuiltinModules
       - run: xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove -sdk iphonesimulator -configuration Debug -derivedDataPath build/ios CODE_SIGNING_ALLOWED=NO build
       - run: python3 scripts/verify-ios-modules.py build/ios/Build/Products/Debug-iphonesimulator/Lingrove.app
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove -sdk iphonesimulator -configuration Release -derivedDataPath build/release CODE_SIGNING_ALLOWED=NO build
+      - run: python3 scripts/verify-ios-modules.py build/release/Build/Products/Release-iphonesimulator/Lingrove.app
+      - run: python3 scripts/verify-ios-release.py build/release/Build/Products/Release-iphonesimulator/Lingrove.app

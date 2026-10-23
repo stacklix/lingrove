@@ -12,7 +12,7 @@ SwiftUI 原生语言学习宿主（iOS 17+），使用 WKWebView 运行可独立
 npm ci
 npm run dev                  # 浏览器预览 Sentra
 npm run dev -w @lingrove/omniglyph # 浏览器预览 Omniglyph
-npm run build                # Debug 网页、调试目录及 iOS 内置资源（不生成 ZIP）
+npm run build                # Debug 网页、ZIP、调试目录及 iOS 内置资源
 npm run debug:serve          # 自动构建并监听源码，启动调试服务（端口 8000）
 npm run build:watch          # 只监听并自动构建，配合已经运行的调试服务
 open ios/Lingrove.xcodeproj   # 选择 Lingrove scheme，运行 iPhone/iPad 模拟器
@@ -53,7 +53,7 @@ npm run ios:install -- --team YOUR_TEAM_ID      # 可选：覆盖本次构建的
 {"modules": []}
 ```
 
-每个模块包含 `id`、`name`、`version`、`entry`、`minHostVersion`、`bridgeVersion`、`stateSchemaVersion`、`allowedOrigins`、`downloadUrl`、`size`、`sha256`。构建工具会自动生成完整目录。可选 `minimumAllowedVersion` 强制淘汰旧版。子应用 `version` 由构建工具按北京时间（Asia/Shanghai）的构建日期生成，格式为 `yyyyMMdd`，例如 `20261020`；`minimumAllowedVersion` 也使用日期格式。源 manifest 不再维护版本号。宿主版本及 `minHostVersion` 仍使用三段数字。同一天再次构建时，日期相同但哈希不同仍会更新，哈希相同则跳过。一次构建的所有模块及调试目录、正式目录共用同一日期。调试目录仅提供应用元数据和网页地址，不包含 `downloadUrl`、`size`、`sha256`；正式目录包含 ZIP 下载信息。
+每个模块包含 `id`、`name`、`version`、`entry`、`minHostVersion`、`bridgeVersion`、`stateSchemaVersion`、`allowedOrigins`、`downloadUrl`、`size`、`sha256`。构建工具会自动生成完整目录。可选 `minimumAllowedVersion` 强制淘汰旧版。子应用 `version` 由构建工具按北京时间（Asia/Shanghai）的构建日期生成，格式为 `yyyyMMdd`，例如 `20261020`；`minimumAllowedVersion` 也使用日期格式。源 manifest 不再维护版本号。宿主版本及 `minHostVersion` 仍使用三段数字。同一天再次构建时，日期相同但哈希不同仍会更新，哈希相同则跳过。一次构建的所有模块及调试目录、正式目录共用同一日期。调试和正式目录均包含 `downloadUrl`、`size`、`sha256`、`webUrl`，分别指向本渠道的 ZIP 与 HTML 入口。
 
 应用介绍由各子应用的 `manifest.json` 管理：`description` 是默认中文介绍，`localizedDescriptions` 保存 `en`、`ja` 等语言的介绍。宿主按当前界面语言直接读取元数据，缺少该语言时使用默认介绍；首页显示首句，应用详情显示全文。这些内容随目录、ZIP 和内置 manifest 一起打包更新，无需加入共享翻译字典。
 
@@ -88,7 +88,7 @@ iOS Ad Hoc 打包及 Safari 网页安装见 [配置说明](docs/ios-adhoc.md)。
 
 快速开发阶段，Web 和 iOS 打包均跳过自动测试，直接安装依赖、构建、校验产物并发布；构建或校验失败会阻止发布。iOS 的 PR 验证仍保留测试和无签名模拟器编译，`master` 不再重复编译模拟器。内置子应用统一在 Xcode 构建阶段生成一次。
 
-`.github/workflows/build-gh-pages.yml` 在推送 `master` 或 tag 时执行，也可手动选择 master 或 tag 触发。每次只构建触发渠道：master 使用该次提交生成 `snapshot/` 下的 Debug HTML、JS/CSS 和 `catalog.snapshot.json`，不生成 ZIP，也不重建 tag；tag 使用该 tag 的提交在根目录生成正式 HTML、`app/` 网页资源、`packages/` ZIP、`catalog.json` 和 `publication.json`，不生成 `release/` 目录，不构建调试渠道。两种发布共用 `publish-gh-pages` 并发锁，发布时读取远端最新文件树，只替换目标渠道，保留另一渠道及 `ios/`。每个渠道记录来源提交，拒绝旧提交或分叉提交覆盖已发布的新提交。正式发布后根首页直接展示正式网页；尚无正式产物时跳转调试网页。
+`.github/workflows/build-gh-pages.yml` 在推送 `master` 或 tag 时执行，也可手动选择 master 或 tag 触发。每次只构建触发渠道：master 使用该次提交生成 `snapshot/` 下的 Debug HTML、JS/CSS、`packages/` ZIP 和 `catalog.snapshot.json`，不重建 tag；tag 使用该 tag 的提交在根目录生成正式 HTML、`app/` 网页资源、`packages/` ZIP、`catalog.json` 和 `publication.json`，不生成 `release/` 目录，不构建调试渠道。两种发布共用 `publish-gh-pages` 并发锁，发布时读取远端最新文件树，只替换目标渠道，保留另一渠道及 `ios/`。每个渠道记录来源提交，拒绝旧提交或分叉提交覆盖已发布的新提交。正式发布后根首页直接展示正式网页；尚无正式产物时跳转调试网页。
 
 发布后的分支结构：
 
@@ -103,7 +103,8 @@ gh-pages/
 ├── packages/<id>-<日期>.zip        # tag 的正式 ZIP
 ├── snapshot/                     # master，只更新此目录
 │   ├── index.html
-│   ├── catalog.snapshot.json     # 调试清单，不包含 ZIP 下载信息
+│   ├── packages/<id>-<日期>.zip # Debug ZIP
+│   ├── catalog.snapshot.json     # 调试清单，包含 ZIP、SHA-256 和 HTML 地址
 │   ├── publication.json          # 调试来源提交
 │   └── app/<id>/                 # 调试 HTML、JS、CSS 和其他网页资源
 └── ios/                          # 独立维护的 iOS 安装文件
@@ -117,7 +118,7 @@ gh-pages/
 - Sentra 网页：`https://lingrove.stackli.me/snapshot/app/sentra/`
 - Omniglyph 网页：`https://lingrove.stackli.me/snapshot/app/omniglyph/`
 
-目录为普通 `{ "modules": [...] }` JSON；两种目录均包含应用元数据、版本和 `webUrl`。只有正式目录包含 `downloadUrl`、包大小和 SHA-256，指向 `/packages/`；调试目录的网页地址指向 `/snapshot/app/`。`npm run verify:release` 校验当前构建渠道：调试构建检查目录和网页资源且确认无 ZIP，正式构建额外检查 ZIP、哈希及网页文件一致性。
+目录为普通 `{ "modules": [...] }` JSON；两种目录均包含应用元数据、版本、ZIP 地址 `downloadUrl`、包大小、SHA-256 和 HTML 入口 `webUrl`。正式资源位于 `/packages/`、`/app/`；snapshot 资源位于 `/snapshot/packages/`、`/snapshot/app/`。`npm run verify:release` 对两种渠道都校验 ZIP、hash 和网页文件的一致性。
 
 每次运行还保存一份 `lingrove-channels` Actions artifact，保留 14 天。发布保留既有的单提交策略：只替换 `gh-pages` 产物分支，`master` 源码历史不变。仓库规则须允许 Actions 的 `GITHUB_TOKEN` 写入及强推 `gh-pages`；工作流同时申请 `pages: write` 以请求 Pages 构建。
 
@@ -127,7 +128,7 @@ gh-pages/
 
 ## 更新行为
 
-Debug 宿主设置的“开发模式”分区只提供调试模式，默认关闭。冷启动、回到前台及切换模式后关闭设置页时都刷新当前目录：调试模式读取 `snapshot/catalog.snapshot.json`，正常模式读取 `catalog.json`。调试目录仅用于同步应用列表，HTML/JS/CSS 仍从选定的调试服务器加载，不下载 ZIP；正常模式通过正式目录安装更新。调试目录未配置或请求失败时不回退到正式目录。Release 宿主始终使用正式目录。
+Debug 宿主设置的“开发模式”分区只提供调试模式，默认关闭。冷启动、回到前台及切换模式后关闭设置页时都刷新当前目录：调试模式读取 `snapshot/catalog.snapshot.json`，正常模式读取 `catalog.json`。两种目录均提供 `downloadUrl`、`size`、`sha256` 和 `webUrl`（HTML 入口）。宿主共用安装与加载逻辑：有 ZIP 时优先安装并从本地加载，SHA-256 与下载包或内置资源相同时跳过下载；没有 ZIP 时才直接加载 HTML。调试模式使用所选服务器下的 snapshot 目录及资源，支持本地 HTTP；正式模式只允许 HTTPS。调试目录未配置或请求失败时不回退到正式目录。Release 宿主始终使用正式目录。
 
 目录按 URL 分别缓存，刷新应用名称、介绍和列表成员，新增应用会出现，下架应用从列表隐藏；不删除已有学习数据或为同步列表删除安装包。请求失败时保留当前渠道的缓存列表，尚无缓存时保留可用本地应用。切换模式会取消旧请求，防止旧渠道的响应覆盖新列表。
 
@@ -258,11 +259,11 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 ## 调试模式与服务器资源
 
-默认 `npm run build` 输出不压缩的 JS/CSS、source map、`snapshot/catalog.snapshot.json` 和离线内置资源，不生成 ZIP。`npm run build:release` 在 `dist/` 根目录输出正式 HTML、`app/` 下的压缩网页资源、`packages/` 下的 ZIP 和 `catalog.json`。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release。宿主设置只有调试模式开关，默认关闭；开启时显示刷新按钮。展开调试模式可添加和选择服务器地址，连接检测通过后才启用。切换、修改或删除当前地址会关闭调试；关闭设置时保存非空地址并重新加载子应用。Release 构建不提供服务器加载能力。
+默认 `npm run build` 在 `snapshot/` 下输出不压缩的 JS/CSS、source map、`catalog.snapshot.json` 和 `packages/` ZIP，并更新离线内置资源及其 ZIP hash 索引。`npm run build:release` 在 `dist/` 根目录输出正式 HTML、`app/` 下的压缩网页资源、`packages/` 下的 ZIP 和 `catalog.json`。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release。宿主设置只有调试模式开关，默认关闭；开启时显示刷新按钮。展开调试模式可添加和选择服务器地址，连接检测通过后才启用。切换、修改或删除当前地址会关闭调试；关闭设置时保存非空地址并重新加载子应用。Release 构建不提供调试服务器设置；ZIP 更新和缺少 ZIP 时的 HTTPS HTML 加载与 Debug 共用。
 
 1. 执行 `npm run debug:serve`，默认使用端口 8000（可用 `npm run debug:serve -- --port 8080` 修改）。构建前先检测端口；若被占用，显示 PID、用户、启动时间和完整命令，并提示 `[Y/n]`，直接回车或输入 `y` 确认后发送终止请求，等待端口释放再继续；输入 `n` 或按 Ctrl+C 取消启动。非交互运行不会终止占用进程。首次 Debug 构建成功后自动启动服务，并持续监听源码修改，启动时打印可用的局域网 IP 地址；若构建期间端口被其他进程占用，会再次询问确认。按 Ctrl+C 同时停止监听、构建和服务。若已有服务在运行，可另开终端执行 `npm run build:watch`，只启用自动构建。
 2. 在宿主“设置 → 开发模式”展开“调试模式”，添加服务器根地址，例如 `http://192.168.1.10:8000`；单选地址后打开“开启调试模式”，连接检查成功才启用，失败时保持关闭，可修改后重试。关闭设置会保存填写的地址并忽略空白行；点击左上角“返回”加载已启用的资源。手机和电脑需要能互相访问；真机地址不能填电脑的 localhost。
-3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。每个子应用直接请求 `<根地址>/app/<子应用ID>/index.html` 及其 JS/CSS（例如 `/app/sentra/index.html`），不下载或解压 ZIP。新增子应用并更新 `modules.json` 后会自动构建，同一个服务地址即可访问，无需为每个子应用单独启动服务。
+3. `npm run debug:serve` 以整个 `dist/` 为服务根目录，为 `modules.json` 中的所有子应用提供服务。本地自动构建使用 `npm run build -- --no-zip`，不生成 ZIP，snapshot catalog 只提供 HTML 地址。宿主先读取 `<根地址>/snapshot/catalog.snapshot.json`，再请求 `<根地址>/snapshot/app/<子应用ID>/index.html` 及其 JS/CSS。普通 `npm run build` 和 CI 发布仍生成 ZIP。新增子应用并更新 `modules.json` 后会自动构建，同一个服务地址即可访问，无需为每个子应用单独启动服务。
 调试模式在启动、启用和刷新时读取调试服务器的 `catalog.json`，同步首页名称及各语言介绍。显示信息仅在当前调试会话中使用；关闭调试或切换服务器时恢复本地安装信息，不改写安装记录、资源版本或域名授权。
 
 4. 保存子应用源码、静态资源、manifest、共享 SDK 或构建配置后，自动执行 `npm run build`。连续保存会合并处理，构建期间的新修改会在当前构建完成后再执行一次。生成产物、依赖目录和测试文件不触发构建。构建完成后点击宿主设置旁的“重新加载子应用”，先拉取调试目录、更新应用列表，再刷新所有应用。设置页在调试模式显示页面刷新状态，正常模式显示正式包检查和下载状态；详情保留最近完成时间和失败原因。应用来源为调试服务器、宿主内置或 Release 下载。调试详情展示调试目录版本和实际资源地址，本地详情展示资源版本、文件名及下载地址。调试服务器回退时跟随实际资源更新来源，已保存学习数据不受刷新影响。

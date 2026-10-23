@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix='lingrove-channels-') as temporary:
     (root / 'modules.json').write_text('["sentra"]')
     (root / 'index.html').write_text('home')
     (root / 'source.txt').write_text('tag source')
-    (root / '.gitignore').write_text('dist/\nios/Lingrove/Resources/BuiltinModules/\n')
+    (root / '.gitignore').write_text('dist/\nios/Lingrove/Resources/BuiltinModules/\nios/Lingrove/Resources/BuiltinModuleHashes.json\n')
     npm = root / 'compiler.cjs'
     npm.write_text('''const fs = require('node:fs');
 if (process.argv[2] === 'ci') process.exit(0);
@@ -43,8 +43,8 @@ fs.writeFileSync('dist/app/sentra/index.html', fs.readFileSync('source.txt'));
     assert not (root / 'dist/catalog.snapshot.json').exists()
     assert not (root / 'dist/catalog.json').exists()
     assert not (root / 'dist/release').exists()
-    assert not list((root / 'dist').rglob('*.zip'))
-    print('PASS master publishes debug catalog and HTML under snapshot/ without ZIPs')
+    assert list((root / 'dist/snapshot/packages').glob('*.zip'))
+    print('PASS master publishes catalog, ZIP and HTML under snapshot/')
     run('git', '-c', 'tag.gpgsign=false', 'tag', 'v1.0.0')
     (root / 'source.txt').write_text('master source')
     manifest_path = root / 'app/sentra/manifest.json'
@@ -55,8 +55,8 @@ fs.writeFileSync('dist/app/sentra/index.html', fs.readFileSync('source.txt'));
     run('git', '-c', 'commit.gpgsign=false', 'commit', '-m', 'new master source')
     run('node', 'scripts/build-channels.mjs')
     snapshot = json.loads((root / 'dist/snapshot/catalog.snapshot.json').read_text())['modules'][0]
-    assert all(key not in snapshot for key in ['downloadUrl', 'size', 'sha256'])
-    assert snapshot['webUrl'].endswith('/snapshot/app/sentra/')
+    assert all(key in snapshot for key in ['downloadUrl', 'size', 'sha256'])
+    assert snapshot['webUrl'].endswith('/snapshot/app/sentra/index.html')
     assert snapshot['localizedDescriptions'] == master_manifest['localizedDescriptions']
     assert (root / 'dist/snapshot/app/sentra/index.html').read_bytes() == b'master source'
     assert not (root / 'dist/release').exists(), 'master must not rebuild tags'
@@ -65,7 +65,7 @@ fs.writeFileSync('dist/app/sentra/index.html', fs.readFileSync('source.txt'));
     run('node', 'scripts/build-channels.mjs', extra_env={'GITHUB_REF_TYPE': 'tag', 'GITHUB_REF': 'refs/tags/v1.0.0'})
     release = json.loads((root / 'dist/catalog.json').read_text())['modules'][0]
     assert release['downloadUrl'].endswith('/packages/sentra-20261020.zip')
-    assert release['webUrl'].endswith('/app/sentra/')
+    assert release['webUrl'].endswith('/app/sentra/index.html')
     assert release['localizedDescriptions'] == tag_manifest['localizedDescriptions']
     assert (root / 'dist/app/sentra/index.html').read_bytes() == b'tag source'
     assert not (root / 'dist/snapshot').exists(), 'tag must not produce debug outputs'

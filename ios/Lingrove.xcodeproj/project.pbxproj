@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		141489A826CF22B06D03ED1D /* LingroveApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3141EA1A801FFACD7914DE9 /* LingroveApp.swift */; };
-		2F0589B18B6221B63FA1AA49 /* HostConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 575CB22ADB6835BA1E24AF00 /* HostConfig.json */; };
 		3575B0D523597E73F5E655DF /* RuntimeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72874FE63881988C31D2214A /* RuntimeTests.swift */; };
 		37A0C4ECCF69C034B7FC4DC6 /* Module.swift in Sources */ = {isa = PBXBuildFile; fileRef = 424092A96CD971389484FF48 /* Module.swift */; };
 		41AF4F5AA48DA1564349E8F1 /* ModuleRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BCC862F26DB766FEB2E080E /* ModuleRuntime.swift */; };
@@ -24,6 +23,8 @@
 		F805393E3DC565BFE86E5C82 /* StoredZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172EA4DEE36E904A1A1CA822 /* StoredZIP.swift */; };
 		FD4E235CAC8A1C38F3760EE0 /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5106270A5CA6793A48275A4 /* LLMService.swift */; };
 		FED4BCEB50B2EE9C63A70C86 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBCF2ED2A0A978F71D7086D1 /* Foundation.framework */; };
+		953003A537FF42F38776C616 /* DebugServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 144DA1F770A54FD98BC4F9F1 /* DebugServer.swift */; };
+		55593FCBBC3349C2A965D695 /* DebugViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0647FCD2DD3B4A11ADC62D81 /* DebugViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +64,8 @@
 		E5106270A5CA6793A48275A4 /* LLMService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		EBCF2ED2A0A978F71D7086D1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		F6CBFF372F7D8D170375FD66 /* Lingrove.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lingrove.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		144DA1F770A54FD98BC4F9F1 /* DebugServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugServer.swift; path = Core/DebugServer.swift; sourceTree = "<group>"; };
+		0647FCD2DD3B4A11ADC62D81 /* DebugViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DebugViews.swift; path = DebugViews.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +136,8 @@
 		A70E3FED0697FD4C3E50C7D0 /* Lingrove */ = {
 			isa = PBXGroup;
 			children = (
+				144DA1F770A54FD98BC4F9F1 /* DebugServer.swift */,
+				0647FCD2DD3B4A11ADC62D81 /* DebugViews.swift */,
 				E3141EA1A801FFACD7914DE9 /* LingroveApp.swift */,
 				424092A96CD971389484FF48 /* Module.swift */,
 				860DA6FB0A6340F0C8FDE37D /* ModuleStore.swift */,
@@ -280,7 +285,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F0589B18B6221B63FA1AA49 /* HostConfig.json in Resources */,
 				AA1800000000000000000001 /* Localizable.xcstrings in Resources */,
 				9BDCF3F994E758EB69D23EE1 /* Assets.xcassets in Resources */,
 			);
@@ -304,6 +308,8 @@
 			);
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/BuiltinModules",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/HostConfig.json",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/BuiltinModuleHashes.json",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -324,6 +330,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				953003A537FF42F38776C616 /* DebugServer.swift in Sources */,
+				55593FCBBC3349C2A965D695 /* DebugViews.swift in Sources */,
 				141489A826CF22B06D03ED1D /* LingroveApp.swift in Sources */,
 				37A0C4ECCF69C034B7FC4DC6 /* Module.swift in Sources */,
 				7B2BB5E4C35DE26F4CF9A1FD /* ModuleStore.swift in Sources */,
@@ -506,6 +514,10 @@
 				DEVELOPMENT_TEAM = A23G28RL2L;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				EXCLUDED_SOURCE_FILE_NAMES = (
+					DebugServer.swift,
+					DebugViews.swift,
+				);
 				INFOPLIST_FILE = Lingrove/Resources/ReleaseInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Lingrove;
 				INFOPLIST_KEY_CFBundleName = Lingrove;

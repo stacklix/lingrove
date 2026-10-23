@@ -61,7 +61,180 @@ final class GitHubBuildNetwork: URLProtocol, @unchecked Sendable {
 }
 #endif
 
+final class DebugCatalogNetwork: URLProtocol, @unchecked Sendable {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let url = request.url!
+        let body: Data
+        let status: Int
+        switch url.path {
+        case "/development/snapshot/catalog.snapshot.json":
+            XCTAssertEqual(request.httpMethod, "GET")
+            let module = Module(id: "verso", name: "Verso", version: "20261023", entry: "index.html",
+                                minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+            body = url.host == "invalid.example" ? Data("invalid".utf8)
+                : try! JSONEncoder().encode(Catalog(modules: [module]))
+            status = url.host == "missing-catalog.example" ? 404 : 200
+        case "/development/snapshot/app/verso/index.html":
+            XCTAssertEqual(request.httpMethod, "HEAD")
+            body = Data()
+            status = url.host == "missing-entry.example" ? 404 : 200
+        default:
+            XCTFail("Connection test must only use the selected server's snapshot catalog: \(url)")
+            body = Data()
+            status = 404
+        }
+        let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+
+final class ModuleCatalogNetwork: URLProtocol, @unchecked Sendable {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let url = request.url!
+        XCTAssertTrue(["/catalog.json", "/snapshot/catalog.snapshot.json"].contains(url.path))
+        // A forced refresh simulates a catalog disappearing after a successful check.
+        let status = url.query == nil ? 200 : 404
+        var module = Module(id: "verso", name: "Verso", version: "20261023", entry: "index.html",
+                            minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        module.webUrl = "https://catalog.example/snapshot/app/verso/index.html"
+        if url.path == "/catalog.json" {
+            module.downloadUrl = "https://catalog.example/packages/verso-20261023.zip"
+            module.sha256 = String(repeating: "a", count: 64)
+            module.size = 3
+        }
+        let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: try! JSONEncoder().encode(Catalog(modules: [module])))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+
 final class RuntimeTests: XCTestCase {
+    #if DEBUG
+    @MainActor func testDebugCatalogFailureLoadsLocalResourcesWithoutServerEntry() async throws {
+        try XCTSkipUnless(DebugServer.available)
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let builtin = root.appendingPathComponent("builtin")
+        let directory = builtin.appendingPathComponent("verso")
+        let suite = "debug-catalog-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer {
+            defaults.removePersistentDomain(forName: suite)
+            try? FileManager.default.removeItem(at: root)
+        }
+        defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        DebugServerSettings(addresses: [.init(id: "debug", url: "http://localhost:8000")], activeID: "debug").save(defaults: defaults)
+        let module = Module(id: "verso", name: "Verso", version: "20261023", entry: "index.html",
+                            minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try JSONEncoder().encode(module).write(to: directory.appendingPathComponent("manifest.json"))
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [ModuleCatalogNetwork.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        // The ordinary URL must never be consulted in debug mode.
+        let config = HostConfiguration(catalogURL: "https://wrong.example/ordinary.json",
+                                       snapshotCatalogURL: "https://catalog.example/snapshot/catalog.snapshot.json")
+        let store = ModuleStore(root: root.appendingPathComponent("state"), config: config, session: session,
+                                builtinRoot: builtin, defaults: defaults)
+        XCTAssertNil(store.remoteEntryURL(for: module))
+        let succeeded = await store.checkForUpdates()
+        XCTAssertTrue(succeeded)
+        XCTAssertEqual(store.remoteEntryURL(for: module)?.absoluteString, "http://localhost:8000/snapshot/app/verso/index.html")
+        let refreshed = await store.checkForUpdates(forceRefresh: true)
+        XCTAssertFalse(refreshed)
+        XCTAssertEqual(store.modules, [module])
+        XCTAssertNil(store.remoteEntryURL(for: module))
+        XCTAssertEqual(store.directory(for: module), directory)
+    }
+    #endif
+
+    @MainActor func testMissingCatalogUsesCurrentBuiltinsAndPreservesStoredData() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let builtin = root.appendingPathComponent("builtin")
+        let state = root.appendingPathComponent("state")
+        let suite = "builtin-catalog-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer {
+            defaults.removePersistentDomain(forName: suite)
+            try? FileManager.default.removeItem(at: root)
+        }
+        let module = Module(id: "verso", name: "Verso", version: "20261023", entry: "index.html",
+                            minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        var downloaded = module
+        downloaded.version = "20261024"
+        downloaded.sha256 = String(repeating: "a", count: 64)
+        var obsolete = module
+        obsolete.id = "lector"
+        let builtinDirectory = builtin.appendingPathComponent(module.id)
+        let downloadedDirectory = state.appendingPathComponent("Modules/verso/\(downloaded.resourceIdentity)")
+        for (directory, manifest) in [(builtinDirectory, module), (downloadedDirectory, downloaded)] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try JSONEncoder().encode(manifest).write(to: directory.appendingPathComponent("manifest.json"))
+        }
+        let catalogURL = "https://catalog.example/catalog.json"
+        let cachedCatalog = try JSONEncoder().encode([catalogURL: Catalog(modules: [obsolete])])
+        try cachedCatalog.write(to: state.appendingPathComponent("catalogs.json"))
+        let registry = [obsolete.id: ModuleStore.Installed(active: obsolete, healthy: true),
+                        module.id: ModuleStore.Installed(active: downloaded, healthy: true)]
+        try JSONEncoder().encode(registry).write(to: state.appendingPathComponent("registry.json"))
+        let userData = Data("user article".utf8)
+        try userData.write(to: state.appendingPathComponent("article.json"))
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [ModuleCatalogNetwork.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        func openStore() -> ModuleStore {
+            ModuleStore(root: state, config: HostConfiguration(catalogURL: catalogURL), session: session,
+                        builtinRoot: builtin, defaults: defaults)
+        }
+        let store = openStore()
+        XCTAssertEqual(store.modules, [module])
+        XCTAssertEqual(store.directory(for: module), builtinDirectory)
+        let succeeded = await store.checkForUpdates()
+        XCTAssertTrue(succeeded)
+        XCTAssertEqual(store.modules.first?.sha256, downloaded.sha256)
+        XCTAssertEqual(store.modules.first?.version, downloaded.version)
+        XCTAssertEqual(store.directory(for: downloaded), downloadedDirectory)
+        // Reopening never restores a catalog or app list from a previous session.
+        XCTAssertEqual(openStore().modules, [module])
+        let refreshed = await store.checkForUpdates(forceRefresh: true)
+        XCTAssertFalse(refreshed)
+        XCTAssertEqual(store.modules, [module])
+        XCTAssertEqual(store.directory(for: module), builtinDirectory)
+        XCTAssertTrue(store.blocked.isEmpty)
+        XCTAssertEqual(try Data(contentsOf: state.appendingPathComponent("catalogs.json")), cachedCatalog)
+        XCTAssertEqual(try Data(contentsOf: state.appendingPathComponent("article.json")), userData)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: downloadedDirectory.appendingPathComponent("manifest.json").path))
+    }
+    #if DEBUG
+    func testDebugConnectionUsesSelectedServerSnapshotCatalog() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [DebugCatalogNetwork.self]
+        let message = try await DebugServer.testConnection("https://debug.example/development", configuration: configuration)
+        XCTAssertEqual(message, "连接成功，1 个子应用入口均可访问。")
+        for host in ["missing-catalog.example", "invalid.example", "missing-entry.example"] {
+            do {
+                _ = try await DebugServer.testConnection("https://\(host)/development", configuration: configuration)
+                XCTFail("Invalid debug server must not enable debug mode: \(host)")
+            } catch {
+                if host == "missing-entry.example" {
+                    XCTAssertTrue(error.localizedDescription.contains("/snapshot/app/verso/index.html 返回 HTTP 404"))
+                }
+            }
+        }
+    }
+    #endif
+
+    #if DEBUG
     #if DEBUG
     func testGitHubBuildStatusUsesSavedTokenAndCurrentAttempt() async throws {
         let configuration = URLSessionConfiguration.ephemeral
@@ -74,7 +247,9 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(snapshot?.run.runAttempt, 2)
         XCTAssertEqual(snapshot?.jobs.first?.activeStep, "Archive")
     }
+    #endif
 
+    #if DEBUG
     func testGitHubBuildStatusReadsWithoutToken() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [GitHubBuildNetwork.self]
@@ -86,6 +261,8 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(snapshot?.run.id, 123)
         XCTAssertEqual(snapshot?.jobs.first?.activeStep, "Archive")
     }
+    #endif
+
     #endif
 
     func testHostAppUpdateComparesVersionThenNumericBuild() {
@@ -129,6 +306,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(reopened.modules.map(\.id), ["beta", "gamma", "alpha"])
     }
 
+    #if DEBUG
     @MainActor func testUnavailableDebugServerFallsBackLocallyAndReloadRetriesServer() async throws {
         try XCTSkipUnless(DebugServer.available)
         let defaults = UserDefaults.standard
@@ -149,7 +327,7 @@ final class RuntimeTests: XCTestCase {
         let ready = expectation(description: "Local fallback bridge ready")
         var startupFailures = 0
         var failures = 0
-        let page = ModulePage(module: module, directory: directory, onReady: { ready.fulfill() }, onFailure: { _ in failures += 1 }, onStartupFailure: { startupFailures += 1 }, refreshing: true)
+        let page = ModulePage(module: module, directory: directory, onReady: { ready.fulfill() }, onFailure: { _ in failures += 1 }, onStartupFailure: { startupFailures += 1 }, remoteEntryURL: { DebugServer.entryURL(for: module) }, refreshing: true)
         defer { page.close() }
         let remoteRuntime = page.runtime!
         await fulfillment(of: [ready], timeout: 30)
@@ -160,7 +338,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(page.failure)
         XCTAssertFalse(page.isLoading)
         XCTAssertFalse(page.isReloading)
-        XCTAssertEqual(page.reloadMessage, "服务器不可用，已加载本地资源")
+        XCTAssertEqual(page.reloadMessage, "网页不可用，已加载本地资源")
         XCTAssertEqual(startupFailures, 0)
         XCTAssertEqual(failures, 0)
         remoteRuntime.onFailure("stale failure")
@@ -173,6 +351,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(startupFailures, 1)
         XCTAssertEqual(failures, 1)
     }
+    #endif
 
     @MainActor func testBundledPronunciationDecodesOffline() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -235,6 +414,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(page.webView.scrollView.subviews.filter {$0 is InlineHandwriting}.count,0)
     }
 
+    #if DEBUG
     @MainActor func testDebugHTTPPageCanUseHostBridge() async throws {
         let server = try NWListener(using: .tcp, on: .any)
         let listening = expectation(description: "HTTP server ready")
@@ -254,7 +434,7 @@ final class RuntimeTests: XCTestCase {
         let entry = URL(string: "http://127.0.0.1:\(port.rawValue)/remote-test/index.html")!
         let module = Module(id: "remote-test", name: "Remote", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let ready = expectation(description: "Remote HTTP page bridge handshake")
-        let runtime = Runtime(module: module, directory: FileManager.default.temporaryDirectory, onReady: { ready.fulfill() }, onFailure: { XCTFail($0) }, debugEntryURL: entry)
+        let runtime = Runtime(module: module, directory: FileManager.default.temporaryDirectory, onReady: { ready.fulfill() }, onFailure: { XCTFail($0) }, remoteEntryURL: entry)
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
         config.userContentController.addScriptMessageHandler(runtime, contentWorld: .page, name: "lingrove")
@@ -268,6 +448,9 @@ final class RuntimeTests: XCTestCase {
         XCTAssertTrue(runtime.accepts(entry))
         XCTAssertFalse(runtime.accepts(URL(string: "lingrove://remote-test/index.html")!))
     }
+    #endif
+
+    #if DEBUG
     func testDebugModeSwitchDefaultsOffAndDisablesRemoteResources() throws {
         try XCTSkipUnless(DebugServer.available)
         let defaults = UserDefaults.standard
@@ -289,13 +472,16 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(DebugServerSettings.load(defaults: defaults).activeAddress, "http://localhost:8000")
         defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         XCTAssertEqual(DebugServer.entryURL(for: module)?.absoluteString, "http://localhost:8000/snapshot/app/switch-test/index.html")
-        XCTAssertTrue(HostConfiguration.usesBundledResources())
+        XCTAssertEqual(HostConfiguration.resourceMode(), .debug)
         defaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         XCTAssertFalse(DebugServer.enabled)
         XCTAssertNil(DebugServer.entryURL(for: module))
         XCTAssertFalse(DebugServer.canRefresh)
-        XCTAssertFalse(HostConfiguration.usesBundledResources())
+        XCTAssertEqual(HostConfiguration.resourceMode(), .bundled)
     }
+    #endif
+
+    #if DEBUG
     func testDebugServerAddressAndNavigationIsolation() throws {
         XCTAssertEqual(try DebugServer.normalized("  http://192.168.1.2:8000/assets  "), "http://192.168.1.2:8000/assets/")
         XCTAssertEqual(try DebugServer.normalized("  "), "")
@@ -309,6 +495,9 @@ final class RuntimeTests: XCTestCase {
             XCTAssertFalse(DebugServer.allows(URL(string: raw)!, entry: entry))
         }
     }
+    #endif
+
+    #if DEBUG
     @MainActor func testDebugReloadReportsReadyAndFailureOnlyAfterReload() throws {
         let originalServers = UserDefaults.standard.object(forKey: DebugServer.preferenceKey)
         UserDefaults.standard.removeObject(forKey: DebugServer.preferenceKey)
@@ -318,7 +507,7 @@ final class RuntimeTests: XCTestCase {
         defer { UserDefaults.standard.set(originalEnabled, forKey: HostConfiguration.resourceModePreferenceKey) }
         let module = Module(id: "feedback-test", name: "Feedback", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         var messages: [String] = []
-        var states: [ModuleReloadState] = []
+        var states: [ModuleLoadState] = []
         let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in }, onReloadResult: { message, state in messages.append(message); states.append(state) })
         defer { page.close() }
         XCTAssertTrue(page.isLoading)
@@ -349,9 +538,12 @@ final class RuntimeTests: XCTestCase {
         page.runtime.onReady()
         XCTAssertEqual(page.reloadMessage, "本地资源重新加载成功")
     }
+    #endif
+
+    #if DEBUG
     func testListRefreshStatusExpiresWithoutDiscardingHistory() {
         let completedAt = Date(timeIntervalSince1970: 1_000)
-        for state in [ModuleReloadState.succeeded, .failed] {
+        for state in [ModuleLoadState.succeeded, .failed] {
             let record = ModuleReloadRecord(state: state, message: "result", completedAt: completedAt)
             XCTAssertEqual(record.listState(at: completedAt), state)
             XCTAssertEqual(record.listState(at: completedAt.addingTimeInterval(4.999)), state)
@@ -363,7 +555,9 @@ final class RuntimeTests: XCTestCase {
         let loading = ModuleReloadRecord(state: .loading, message: "正在刷新…", completedAt: completedAt)
         XCTAssertEqual(loading.listState(at: completedAt.addingTimeInterval(60)), .loading)
     }
+    #endif
 
+    #if DEBUG
     @MainActor func testDebugReloadReportsServerSuccessAndLocalFallback() throws {
         try XCTSkipUnless(DebugServer.available)
         let originalMode = UserDefaults.standard.object(forKey: HostConfiguration.resourceModePreferenceKey)
@@ -375,17 +569,17 @@ final class RuntimeTests: XCTestCase {
         let module = Module(id: "server-feedback", name: "Server", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let serverURL = try XCTUnwrap(DebugServer.entryURL(for: module))
         var sources: [ModuleResourceSource] = []
-        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in }, onResourceSource: { sources.append($0) })
+        let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in }, onResourceSource: { sources.append($0) }, remoteEntryURL: { DebugServer.entryURL(for: module) })
         defer { page.close() }
         XCTAssertEqual(sources.last, .loading(serverURL))
         page.runtime.onReady()
-        let serverSource = ModuleResourceSource.debugServer(serverURL)
+        let serverSource = ModuleResourceSource.web(serverURL)
         XCTAssertEqual(sources.last, serverSource, "Initial loads also report the actual source")
         page.reload()
         XCTAssertEqual(sources.last, .loading(serverURL))
         XCTAssertTrue(page.isReloading)
         page.runtime.onReady()
-        XCTAssertEqual(page.reloadMessage, "服务器资源刷新成功")
+        XCTAssertEqual(page.reloadMessage, "网页资源刷新成功")
         XCTAssertEqual(sources.last, serverSource)
         XCTAssertFalse(page.isReloading)
         page.reload()
@@ -398,7 +592,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(page.failure)
         XCTAssertTrue(page.isReloading)
         page.runtime.onReady()
-        XCTAssertEqual(page.reloadMessage, "服务器不可用，已加载本地资源")
+        XCTAssertEqual(page.reloadMessage, "网页不可用，已加载本地资源")
         XCTAssertEqual(sources.last, .local)
         XCTAssertFalse(page.isReloading)
         page.reload()
@@ -406,6 +600,9 @@ final class RuntimeTests: XCTestCase {
         page.runtime.onFailure("本地资源损坏")
         XCTAssertEqual(sources.last, .failed)
     }
+    #endif
+
+    #if DEBUG
     @MainActor func testDebugReloadAllIncludesUnopenedModulesAndReportsIndividualResults() async throws {
         try XCTSkipUnless(DebugServer.available)
         let originalMode = UserDefaults.standard.object(forKey: HostConfiguration.resourceModePreferenceKey)
@@ -471,6 +668,8 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(pages.reloadRecords["empty"]?.message, "暂无已安装的应用。")
         XCTAssertTrue(pages.resourceSources.isEmpty)
     }
+    #endif
+
     @MainActor func testReloadRecreatesWebViewAndClosesOldRuntime() throws {
         let module = Module(id: "reload-test", name: "Reload", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         let page = ModulePage(module: module, directory: FileManager.default.temporaryDirectory, onReady: {}, onFailure: { _ in })

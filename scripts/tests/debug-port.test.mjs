@@ -1,6 +1,27 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { DEFAULT_DEBUG_PORT, ensureDebugPort } from '../debug-port.mjs';
+import { createServer } from 'node:net';
+import { DEFAULT_DEBUG_PORT, ensureDebugPort, findPortProcesses } from '../debug-port.mjs';
+
+test(
+  'Windows identifies the actual listener without terminating it',
+  { skip: process.platform !== 'win32' },
+  async (t) => {
+    const server = createServer();
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    t.after(() => new Promise((resolve) => server.close(resolve)));
+    const processes = await findPortProcesses(server.address().port);
+    const owner = processes.find((item) => item.pid === process.pid);
+    assert.ok(owner);
+    assert.ok(owner.user);
+    assert.ok(Number.isFinite(Date.parse(owner.started)));
+    assert.ok(owner.command.includes('node'));
+    assert.equal(server.listening, true);
+  },
+);
 
 const listener = {
   pid: 123,
