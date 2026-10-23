@@ -166,8 +166,10 @@ struct ModuleReloadRecord: Codable, Equatable {
     private var isRecovering = false
     @Published private(set) var isLoading = true
     @Published private(set) var isRootPage = true
+    @Published private(set) var backgroundColor = LingroveTheme.background
     private(set) var runtime: Runtime!
     private(set) var webView: WKWebView!
+    private var backgroundObservation: NSKeyValueObservation?
     private var offset: CGPoint?
     @Published private(set) var generation = UUID()
     #if DEBUG
@@ -337,7 +339,17 @@ struct ModuleReloadRecord: Codable, Equatable {
         webView.scrollView.keyboardDismissMode = .onDrag
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
         webView.isOpaque = false
-        webView.backgroundColor = LingroveTheme.background
+        webView.backgroundColor = backgroundColor
+        // WebKit derives this color from the document's html/body backgrounds.
+        // Keep native safe areas in sync with CSS, including appearance changes.
+        backgroundObservation = webView.observe(\.underPageBackgroundColor, options: [.initial, .new]) { [weak self] view, _ in
+            MainActor.assumeIsolated {
+                guard let self, self.webView === view,
+                      let color = view.underPageBackgroundColor,
+                      !self.backgroundColor.isEqual(color) else { return }
+                self.backgroundColor = color
+            }
+        }
         webView.navigationDelegate = runtime
         runtime.webView = webView
         #if DEBUG
@@ -372,6 +384,8 @@ struct ModuleReloadRecord: Codable, Equatable {
         }
     }
     func close() {
+        backgroundObservation?.invalidate()
+        backgroundObservation = nil
         runtime.close()
         webView.stopLoading()
         webView.navigationDelegate = nil
@@ -419,7 +433,7 @@ struct ModuleScreen: View {
                             Text("正在加载页面").font(.subheadline).foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color(uiColor: LingroveTheme.background))
+                        .background(Color(uiColor: page.backgroundColor))
                         .accessibilityIdentifier("module-loading")
                         .transition(.opacity)
                     }
@@ -428,7 +442,7 @@ struct ModuleScreen: View {
             }
         }
         .ignoresSafeArea(.container, edges: .bottom)
-        .background(Color(uiColor: LingroveTheme.background).ignoresSafeArea())
+        .background(Color(uiColor: page.backgroundColor).ignoresSafeArea())
         .overlay(alignment: .topLeading) {
             HStack(spacing: 8) {
                 if page.isRootPage || page.failure != nil || page.isLoading {

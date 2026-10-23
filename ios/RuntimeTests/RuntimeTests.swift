@@ -897,6 +897,59 @@ final class RuntimeTests: XCTestCase {
         XCTAssertEqual(failures, 1)
         XCTAssertEqual(startupFailures, 0)
     }
+    @MainActor func testPageBackgroundTracksAppearanceAndCachedDocumentChanges() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try Data("""
+            <html><head><style>
+            html,body { height:100%; margin:0; background:#f3f6fb; }
+            @media(prefers-color-scheme:dark) { html,body { background:#151c29; } }
+            </style></head><body><script src="ready.js"></script></body></html>
+            """.utf8).write(to: directory.appendingPathComponent("index.html"))
+        try Data("window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}})".utf8)
+            .write(to: directory.appendingPathComponent("ready.js"))
+        let module = Module(id: "background-test", name: "Background", version: "20260101", entry: "index.html", minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let ready = expectation(description: "background page ready")
+        let page = ModulePage(module: module, directory: directory, onReady: { ready.fulfill() }, onFailure: { XCTFail($0) })
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previousWindow = scene.windows.first(where: \.isKeyWindow)
+        let window = UIWindow(windowScene: scene)
+        let controller = UIViewController()
+        window.rootViewController = controller
+        window.overrideUserInterfaceStyle = .light
+        page.webView.frame = controller.view.bounds
+        page.webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        controller.view.addSubview(page.webView)
+        window.makeKeyAndVisible()
+        defer {
+            page.close()
+            page.webView.removeFromSuperview()
+            window.isHidden = true
+            previousWindow?.makeKeyAndVisible()
+        }
+        func waitForBackground(_ rgb: Int) async {
+            let updated = expectation(description: "page background \(rgb)")
+            let subscription = page.$backgroundColor.filter { color in
+                var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+                guard color.getRed(&red, green: &green, blue: &blue, alpha: &alpha) else { return false }
+                return abs(red - CGFloat((rgb >> 16) & 255) / 255) < 0.005
+                    && abs(green - CGFloat((rgb >> 8) & 255) / 255) < 0.005
+                    && abs(blue - CGFloat(rgb & 255) / 255) < 0.005 && alpha > 0.99
+            }.first().sink { _ in updated.fulfill() }
+            await fulfillment(of: [updated], timeout: 10)
+            subscription.cancel()
+        }
+        await fulfillment(of: [ready], timeout: 15)
+        await waitForBackground(0xf3f6fb)
+        window.overrideUserInterfaceStyle = .dark
+        await waitForBackground(0x151c29)
+        page.detach()
+        _ = try await page.webView.evaluateJavaScript("document.documentElement.style.backgroundColor='#20332f';document.body.style.backgroundColor='#20332f'")
+        await waitForBackground(0x20332f)
+        page.restorePosition()
+        await waitForBackground(0x20332f)
+    }
     @MainActor func testPagePreservesDOMAndJavaScriptAfterDetaching() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
