@@ -11,7 +11,7 @@ repository = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='lingrove-channels-') as temporary:
     root = Path(temporary)
     (root / 'scripts').mkdir()
-    for name in ['build-version.mjs', 'build-channels.mjs', 'build-modules.mjs', 'package-modules.mjs', 'stored-zip.py', 'verify-release.py']:
+    for name in ['build-version.mjs', 'build-channels.mjs', 'build-modules.mjs', 'build-modules-worker.mjs', 'build-lock.py', 'package-modules.mjs', 'stored-zip.py', 'verify-release.py']:
         shutil.copy(repository / 'scripts' / name, root / 'scripts' / name)
     (root / 'app/sentra').mkdir(parents=True)
     (root / 'app/sentra/manifest.json').write_text((repository / 'app/sentra/manifest.json').read_text())
@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix='lingrove-channels-') as temporary:
     (root / 'modules.json').write_text('["sentra"]')
     (root / 'index.html').write_text('home')
     (root / 'source.txt').write_text('tag source')
-    (root / '.gitignore').write_text('dist/\nios/Lingrove/Resources/BuiltinModules/\nios/Lingrove/Resources/BuiltinModuleHashes.json\n')
+    (root / '.gitignore').write_text('node_modules/\ndist/\nios/Lingrove/Resources/BuiltinModules/\nios/Lingrove/Resources/BuiltinModuleHashes.json\n')
     npm = root / 'compiler.cjs'
     npm.write_text('''const fs = require('node:fs');
 if (process.argv[2] === 'ci') process.exit(0);

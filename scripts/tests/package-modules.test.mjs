@@ -13,6 +13,8 @@ test('both channels publish matching ZIP and HTML resources with bundled package
     for (const name of [
       'build-version.mjs',
       'build-modules.mjs',
+      'build-modules-worker.mjs',
+      'build-lock.py',
       'package-modules.mjs',
       'stored-zip.py',
       'verify-release.py',
@@ -191,7 +193,10 @@ test('both channels publish matching ZIP and HTML resources with bundled package
             for (const headers of [{}, { 'Stack-Pass': 'incorrect' }]) {
               const denied = await fetch(`${origin}${target}`, { method, headers });
               assert.equal(denied.status, 401);
-              assert.equal(denied.headers.get('www-authenticate'), 'Stack-Pass realm="Lingrove Debug"');
+              assert.equal(
+                denied.headers.get('www-authenticate'),
+                'Stack-Pass realm="Lingrove Debug"',
+              );
               assert.equal(denied.headers.get('cache-control'), 'no-store');
               assert.equal(await denied.text(), '');
             }

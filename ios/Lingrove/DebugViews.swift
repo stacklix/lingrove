@@ -609,6 +609,8 @@ struct GitHubBuildStatusView: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
+                .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+                .alignmentGuide(.listRowSeparatorTrailing) { $0[.trailing] }
             }
             Link("在 GitHub 查看", destination: URL(string: snapshot.map {
                 "https://github.com/stacklix/lingrove/actions/runs/\($0.run.id)"

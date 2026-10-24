@@ -139,6 +139,8 @@ test('child build requires no native translations and leaves existing native res
     new URL('scripts/build-version.mjs', root),
     path.join(directory, 'scripts/build-version.mjs'),
   );
+  for (const name of ['build-modules-worker.mjs', 'build-lock.py'])
+    await cp(new URL(`scripts/${name}`, root), path.join(directory, 'scripts', name));
   await writeFile(path.join(directory, 'modules.json'), '["independent"]');
   await cp(
     new URL('scripts/package-modules.mjs', root),
@@ -169,12 +171,12 @@ test('child build requires no native translations and leaves existing native res
   );
   await writeFile(
     path.join(directory, 'scripts/stored-zip.py'),
-    `require('node:fs').writeFileSync(process.argv[3], 'archive fixture');`,
+    `import pathlib, sys\npathlib.Path(sys.argv[2]).write_bytes(b'archive fixture')\n`,
   );
   const build = () =>
     spawnSync(process.execPath, ['scripts/build-modules.mjs'], {
       cwd: directory,
-      env: { ...process.env, npm_execpath: compiler, PYTHON: process.execPath },
+      env: { ...process.env, npm_execpath: compiler },
       encoding: 'utf8',
     });
   let result = build();

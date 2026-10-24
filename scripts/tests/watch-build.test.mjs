@@ -23,6 +23,8 @@ test('watches build inputs, including new apps and shared locales, while ignorin
     'package.json',
     'package-lock.json',
     'scripts/build-modules.mjs',
+    'scripts/build-modules-worker.mjs',
+    'scripts/build-lock.py',
     'scripts/stored-zip.py',
   ])
     assert.equal(isBuildInput(file), true, file);

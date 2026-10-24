@@ -7,6 +7,8 @@ import { DEFAULT_DEBUG_PORT, ensureDebugPort } from './debug-port.mjs';
 const rootFiles = new Set(['package.json', 'package-lock.json', 'modules.json', 'index.html']);
 const buildScripts = new Set([
   'build-modules.mjs',
+  'build-modules-worker.mjs',
+  'build-lock.py',
   'build-version.mjs',
   'package-modules.mjs',
   'stored-zip.py',

@@ -425,7 +425,7 @@ final class LingroveUITests: XCTestCase {
         replaceDebugAddress(field, url)
         addressSelection(app, field).tap()
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
-        let token = app.secureTextFields["debug-token-input"]
+        let token = app.textFields["debug-token-input"]
         let result = addressResult(app, field)
         XCTAssertTrue(result.waitForExistence(timeout: 10))
         XCTAssertTrue(result.label.contains("HTTP 401"))

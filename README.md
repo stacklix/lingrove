@@ -261,6 +261,8 @@ xcodebuild -project ios/Lingrove.xcodeproj -scheme Lingrove \
 
 ## 调试模式与服务器资源
 
+手动构建、自动监听和 Release 构建共用 `node_modules/.cache/lingrove/build.lock` 系统文件锁，从清理 `dist/` 到编译、打包和同步内置资源全程串行执行。已有构建运行时，新构建会提示等待；构建结束、失败或持锁进程退出后系统自动释放锁，无需删除锁文件。锁文件保留在 `dist/` 外，不随构建清理，也不提交到 Git。
+
 默认 `npm run build` 在 `snapshot/` 下输出不压缩的 JS/CSS、source map、`catalog.snapshot.json` 和 `packages/` ZIP，并更新离线内置资源及其 ZIP hash 索引。`npm run build:release` 在 `dist/` 根目录输出正式 HTML、`app/` 下的压缩网页资源、`packages/` 下的 ZIP 和 `catalog.json`。Xcode 的 Run 和默认构建使用 Debug，Archive 使用 Release。宿主设置只有调试模式开关，默认关闭；开启时显示刷新按钮。展开调试模式可添加和选择服务器地址，连接检测通过后才启用。切换、修改或删除当前地址会关闭调试；关闭设置时保存非空地址并重新加载子应用。Release 构建不提供调试服务器设置；ZIP 更新和缺少 ZIP 时的 HTTPS HTML 加载与 Debug 共用。
 
 1. 执行 `npm run debug:serve`，默认使用端口 8000（可用 `npm run debug:serve -- --port 8080` 修改）。构建前先检测端口；若被占用，显示 PID、用户、启动时间和完整命令，并提示 `[Y/n]`，直接回车或输入 `y` 确认后发送终止请求，等待端口释放再继续；输入 `n` 或按 Ctrl+C 取消启动。非交互运行不会终止占用进程。首次 Debug 构建成功后自动启动服务，并持续监听源码修改，启动时打印可用的局域网 IP 地址；若构建期间端口被其他进程占用，会再次询问确认。按 Ctrl+C 同时停止监听、构建和服务。若已有服务在运行，可另开终端执行 `npm run build:watch`，只启用自动构建。

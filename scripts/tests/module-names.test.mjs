@@ -11,18 +11,24 @@ test('a partial app rename fails before deleting outputs or compiling', async (t
   const directory = await mkdtemp(path.join(tmpdir(), 'lingrove-names-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
   await mkdir(path.join(directory, 'scripts'));
-  for (const file of ['build-modules.mjs', 'build-version.mjs'])
+  for (const file of [
+    'build-modules.mjs',
+    'build-modules-worker.mjs',
+    'build-lock.py',
+    'build-version.mjs',
+  ])
     await cp(new URL(`scripts/${file}`, root), path.join(directory, 'scripts', file));
   await writeFile(path.join(directory, 'scripts/package-modules.mjs'), '');
   await mkdir(path.join(directory, 'app/example'), { recursive: true });
   await writeFile(path.join(directory, 'modules.json'), '["example"]');
   const compiler = path.join(directory, 'compiler.cjs');
   await writeFile(compiler, `require('node:fs').writeFileSync('compiled', 'yes');`);
-  const build = () => spawnSync(process.execPath, ['scripts/build-modules.mjs'], {
-    cwd: directory,
-    env: { ...process.env, npm_execpath: compiler },
-    encoding: 'utf8',
-  });
+  const build = () =>
+    spawnSync(process.execPath, ['scripts/build-modules.mjs'], {
+      cwd: directory,
+      env: { ...process.env, npm_execpath: compiler },
+      encoding: 'utf8',
+    });
   const manifest = { id: 'example', name: 'Example', entry: 'index.html' };
   const pkg = { name: '@lingrove/example' };
   const html = '<title>Example · Practice</title>';
@@ -48,7 +54,10 @@ test('a partial app rename fails before deleting outputs or compiling', async (t
     const invalid = build();
     assert.notEqual(invalid.status, 0);
     assert.match(invalid.stderr, message);
-    assert.equal(await readFile(path.join(directory, 'dist/previous'), 'utf8'), 'keep until validation passes');
+    assert.equal(
+      await readFile(path.join(directory, 'dist/previous'), 'utf8'),
+      'keep until validation passes',
+    );
     await assert.rejects(readFile(path.join(directory, 'compiled')), { code: 'ENOENT' });
   }
 });

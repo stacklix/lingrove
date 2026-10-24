@@ -355,7 +355,7 @@ struct HomeView: View {
                         NavigationStack {
                             Form {
                                 Section {
-                                    SecureField("Token", text: $debugTokenDraft)
+                                    TextField("Token", text: $debugTokenDraft)
                                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                                         .keyboardType(.asciiCapable)
                                         .accessibilityIdentifier("debug-token-input")
