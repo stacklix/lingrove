@@ -59,6 +59,30 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         debugSettings = .init(addresses: [.init(id: "empty", url: "  ")], activeID: "empty")
         debugSettings.save(defaults: debugSettingsDefaults)
         check(debugSettingsDefaults.object(forKey: DebugServer.preferenceKey) == nil, "no debug configuration is saved when every row is empty")
+        debugSettings = .init(addresses: [.init(id: "auth", url: "https://debug.example/development", requiresToken: true)], activeID: "auth")
+        debugSettings.save(defaults: debugSettingsDefaults)
+        check(DebugServerSettings.load(defaults: debugSettingsDefaults).activeServer?.requiresToken == true, "debug authentication status persists per address")
+        debugSettingsDefaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        for path in ["catalog.snapshot.json", "app/verso/assets/index.js", "packages/verso.zip"] {
+            check(DebugServer.configuredAddress(for: URL(string: "https://debug.example/development/snapshot/\(path)")!, defaults: debugSettingsDefaults) != nil, "debug authentication covers \(path)")
+        }
+        for raw in ["https://other.example/development/snapshot/app/verso/index.html", "http://debug.example/development/snapshot/app/verso/index.html", "https://debug.example:444/development/snapshot/app/verso/index.html", "https://debug.example/snapshot/catalog.snapshot.json", "https://debug.example/development/snapshot-evil/app/index.html", "https://debug.example/development/catalog.json", "https://debug.example/v1/chat/completions"] {
+            check(DebugServer.configuredAddress(for: URL(string: raw)!, defaults: debugSettingsDefaults) == nil, "debug Token excluded from \(raw)")
+        }
+        debugSettingsDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        check(DebugServer.configuredAddress(for: URL(string: "https://debug.example/development/snapshot/catalog.snapshot.json")!, defaults: debugSettingsDefaults) == nil, "bundled mode never attaches debug credentials")
+        var authenticatedRequest = URLRequest(url: URL(string: "https://debug.example/")!)
+        try DebugServer.authorize(&authenticatedRequest, token: " Ab12Cd\n")
+        check(authenticatedRequest.value(forHTTPHeaderField: "Stack-Pass") == "Ab12Cd", "debug Token is sent in Stack-Pass header")
+        check(authenticatedRequest.value(forHTTPHeaderField: "Authorization") == nil, "debug authentication does not set Authorization")
+        rejects("debug Token rejects header injection") { _ = try DebugServer.validatedToken("token\r\nX-Injected: true") }
+        for token in ["Ab12Cd", "123456", "ABCdef"] {
+            let validated = try DebugServer.validatedToken(token)
+            check(validated == token, "debug Token accepts six ASCII letters or digits: \(token)")
+        }
+        for token in ["abc12", "abcd123", "abc-12", "中文1234"] {
+            rejects("debug Token rejects invalid format: \(token)") { _ = try DebugServer.validatedToken(token) }
+        }
         #endif
         check(Version("1.10.0")! > Version("1.2.0")!, "semantic version ordering")
         check(Version("../1") == nil && Version("1.2") == nil, "invalid versions rejected")

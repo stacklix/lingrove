@@ -9,6 +9,8 @@ struct DebugAddressRow: View {
     let testing: Bool
     let message: String?
     let failed: Bool
+    let requiresToken: Bool
+    let onToken: () -> Void
     let onSelect: () -> Void
     let onDelete: () -> Void
 
@@ -35,6 +37,13 @@ struct DebugAddressRow: View {
                     .accessibilityLabel("删除调试地址")
                     .accessibilityIdentifier("debug-address-delete-\(serverID)")
             }
+            Button(action: onToken) {
+                Label(requiresToken ? "Token 认证" : "设置 Token", systemImage: requiresToken ? "lock.fill" : "key")
+                    .font(.footnote)
+            }
+            .buttonStyle(.borderless)
+            .disabled(testing)
+            .accessibilityIdentifier("debug-address-token-\(serverID)")
             if testing {
                 HStack(spacing: 6) { ProgressView(); Text("正在测试…") }
                     .font(.footnote)

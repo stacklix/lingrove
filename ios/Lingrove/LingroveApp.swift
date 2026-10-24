@@ -80,6 +80,13 @@ struct HomeView: View {
     @State private var failedAddresses: Set<String> = []
     @State private var connectionTest: Task<Void, Never>?
     @State private var connectionTestID = UUID()
+    @State private var showingDebugTokenPrompt = false
+    @State private var debugTokenAddressID: String?
+    @State private var debugTokenDraft = ""
+    @State private var debugTokenMessage = ""
+    @State private var enableAfterDebugToken = false
+    @State private var retryDebugAddressAfterPrompt: String?
+    @State private var debugCredentialsChanged = false
     @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
     private var debugEnabled: Bool { resourceMode == .debug }
     @State private var initialResourceMode = ChildAppResourceMode.bundled
@@ -236,6 +243,8 @@ struct HomeView: View {
                                             testing: testingAddressID == server.id,
                                             message: connectionMessages[server.id],
                                             failed: failedAddresses.contains(server.id),
+                                            requiresToken: server.requiresToken == true,
+                                            onToken: { editDebugToken(server.id, enableAfterSave: debugEnabled && debugServers.activeID == server.id) },
                                             onSelect: { selectDebugAddress(server.id) },
                                             onDelete: { removeDebugAddress(server.id) }
                                         )
@@ -246,6 +255,11 @@ struct HomeView: View {
                                     .accessibilityIdentifier("debug-add-address")
                                     Text("选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。")
                                         .font(.footnote).foregroundStyle(.secondary)
+                                }
+                                if let server = debugServers.activeServer, server.requiresToken == true {
+                                    Label("当前地址采用 Token 认证", systemImage: "lock.fill")
+                                        .font(.footnote).foregroundStyle(.secondary)
+                                        .accessibilityIdentifier("debug-active-token-auth")
                                 }
                                 if !store.notice.isEmpty {
                                     Text(store.notice).font(.footnote).foregroundStyle(.secondary)
@@ -335,6 +349,38 @@ struct HomeView: View {
                     }
                     .hostSettingsBackground()
                     .environment(\.editMode, $moduleEditMode)
+                    #if DEBUG
+                    .sheet(isPresented: $showingDebugTokenPrompt, onDismiss: finishDebugTokenPrompt) {
+                        NavigationStack {
+                            Form {
+                                Section {
+                                    SecureField("Token", text: $debugTokenDraft)
+                                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                        .keyboardType(.asciiCapable)
+                                        .accessibilityIdentifier("debug-token-input")
+                                } footer: {
+                                    Text(debugTokenMessage)
+                                }
+                                .hostSettingsRowBackground()
+                            }
+                            .hostSettingsBackground()
+                            .navigationTitle("调试服务器 Token")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("取消", role: .cancel) { cancelDebugToken() }
+                                        .accessibilityIdentifier("debug-token-cancel")
+                                }
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("保存") { saveDebugToken() }
+                                        .accessibilityIdentifier("debug-token-save")
+                                }
+                            }
+                        }
+                        .presentationBackground(Color(uiColor: LingroveTheme.background))
+                        .presentationDetents([.medium, .large])
+                    }
+                    #endif
                     .navigationDestination(isPresented: $showingLLMSettings) {
                         LLMSettingsView()
                             .environment(\.editMode, .constant(.inactive))
@@ -427,27 +473,102 @@ struct HomeView: View {
             setResourceMode(.bundled)
             return
         }
+        // Enabling is a pending operation until the server accepts the saved or
+        // newly entered Token. Cancellation must never retain an enabled mode.
+        if debugEnabled { setResourceMode(.bundled) }
         guard let addressID = debugServers.activeID,
               let server = debugServers.addresses.first(where: { $0.id == addressID }) else { return }
         testingAddressID = addressID
         let testID = connectionTestID
         connectionTest = Task { @MainActor in
             do {
-                let message = try await DebugServer.testConnection(server.url)
+                let token = try DebugServerTokenStore.load(address: server.url)
+                let result = try await DebugServer.testConnection(server.url, token: token)
                 guard !Task.isCancelled, connectionTestID == testID, showingSettings else { return }
+                if let index = debugServers.addresses.firstIndex(where: { $0.id == addressID }) {
+                    debugServers.addresses[index].requiresToken = result.requiresToken || !token.isEmpty
+                }
                 // Publish the verified address before enabling server resource loading.
                 debugServers.save()
                 setResourceMode(.debug)
-                connectionMessages[addressID] = message
+                connectionMessages[addressID] = result.message
             } catch {
                 guard !Task.isCancelled, connectionTestID == testID, showingSettings else { return }
                 debugSettingsExpanded = true
                 failedAddresses.insert(addressID)
                 connectionMessages[addressID] = "连接失败：\(error.localizedDescription)"
+                if error is DebugServerAuthenticationError {
+                    if let index = debugServers.addresses.firstIndex(where: { $0.id == addressID }) {
+                        debugServers.addresses[index].requiresToken = true
+                    }
+                    editDebugToken(addressID, enableAfterSave: true, authenticationFailed: true)
+                }
             }
             connectionTest = nil
             testingAddressID = nil
         }
+    }
+    private func editDebugToken(_ id: String, enableAfterSave: Bool, authenticationFailed: Bool = false) {
+        guard let server = debugServers.addresses.first(where: { $0.id == id }) else { return }
+        do {
+            debugTokenDraft = try DebugServerTokenStore.load(address: server.url)
+            debugTokenAddressID = id
+            enableAfterDebugToken = enableAfterSave
+            retryDebugAddressAfterPrompt = nil
+            if enableAfterSave && debugEnabled { setResourceMode(.bundled) }
+            debugTokenMessage = (authenticationFailed ? AppLanguage.text("服务器需要 Token，或已保存的 Token 无效。") + "\n" : "")
+                + server.url + "\n" + AppLanguage.text("Token 必须为 6 位英文字母或数字，区分大小写。")
+                + "\n" + AppLanguage.text("Token 仅保存在本机 Keychain，通过 Stack-Pass 请求头发送。")
+            showingDebugTokenPrompt = true
+        } catch {
+            connectionMessages[id] = error.localizedDescription
+            failedAddresses.insert(id)
+        }
+    }
+    private func saveDebugToken() {
+        guard let id = debugTokenAddressID,
+              let index = debugServers.addresses.firstIndex(where: { $0.id == id }) else { return }
+        do {
+            let token = try DebugServer.validatedToken(debugTokenDraft)
+            try DebugServerTokenStore.save(token, address: debugServers.addresses[index].url)
+            debugServers.addresses[index].requiresToken = !token.isEmpty
+            connectionMessages[id] = nil
+            failedAddresses.remove(id)
+            if debugServers.activeID == id {
+                debugCredentialsChanged = true
+                if debugEnabled { setResourceMode(.bundled) }
+            }
+            debugServers.save()
+            // Wait for dismissal before testing. A fast 401 can then present the
+            // input again without racing the previous presentation's teardown.
+            retryDebugAddressAfterPrompt = enableAfterDebugToken ? id : nil
+            debugTokenDraft = ""
+            showingDebugTokenPrompt = false
+        } catch {
+            connectionMessages[id] = error.localizedDescription
+            failedAddresses.insert(id)
+            debugTokenMessage = error.localizedDescription
+        }
+    }
+    private func cancelDebugToken() {
+        retryDebugAddressAfterPrompt = nil
+        clearConnectionTest()
+        if enableAfterDebugToken { setResourceMode(.bundled) }
+        debugTokenDraft = ""
+        showingDebugTokenPrompt = false
+    }
+    private func finishDebugTokenPrompt() {
+        let retryAddress = retryDebugAddressAfterPrompt
+        retryDebugAddressAfterPrompt = nil
+        if retryAddress == nil {
+            clearConnectionTest()
+            if enableAfterDebugToken { setResourceMode(.bundled) }
+        }
+        enableAfterDebugToken = false
+        debugTokenDraft = ""
+        debugTokenAddressID = nil
+        guard let retryAddress, showingSettings, debugServers.activeID == retryAddress else { return }
+        setDebugEnabled(true)
     }
     private func selectDebugAddress(_ id: String) {
         guard debugServers.activeID != id else { return }
@@ -477,6 +598,11 @@ struct HomeView: View {
         clearConnectionTest()
         debugServers = DebugServerSettings.load()
         debugSettingsExpanded = false
+        debugCredentialsChanged = false
+        debugTokenDraft = ""
+        showingDebugTokenPrompt = false
+        retryDebugAddressAfterPrompt = nil
+        enableAfterDebugToken = false
         initialDebugAddress = DebugServer.activeAddress
         connectionMessages.removeAll()
         failedAddresses.removeAll()
@@ -490,9 +616,13 @@ struct HomeView: View {
     private func finishSettings() {
         #if DEBUG
         clearConnectionTest()
+        debugTokenDraft = ""
+        showingDebugTokenPrompt = false
+        retryDebugAddressAfterPrompt = nil
+        enableAfterDebugToken = false
         if DebugServer.available { debugServers.save() }
         guard DebugServer.available,
-              initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress else { return }
+              initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress || debugCredentialsChanged else { return }
         let expectedMode = resourceMode
         let expectedAddress = DebugServer.activeAddress
         Task { @MainActor in

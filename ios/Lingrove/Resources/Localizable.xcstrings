@@ -5258,6 +5258,248 @@
           }
         }
       }
+    },
+    "Token 认证": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token 认证"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token authentication"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token 認証"
+          }
+        }
+      }
+    },
+    "设置 Token": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置 Token"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set token"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token を設定"
+          }
+        }
+      }
+    },
+    "当前地址采用 Token 认证": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前地址采用 Token 认证"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The selected address uses token authentication"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択中のアドレスは Token 認証を使用します"
+          }
+        }
+      }
+    },
+    "调试服务器 Token": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调试服务器 Token"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Debug server token"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグサーバーの Token"
+          }
+        }
+      }
+    },
+    "服务器需要 Token，或已保存的 Token 无效。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "服务器需要 Token，或已保存的 Token 无效。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server requires a token, or the saved token is invalid."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サーバーには Token が必要です。または保存済みの Token が無効です。"
+          }
+        }
+      }
+    },
+    "调试服务器需要有效的 Token，请输入后重试。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调试服务器需要有效的 Token，请输入后重试。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The debug server requires a valid token. Enter it and try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグサーバーには有効な Token が必要です。入力して再試行してください。"
+          }
+        }
+      }
+    },
+    "无法读取调试 Token，请解锁设备后重试。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取调试 Token，请解锁设备后重试。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to read the debug token. Unlock your device and try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグ用 Token を読み込めません。端末のロックを解除して再試行してください。"
+          }
+        }
+      }
+    },
+    "无法删除调试 Token。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法删除调试 Token。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to delete the debug token."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグ用 Token を削除できません。"
+          }
+        }
+      }
+    },
+    "无法保存调试 Token。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存调试 Token。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to save the debug token."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグ用 Token を保存できません。"
+          }
+        }
+      }
+    },
+    "Token 必须为 6 位英文字母或数字，区分大小写。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token 必须为 6 位英文字母或数字，区分大小写。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The token must be exactly 6 letters or digits (A–Z, a–z, 0–9). It is case-sensitive."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token は半角英数字6文字で入力してください。大文字と小文字は区別されます。"
+          }
+        }
+      }
+    },
+    "Token 仅保存在本机 Keychain，通过 Stack-Pass 请求头发送。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token 仅保存在本机 Keychain，通过 Stack-Pass 请求头发送。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The token is stored only in this device’s Keychain and sent in the Stack-Pass header."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Token はこの端末の Keychain にのみ保存され、Stack-Pass ヘッダーで送信されます。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -301,7 +301,7 @@ struct ModuleReloadRecord: Codable, Equatable {
                               guard let self, self.generation == loadGeneration else { return }
                               self.isRootPage = isRoot
                           })
-        configureWebView(entryURL: remote ?? URL(string: "lingrove://\(module.id)/\(module.entry)")!)
+        configureWebView(entryURL: runtime.resourceEntryURL)
     }
 
     private func configureWebView(entryURL: URL) {
@@ -576,6 +576,16 @@ struct ModuleWebView: UIViewRepresentable {
     private var watchdog: Task<Void, Never>?
     private var inlineHandwriting: InlineHandwriting?
     private let remoteEntryURL: URL?
+    #if DEBUG
+    private let debugResourceBase: URL?
+    private var debugResourceTasks: [ObjectIdentifier: Task<Void, Never>] = [:]
+    #endif
+    var resourceEntryURL: URL {
+        #if DEBUG
+        if debugResourceBase != nil { return URL(string: "lingrove://\(module.id)/\(module.entry)")! }
+        #endif
+        return remoteEntryURL ?? URL(string: "lingrove://\(module.id)/\(module.entry)")!
+    }
     private let onReload: () -> Void
     private let onNavigation: (Bool) -> Void
     private let onProcessTermination: (() -> Void)?
@@ -596,6 +606,13 @@ struct ModuleWebView: UIViewRepresentable {
     }()
     init(module: Module, directory: URL, onReady: @escaping () -> Void, onFailure: @escaping (String) -> Void, networkSession: URLSession? = nil, networkDefaults: UserDefaults = .standard, llmConfiguration: @escaping () throws -> LLMConfiguration = { try LLMStore.load() }, ttsConfiguration: @escaping () throws -> TTSConfiguration = { try TTSStore.load() }, onStartupFailure: @escaping () -> Void = {}, remoteEntryURL: URL? = nil, onReload: @escaping () -> Void = {}, onProcessTermination: (() -> Void)? = nil, onNavigation: @escaping (Bool) -> Void = { _ in }) {
         self.remoteEntryURL = remoteEntryURL
+        #if DEBUG
+        if let remoteEntryURL, DebugServer.configuredAddress(for: remoteEntryURL, defaults: networkDefaults) != nil {
+            var base = remoteEntryURL
+            for _ in module.entry.split(separator: "/") { base.deleteLastPathComponent() }
+            debugResourceBase = base
+        } else { debugResourceBase = nil }
+        #endif
         self.onProcessTermination = onProcessTermination
         self.onReload = onReload
         self.onNavigation = onNavigation
@@ -624,7 +641,14 @@ struct ModuleWebView: UIViewRepresentable {
         ttsPreload?.audio.cancel(); ttsPreload = nil
         for (id, player) in ttsPlayers { player.stop(); networkTasks[id]?.cancel() }
     }
-    func close() { stopTTSPlayback(); closed = true; inlineHandwriting?.detach(); inlineHandwriting = nil; watchdog?.cancel(); for task in networkTasks.values { task.cancel() }; networkTasks.removeAll(); session.invalidateAndCancel() }
+    func close() {
+        stopTTSPlayback(); closed = true; inlineHandwriting?.detach(); inlineHandwriting = nil; watchdog?.cancel()
+        for task in networkTasks.values { task.cancel() }; networkTasks.removeAll()
+        #if DEBUG
+        for task in debugResourceTasks.values { task.cancel() }; debugResourceTasks.removeAll()
+        #endif
+        session.invalidateAndCancel()
+    }
     private func fail(_ reason: String, startupFailure: Bool = true) {
         guard !closed else { return }
         close()
@@ -661,6 +685,9 @@ struct ModuleWebView: UIViewRepresentable {
         decisionHandler(url.map { accepts($0) } == true ? .allow : .cancel)
     }
     func accepts(_ url: URL) -> Bool {
+        #if DEBUG
+        if debugResourceBase != nil { return NetworkPolicy.allowsPage(url, entry: resourceEntryURL) }
+        #endif
         if let remoteEntryURL { return NetworkPolicy.allowsPage(url, entry: remoteEntryURL) }
         return url.scheme == "lingrove" && url.host == module.id
     }
@@ -669,6 +696,12 @@ struct ModuleWebView: UIViewRepresentable {
             guard let url = urlSchemeTask.request.url, url.host == module.id else { throw ModuleError.invalid("资源来源无效") }
             let path = url.path.removingPercentEncoding ?? url.path
             guard !path.contains("\\"), !path.split(separator: "/").contains("..") else { throw ModuleError.invalid("资源路径无效") }
+            #if DEBUG
+            if let debugResourceBase {
+                loadDebugResource(urlSchemeTask, url: url, path: path, base: debugResourceBase)
+                return
+            }
+            #endif
             let file = directory.appendingPathComponent(path == "/" ? module.entry : String(path.dropFirst())).standardizedFileURL.resolvingSymlinksInPath()
             guard file.path.hasPrefix(directory.standardizedFileURL.resolvingSymlinksInPath().path + "/") else { throw ModuleError.invalid("资源越界") }
             var data = try Data(contentsOf: file)
@@ -681,7 +714,43 @@ struct ModuleWebView: UIViewRepresentable {
             urlSchemeTask.didReceive(data); urlSchemeTask.didFinish()
         } catch { urlSchemeTask.didFailWithError(error) }
     }
-    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {}
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
+        #if DEBUG
+        debugResourceTasks.removeValue(forKey: ObjectIdentifier(urlSchemeTask))?.cancel()
+        #endif
+    }
+    #if DEBUG
+    // WebKit does not propagate a main-document Stack-Pass header to relative
+    // scripts, styles, fonts, or fetches. Serve the selected debug module through
+    // the host scheme so every resource is authenticated outside JavaScript.
+    private func loadDebugResource(_ schemeTask: WKURLSchemeTask, url: URL, path: String, base: URL) {
+        let id = ObjectIdentifier(schemeTask)
+        debugResourceTasks[id] = Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer { self.debugResourceTasks.removeValue(forKey: id) }
+            do {
+                let remote = base.appendingPathComponent(path == "/" ? self.module.entry : String(path.dropFirst()))
+                var components = URLComponents(url: remote, resolvingAgainstBaseURL: false)!
+                components.percentEncodedQuery = URLComponents(url: url, resolvingAgainstBaseURL: false)?.percentEncodedQuery
+                var request = URLRequest(url: components.url!, cachePolicy: .reloadIgnoringLocalCacheData)
+                request.timeoutInterval = 30
+                try DebugServer.authorize(&request, defaults: self.networkDefaults)
+                let (data, response) = try await self.session.data(for: request)
+                try Task.checkCancellation()
+                guard !self.closed, self.debugResourceTasks[id] != nil else { return }
+                guard let http = response as? HTTPURLResponse else { throw ModuleError.invalid("服务器未返回有效的 HTTP 响应。") }
+                if http.statusCode == 401 { throw DebugServerAuthenticationError.required }
+                guard http.statusCode == 200 else { throw ModuleError.invalid("网页资源返回 HTTP \(http.statusCode)") }
+                schemeTask.didReceive(URLResponse(url: url, mimeType: http.mimeType, expectedContentLength: data.count, textEncodingName: http.textEncodingName))
+                schemeTask.didReceive(data)
+                schemeTask.didFinish()
+            } catch {
+                guard !Task.isCancelled, !self.closed, self.debugResourceTasks[id] != nil else { return }
+                schemeTask.didFailWithError(error)
+            }
+        }
+    }
+    #endif
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
         guard !closed, message.frameInfo.isMainFrame, message.frameInfo.request.url.map({ accepts($0) }) == true,
               let body = message.body as? [String: Any], body["version"] as? Int == 1,

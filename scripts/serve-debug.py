@@ -4,6 +4,9 @@ import json
 import ipaddress
 import socket
 import re
+import os
+import secrets
+import string
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -28,14 +31,38 @@ def local_addresses():
 
 
 class DebugHandler(SimpleHTTPRequestHandler):
+    def parse_request(self):
+        if not super().parse_request():
+            return False
+        tokens = self.headers.get_all('Stack-Pass', [])
+        expected = self.server.debug_token.encode('utf-8')
+        if len(tokens) != 1 or not secrets.compare_digest(tokens[0].encode('utf-8'), expected):
+            self.send_response(401)
+            self.send_header('WWW-Authenticate', 'Stack-Pass realm="Lingrove Debug"')
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            self.close_connection = True
+            return False
+        return True
+
+    def list_directory(self, path):
+        self.send_error(403, 'Directory listing is disabled')
+        return None
+
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
+        self.send_header('X-Lingrove-Debug-Auth', 'Stack-Pass')
         super().end_headers()
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--port', type=int, default=8000)
     args = parser.parse_args()
+    token = os.environ.get('LINGROVE_DEBUG_TOKEN')
+    if token is None:
+        token = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(6))
+    if not re.fullmatch(r'[A-Za-z0-9]{6}', token):
+        parser.error('LINGROVE_DEBUG_TOKEN must contain exactly 6 ASCII letters or digits (case-sensitive)')
     project = Path(__file__).resolve().parent.parent
     root = project / 'dist'
     try:
@@ -50,9 +77,12 @@ def main():
     if missing:
         parser.error(f'Missing built resources for {", ".join(missing)}. Run npm run build first')
     with ThreadingHTTPServer(('0.0.0.0', args.port), partial(DebugHandler, directory=str(root))) as server:
+        server.debug_token = token
         port = server.server_port
         print(f'Serving {root}', flush=True)
         print(f'  本机访问：http://localhost:{port}', flush=True)
+        print(f'  Token：{token}', flush=True)
+        print('  所有请求须携带 Stack-Pass: <Token>；在手机调试地址中填写 Token。', flush=True)
         addresses = local_addresses()
         for address in addresses:
             print(f'  局域网地址：http://{address}:{port}', flush=True)

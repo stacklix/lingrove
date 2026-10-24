@@ -138,43 +138,111 @@ test('both channels publish matching ZIP and HTML resources with bundled package
     );
     assert.notEqual(invalid.status, 0);
     assert.match(invalid.stderr, /only supported for local snapshot/);
-    const server = spawn('python3', ['scripts/serve-debug.py', '--port', '0'], {
-      cwd: root,
-      env: { ...env, PYTHONUTF8: '1' },
-    });
-    try {
-      const origin = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(
-          () => reject(new Error('Debug server startup timed out')),
-          10000,
-        );
-        let output = '';
-        server.once('error', reject);
-        server.once('exit', (code) => {
-          clearTimeout(timeout);
-          reject(new Error(`Debug server exited: ${code}`));
-        });
-        server.stdout.on('data', (chunk) => {
-          output += chunk;
-          const port = /http:\/\/localhost:(\d+)/.exec(output)?.[1];
-          if (port) {
-            clearTimeout(timeout);
-            resolve(`http://127.0.0.1:${port}`);
-          }
-        });
+    for (const token of ['', 'abc12', 'abcd123', 'abc-12', '中文1234']) {
+      const rejected = spawnSync('python3', ['scripts/serve-debug.py', '--port', '0'], {
+        cwd: root,
+        env: { ...env, PYTHONUTF8: '1', LINGROVE_DEBUG_TOKEN: token },
+        encoding: 'utf8',
       });
-      const catalog = await fetch(`${origin}/snapshot/catalog.snapshot.json`).then((response) =>
-        response.json(),
-      );
-      assert.equal(Object.hasOwn(catalog.modules[0], 'downloadUrl'), false);
-      const html = await fetch(`${origin}/snapshot/app/example/index.html`);
-      assert.equal(html.status, 200);
-      assert.equal(await html.text(), '<p>Example</p>');
-    } finally {
-      if (server.exitCode === null && server.signalCode === null) {
-        const closed = once(server, 'close');
-        server.kill();
-        await closed;
+      assert.notEqual(rejected.status, 0);
+      assert.match(rejected.stderr, /exactly 6 ASCII letters or digits/);
+    }
+    for (const configuredToken of ['Ab12Cd', '123456', 'ABCdef', undefined]) {
+      const serverEnv = { ...env, PYTHONUTF8: '1' };
+      if (configuredToken === undefined) delete serverEnv.LINGROVE_DEBUG_TOKEN;
+      else serverEnv.LINGROVE_DEBUG_TOKEN = configuredToken;
+      const server = spawn('python3', ['scripts/serve-debug.py', '--port', '0'], {
+        cwd: root,
+        env: serverEnv,
+      });
+      try {
+        const { origin, token } = await new Promise((resolve, reject) => {
+          const timeout = setTimeout(
+            () => reject(new Error('Debug server startup timed out')),
+            10000,
+          );
+          let output = '';
+          server.once('error', reject);
+          server.once('exit', (code) => {
+            clearTimeout(timeout);
+            reject(new Error(`Debug server exited: ${code}`));
+          });
+          server.stdout.on('data', (chunk) => {
+            output += chunk;
+            const port = /http:\/\/localhost:(\d+)/.exec(output)?.[1];
+            const token = /Token：([A-Za-z0-9]{6})\r?\n/.exec(output)?.[1];
+            if (port && token) {
+              clearTimeout(timeout);
+              resolve({ origin: `http://127.0.0.1:${port}`, token });
+            }
+          });
+        });
+        assert.match(token, /^[A-Za-z0-9]{6}$/);
+        if (configuredToken !== undefined) assert.equal(token, configuredToken);
+        for (const target of [
+          '/',
+          '/snapshot/catalog.snapshot.json',
+          '/snapshot/app/example/index.html',
+          '/missing',
+        ]) {
+          for (const method of ['GET', 'HEAD', 'POST']) {
+            for (const headers of [{}, { 'Stack-Pass': 'incorrect' }]) {
+              const denied = await fetch(`${origin}${target}`, { method, headers });
+              assert.equal(denied.status, 401);
+              assert.equal(denied.headers.get('www-authenticate'), 'Stack-Pass realm="Lingrove Debug"');
+              assert.equal(denied.headers.get('cache-control'), 'no-store');
+              assert.equal(await denied.text(), '');
+            }
+          }
+        }
+        const queryToken = await fetch(`${origin}/snapshot/catalog.snapshot.json?token=${token}`);
+        assert.equal(queryToken.status, 401);
+        for (const headers of [
+          { Authorization: `Bearer ${token}` },
+          { 'Stack-Pass': `Bearer ${token}` },
+          { 'Stack-Pass': `${token}, ${token}` },
+        ]) {
+          const denied = await fetch(`${origin}/snapshot/catalog.snapshot.json`, { headers });
+          assert.equal(denied.status, 401);
+        }
+        const authenticated = (target, options = {}) =>
+          fetch(`${origin}${target}`, {
+            ...options,
+            headers: { 'Stack-Pass': token },
+          });
+        if (token !== token.toLowerCase()) {
+          const wrongCase = await fetch(`${origin}/snapshot/catalog.snapshot.json`, {
+            headers: { 'Stack-Pass': token.toLowerCase() },
+          });
+          assert.equal(wrongCase.status, 401);
+        }
+        const catalog = await authenticated('/snapshot/catalog.snapshot.json').then((response) =>
+          response.json(),
+        );
+        assert.equal(Object.hasOwn(catalog.modules[0], 'downloadUrl'), false);
+        const html = await authenticated('/snapshot/app/example/index.html');
+        assert.equal(html.status, 200);
+        assert.equal(html.headers.get('x-lingrove-debug-auth'), 'Stack-Pass');
+        const lowercaseHeader = await fetch(`${origin}/snapshot/catalog.snapshot.json`, {
+          headers: { 'stack-pass': token },
+        });
+        assert.equal(lowercaseHeader.status, 200);
+        assert.equal(await html.text(), '<p>Example</p>');
+        const directoryIndex = await authenticated('/snapshot/app/example/');
+        assert.equal(directoryIndex.status, 200);
+        assert.equal(await directoryIndex.text(), '<p>Example</p>');
+        for (const method of ['GET', 'HEAD']) {
+          const listing = await authenticated('/snapshot/app/?sort=name', { method });
+          assert.equal(listing.status, 403);
+          assert.equal(listing.headers.get('cache-control'), 'no-store');
+          assert.doesNotMatch(await listing.text(), /href=|example/);
+        }
+      } finally {
+        if (server.exitCode === null && server.signalCode === null) {
+          const closed = once(server, 'close');
+          server.kill();
+          await closed;
+        }
       }
     }
   } finally {

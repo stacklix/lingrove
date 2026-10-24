@@ -392,6 +392,68 @@ final class LingroveUITests: XCTestCase {
         waitForEnabled(verso); verso.tap()
         XCTAssertTrue(app.webViews.buttons["导入文章"].waitForExistence(timeout: 20))
     }
+    func testDebugTokenFailurePromptsAgainAndCancellationKeepsModeOff() throws {
+        let listener = try NWListener(using: .tcp, on: .any)
+        let ready = expectation(description: "Token protected debug server ready")
+        listener.stateUpdateHandler = { if case .ready = $0 { ready.fulfill() } }
+        listener.newConnectionHandler = { connection in
+            connection.start(queue: .global())
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, _, _ in
+                let request = String(data: data ?? Data(), encoding: .utf8) ?? ""
+                let authorized = request.components(separatedBy: "\r\n").contains { line in
+                    let fields = line.split(separator: ":", maxSplits: 1)
+                    return fields.count == 2 && fields[0].lowercased() == "stack-pass"
+                        && String(fields[1]).trimmingCharacters(in: .whitespaces) == "Ui12Ab"
+                }
+                let catalog = #"{"modules":[{"id":"sentra","name":"Sentra","entry":"index.html","version":"20261023","minHostVersion":"1.3.0","bridgeVersion":1,"stateSchemaVersion":1,"allowedOrigins":[]}]}"#
+                let body = authorized && !request.hasPrefix("HEAD ") ? catalog : ""
+                let status = authorized ? "200 OK" : "401 Unauthorized"
+                let response = "HTTP/1.1 \(status)\r\nContent-Type: application/json\r\nWWW-Authenticate: Stack-Pass realm=\"Lingrove Debug\"\r\nX-Lingrove-Debug-Auth: Stack-Pass\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
+                connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
+            }
+        }
+        listener.start(queue: .global())
+        defer { listener.cancel() }
+        wait(for: [ready], timeout: 5)
+        let url = "http://127.0.0.1:\(try XCTUnwrap(listener.port).rawValue)"
+        let app = XCUIApplication()
+        app.launchArguments += ["-app.language", "zh-Hans", "-AppleLanguages", "(zh-Hans)"]
+        app.launch()
+        defer { app.terminate() }
+        prepareDebugSettings(app)
+        let field = debugFields(app).firstMatch
+        replaceDebugAddress(field, url)
+        addressSelection(app, field).tap()
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        let token = app.secureTextFields["debug-token-input"]
+        XCTAssertTrue(token.waitForExistence(timeout: 10))
+        token.tap(); token.typeText("Bad123")
+        app.buttons["debug-token-save"].tap()
+        XCTAssertTrue(token.waitForExistence(timeout: 10), "A rejected Token must present the input again")
+        app.buttons["debug-token-cancel"].tap()
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
+        app.buttons["settings-back"].tap()
+        XCTAssertFalse(app.buttons["重新加载子应用"].exists)
+        app.buttons["应用设置"].tap()
+        app.buttons["debug-settings-disclosure"].tap()
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        XCTAssertTrue(token.waitForExistence(timeout: 10), "A saved invalid Token must also prompt again")
+        app.buttons["debug-token-cancel"].tap()
+        XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        XCTAssertTrue(token.waitForExistence(timeout: 10))
+        token.tap()
+        token.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Bad123".count))
+        token.typeText("Ui12Ab")
+        app.buttons["debug-token-save"].tap()
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            app.switches["debug-mode-toggle"].firstMatch.value as? String == "1"
+        }, object: nil)
+        wait(for: [enabled], timeout: 15)
+        XCTAssertTrue(app.otherElements["debug-active-token-auth"].exists || app.staticTexts["当前地址采用 Token 认证"].exists)
+        tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+    }
     func testDebugConnectionFormLightMode() { checkDebugConnectionForm(appearance: "light") }
     func testDebugConnectionFormDarkMode() { checkDebugConnectionForm(appearance: "dark") }
     private func checkDebugConnectionForm(appearance: String) {

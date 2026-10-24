@@ -66,6 +66,13 @@ final class DebugCatalogNetwork: URLProtocol, @unchecked Sendable {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
         let url = request.url!
+        if url.host == "authenticated.example", request.value(forHTTPHeaderField: "Stack-Pass") != "Ab12Cd" {
+            let response = HTTPURLResponse(url: url, statusCode: 401, httpVersion: nil,
+                                           headerFields: ["WWW-Authenticate": "Stack-Pass realm=\"Lingrove Debug\""])!
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocolDidFinishLoading(self)
+            return
+        }
         let body: Data
         let status: Int
         switch url.path {
@@ -85,13 +92,52 @@ final class DebugCatalogNetwork: URLProtocol, @unchecked Sendable {
             body = Data()
             status = 404
         }
-        let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!
+        let headers = url.host == "authenticated.example" ? ["X-Lingrove-Debug-Auth": "Stack-Pass"] : [:]
+        let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: headers)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: body)
         client?.urlProtocolDidFinishLoading(self)
     }
     override func stopLoading() {}
 }
+
+#if DEBUG
+final class AuthenticatedDebugResourcesNetwork: URLProtocol, @unchecked Sendable {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let url = request.url!
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Stack-Pass"), "Rs12Ab")
+        XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
+        XCTAssertTrue(url.path.hasPrefix("/development/snapshot/app/auth-test/"))
+        let mime: String
+        let body: String
+        switch url.lastPathComponent {
+        case "index.html":
+            mime = "text/html"
+            body = "<html><head><link rel='stylesheet' href='./style.css'><script type='module' src='./main.js'></script></head><body><img src='./image.svg'></body></html>"
+        case "style.css":
+            mime = "text/css"; body = "body { color: rgb(1, 2, 3); }"
+        case "main.js":
+            mime = "application/javascript"
+            body = "import { ready } from './dependency.js'; window.addEventListener('load', () => { if (getComputedStyle(document.body).color === 'rgb(1, 2, 3)' && document.images[0].naturalWidth === 1) ready(); });"
+        case "dependency.js":
+            mime = "application/javascript"
+            body = "export function ready() { window.webkit.messageHandlers.lingrove.postMessage({version:1,method:'runtime.ready',params:{}}); }"
+        case "image.svg":
+            mime = "image/svg+xml"; body = "<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>"
+        default:
+            XCTFail("Unexpected debug resource: \(url)")
+            client?.urlProtocol(self, didFailWithError: URLError(.fileDoesNotExist)); return
+        }
+        let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: ["Content-Type": mime])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data(body.utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+#endif
 
 final class ModuleCatalogNetwork: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool { true }
@@ -220,7 +266,16 @@ final class RuntimeTests: XCTestCase {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [DebugCatalogNetwork.self]
         let message = try await DebugServer.testConnection("https://debug.example/development", configuration: configuration)
-        XCTAssertEqual(message, "连接成功，1 个子应用入口均可访问。")
+        XCTAssertEqual(message.message, "连接成功，1 个子应用入口均可访问。")
+        XCTAssertFalse(message.requiresToken)
+        for token in ["", "Bad123", "abc12", "abcdef7", "abc-12"] {
+            do {
+                _ = try await DebugServer.testConnection("https://authenticated.example/development", token: token, configuration: configuration)
+                XCTFail("Missing or incorrect Token must request authentication")
+            } catch { XCTAssertTrue(error is DebugServerAuthenticationError) }
+        }
+        let authenticated = try await DebugServer.testConnection("https://authenticated.example/development", token: "Ab12Cd", configuration: configuration)
+        XCTAssertTrue(authenticated.requiresToken)
         for host in ["missing-catalog.example", "invalid.example", "missing-entry.example"] {
             do {
                 _ = try await DebugServer.testConnection("https://\(host)/development", configuration: configuration)
@@ -231,6 +286,39 @@ final class RuntimeTests: XCTestCase {
                 }
             }
         }
+    }
+    @MainActor func testDebugTokenAuthenticatesHTMLAndEveryRelativeResource() async throws {
+        let suite = "debug-resources-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        let address = "https://\(UUID().uuidString.lowercased()).example/development"
+        defer { defaults.removePersistentDomain(forName: suite); try? DebugServerTokenStore.save("", address: address) }
+        DebugServerSettings(addresses: [.init(id: "auth", url: address, requiresToken: true)], activeID: "auth").save(defaults: defaults)
+        defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
+        try DebugServerTokenStore.save("Rs12Ab", address: address)
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [AuthenticatedDebugResourcesNetwork.self]
+        let session = URLSession(configuration: configuration)
+        let module = Module(id: "auth-test", name: "Auth", version: "20260101", entry: "index.html", minHostVersion: "1.0.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
+        let ready = expectation(description: "Authenticated HTML, CSS, image, JS and imported JS load")
+        let entry = try XCTUnwrap(DebugServer.entryURL(for: module, defaults: defaults))
+        let runtime = Runtime(module: module, directory: FileManager.default.temporaryDirectory, onReady: { ready.fulfill() }, onFailure: { XCTFail($0) }, networkSession: session, networkDefaults: defaults, remoteEntryURL: entry)
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = .nonPersistent()
+        config.setURLSchemeHandler(runtime, forURLScheme: "lingrove")
+        config.userContentController.addScriptMessageHandler(runtime, contentWorld: .page, name: "lingrove")
+        let webView = WKWebView(frame: .zero, configuration: config)
+        runtime.webView = webView; webView.navigationDelegate = runtime
+        defer { runtime.close(); config.userContentController.removeScriptMessageHandler(forName: "lingrove", contentWorld: .page) }
+        XCTAssertEqual(runtime.resourceEntryURL.absoluteString, "lingrove://auth-test/index.html")
+        XCTAssertFalse(runtime.accepts(entry))
+        webView.load(URLRequest(url: runtime.resourceEntryURL))
+        await fulfillment(of: [ready], timeout: 15)
+        XCTAssertTrue(runtime.accepts(try XCTUnwrap(webView.url)))
+        XCTAssertFalse((defaults.string(forKey: DebugServer.preferenceKey) ?? "").contains("Rs12Ab"))
+        var publicRequest = URLRequest(url: URL(string: "https://updates.example/catalog.json")!)
+        try DebugServer.authorize(&publicRequest, defaults: defaults)
+        XCTAssertNil(publicRequest.value(forHTTPHeaderField: "Stack-Pass"))
+        XCTAssertNil(publicRequest.value(forHTTPHeaderField: "Authorization"))
     }
     #endif
 
