@@ -1,4 +1,16 @@
 {
+  "阿拉伯语": {
+    "en": "Arabic",
+    "ja": "アラビア語"
+  },
+  "附标与扩展字符": {
+    "en": "Diacritics and additional characters",
+    "ja": "発音記号・拡張文字"
+  },
+  "阿拉伯语从右向左书写，字母自动连写；先输入字母，再点按附标。扩展区还提供字母变体、标点和数字。": {
+    "en": "Arabic is written right to left, with letters joining automatically. Type a letter before adding diacritics. Extra keys provide letter variants, punctuation and numerals.",
+    "ja": "アラビア語は右から左に書き、文字は自動でつながります。文字を入力してから発音記号を追加してください。拡張キーには異体字・句読点・数字もあります。"
+  },
   "清空": {
     "en": "Clear",
     "ja": "クリア"
@@ -206,5 +218,77 @@
   "格鲁吉亚语使用 Shift 输入扩展字母，输入后自动恢复；切换语言保留文字。": {
     "en": "Use Shift for additional Georgian letters; it resets after typing. Switching languages keeps your text.",
     "ja": "Shiftでジョージア語の拡張文字を入力できます。入力後は元に戻ります。言語を切り替えても入力は保持されます。"
+  },
+  "越南语": {
+    "en": "Vietnamese",
+    "ja": "ベトナム語"
+  },
+  "越南语输入方式": {
+    "en": "Vietnamese input method",
+    "ja": "ベトナム語の入力方式"
+  },
+  "长按选字": {
+    "en": "Press and hold",
+    "ja": "長押しで選択"
+  },
+  "输入说明": {
+    "en": "How to type",
+    "ja": "入力方法"
+  },
+  "越南语输入说明": {
+    "en": "Typing Vietnamese",
+    "ja": "ベトナム語の入力方法"
+  },
+  "关闭输入说明": {
+    "en": "Close typing help",
+    "ja": "入力方法を閉じる"
+  },
+  "选择字母变体": {
+    "en": "Choose a letter variant",
+    "ja": "文字のバリエーションを選択"
+  },
+  "长按元音或 d 选择带符号字母；Telex 可组合输入，例如 tieengs → tiếng。点按右上角“输入说明”查看用法。": {
+    "en": "Hold a vowel or d to choose a variant. Telex combines keys, for example tieengs → tiếng. Tap the help button at the top right for instructions.",
+    "ja": "母音や d を長押しすると記号付き文字を選べます。Telex では tieengs → tiếng のように入力できます。右上の入力方法ボタンで使い方を確認できます。"
+  },
+  "长按 a、e、i、o、u、y 或 d，滑到需要的字母后松开。字母按形状分行、声调分列，支持全部带声调字母。": {
+    "en": "Hold a, e, i, o, u, y or d, slide to the letter you want, then release. Rows group vowel shapes and columns group tones. Every tone-marked vowel is available.",
+    "ja": "a・e・i・o・u・y・d を長押しし、使いたい文字まで滑らせて指を離します。行は文字の形、列は声調ごとに並び、すべての声調付き母音を選べます。"
+  },
+  "使用 Shift 或大写锁定后，长按可选择大写字母。键盘导航时，在字母键按 ↓ 打开选字，用方向键选择、Enter 确认，Esc 取消。": {
+    "en": "Use Shift or Caps lock for uppercase variants. With keyboard navigation, press ↓ on a letter key to open variants, use arrows to choose, Enter to confirm and Esc to cancel.",
+    "ja": "Shift または大文字固定で大文字の候補を選べます。キーボードでは文字キー上で ↓ を押すと候補が開き、矢印キーで選択、Enter で確定、Esc で取り消せます。"
+  },
+  "Telex 组合输入": {
+    "en": "Typing with Telex",
+    "ja": "Telex で入力"
+  },
+  "选择 Telex 后，直接用普通字母键组合。声调键可以在词末输入，空格或标点结束当前词。": {
+    "en": "Choose Telex to combine ordinary letter keys. Tone keys can be entered at the end of a word. A space or punctuation ends the current word.",
+    "ja": "Telex を選ぶと通常の文字キーを組み合わせて入力できます。声調キーは単語の末尾でも入力でき、空白や句読点で単語が確定します。"
+  },
+  "特殊字母组合": {
+    "en": "Letter combinations",
+    "ja": "特殊文字の組み合わせ"
+  },
+  "声调组合": {
+    "en": "Tone combinations",
+    "ja": "声調の組み合わせ"
+  },
+  "在元音后输入以下按键添加声调，例如 as → á；也可以组合使用，例如 aas → ấ。": {
+    "en": "Type these keys after a vowel to add a tone, such as as → á. Combine them with letter shapes too, such as aas → ấ.",
+    "ja": "母音の後に次のキーを入力して声調を付けます（as → á）。文字の形との組み合わせも可能です（aas → ấ）。"
+  },
+  "修改与切换": {
+    "en": "Editing and switching",
+    "ja": "修正と切り替え"
+  },
+  "z 去掉声调；重复修饰键可按原字母输入，例如 ass → as、aaa → aa。正在组合时，删除逐步撤销按键。": {
+    "en": "z removes a tone. Repeat a modifier to enter it literally, such as ass → as or aaa → aa. While composing, Delete undoes one keystroke at a time.",
+    "ja": "z で声調を外せます。修飾キーを繰り返すと通常の文字になります（ass → as、aaa → aa）。変換中は削除で一打ずつ戻せます。"
+  },
+  "输入英文时可切换到“长按选字”，字母就不会自动组合。切换输入方式或语言会保留文字和光标。": {
+    "en": "Switch to Press and hold when typing English to keep letters from combining. Switching input methods or languages preserves your text and caret.",
+    "ja": "英語を入力する場合は「長押しで選択」に切り替えると、自動変換を止められます。入力方式や言語を切り替えても文字とカーソル位置は保持されます。"
   }
 }

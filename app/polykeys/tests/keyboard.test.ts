@@ -1,6 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import { deleteSelection, layouts, letterCase, replaceSelection } from '../src/keyboard';
+import { vietnameseVariants } from '../src/vietnamese';
 describe('multilingual text editing', () => {
+  it('covers Arabic letters, variants, diacritics, punctuation and numerals', () => {
+    const layout = layouts.find(item => item.id === 'ar')!;
+    const available = layout.rows.join('') + layout.extra;
+    for (const char of 'ابتثجحخدذرزسشصضطظعغفقكلمنهويءةىأإآؤئٱًٌٍَُِّْٰـ،؛؟٠١٢٣٤٥٦٧٨٩') {
+      expect(available).toContain(char);
+      expect(letterCase(char, true, 'ar')).toBe(char);
+    }
+    expect(new Set(available).size).toBe([...available].length);
+    // Text remains logical Unicode, so lam-alef is two ordinary letters.
+    expect(replaceSelection('سل', 2, 2, 'ا')).toEqual({ text: 'سلا', caret: 3 });
+    expect(deleteSelection('سلَّا', 4, 4)).toEqual({ text: 'سا', caret: 1 });
+  });
+  it('covers Vietnamese vowels with every tone in both cases', () => {
+    const layout = layouts.find(item => item.id === 'vi')!;
+    const available = layout.rows.join('') + [...'aeiouyd'].flatMap(vietnameseVariants).join('');
+    expect(layout.extra).toBe('');
+    expect(layout.rows).toEqual(['qwertyuiop', 'asdfghjkl', 'zxcvbnm']);
+    for (const vowel of 'aăâeêioôơuưy') {
+      for (const tone of ['', '\u0301', '\u0300', '\u0309', '\u0303', '\u0323']) {
+        const char = (vowel + tone).normalize('NFC');
+        expect(available).toContain(char);
+        expect(letterCase(char, true, 'vi')).toBe(char.toLocaleUpperCase('vi'));
+      }
+    }
+    expect(available).toContain('đ');
+    expect(new Set(layout.extra).size).toBe(layout.extra.length);
+  });
   it('matches both Georgian screenshot states and covers all 33 modern letters', () => {
     const layout = layouts.find(item => item.id === 'ka')!;
     expect(layout.rows).toEqual(['ქწერტყუიოპ', 'ასდფგჰჯკლ', 'ზხცვბნმ']);

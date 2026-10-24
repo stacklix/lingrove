@@ -3,6 +3,7 @@ export interface Layout { id: string; locale: string; name: string; rows: string
 // Variant choices and source screenshots are documented in ../README.md.
 const qwerty = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
 export const layouts: Layout[] = [
+  { id: 'ar', locale: 'ar', name: '阿拉伯语', rows: ['ضصثقفغعهخحج', 'شسيبلاتنمكة', 'ءظطذدزروى'], extra: 'أإآؤئٱًٌٍَُِّْٰـ،؛؟٠١٢٣٤٥٦٧٨٩' },
   { id: 'ko', locale: 'ko', name: '韩语', rows: ['ㅂㅈㄷㄱㅅㅛㅕㅑㅐㅔ', 'ㅁㄴㅇㄹㅎㅗㅓㅏㅣ', 'ㅋㅌㅊㅍㅠㅜㅡ'], extra: '' },
   { id: 'ja', locale: 'ja', name: '日语', rows: qwerty, extra: "ー、。・「」！？'" },
   { id: 'en', locale: 'en', name: '英语', rows: qwerty, extra: '' },
@@ -12,6 +13,7 @@ export const layouts: Layout[] = [
   { id: 'pt', locale: 'pt', name: '葡萄牙语', rows: qwerty, extra: 'áàâãçéêíóôõúü' },
   { id: 'it', locale: 'it', name: '意大利语', rows: qwerty, extra: 'àèéìíîòóùú' },
   { id: 'tr', locale: 'tr', name: '土耳其语', rows: qwerty, extra: 'çğıöşüâîû' },
+  { id: 'vi', locale: 'vi', name: '越南语', rows: qwerty, extra: '' },
   { id: 'ru', locale: 'ru', name: '俄语', rows: ['яшертыуиопэ', 'асдфгчйклжщ', 'зхцвбнмью'], extra: 'ёъ' },
   { id: 'uk', locale: 'uk', name: '乌克兰语', rows: ['йцукенгшщзхї', "фівапролджє'", 'ячсмитьбюґ'], extra: '' },
   { id: 'el', locale: 'el', name: '希腊语', rows: ['ερτυθιοπ΄', 'ασδφγηξκλ', 'ζχψωβνμ'], extra: 'ςάέήίόύώϊϋΐΰ' },
