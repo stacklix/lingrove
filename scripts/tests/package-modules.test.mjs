@@ -149,6 +149,8 @@ test('both channels publish matching ZIP and HTML resources with bundled package
     }
     for (const configuredToken of ['Ab12Cd', '123456', 'ABCdef', undefined]) {
       const serverEnv = { ...env, PYTHONUTF8: '1' };
+      delete serverEnv.LINGROVE_DEBUG_LAN_CIDRS;
+      delete serverEnv.LINGROVE_DEBUG_PROXY_CIDRS;
       if (configuredToken === undefined) delete serverEnv.LINGROVE_DEBUG_TOKEN;
       else serverEnv.LINGROVE_DEBUG_TOKEN = configuredToken;
       const server = spawn('python3', ['scripts/serve-debug.py', '--port', '0'], {

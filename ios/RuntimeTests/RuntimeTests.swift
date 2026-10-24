@@ -92,7 +92,8 @@ final class DebugCatalogNetwork: URLProtocol, @unchecked Sendable {
             body = Data()
             status = 404
         }
-        let headers = url.host == "authenticated.example" ? ["X-Lingrove-Debug-Auth": "Stack-Pass"] : [:]
+        let headers = url.host == "authenticated.example" ? ["X-Lingrove-Debug-Auth": "Stack-Pass"]
+            : (url.host == "lan.example" ? ["X-Lingrove-Debug-Auth": "none"] : [:])
         let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: headers)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: body)
@@ -268,6 +269,8 @@ final class RuntimeTests: XCTestCase {
         let message = try await DebugServer.testConnection("https://debug.example/development", configuration: configuration)
         XCTAssertEqual(message.message, "连接成功，1 个子应用入口均可访问。")
         XCTAssertFalse(message.requiresToken)
+        let lan = try await DebugServer.testConnection("https://lan.example/development", token: "Ab12Cd", configuration: configuration)
+        XCTAssertFalse(lan.requiresToken, "A saved Token does not make an exempt LAN address authenticated")
         for token in ["", "Bad123", "abc12", "abcdef7", "abc-12"] {
             do {
                 _ = try await DebugServer.testConnection("https://authenticated.example/development", token: token, configuration: configuration)

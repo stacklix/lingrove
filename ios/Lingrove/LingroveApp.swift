@@ -486,7 +486,7 @@ struct HomeView: View {
                 let result = try await DebugServer.testConnection(server.url, token: token)
                 guard !Task.isCancelled, connectionTestID == testID, showingSettings else { return }
                 if let index = debugServers.addresses.firstIndex(where: { $0.id == addressID }) {
-                    debugServers.addresses[index].requiresToken = result.requiresToken || !token.isEmpty
+                    debugServers.addresses[index].requiresToken = result.requiresToken
                 }
                 // Publish the verified address before enabling server resource loading.
                 debugServers.save()
