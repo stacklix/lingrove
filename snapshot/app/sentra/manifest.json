@@ -1,0 +1,15 @@
+{
+  "id": "sentra",
+  "name": "Sentra",
+  "description": "从一句话开始，理解另一种语言。翻译、语法与地道表达。",
+  "localizedDescriptions": {
+    "en": "Understand another language, one sentence at a time. Translation, grammar and natural expression.",
+    "ja": "一文から、別の言語を理解する。翻訳、文法、自然な表現。"
+  },
+  "entry": "index.html",
+  "minHostVersion": "1.2.0",
+  "bridgeVersion": 1,
+  "stateSchemaVersion": 1,
+  "allowedOrigins": [],
+  "version": "20261024"
+}

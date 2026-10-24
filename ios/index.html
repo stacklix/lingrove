@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>安装 Lingrove</title>
+  <style>
+    :root{color-scheme:light dark;--bg:#f5f3ec;--card:#fffef9;--text:#304e3e;--muted:#626f60;--line:#dce1d5;--accent:#315e46;--on-accent:#fff}
+    @media(prefers-color-scheme:dark){:root{--bg:#171d19;--card:#222b24;--text:#e2ebdf;--muted:#aebca9;--line:#3e4c40;--accent:#b5d8b5;--on-accent:#192b1f}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 -apple-system,BlinkMacSystemFont,sans-serif;padding:40px 20px calc(32px + env(safe-area-inset-bottom))}main{max-width:560px;margin:auto}a{color:inherit}a:focus-visible{outline:3px solid var(--accent);outline-offset:5px}header{margin:32px 0}img{width:76px;height:76px;border-radius:18px}h1{font-size:36px;margin:12px 0 0;line-height:1.3}p{color:var(--muted)}.card{padding:24px;background:var(--card);border:1px solid var(--line);border-radius:24px}.actions{display:grid;gap:12px;margin:24px 0}.button{display:block;text-align:center;text-decoration:none;padding:14px 16px;border:1px solid var(--line);border-radius:14px;font-weight:600}.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}dl{display:grid;grid-template-columns:90px 1fr;gap:8px;margin:0}dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}h2{font-size:18px;margin-top:28px}li{margin:8px 0}ol{padding-left:22px}footer{font-size:12px;color:var(--muted);margin-top:24px;overflow-wrap:anywhere}summary{cursor:pointer}
+  </style>
+</head>
+<body><main>
+  <a href="../">← 返回首页</a>
+  <header><img src="icon.png" alt="" width="76" height="76"><h1>Lingrove</h1><p>把语言学习装进口袋。</p></header>
+  <section class="card" aria-label="安装包">
+    <dl><dt>版本</dt><dd>1.3.0（36.1）</dd><dt>构建</dt><dd>Debug · Ad Hoc</dd><dt>大小</dt><dd>10.4 MB</dd><dt>有效期至</dt><dd>2027-10-21</dd></dl>
+    <div class="actions"><a class="button primary" href="itms-services://?action=download-manifest&amp;url=https%3A%2F%2Flingrove.stackli.me%2Fios%2Fmanifest-989155f705df46ac.plist">安装到 iPhone / iPad</a><a class="button" href="Lingrove-989155f705df46ac.ipa" download>下载 IPA 文件</a></div>
+    <p>适用于 iOS / iPadOS 17 及以上，仅限已登记的测试设备。</p>
+  </section>
+  <h2>如何安装</h2>
+  <ol><li>在目标设备的 Safari 中打开本页。</li><li>点击安装按钮，并在系统提示中确认安装。</li><li>回到主屏幕，等待 Lingrove 下载完成。</li></ol>
+  <details><summary>无法安装？</summary><p>确认设备 UDID 已包含在本次安装包的描述文件中。新增设备后，需要重新生成描述文件并重新打包。也请检查系统版本、网络及上方有效期；在微信等应用内打开时，请改用 Safari。</p></details>
+  <footer>构建时间：<time id="build-time" datetime="2026-10-24T11:34:22+00:00">2026-10-24T11:34:22+00:00</time><br>SHA-256：989155f705df46ac95a94a8f08bbc42bacd460a62f6cd4dfbb03e395585bcebf</footer>
+</main>
+<script>
+  const buildTime = document.getElementById('build-time');
+  buildTime.textContent = new Intl.DateTimeFormat(navigator.language, {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short',
+  }).format(new Date(buildTime.dateTime));
+</script>
+</body>
+</html>

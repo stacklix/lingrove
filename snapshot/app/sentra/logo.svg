@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="#3264B4">
+  <title>Sentra</title>
+  <path fill-rule="evenodd" d="M30 26h56a14 14 0 0 1 14 14v30a14 14 0 0 1-14 14H54L30 102V84a14 14 0 0 1-14-14V40a14 14 0 0 1 14-14Zm4 18v8h48v-8H34Zm0 16v8h32v-8H34Z"/>
+  <path d="M108 48a18 18 0 0 1 4 12v24a14 14 0 0 1-14 14v12L80 96h8a20 20 0 0 0 20-20V48Z"/>
+</svg>
