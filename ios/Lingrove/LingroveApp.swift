@@ -200,212 +200,208 @@ struct HomeView: View {
             .safeAreaInset(edge: .bottom) {
                 HostPlaybackControls()
             }
-            .sheet(isPresented: $showingSettings, onDismiss: finishSettings) {
-                NavigationStack {
-                    Form {
-                        #if DEBUG
-                        Group {
-                            Section("开发模式") {
-                                HStack(spacing: 12) {
-                                    Button {
-                                        withAnimation { debugSettingsExpanded.toggle() }
-                                    } label: {
-                                        HStack(spacing: 10) {
-                                            Image(systemName: debugSettingsExpanded ? "chevron.down" : "chevron.right")
-                                                .font(.footnote.weight(.semibold))
-                                                .frame(width: 16)
-                                                .accessibilityHidden(true)
-                                            Text("调试模式")
-                                        }
-                                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                                        .contentShape(Rectangle())
-                                    }
-                                    .buttonStyle(.plain)
-                                    .accessibilityValue(debugSettingsExpanded ? Text("已展开") : Text("已折叠"))
-                                    .accessibilityIdentifier("debug-settings-disclosure")
-                                    if testingAddressID != nil { ProgressView().accessibilityLabel("正在测试…") }
-                                    Toggle("开启调试模式", isOn: Binding(get: { debugEnabled }, set: setDebugEnabled))
-                                        .labelsHidden()
-                                        .disabled(debugServers.activeID == nil || testingAddressID != nil)
-                                        .accessibilityIdentifier("debug-mode-toggle")
-                                }
-                                if debugSettingsExpanded {
-                                    ForEach(debugServers.addresses) { server in
-                                        DebugAddressRow(
-                                            serverID: server.id,
-                                            address: Binding(
-                                                get: { debugServers.addresses.first { $0.id == server.id }?.url ?? "" },
-                                                set: { updateDebugAddress(server.id, url: $0) }
-                                            ),
-                                            selected: debugServers.activeID == server.id,
-                                            testing: testingAddressID == server.id,
-                                            message: connectionMessages[server.id],
-                                            failed: failedAddresses.contains(server.id),
-                                            requiresToken: server.requiresToken == true,
-                                            onToken: { editDebugToken(server.id) },
-                                            onSelect: { selectDebugAddress(server.id) },
-                                            onDelete: { removeDebugAddress(server.id) }
-                                        )
-                                    }
-                                    Button("添加调试地址", systemImage: "plus") {
-                                        debugServers.addresses.append(DebugServerAddress())
-                                    }
-                                    .accessibilityIdentifier("debug-add-address")
-                                    Text("选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。")
-                                        .font(.footnote).foregroundStyle(.secondary)
-                                }
-                                if let server = debugServers.activeServer, server.requiresToken == true {
-                                    Label("当前地址采用 Token 认证", systemImage: "lock.fill")
-                                        .font(.footnote).foregroundStyle(.secondary)
-                                        .accessibilityIdentifier("debug-active-token-auth")
-                                }
-                                if !store.notice.isEmpty {
-                                    Text(store.notice).font(.footnote).foregroundStyle(.secondary)
-                                }
-                            }
-                            .hostSettingsRowBackground()
-                            HostAppUpdateSection()
-                        }
-                        Section {
-                            ForEach(store.modules) { module in
-                                NavigationLink {
-                                    ModuleDeveloperDetailsView(store: store, pages: pages, moduleID: module.id)
-                                        .environment(\.editMode, .constant(.inactive))
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        Text(module.name)
-                                        Spacer(minLength: 8)
-                                        if !debugEnabled {
-                                            ModuleListDownloadStatusView(record: store.downloadRecords[module.id], progress: store.downloadProgress[module.id])
-                                                .accessibilityIdentifier("module-download-status-\(module.id)")
-                                        } else {
-                                            ModuleListReloadStatusView(record: pages.reloadRecords[module.id])
-                                                .accessibilityIdentifier("module-refresh-status-\(module.id)")
-                                        }
-                                    }
-                                }
-                                .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
-                                .accessibilityIdentifier("module-developer-details-\(module.id)")
-                            }
-                        }
-                        .hostSettingsRowBackground()
-                        GitHubBuildStatusSection(isPresented: showingSettings)
-                        #endif
-                        Section("外观") {
-                            Picker("主题", selection: $draftAppearance) {
-                                ForEach(AppAppearance.allCases) { appearance in
-                                    Text(LocalizedStringKey(appearance.title)).tag(appearance)
-                                }
-                            }.accessibilityIdentifier("appearance-picker")
-                            .onChange(of: draftAppearance) { _, value in
-                                if showingSettings { UserDefaults.standard.set(value.rawValue, forKey: AppAppearance.preferenceKey) }
-                            }
-                        }
-                        .hostSettingsRowBackground()
-                        Section("App 语言") {
-                            Picker("App 语言", selection: $draftAppLanguage) {
-                                Text("跟随系统").tag("system")
-                                Text(verbatim: "简体中文").tag("zh-Hans")
-                                Text("English").tag("en")
-                                Text("日本語").tag("ja")
-                            }
-                            .onChange(of: draftAppLanguage) { _, value in
-                                guard showingSettings else { return }
-                                UserDefaults.standard.set(value, forKey: AppLanguage.preferenceKey)
-                                pages.updateLanguage()
-                            }
-                        }
-                        .hostSettingsRowBackground()
-                        Section("模型服务") {
-                            Button { showingLLMSettings = true } label: {
-                                HStack {
-                                    Text("通用模型")
-                                    Spacer()
-                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
-                                }.contentShape(Rectangle())
-                            }.buttonStyle(.plain)
-                            Button { showingTTSSettings = true } label: {
-                                HStack {
-                                    Text("语音合成")
-                                    Spacer()
-                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
-                                }.contentShape(Rectangle())
-                            }.buttonStyle(.plain).accessibilityIdentifier("tts-settings-entry")
-                            Button { showingLLMUsage = true } label: {
-                                HStack {
-                                    Text("模型使用统计")
-                                    Spacer()
-                                    Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
-                                }.contentShape(Rectangle())
-                            }.buttonStyle(.plain)
-                        }
-                        .hostSettingsRowBackground()
-                        ModuleManagementSection(store: store, modules: $draftModules, editMode: $moduleEditMode)
-                        NetworkAuthorizationSection(modules: store.modules).id(networkSummaryRevision)
-                        Section("关于") { Text("Lingrove \(HostConfiguration.currentVersion)") }
-                            .hostSettingsRowBackground()
-                    }
-                    .hostSettingsBackground()
-                    .environment(\.editMode, $moduleEditMode)
+            .navigationDestination(isPresented: $showingSettings) {
+                Form {
                     #if DEBUG
-                    .sheet(isPresented: $showingDebugTokenPrompt, onDismiss: {
-                        debugTokenDraft = ""
-                        debugTokenAddressID = nil
-                    }) {
-                        NavigationStack {
-                            Form {
-                                Section {
-                                    TextField("Token", text: $debugTokenDraft)
-                                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                                        .keyboardType(.asciiCapable)
-                                        .accessibilityIdentifier("debug-token-input")
-                                } footer: {
-                                    Text(debugTokenMessage)
+                    Group {
+                        Section("开发模式") {
+                            HStack(spacing: 12) {
+                                Button {
+                                    withAnimation { debugSettingsExpanded.toggle() }
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: debugSettingsExpanded ? "chevron.down" : "chevron.right")
+                                            .font(.footnote.weight(.semibold))
+                                            .frame(width: 16)
+                                            .accessibilityHidden(true)
+                                        Text("调试模式")
+                                    }
+                                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                                    .contentShape(Rectangle())
                                 }
-                                .hostSettingsRowBackground()
+                                .buttonStyle(.plain)
+                                .accessibilityValue(debugSettingsExpanded ? Text("已展开") : Text("已折叠"))
+                                .accessibilityIdentifier("debug-settings-disclosure")
+                                if testingAddressID != nil { ProgressView().accessibilityLabel("正在测试…") }
+                                Toggle("开启调试模式", isOn: Binding(get: { debugEnabled }, set: setDebugEnabled))
+                                    .labelsHidden()
+                                    .disabled(debugServers.activeID == nil || testingAddressID != nil)
+                                    .accessibilityIdentifier("debug-mode-toggle")
                             }
-                            .hostSettingsBackground()
-                            .navigationTitle("调试服务器 Token")
-                            .navigationBarTitleDisplayMode(.inline)
-                            .toolbar {
-                                ToolbarItem(placement: .cancellationAction) {
-                                    Button("取消", role: .cancel) { cancelDebugToken() }
-                                        .accessibilityIdentifier("debug-token-cancel")
+                            if debugSettingsExpanded {
+                                ForEach(debugServers.addresses) { server in
+                                    DebugAddressRow(
+                                        serverID: server.id,
+                                        address: Binding(
+                                            get: { debugServers.addresses.first { $0.id == server.id }?.url ?? "" },
+                                            set: { updateDebugAddress(server.id, url: $0) }
+                                        ),
+                                        selected: debugServers.activeID == server.id,
+                                        testing: testingAddressID == server.id,
+                                        message: connectionMessages[server.id],
+                                        failed: failedAddresses.contains(server.id),
+                                        requiresToken: server.requiresToken == true,
+                                        onToken: { editDebugToken(server.id) },
+                                        onSelect: { selectDebugAddress(server.id) },
+                                        onDelete: { removeDebugAddress(server.id) }
+                                    )
                                 }
-                                ToolbarItem(placement: .confirmationAction) {
-                                    Button("保存") { saveDebugToken() }
-                                        .accessibilityIdentifier("debug-token-save")
+                                Button("添加调试地址", systemImage: "plus") {
+                                    debugServers.addresses.append(DebugServerAddress())
                                 }
+                                .accessibilityIdentifier("debug-add-address")
+                                Text("选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。")
+                                    .font(.footnote).foregroundStyle(.secondary)
+                            }
+                            if let server = debugServers.activeServer, server.requiresToken == true {
+                                Label("当前地址采用 Token 认证", systemImage: "lock.fill")
+                                    .font(.footnote).foregroundStyle(.secondary)
+                                    .accessibilityIdentifier("debug-active-token-auth")
+                            }
+                            if !store.notice.isEmpty {
+                                Text(store.notice).font(.footnote).foregroundStyle(.secondary)
                             }
                         }
-                        .presentationBackground(Color(uiColor: LingroveTheme.background))
-                        .presentationDetents([.medium, .large])
+                        .hostSettingsRowBackground()
+                        HostAppUpdateSection()
                     }
+                    Section {
+                        ForEach(store.modules) { module in
+                            NavigationLink {
+                                ModuleDeveloperDetailsView(store: store, pages: pages, moduleID: module.id)
+                                    .environment(\.editMode, .constant(.inactive))
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text(module.name)
+                                    Spacer(minLength: 8)
+                                    if !debugEnabled {
+                                        ModuleListDownloadStatusView(record: store.downloadRecords[module.id], progress: store.downloadProgress[module.id])
+                                            .accessibilityIdentifier("module-download-status-\(module.id)")
+                                    } else {
+                                        ModuleListReloadStatusView(record: pages.reloadRecords[module.id])
+                                            .accessibilityIdentifier("module-refresh-status-\(module.id)")
+                                    }
+                                }
+                            }
+                            .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+                            .accessibilityIdentifier("module-developer-details-\(module.id)")
+                        }
+                    }
+                    .hostSettingsRowBackground()
+                    GitHubBuildStatusSection(isPresented: showingSettings)
                     #endif
-                    .navigationDestination(isPresented: $showingLLMSettings) {
-                        LLMSettingsView()
-                            .environment(\.editMode, .constant(.inactive))
-                            .onDisappear { networkSummaryRevision += 1 }
-                    }
-                    .navigationDestination(isPresented: $showingTTSSettings) {
-                        TTSSettingsView().environment(\.editMode, .constant(.inactive))
-                    }
-                    .navigationDestination(isPresented: $showingLLMUsage) {
-                        LLMUsageView().environment(\.editMode, .constant(.inactive))
-                    }
-                    .navigationTitle("设置").toolbar {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Button { showingSettings = false } label: {
-                                Image(systemName: "chevron.left")
-                            }.accessibilityLabel("返回").accessibilityIdentifier("settings-back")
+                    Section("外观") {
+                        Picker("主题", selection: $draftAppearance) {
+                            ForEach(AppAppearance.allCases) { appearance in
+                                Text(LocalizedStringKey(appearance.title)).tag(appearance)
+                            }
+                        }.accessibilityIdentifier("appearance-picker")
+                        .onChange(of: draftAppearance) { _, value in
+                            if showingSettings { UserDefaults.standard.set(value.rawValue, forKey: AppAppearance.preferenceKey) }
                         }
                     }
+                    .hostSettingsRowBackground()
+                    Section("App 语言") {
+                        Picker("App 语言", selection: $draftAppLanguage) {
+                            Text("跟随系统").tag("system")
+                            Text(verbatim: "简体中文").tag("zh-Hans")
+                            Text("English").tag("en")
+                            Text("日本語").tag("ja")
+                        }
+                        .onChange(of: draftAppLanguage) { _, value in
+                            guard showingSettings else { return }
+                            UserDefaults.standard.set(value, forKey: AppLanguage.preferenceKey)
+                            pages.updateLanguage()
+                        }
+                    }
+                    .hostSettingsRowBackground()
+                    Section("模型服务") {
+                        Button { showingLLMSettings = true } label: {
+                            HStack {
+                                Text("通用模型")
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                            }.contentShape(Rectangle())
+                        }.buttonStyle(.plain)
+                        Button { showingTTSSettings = true } label: {
+                            HStack {
+                                Text("语音合成")
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                            }.contentShape(Rectangle())
+                        }.buttonStyle(.plain).accessibilityIdentifier("tts-settings-entry")
+                        Button { showingLLMUsage = true } label: {
+                            HStack {
+                                Text("模型使用统计")
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+                            }.contentShape(Rectangle())
+                        }.buttonStyle(.plain)
+                    }
+                    .hostSettingsRowBackground()
+                    ModuleManagementSection(store: store, modules: $draftModules, editMode: $moduleEditMode)
+                    NetworkAuthorizationSection(modules: store.modules).id(networkSummaryRevision)
+                    Section("关于") { Text("Lingrove \(HostConfiguration.currentVersion)") }
+                        .hostSettingsRowBackground()
                 }
-                .presentationBackground(Color(uiColor: LingroveTheme.background))
+                .hostSettingsBackground()
+                .environment(\.editMode, $moduleEditMode)
+                #if DEBUG
+                .sheet(isPresented: $showingDebugTokenPrompt, onDismiss: {
+                    debugTokenDraft = ""
+                    debugTokenAddressID = nil
+                }) {
+                    NavigationStack {
+                        Form {
+                            Section {
+                                TextField("Token", text: $debugTokenDraft)
+                                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                    .keyboardType(.asciiCapable)
+                                    .accessibilityIdentifier("debug-token-input")
+                            } footer: {
+                                Text(debugTokenMessage)
+                            }
+                            .hostSettingsRowBackground()
+                        }
+                        .hostSettingsBackground()
+                        .navigationTitle("调试服务器 Token")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("取消", role: .cancel) { cancelDebugToken() }
+                                    .accessibilityIdentifier("debug-token-cancel")
+                            }
+                            ToolbarItem(placement: .confirmationAction) {
+                                Button("保存") { saveDebugToken() }
+                                    .accessibilityIdentifier("debug-token-save")
+                            }
+                        }
+                    }
+                    .presentationBackground(Color(uiColor: LingroveTheme.background))
+                    .presentationDetents([.medium, .large])
+                }
+                #endif
+                .navigationDestination(isPresented: $showingLLMSettings) {
+                    LLMSettingsView()
+                        .environment(\.editMode, .constant(.inactive))
+                        .onDisappear { networkSummaryRevision += 1 }
+                }
+                .navigationDestination(isPresented: $showingTTSSettings) {
+                    TTSSettingsView().environment(\.editMode, .constant(.inactive))
+                }
+                .navigationDestination(isPresented: $showingLLMUsage) {
+                    LLMUsageView().environment(\.editMode, .constant(.inactive))
+                }
+                .navigationTitle("设置")
             }
             .task { guard !didCheck else { return }; didCheck = true; do { _ = try LLMStore.load() } catch { modelError = error.localizedDescription }; await store.checkForUpdates() }
             .alert("通用模型设置读取失败", isPresented: Binding(get: { !modelError.isEmpty }, set: { if !$0 { modelError = "" } })) { Button("好") { modelError = "" } } message: { Text(AppLanguage.text(modelError)) }
         }.tint(Color(uiColor: LingroveTheme.accent))
+        .onChange(of: showingSettings) { _, isPresented in
+            // Save only when settings leaves the navigation stack, rather than
+            // whenever its root disappears behind a settings subpage.
+            if !isPresented { finishSettings() }
+        }
         .onChange(of: store.modules) { _, modules in pages.reconcile(modules: modules, blocked: store.blocked) }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active, didCheck else { return }

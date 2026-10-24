@@ -97,7 +97,8 @@ final class LingroveUITests: XCTestCase {
         developerScreenshot.name = "Developer-module-details-\(appearance)"
         developerScreenshot.lifetime = .keepAlways
         add(developerScreenshot)
-        app.navigationBars["Sentra"].buttons.firstMatch.tap()
+        swipeFromLeftEdge(app)
+        XCTAssertTrue(app.navigationBars["设置"].waitForExistence(timeout: 5), "A nested page swipe must return to settings")
         let edit = app.buttons["module-edit-button"]
         for _ in 0..<8 {
             if edit.exists && edit.isHittable { break }
@@ -136,7 +137,11 @@ final class LingroveUITests: XCTestCase {
         edit.tap()
         XCTAssertEqual(edit.label, "编辑")
         XCTAssertTrue(detailRows.firstMatch.waitForExistence(timeout: 5))
-        app.buttons["settings-back"].tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.5))
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
+        XCTAssertTrue(app.navigationBars["设置"].exists, "A drag away from the edge must not close settings")
+        swipeFromLeftEdge(app)
+        XCTAssertTrue(app.navigationBars["设置"].waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 5))
         let homeScreenshot = XCTAttachment(screenshot: app.screenshot())
         homeScreenshot.name = "Home-list-\(appearance)"
@@ -213,6 +218,10 @@ final class LingroveUITests: XCTestCase {
         XCTAssertTrue(app.buttons["module-exit-edge"].waitForExistence(timeout: 5))
         XCTAssertFalse(home.exists)
         exitFromEdge()
+    }
+    private func swipeFromLeftEdge(_ app: XCUIApplication) {
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.005, dy: 0.5))
+            .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5)))
     }
     private func waitForEnabled(_ element: XCUIElement) {
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND enabled == true"), object: element)
@@ -364,7 +373,7 @@ final class LingroveUITests: XCTestCase {
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         replaceDebugAddress(second, url + "/second")
         enable(second)
-        app.buttons["settings-back"].tap()
+        app.navigationBars["设置"].buttons.firstMatch.tap()
         app.terminate(); app.launch()
         app.buttons["应用设置"].tap()
         app.buttons["debug-settings-disclosure"].tap()
@@ -386,7 +395,7 @@ final class LingroveUITests: XCTestCase {
         XCTAssertFalse(app.switches["snapshot-toggle"].exists)
         XCTAssertTrue(restoredFirst.exists)
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
-        app.buttons["settings-back"].tap()
+        app.navigationBars["设置"].buttons.firstMatch.tap()
         XCTAssertFalse(app.buttons["重新加载子应用"].exists)
         let verso = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Verso")).firstMatch
         waitForEnabled(verso); verso.tap()
@@ -496,7 +505,7 @@ final class LingroveUITests: XCTestCase {
         for id in ["alphi", "lexis", "verso", "sentra"] {
             XCTAssertTrue(app.buttons["module-developer-details-\(id)"].exists)
         }
-        app.buttons["settings-back"].tap()
+        app.navigationBars["设置"].buttons.firstMatch.tap()
         app.terminate(); app.launch()
         for name in ["Alphi", "Lexis", "Verso", "Sentra"] {
             waitForEnabled(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch)
@@ -534,7 +543,7 @@ final class LingroveUITests: XCTestCase {
         input.tap(); input.typeText("Keep this unsent draft")
         app.buttons["返回 Lingrove"].tap()
         app.buttons["应用设置"].tap()
-        app.buttons["settings-back"].tap()
+        app.navigationBars["设置"].buttons.firstMatch.tap()
         waitForEnabled(entry); entry.tap()
         XCTAssertTrue(input.waitForExistence(timeout: 20))
         XCTAssertEqual(input.value as? String, "Keep this unsent draft")
@@ -553,7 +562,9 @@ final class LingroveUITests: XCTestCase {
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         app.buttons["debug-add-address"].tap()
         XCTAssertEqual(debugFields(app).count, 2)
-        app.buttons["settings-back"].tap()
+        swipeFromLeftEdge(app)
+        XCTAssertTrue(app.navigationBars["设置"].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["应用设置"].waitForExistence(timeout: 5))
         app.terminate(); app.launch()
         app.buttons["应用设置"].tap()
         XCTAssertEqual(debugFields(app).count, 0, "Debug settings start collapsed")
@@ -565,12 +576,12 @@ final class LingroveUITests: XCTestCase {
         app.buttons["debug-address-delete-\(id)"].tap()
         app.buttons["debug-add-address"].tap()
         XCTAssertTrue(debugFields(app).firstMatch.isHittable)
-        app.buttons["settings-back"].tap()
+        app.navigationBars["设置"].buttons.firstMatch.tap()
         app.buttons["应用设置"].tap()
         app.buttons["debug-settings-disclosure"].tap()
         XCTAssertEqual(debugFields(app).count, 0, "An empty configuration must not persist")
         XCTAssertFalse(app.switches["debug-mode-toggle"].firstMatch.isEnabled)
-        app.buttons["settings-back"].tap()
+        app.navigationBars["设置"].buttons.firstMatch.tap()
     }
 
     func testChildPageDoesNotZoomWithPinch() throws {
