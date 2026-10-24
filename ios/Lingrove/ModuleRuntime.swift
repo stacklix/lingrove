@@ -739,7 +739,6 @@ struct ModuleWebView: UIViewRepresentable {
                 try Task.checkCancellation()
                 guard !self.closed, self.debugResourceTasks[id] != nil else { return }
                 guard let http = response as? HTTPURLResponse else { throw ModuleError.invalid("服务器未返回有效的 HTTP 响应。") }
-                if http.statusCode == 401 { throw DebugServerAuthenticationError.required }
                 guard http.statusCode == 200 else { throw ModuleError.invalid("网页资源返回 HTTP \(http.statusCode)") }
                 schemeTask.didReceive(URLResponse(url: url, mimeType: http.mimeType, expectedContentLength: data.count, textEncodingName: http.textEncodingName))
                 schemeTask.didReceive(data)

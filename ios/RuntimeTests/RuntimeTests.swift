@@ -271,11 +271,20 @@ final class RuntimeTests: XCTestCase {
         XCTAssertFalse(message.requiresToken)
         let lan = try await DebugServer.testConnection("https://lan.example/development", token: "Ab12Cd", configuration: configuration)
         XCTAssertFalse(lan.requiresToken, "A saved Token does not make an exempt LAN address authenticated")
-        for token in ["", "Bad123", "abc12", "abcdef7", "abc-12"] {
+        for token in ["", "Bad123"] {
             do {
                 _ = try await DebugServer.testConnection("https://authenticated.example/development", token: token, configuration: configuration)
-                XCTFail("Missing or incorrect Token must request authentication")
-            } catch { XCTAssertTrue(error is DebugServerAuthenticationError) }
+                XCTFail("Missing or incorrect Token must fail like any other HTTP error")
+            } catch {
+                XCTAssertTrue(error is ModuleError)
+                XCTAssertTrue(error.localizedDescription.contains("/snapshot/catalog.snapshot.json 返回 HTTP 401"))
+            }
+        }
+        for token in ["abc12", "abcdef7", "abc-12"] {
+            XCTAssertThrowsError(try DebugServer.validatedToken(token)) { error in
+                XCTAssertTrue(error is ModuleError)
+                XCTAssertTrue(error.localizedDescription.contains("6 位"))
+            }
         }
         let authenticated = try await DebugServer.testConnection("https://authenticated.example/development", token: "Ab12Cd", configuration: configuration)
         XCTAssertTrue(authenticated.requiresToken)
@@ -284,7 +293,9 @@ final class RuntimeTests: XCTestCase {
                 _ = try await DebugServer.testConnection("https://\(host)/development", configuration: configuration)
                 XCTFail("Invalid debug server must not enable debug mode: \(host)")
             } catch {
-                if host == "missing-entry.example" {
+                if host == "missing-catalog.example" {
+                    XCTAssertTrue(error.localizedDescription.contains("/snapshot/catalog.snapshot.json 返回 HTTP 404"))
+                } else if host == "missing-entry.example" {
                     XCTAssertTrue(error.localizedDescription.contains("/snapshot/app/verso/index.html 返回 HTTP 404"))
                 }
             }

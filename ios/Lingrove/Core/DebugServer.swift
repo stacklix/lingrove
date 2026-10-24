@@ -47,17 +47,6 @@ struct DebugServerSettings: Codable, Equatable {
     }
 }
 
-enum DebugServerAuthenticationError: LocalizedError {
-    case required
-    case invalidFormat
-    var errorDescription: String? {
-        switch self {
-        case .required: return "调试服务器需要有效的 Token，请输入后重试。"
-        case .invalidFormat: return "Token 必须为 6 位英文字母或数字，区分大小写。"
-        }
-    }
-}
-
 enum DebugServerTokenStore {
     private static func query(_ address: String) throws -> [String: Any] {
         let normalized = try DebugServer.normalized(address)
@@ -116,7 +105,7 @@ enum DebugServer {
     static func validatedToken(_ raw: String) throws -> String {
         let token = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard token.isEmpty || token.range(of: "^[A-Za-z0-9]{6}$", options: .regularExpression) != nil else {
-            throw DebugServerAuthenticationError.invalidFormat
+            throw ModuleError.invalid("Token 必须为 6 位英文字母或数字，区分大小写。")
         }
         return token
     }
@@ -194,9 +183,11 @@ enum DebugServer {
         var request = URLRequest(url: catalogURL, cachePolicy: .reloadIgnoringLocalCacheData)
         try authorize(&request, token: token)
         let (data, response) = try await session.data(for: request)
-        if (response as? HTTPURLResponse)?.statusCode == 401 { throw DebugServerAuthenticationError.required }
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw ModuleError.invalid("无法读取调试目录 \(catalogURL.path)，请确认服务已启动且已运行 npm run build。")
+        guard let http = response as? HTTPURLResponse else {
+            throw ModuleError.invalid("服务器未返回有效的 HTTP 响应。")
+        }
+        guard http.statusCode == 200 else {
+            throw ModuleError.invalid("\(catalogURL.path) 返回 HTTP \(http.statusCode)，请确认服务已启动且已运行 npm run build。")
         }
         let catalog = try resolve(JSONDecoder().decode(Catalog.self, from: data), relativeTo: catalogURL)
         let requiresToken = http.value(forHTTPHeaderField: "X-Lingrove-Debug-Auth")?.lowercased() == "stack-pass"
@@ -215,7 +206,6 @@ enum DebugServer {
             guard let http = response as? HTTPURLResponse else {
                 throw ModuleError.invalid("服务器未返回有效的 HTTP 响应。")
             }
-            if http.statusCode == 401 { throw DebugServerAuthenticationError.required }
             guard (200..<300).contains(http.statusCode) else {
                 throw ModuleError.invalid("\(url.path) 返回 HTTP \(http.statusCode)，请确认服务已启动且已运行 npm run build。")
             }

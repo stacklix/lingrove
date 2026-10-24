@@ -5347,50 +5347,6 @@
         }
       }
     },
-    "服务器需要 Token，或已保存的 Token 无效。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "服务器需要 Token，或已保存的 Token 无效。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The server requires a token, or the saved token is invalid."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "サーバーには Token が必要です。または保存済みの Token が無効です。"
-          }
-        }
-      }
-    },
-    "调试服务器需要有效的 Token，请输入后重试。": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "调试服务器需要有效的 Token，请输入后重试。"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The debug server requires a valid token. Enter it and try again."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "デバッグサーバーには有効な Token が必要です。入力して再試行してください。"
-          }
-        }
-      }
-    },
     "无法读取调试 Token，请解锁设备后重试。": {
       "localizations": {
         "zh-Hans": {
