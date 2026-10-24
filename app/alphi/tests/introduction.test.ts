@@ -24,6 +24,13 @@ it('provides sourced, fully translated introductions for every language', () => 
       ...Object.values(intro.facts),
       intro.writingNote,
       intro.tip,
+      ...(intro.toneGuide
+        ? [
+            intro.toneGuide.introduction,
+            intro.toneGuide.note,
+            ...intro.toneGuide.tones.flatMap((tone) => [tone.meaning, tone.description]),
+          ]
+        : []),
       ...intro.history.flatMap((event) => [event.period, event.title, event.description]),
     ];
     for (const key of content) {
@@ -35,24 +42,31 @@ it('provides sourced, fully translated introductions for every language', () => 
 });
 
 it('updates an open introduction when the app language changes', async () => {
-  const wrapper = mount(LanguageIntroduction, { props: { language: 'ko' } });
+  const wrapper = mount(LanguageIntroduction, { props: { language: 'vi' } });
   try {
     expect(wrapper.text()).toContain('发展历史');
-    expect(wrapper.text()).toContain(introductions.ko.summary);
+    expect(wrapper.text()).toContain(introductions.vi.summary);
+    expect(wrapper.findAll('.introduction-tone-list > div')).toHaveLength(6);
+    expect(wrapper.text()).toContain('ắ 是 ă 加 sắc');
     for (const locale of ['en', 'ja'] as const) {
       setAppLocale(locale);
       await wrapper.vm.$nextTick();
       expect(wrapper.text()).toContain(
-        messages[introductions.ko.summary as keyof typeof messages][locale],
+        messages[introductions.vi.summary as keyof typeof messages][locale],
+      );
+      expect(wrapper.text()).toContain(messages['六个声调'][locale]);
+      expect(wrapper.text()).toContain(
+        messages[introductions.vi.toneGuide!.tones[0].description as keyof typeof messages][locale],
       );
       expect(wrapper.text()).toContain(messages['发展历史'][locale]);
-      expect(wrapper.get('h1').text()).toBe('한국어');
+      expect(wrapper.get('h1').text()).toBe('Tiếng Việt');
       expect(wrapper.findAll('.introduction-sources a')).toHaveLength(
-        introductions.ko.sources.length,
+        introductions.vi.sources.length,
       );
     }
     await wrapper.setProps({ language: 'hy' });
     expect(wrapper.get('h1').text()).toBe('Հայերեն');
+    expect(wrapper.find('.introduction-tones').exists()).toBe(false);
     expect(wrapper.text()).toContain(
       messages[introductions.hy.summary as keyof typeof messages].ja,
     );

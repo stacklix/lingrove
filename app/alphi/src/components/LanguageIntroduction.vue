@@ -26,6 +26,22 @@ const introduction = computed(() => introductions[props.language]);
       <h2>{{ t('文字与读音') }}</h2>
       <p>{{ t(introduction.writingNote) }}</p>
     </section>
+    <section v-if="introduction.toneGuide" class="introduction-section introduction-tones">
+      <h2>{{ t('六个声调') }}</h2>
+      <p>{{ t(introduction.toneGuide.introduction) }}</p>
+      <dl class="introduction-tone-list">
+        <div v-for="tone in introduction.toneGuide.tones" :key="tone.name">
+          <dt lang="vi">{{ tone.name }}</dt>
+          <dd>
+            <p class="introduction-tone-example">
+              <span lang="vi">{{ tone.sample }}</span> — {{ t(tone.meaning) }}
+            </p>
+            <p>{{ t(tone.description) }}</p>
+          </dd>
+        </div>
+      </dl>
+      <p>{{ t(introduction.toneGuide.note) }}</p>
+    </section>
     <section class="introduction-section">
       <h2>{{ t('发展历史') }}</h2>
       <ol class="introduction-timeline">

@@ -5,6 +5,11 @@ export interface LanguageIntroduction {
   summary: string;
   facts: { family: string; region: string; script: string };
   writingNote: string;
+  toneGuide?: {
+    introduction: string;
+    tones: { name: string; sample: string; meaning: string; description: string }[];
+    note: string;
+  };
   history: { period: string; title: string; description: string }[];
   tip: string;
   sources: { label: string; url: string }[];
@@ -293,6 +298,49 @@ export const introductions: Record<Language, LanguageIntroduction> = {
     },
     writingNote:
       'ă、â、đ、ê、ô、ơ、ư 是独立字母。声调另用五种符号标记，无标记也是一种声调；不要把声调变体当作新字母。',
+    toneGuide: {
+      introduction:
+        '越南语有六个书写声调：一个无标记，五个用符号标在元音上。声调会改变词义。以下以北部常见读法为参考，各地区的音高和发声方式会有差异。',
+      tones: [
+        {
+          name: 'ngang',
+          sample: 'a · ba',
+          meaning: '三',
+          description: '无标记。音高居中或略高，单独读时通常较平稳。',
+        },
+        {
+          name: 'huyền',
+          sample: 'à · và',
+          meaning: '和',
+          description: '左斜符号。音高较低，轻缓下降，常带一点气声。',
+        },
+        {
+          name: 'sắc',
+          sample: 'á · cá',
+          meaning: '鱼',
+          description: '右斜符号。音高向上升，发音较紧。',
+        },
+        {
+          name: 'hỏi',
+          sample: 'ả · cả',
+          meaning: '年长的；大的',
+          description: '上方钩号。音高先向中低处降，单独读时末尾常回升。',
+        },
+        {
+          name: 'ngã',
+          sample: 'ã · đã',
+          meaning: '表示过去',
+          description: '上方波浪号。音高上升，中间常有喉部收紧或短暂中断。',
+        },
+        {
+          name: 'nặng',
+          sample: 'ạ · mạ',
+          meaning: '稻秧',
+          description: '下方圆点。音高较低并急降，发音短促，收尾常有喉部收紧。',
+        },
+      ],
+      note: '先认字母，再认声调：ắ 是 ă 加 sắc，ầ 是 â 加 huyền，ợ 是 ơ 加 nặng。字母符号决定元音，声调符号决定声调；同一个元音上可以同时出现两种符号。练习时结合词语听辨，不要直接套用普通话四声。',
+    },
     history: [
       {
         period: '早期书写传统',
@@ -316,6 +364,10 @@ export const introductions: Record<Language, LanguageIntroduction> = {
       {
         label: 'NIU SEAsite · Vietnamese alphabet',
         url: 'https://seasite.niu.edu/vietnamese/Guide_to_Pronunciation/alphabet/alphabet_table.htm',
+      },
+      {
+        label: 'NIU SEAsite · Vietnamese tones',
+        url: 'https://seasite.niu.edu/vietnamese/Guide_to_Pronunciation/tone_table.htm',
       },
       {
         label: 'Donny Trương · Vietnamese Typography',

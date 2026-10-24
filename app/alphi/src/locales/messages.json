@@ -2175,6 +2175,66 @@
     "en": "Vietnamese recordings come from Northern Illinois University’s SEAsite alphabet lessons, shared by upper- and lowercase forms. For personal study with original credits retained; public redistribution permission has not been verified.",
     "ja": "ベトナム語の録音は北イリノイ大学 SEAsite の字母教材に由来し、大文字と小文字で共用します。原典の情報を保持した個人学習用で、公開再配布の許諾は確認していません。"
   },
+  "六个声调": {
+    "en": "Six tones",
+    "ja": "6つの声調"
+  },
+  "越南语有六个书写声调：一个无标记，五个用符号标在元音上。声调会改变词义。以下以北部常见读法为参考，各地区的音高和发声方式会有差异。": {
+    "en": "Vietnamese spelling distinguishes six tones: one unmarked and five marked on vowels. Tones change word meanings. The descriptions below reflect common Northern pronunciation; pitch and voice quality vary by region.",
+    "ja": "ベトナム語の表記は6つの声調を区別し、1つは無標、5つは母音に記号を付けます。声調で語の意味が変わります。以下は北部の一般的な発音を参考にしており、音の高さや声質には地域差があります。"
+  },
+  "三": {
+    "en": "Three",
+    "ja": "三"
+  },
+  "和": {
+    "en": "And",
+    "ja": "〜と"
+  },
+  "鱼": {
+    "en": "Fish",
+    "ja": "魚"
+  },
+  "年长的；大的": {
+    "en": "Elder; large",
+    "ja": "年長の・大きい"
+  },
+  "表示过去": {
+    "en": "Past-time marker",
+    "ja": "過去を表す"
+  },
+  "稻秧": {
+    "en": "Rice seedling",
+    "ja": "稲の苗"
+  },
+  "无标记。音高居中或略高，单独读时通常较平稳。": {
+    "en": "Unmarked. Mid or upper-mid pitch, usually fairly level in isolation.",
+    "ja": "無標。中程度またはやや高い音で、単独では比較的平らに発音します。"
+  },
+  "左斜符号。音高较低，轻缓下降，常带一点气声。": {
+    "en": "Grave accent. Low pitch with a gentle fall, often slightly breathy.",
+    "ja": "左下がりの記号。低めの音が緩やかに下がり、息の混じった声になることがあります。"
+  },
+  "右斜符号。音高向上升，发音较紧。": {
+    "en": "Acute accent. Rising pitch with a tense voice.",
+    "ja": "右上がりの記号。音が上がり、声に張りがあります。"
+  },
+  "上方钩号。音高先向中低处降，单独读时末尾常回升。": {
+    "en": "Hook above. Pitch drops to a mid-low range, often rising again at the end in isolation.",
+    "ja": "上のかぎ形記号。中低域へ下がり、単独では終わりに上がることがよくあります。"
+  },
+  "上方波浪号。音高上升，中间常有喉部收紧或短暂中断。": {
+    "en": "Tilde above. Rising pitch, often with a constriction or brief break in the throat.",
+    "ja": "上の波形記号。音が上がり、途中で喉が締まったり、声が一瞬途切れたりします。"
+  },
+  "下方圆点。音高较低并急降，发音短促，收尾常有喉部收紧。": {
+    "en": "Dot below. A short, low, sharply falling tone, often ending with a constriction in the throat.",
+    "ja": "下の点。低い音が急に下がる短い声調で、終わりに喉を締めることがよくあります。"
+  },
+  "先认字母，再认声调：ắ 是 ă 加 sắc，ầ 是 â 加 huyền，ợ 是 ơ 加 nặng。字母符号决定元音，声调符号决定声调；同一个元音上可以同时出现两种符号。练习时结合词语听辨，不要直接套用普通话四声。": {
+    "en": "Identify the letter first, then the tone: ắ is ă plus sắc, ầ is â plus huyền, and ợ is ơ plus nặng. Letter marks identify the vowel; tone marks identify the tone. Both can appear on one vowel. Practise listening in words rather than mapping them directly to Mandarin’s four tones.",
+    "ja": "まず文字、次に声調を確認しましょう。ắ は ă に sắc、ầ は â に huyền、ợ は ơ に nặng を加えた形です。字母の記号は母音、声調記号は声調を表し、同じ母音に両方が付くことがあります。語の中で聞き分け、中国語普通話の四声にそのまま当てはめないようにしましょう。"
+  },
   "字母名称": {
     "en": "Letter name",
     "ja": "文字の名前"

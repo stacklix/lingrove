@@ -1826,6 +1826,31 @@ main.learning-page {
 .introduction-section {
   margin: 32px 0;
 }
+.introduction-tone-list {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+.introduction-tone-list > div {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+}
+.introduction-tone-list dt {
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 600;
+}
+.introduction-tone-list dd {
+  margin: 0;
+}
+.introduction-tone-list p {
+  margin: 8px 0 0;
+}
+.introduction-tone-example span {
+  font-size: 22px;
+}
 .language-introduction h2 {
   margin: 0 0 14px;
   color: var(--accent);
