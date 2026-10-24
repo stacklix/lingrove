@@ -20,6 +20,7 @@ def verify(bundle):
         b'DebugServer', b'GitHubBuildStatus', b'DebugAddressRow', b'ModuleDeveloperDetailsView',
         b'ModuleReloadRecord', b'debug.servers', b'modules.reloadHistory', b'module-refresh',
         b'snapshot/catalog.snapshot.json', b'snapshotCatalogURL',
+        b'Stack-Pass', b'X-Lingrove-Debug-Auth',
     ):
         assert marker not in executable, f'Release executable contains debug code: {marker.decode()}'
     print('PASS Release executable, host configuration and network policy exclude debug functionality')

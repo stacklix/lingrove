@@ -423,18 +423,21 @@ struct ModuleDownloadRecord: Codable, Equatable {
             } else { refresh(); statuses[module.id] = "页面启动失败，可重新打开" }
         } catch { notice = "回退失败：\(error.localizedDescription)" }
     }
-    nonisolated private static func fetch(session: ModuleDownloadSession, url: URL, limit: Int, forceRefresh: Bool = false,
-                                          timeout: TimeInterval = ModuleTransferTimeout.catalog, sourceURL: URL? = nil, debugToken: String? = nil,
-                                          onProgress: (@Sendable (Int) -> Void)? = nil) async throws -> Data {
-        var allowed = NetworkPolicy.origin(url.absoluteString) != nil
+    private func resourceRequest(for url: URL) throws -> URLRequest {
+        guard allowsResource(url) else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
+        var request = URLRequest(url: url)
         #if DEBUG
-        if let sourceURL { allowed = allowed || DebugServer.allowsResource(url, catalogURL: sourceURL) }
+        try DebugServer.authorize(&request, defaults: defaults)
         #endif
-        guard allowed else { throw ModuleError.invalid("更新地址必须使用 HTTPS") }
-        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        return request
+    }
+    nonisolated private static func fetch(session: ModuleDownloadSession, request: URLRequest, limit: Int, forceRefresh: Bool = false,
+                                          timeout: TimeInterval = ModuleTransferTimeout.catalog,
+                                          onProgress: (@Sendable (Int) -> Void)? = nil) async throws -> Data {
+        var request = request
+        var components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
         if forceRefresh { components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "_refresh", value: UUID().uuidString)] }
-        var request = URLRequest(url: components.url!)
-        if let debugToken { request.setValue(debugToken, forHTTPHeaderField: "Stack-Pass") }
+        request.url = components.url!
         if forceRefresh { request.setValue("no-cache", forHTTPHeaderField: "Cache-Control") }
         request.timeoutInterval = timeout; request.cachePolicy = .reloadIgnoringLocalCacheData
         return try await session.download(request: request, limit: limit, onProgress: onProgress)
@@ -470,19 +473,10 @@ struct ModuleDownloadRecord: Codable, Equatable {
             finishPendingDownloadChecks(state: .failed, message: notice)
             return false
         }
-        #if DEBUG
-        let sourceURL = HostConfiguration.resourceMode(defaults: defaults) == .debug ? url : nil
-        #else
-        let sourceURL: URL? = nil
-        #endif
         var receivedCatalog = false
         do {
-            var request = URLRequest(url: url)
-            #if DEBUG
-            try DebugServer.authorize(&request, defaults: defaults)
-            #endif
-            let catalogData = try await Self.fetch(session: session, url: url, limit: 1024 * 1024, forceRefresh: forceRefresh, sourceURL: sourceURL,
-                                                   debugToken: request.value(forHTTPHeaderField: "Stack-Pass"))
+            let request = try resourceRequest(for: url)
+            let catalogData = try await Self.fetch(session: session, request: request, limit: 1024 * 1024, forceRefresh: forceRefresh)
             var catalog = try JSONDecoder().decode(Catalog.self, from: catalogData)
             try Task.checkCancellation()
             try catalog.validate()
@@ -563,11 +557,6 @@ struct ModuleDownloadRecord: Codable, Equatable {
         guard !modules.isEmpty else { return true }
         var succeeded = true
         let session = self.session
-        #if DEBUG
-        let sourceURL = HostConfiguration.resourceMode(defaults: defaults) == .debug ? URL(string: catalogURL) : nil
-        #else
-        let sourceURL: URL? = nil
-        #endif
         func clearOwnedDownloads() {
             for module in modules where downloadStatusOwners[module.id] == id {
                 if statuses[module.id]?.hasPrefix("正在下载") == true {
@@ -590,24 +579,20 @@ struct ModuleDownloadRecord: Codable, Equatable {
                 recordDownload(module.id, state: .downloading, message: "正在下载…")
                 downloadProgress[module.id] = 0
                 downloadStatusOwners[module.id] = id
-                let debugToken: Result<String?, Error> = Result {
-                    guard let rawURL = module.downloadUrl, let url = URL(string: rawURL) else { return nil }
-                    var request = URLRequest(url: url)
-                    #if DEBUG
-                    try DebugServer.authorize(&request, defaults: defaults)
-                    #endif
-                    return request.value(forHTTPHeaderField: "Stack-Pass")
+                let request: Result<URLRequest, Error> = Result {
+                    guard let rawURL = module.downloadUrl, let url = URL(string: rawURL) else {
+                        throw ModuleError.invalid("下载元数据无效")
+                    }
+                    return try resourceRequest(for: url)
                 }
                 group.addTask {
-                    guard let rawURL = module.downloadUrl,
-                          let url = URL(string: rawURL),
-                          let expectedHash = module.sha256, expectedHash.count == 64,
+                    guard let expectedHash = module.sha256, expectedHash.count == 64,
                           let size = module.size, size > 0, size <= 50 * 1024 * 1024 else {
                         return (module, .failure(ModuleError.invalid("下载元数据无效")))
                     }
                     do {
-                        let data = try await Self.fetch(session: session, url: url, limit: size, forceRefresh: forceRefresh,
-                                                        timeout: ModuleTransferTimeout.package, sourceURL: sourceURL, debugToken: try debugToken.get()) { received in
+                        let data = try await Self.fetch(session: session, request: try request.get(), limit: size, forceRefresh: forceRefresh,
+                                                        timeout: ModuleTransferTimeout.package) { received in
                             Task { @MainActor [weak self] in
                                 guard let self, self.updateID == id,
                                       self.downloadStatusOwners[module.id] == id,

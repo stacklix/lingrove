@@ -146,6 +146,11 @@ final class ModuleCatalogNetwork: URLProtocol, @unchecked Sendable {
     override func startLoading() {
         let url = request.url!
         XCTAssertTrue(["/catalog.json", "/snapshot/catalog.snapshot.json"].contains(url.path))
+        if url.path == "/snapshot/catalog.snapshot.json" {
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Stack-Pass"), "Ct12Ab")
+        } else {
+            XCTAssertNil(request.value(forHTTPHeaderField: "Stack-Pass"))
+        }
         // A forced refresh simulates a catalog disappearing after a successful check.
         let status = url.query == nil ? 200 : 404
         var module = Module(id: "verso", name: "Verso", version: "20261023", entry: "index.html",
@@ -173,12 +178,15 @@ final class RuntimeTests: XCTestCase {
         let directory = builtin.appendingPathComponent("verso")
         let suite = "debug-catalog-\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        let address = "http://\(UUID().uuidString.lowercased()).example:8000"
         defer {
             defaults.removePersistentDomain(forName: suite)
+            try? DebugServerTokenStore.save("", address: address)
             try? FileManager.default.removeItem(at: root)
         }
         defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
-        DebugServerSettings(addresses: [.init(id: "debug", url: "http://localhost:8000")], activeID: "debug").save(defaults: defaults)
+        DebugServerSettings(addresses: [.init(id: "debug", url: address)], activeID: "debug").save(defaults: defaults)
+        try DebugServerTokenStore.save("Ct12Ab", address: address)
         let module = Module(id: "verso", name: "Verso", version: "20261023", entry: "index.html",
                             minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -195,7 +203,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertNil(store.remoteEntryURL(for: module))
         let succeeded = await store.checkForUpdates()
         XCTAssertTrue(succeeded)
-        XCTAssertEqual(store.remoteEntryURL(for: module)?.absoluteString, "http://localhost:8000/snapshot/app/verso/index.html")
+        XCTAssertEqual(store.remoteEntryURL(for: module)?.absoluteString, "\(address)/snapshot/app/verso/index.html")
         let refreshed = await store.checkForUpdates(forceRefresh: true)
         XCTAssertFalse(refreshed)
         XCTAssertEqual(store.modules, [module])

@@ -65,6 +65,12 @@ test('Release compilation excludes debug implementations while Debug retains the
     'modules.reloadHistory',
     'module-refresh',
     'isInspectable',
+    'debugToken',
+    'Stack-Pass',
+    'X-Lingrove-Debug-Auth',
+    'debugResourceBase',
+    'debugResourceTasks',
+    'loadDebugResource',
   ]) {
     assert.ok(debug.includes(marker), `Debug lost ${marker}`);
     assert.ok(!release.includes(marker), `Release still compiles ${marker}`);
@@ -116,8 +122,10 @@ test('Release artifact verifier rejects debug executable and debug resource conf
       { encoding: 'utf8' },
     );
   assert.equal(verify().status, 0);
-  await writeFile(path.join(directory, 'Lingrove'), 'code DebugServer code');
-  assert.match(verify().stderr, /Release executable contains debug code/);
+  for (const marker of ['DebugServer', 'Stack-Pass', 'X-Lingrove-Debug-Auth']) {
+    await writeFile(path.join(directory, 'Lingrove'), `code ${marker} code`);
+    assert.match(verify().stderr, /Release executable contains debug code/);
+  }
   await writeFile(path.join(directory, 'Lingrove'), 'local application code');
   await writeFile(
     path.join(directory, 'HostConfig.json'),
