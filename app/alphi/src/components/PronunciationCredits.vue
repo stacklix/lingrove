@@ -27,6 +27,13 @@ const entries = computed(() =>
         )
       }}
     </p>
+    <p v-else-if="language === 'vi'">
+      {{
+        t(
+          '越南语录音来自北伊利诺伊大学 SEAsite 字母教材，大小写共用字母读音。音频仅供个人学习，保留原始来源；未确认公开再分发许可。',
+        )
+      }}
+    </p>
     <p v-else-if="language === 'ja'">
       {{ t('日语录音来自') }}
       <a

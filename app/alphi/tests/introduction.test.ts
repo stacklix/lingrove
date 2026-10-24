@@ -12,7 +12,7 @@ beforeEach(async () => {
   setAppLocale('zh-Hans');
 });
 
-it('provides sourced, fully translated introductions for all six languages', () => {
+it('provides sourced, fully translated introductions for every language', () => {
   for (const { id } of languages) {
     const intro = introductions[id];
     expect(intro.nativeName).toBeTruthy();

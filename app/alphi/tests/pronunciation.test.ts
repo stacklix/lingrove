@@ -39,8 +39,8 @@ it('bundles each sample and shares pronunciation between both written forms', ()
       expect(pronunciationFor(id)).toBe(sample);
     }
   }
-  expect(samples).toHaveLength(215);
-  expect(glyphs).toHaveLength(358);
+  expect(samples).toHaveLength(244);
+  expect(glyphs).toHaveLength(416);
   for (const glyph of glyphs) {
     expect(samples.filter((sample) => sample.glyphs.includes(glyph.id))).toHaveLength(1);
   }
@@ -56,7 +56,7 @@ it('bundles each sample and shares pronunciation between both written forms', ()
     );
     expect(createHash('sha256').update(recording).digest('hex')).toBe(source.downloadSha256);
   }
-});
+}, 15000);
 it('stops previous audio and ignores an outdated playback failure', async () => {
   const players: any[] = [];
   vi.stubGlobal(
@@ -120,8 +120,8 @@ it('provides playback failure feedback and permits retry', async () => {
   expect(speaking.value).toBe('');
 });
 
-it('provides native letter names for the three reference alphabets', () => {
-  for (const language of ['hy', 'ka', 'ko']) {
+it('provides recordings for each reference alphabet', () => {
+  for (const language of ['hy', 'ka', 'ko', 'vi']) {
     const letters = glyphs.filter((g) => g.language === language);
     expect(letters.length).toBeGreaterThan(0);
     for (const glyph of letters) {

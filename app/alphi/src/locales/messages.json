@@ -2110,5 +2110,73 @@
   "资料来源": {
     "en": "Sources and further reading",
     "ja": "参考資料"
+  },
+  "越南语": {
+    "en": "Vietnamese",
+    "ja": "ベトナム語"
+  },
+  "越南语属于南亚语系，主要在越南及海外社群中使用。声调和元音的区别会改变词义。": {
+    "en": "Vietnamese is an Austroasiatic language used in Vietnam and overseas communities. Tones and vowel distinctions can change word meanings.",
+    "ja": "ベトナム語はオーストロアジア語族に属し、ベトナムや海外のコミュニティで使われます。声調や母音の違いによって語の意味が変わります。"
+  },
+  "南亚语系 · 越语支": {
+    "en": "Austroasiatic · Vietic",
+    "ja": "オーストロアジア語族 · ベト語支"
+  },
+  "越南及海外越南语社群": {
+    "en": "Vietnam and overseas Vietnamese communities",
+    "ja": "ベトナムおよび海外のベトナム語コミュニティ"
+  },
+  "国语字 · 29 个字母": {
+    "en": "Quốc ngữ · 29 letters",
+    "ja": "クオック・グー · 29文字"
+  },
+  "ă、â、đ、ê、ô、ơ、ư 是独立字母。声调另用五种符号标记，无标记也是一种声调；不要把声调变体当作新字母。": {
+    "en": "The letters ă, â, đ, ê, ô, ơ and ư are distinct letters. Five marks indicate tones, alongside an unmarked tone; tonal variants are not additional alphabet letters.",
+    "ja": "ă・â・đ・ê・ô・ơ・ư は独立した文字です。声調は5種類の記号と無標で表し、声調付きの形を別の字母として数えません。"
+  },
+  "早期书写传统": {
+    "en": "Early writing traditions",
+    "ja": "初期の表記"
+  },
+  "汉文与字喃": {
+    "en": "Classical Chinese and chữ Nôm",
+    "ja": "漢文とチュノム"
+  },
+  "汉文长期用于正式文书，字喃则借用和改造汉字来记录越南语。": {
+    "en": "Classical Chinese served formal writing, while chữ Nôm adapted Chinese characters to record Vietnamese.",
+    "ja": "漢文は長く公的な文書に用いられ、チュノムは漢字を借用・改変してベトナム語を表しました。"
+  },
+  "17 世纪": {
+    "en": "17th century",
+    "ja": "17世紀"
+  },
+  "拉丁字母记音发展": {
+    "en": "Latin-based writing develops",
+    "ja": "ラテン文字による表記の発展"
+  },
+  "传教士与本地使用者参与发展拉丁字母记音；1651 年出版的越葡拉词典留下重要记录。": {
+    "en": "Missionaries and local speakers developed Latin-based transcription; a Vietnamese–Portuguese–Latin dictionary published in 1651 is an important record.",
+    "ja": "宣教師と現地の話者がラテン文字による表記を発展させ、1651年の越葡羅辞典に重要な記録が残されました。"
+  },
+  "国语字逐步普及": {
+    "en": "Quốc ngữ spreads",
+    "ja": "クオック・グーの普及"
+  },
+  "报刊、教育与文学推动国语字传播，逐渐形成今天通行的书写体系。": {
+    "en": "Newspapers, education and literature spread Quốc ngữ, leading to the writing system used today.",
+    "ja": "新聞、教育、文学を通じてクオック・グーが広まり、現在の一般的な表記となりました。"
+  },
+  "先区分 a、ă、â 和 o、ô、ơ，再结合短词练习声调。字母名称不等于词中的实际发音，不同地区的读法也有差异。": {
+    "en": "First distinguish a/ă/â and o/ô/ơ, then practise tones in short words. Letter names differ from sounds in words, and pronunciation varies by region.",
+    "ja": "まず a・ă・â と o・ô・ơ を区別し、短い語で声調を練習しましょう。文字の名前と語中の発音は異なり、地域差もあります。"
+  },
+  "越南语录音来自北伊利诺伊大学 SEAsite 字母教材，大小写共用字母读音。音频仅供个人学习，保留原始来源；未确认公开再分发许可。": {
+    "en": "Vietnamese recordings come from Northern Illinois University’s SEAsite alphabet lessons, shared by upper- and lowercase forms. For personal study with original credits retained; public redistribution permission has not been verified.",
+    "ja": "ベトナム語の録音は北イリノイ大学 SEAsite の字母教材に由来し、大文字と小文字で共用します。原典の情報を保持した個人学習用で、公開再配布の許諾は確認していません。"
+  },
+  "字母名称": {
+    "en": "Letter name",
+    "ja": "文字の名前"
   }
 }

@@ -2499,5 +2499,295 @@
     "text": "ㅣ",
     "recording": "ko-ㅣ.mp3",
     "kind": "字母读音"
+  },
+  {
+    "id": "vi-00",
+    "glyphs": [
+      "vi-a",
+      "vi-A"
+    ],
+    "text": "a",
+    "recording": "niu/a1.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-01",
+    "glyphs": [
+      "vi-ă",
+      "vi-Ă"
+    ],
+    "text": "á",
+    "recording": "niu/a2.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-02",
+    "glyphs": [
+      "vi-â",
+      "vi-Â"
+    ],
+    "text": "ớ",
+    "recording": "niu/a3.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-03",
+    "glyphs": [
+      "vi-b",
+      "vi-B"
+    ],
+    "text": "bê",
+    "recording": "niu/b.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-04",
+    "glyphs": [
+      "vi-c",
+      "vi-C"
+    ],
+    "text": "xê",
+    "recording": "niu/c.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-05",
+    "glyphs": [
+      "vi-d",
+      "vi-D"
+    ],
+    "text": "dê",
+    "recording": "niu/d1.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-06",
+    "glyphs": [
+      "vi-đ",
+      "vi-Đ"
+    ],
+    "text": "đê",
+    "recording": "niu/d2.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-07",
+    "glyphs": [
+      "vi-e",
+      "vi-E"
+    ],
+    "text": "e",
+    "recording": "niu/e1.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-08",
+    "glyphs": [
+      "vi-ê",
+      "vi-Ê"
+    ],
+    "text": "ê",
+    "recording": "niu/e2.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-09",
+    "glyphs": [
+      "vi-g",
+      "vi-G"
+    ],
+    "text": "giê",
+    "recording": "niu/g.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-10",
+    "glyphs": [
+      "vi-h",
+      "vi-H"
+    ],
+    "text": "hát",
+    "recording": "niu/h.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-11",
+    "glyphs": [
+      "vi-i",
+      "vi-I"
+    ],
+    "text": "i",
+    "recording": "niu/i.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-12",
+    "glyphs": [
+      "vi-k",
+      "vi-K"
+    ],
+    "text": "ca",
+    "recording": "niu/k.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-13",
+    "glyphs": [
+      "vi-l",
+      "vi-L"
+    ],
+    "text": "e-lờ",
+    "recording": "niu/l.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-14",
+    "glyphs": [
+      "vi-m",
+      "vi-M"
+    ],
+    "text": "em-mờ",
+    "recording": "niu/m.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-15",
+    "glyphs": [
+      "vi-n",
+      "vi-N"
+    ],
+    "text": "en-nờ",
+    "recording": "niu/n.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-16",
+    "glyphs": [
+      "vi-o",
+      "vi-O"
+    ],
+    "text": "o",
+    "recording": "niu/o1.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-17",
+    "glyphs": [
+      "vi-ơ",
+      "vi-Ơ"
+    ],
+    "text": "ơ",
+    "recording": "niu/o3.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-18",
+    "glyphs": [
+      "vi-ô",
+      "vi-Ô"
+    ],
+    "text": "ô",
+    "recording": "niu/o2.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-19",
+    "glyphs": [
+      "vi-p",
+      "vi-P"
+    ],
+    "text": "pê",
+    "recording": "niu/p.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-20",
+    "glyphs": [
+      "vi-q",
+      "vi-Q"
+    ],
+    "text": "cu",
+    "recording": "niu/q.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-21",
+    "glyphs": [
+      "vi-r",
+      "vi-R"
+    ],
+    "text": "e-rờ",
+    "recording": "niu/r.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-22",
+    "glyphs": [
+      "vi-s",
+      "vi-S"
+    ],
+    "text": "ét-sì",
+    "recording": "niu/s.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-23",
+    "glyphs": [
+      "vi-t",
+      "vi-T"
+    ],
+    "text": "tê",
+    "recording": "niu/t.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-24",
+    "glyphs": [
+      "vi-u",
+      "vi-U"
+    ],
+    "text": "u",
+    "recording": "niu/u1.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-25",
+    "glyphs": [
+      "vi-ư",
+      "vi-Ư"
+    ],
+    "text": "ư",
+    "recording": "niu/u2.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-26",
+    "glyphs": [
+      "vi-v",
+      "vi-V"
+    ],
+    "text": "vê",
+    "recording": "niu/v.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-27",
+    "glyphs": [
+      "vi-x",
+      "vi-X"
+    ],
+    "text": "ích-xì",
+    "recording": "niu/x.mp3",
+    "kind": "字母名称"
+  },
+  {
+    "id": "vi-28",
+    "glyphs": [
+      "vi-y",
+      "vi-Y"
+    ],
+    "text": "i dài",
+    "recording": "niu/y.mp3",
+    "kind": "字母名称"
   }
 ]

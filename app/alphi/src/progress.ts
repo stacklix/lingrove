@@ -1,5 +1,5 @@
 import { moduleStorage } from '@lingrove/host-sdk';
-import { glyphs, groups, type Language, type Group } from './curriculum';
+import { glyphs, groups, languages, type Language, type Group } from './curriculum';
 import type { Strokes, Assessment } from './scoring';
 import { validAnswer, type Answer, type Question } from './session';
 export type Tab = 'study' | 'tests' | 'letters' | 'about';
@@ -40,6 +40,7 @@ export const emptyProgress = (): Progress => ({
 });
 const store = moduleStorage('alphi');
 const known = new Map(glyphs.map((g) => [g.id, g]));
+const knownLanguages = new Set<string>(languages.map((language) => language.id));
 function validInk(value: unknown): boolean {
   return (
     Array.isArray(value) &&
@@ -86,7 +87,7 @@ export async function loadProgress(): Promise<Progress> {
     !p.lastGroups ||
     Array.isArray(p.lastGroups) ||
     typeof p.lastGroups !== 'object' ||
-    !['ja', 'ru', 'el', 'hy', 'ka', 'ko'].includes(p.language) ||
+    !knownLanguages.has(p.language) ||
     !['study', 'tests', 'letters', 'about'].includes(p.tab) ||
     !Array.isArray(p.learned) ||
     !p.learned.every((id) => known.has(id)) ||
@@ -95,10 +96,7 @@ export async function loadProgress(): Promise<Progress> {
   )
     return invalid();
   for (const [lang, group] of Object.entries(p.lastGroups))
-    if (
-      !['ja', 'ru', 'el', 'hy', 'ka', 'ko'].includes(lang) ||
-      !groups(lang as Language).some((g) => g.id === group)
-    )
+    if (!knownLanguages.has(lang) || !groups(lang as Language).some((g) => g.id === group))
       return invalid();
   for (const [key, c] of Object.entries(p.cursors)) {
     const g = known.get(c?.id);
@@ -114,7 +112,7 @@ export async function loadProgress(): Promise<Progress> {
   }
   for (const [lang, d] of Object.entries(p.drafts)) {
     if (
-      !['ja', 'ru', 'el', 'hy', 'ka', 'ko'].includes(lang) ||
+      !knownLanguages.has(lang) ||
       !d ||
       typeof d.id !== 'string' ||
       !groups(lang as Language).some((g) => g.id === d.group) ||

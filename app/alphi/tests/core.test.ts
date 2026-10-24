@@ -5,13 +5,23 @@ import { assess, maskFromAlpha, similarity } from '../src/scoring';
 import type { Mask } from '../src/scoring';
 describe('curriculum', () => {
   it('contains complete distinct basic alphabets and kana stroke paths', () => {
-    expect(new Set(glyphs.map((g) => g.id)).size).toBe(358);
+    expect(new Set(glyphs.map((g) => g.id)).size).toBe(416);
     expect(poolFor('ja', 'hiragana')).toHaveLength(46);
     expect(poolFor('ja', 'katakana')).toHaveLength(46);
     expect(poolFor('ru', 'lower')).toHaveLength(33);
     expect(poolFor('ru', 'upper')).toHaveLength(33);
     expect(poolFor('el', 'lower')).toHaveLength(25);
     expect(poolFor('el', 'upper')).toHaveLength(24);
+    expect(
+      poolFor('vi', 'lower')
+        .map((g) => g.text)
+        .join(''),
+    ).toBe('aăâbcdđeêghiklmnoôơpqrstuưvxy');
+    expect(
+      poolFor('vi', 'upper')
+        .map((g) => g.text)
+        .join(''),
+    ).toBe('AĂÂBCDĐEÊGHIKLMNOÔƠPQRSTUƯVXY');
     expect(
       glyphs
         .filter((g) => g.language === 'ja')
@@ -50,8 +60,24 @@ describe('round generation', () => {
   it('keeps handwriting and choice results separate', () => {
     expect(
       summarize([
-        { id: 'a', text: 'a', type: 'write', strokes: [], score: 80, correct: true, status: 'match' },
-        { id: 'b', text: 'b', type: 'choice', chosenID: 'a', score: 0, correct: false, status: 'different' },
+        {
+          id: 'a',
+          text: 'a',
+          type: 'write',
+          strokes: [],
+          score: 80,
+          correct: true,
+          status: 'match',
+        },
+        {
+          id: 'b',
+          text: 'b',
+          type: 'choice',
+          chosenID: 'a',
+          score: 0,
+          correct: false,
+          status: 'different',
+        },
       ]),
     ).toEqual({ writing: 80, choices: 0, choiceCount: 1, wrong: ['b'] });
   });

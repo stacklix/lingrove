@@ -245,7 +245,7 @@ const libraryCards = computed(() =>
       : letterCards.value,
 );
 function libraryPair(g: Glyph) {
-  return g.language === 'hy'
+  return g.language === 'hy' || g.language === 'vi'
     ? variants(g)
     : g.language === 'ja'
       ? [g]

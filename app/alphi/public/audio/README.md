@@ -1,6 +1,6 @@
 # 字母发音
 
-当前课程的 215 个基本读音均已提供真人录音，覆盖全部 358 个字形：
+当前课程的 244 个基本读音均已提供真人录音，覆盖全部 416 个字形：
 
 - 日语 46 个基本假名；平假名与片假名共用音频。浊音、拗音等尚不在当前课程范围内。
 - 俄语 33 个字母；大小写共用字母名称读音，包括硬音符和软音符的名称。
@@ -31,3 +31,5 @@
 - 韩语：[zKorean](https://zkorean.com/hangul/appearance) 字母教学真人录音。辅音保留完整的字母名称和发音演示，元音为读音。
 
 格鲁吉亚语、韩语录音仅用于个人学习，未确认公开再分发许可；作者、下载地址和校验值随应用保留。可用 `--ffmpeg <路径>` 指定 FFmpeg。
+
+- 越南语：29 个字母的大小写共用 [Northern Illinois University · SEAsite](https://seasite.niu.edu/vietnamese/Guide_to_Pronunciation/alphabet/alphabet_table.htm) 字母教材逐字录音，原始 MP3 位于 `audio-sources/niu/`。完整转换为单声道 24 kHz WAV，未裁剪、变速或变调。仅供个人学习，未确认公开再分发许可；逐文件来源和校验值见 `SOURCES.json`。

@@ -519,11 +519,14 @@ it('limits reference languages to printed letters and pronunciation across langu
     ['hy', 39],
     ['ka', 33],
     ['ko', 40],
+    ['vi', 29],
   ] as const) {
     await w.find('select').setValue(language);
     await flushPromises();
     expect(w.findAll('.letter-card')).toHaveLength(count);
-    expect(w.findAll('.library-print-glyph')).toHaveLength(language === 'hy' ? 78 : count);
+    expect(w.findAll('.library-print-glyph')).toHaveLength(
+      ['hy', 'vi'].includes(language) ? count * 2 : count,
+    );
     if (language === 'hy') {
       expect(w.text()).toContain('Ու');
       expect(w.text()).toContain('ԵՎ');
@@ -546,7 +549,7 @@ it('keeps the introduction as a root page across all learning languages', async 
   const w = mountApp();
   await flushPromises();
   await button(w, '介绍').trigger('click');
-  for (const language of ['ja', 'ru', 'el', 'hy', 'ka', 'ko'] as const) {
+  for (const language of ['ja', 'ru', 'el', 'hy', 'ka', 'ko', 'vi'] as const) {
     await w.get('select.lingrove-language-select').setValue(language);
     await flushPromises();
     expect(w.get('.language-introduction h1').text()).toBe(introductions[language].nativeName);
@@ -558,7 +561,7 @@ it('keeps the introduction as a root page across all learning languages', async 
   }
   await button(w, '字母').trigger('click');
   expect(w.find('.language-introduction').exists()).toBe(false);
-  expect(w.findAll('.letter-card')).toHaveLength(40);
+  expect(w.findAll('.letter-card')).toHaveLength(29);
   w.unmount();
 });
 

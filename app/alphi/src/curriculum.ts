@@ -1,5 +1,5 @@
 import kana from './kana.json';
-export type Language = 'ja' | 'ru' | 'el' | 'hy' | 'ka' | 'ko';
+export type Language = 'ja' | 'ru' | 'el' | 'hy' | 'ka' | 'ko' | 'vi';
 export type Group = 'hiragana' | 'katakana' | 'lower' | 'upper' | 'mixed';
 export interface Glyph {
   id: string;
@@ -18,6 +18,7 @@ export const languages = [
   { id: 'hy' as const, name: '亚美尼亚语', subtitle: '', sample: 'ա' },
   { id: 'ka' as const, name: '格鲁吉亚语', subtitle: '', sample: 'ა' },
   { id: 'ko' as const, name: '韩语', subtitle: '', sample: 'ㄱ' },
+  { id: 'vi' as const, name: '越南语', subtitle: '', sample: 'ă' },
 ];
 const hiragana =
   'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん';
@@ -88,6 +89,42 @@ addLetters(
   'giyeok ssanggiyeok nieun digeut ssangdigeut rieul mieum bieup ssangbieup siot ssangsiot ieung jieut ssangjieut chieut kieuk tieut pieup hieut a ae ya yae eo e yeo ye o wa wae oe yo u wo we wi yu eu ui i'.split(
     ' ',
   ),
+);
+addLetters(
+  'vi',
+  [...'aăâbcdđeêghiklmnoôơpqrstuưvxy'],
+  [
+    'a',
+    'á',
+    'ớ',
+    'bê',
+    'xê',
+    'dê',
+    'đê',
+    'e',
+    'ê',
+    'giê',
+    'hát',
+    'i',
+    'ca',
+    'e-lờ',
+    'em-mờ',
+    'en-nờ',
+    'o',
+    'ô',
+    'ơ',
+    'pê',
+    'cu',
+    'e-rờ',
+    'ét-sì',
+    'tê',
+    'u',
+    'ư',
+    'vê',
+    'ích-xì',
+    'i dài',
+  ],
+  true,
 );
 export const glyphs: Glyph[] = [
   ...referenceGlyphs,

@@ -283,4 +283,52 @@ export const introductions: Record<Language, LanguageIntroduction> = {
       },
     ],
   },
+  vi: {
+    nativeName: 'Tiếng Việt',
+    summary: '越南语属于南亚语系，主要在越南及海外社群中使用。声调和元音的区别会改变词义。',
+    facts: {
+      family: '南亚语系 · 越语支',
+      region: '越南及海外越南语社群',
+      script: '国语字 · 29 个字母',
+    },
+    writingNote:
+      'ă、â、đ、ê、ô、ơ、ư 是独立字母。声调另用五种符号标记，无标记也是一种声调；不要把声调变体当作新字母。',
+    history: [
+      {
+        period: '早期书写传统',
+        title: '汉文与字喃',
+        description: '汉文长期用于正式文书，字喃则借用和改造汉字来记录越南语。',
+      },
+      {
+        period: '17 世纪',
+        title: '拉丁字母记音发展',
+        description:
+          '传教士与本地使用者参与发展拉丁字母记音；1651 年出版的越葡拉词典留下重要记录。',
+      },
+      {
+        period: '19—20 世纪',
+        title: '国语字逐步普及',
+        description: '报刊、教育与文学推动国语字传播，逐渐形成今天通行的书写体系。',
+      },
+    ],
+    tip: '先区分 a、ă、â 和 o、ô、ơ，再结合短词练习声调。字母名称不等于词中的实际发音，不同地区的读法也有差异。',
+    sources: [
+      {
+        label: 'NIU SEAsite · Vietnamese alphabet',
+        url: 'https://seasite.niu.edu/vietnamese/Guide_to_Pronunciation/alphabet/alphabet_table.htm',
+      },
+      {
+        label: 'Donny Trương · Vietnamese Typography',
+        url: 'https://vietnamesetypography.com/alphabet/',
+      },
+      {
+        label: 'Donny Trương · History of Quốc ngữ',
+        url: 'https://vietnamesetypography.com/history/',
+      },
+      {
+        label: 'Languages · Austroasiatic components of Vietnamese',
+        url: 'https://www.mdpi.com/2226-471X/9/12/377',
+      },
+    ],
+  },
 };
