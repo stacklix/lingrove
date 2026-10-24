@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { deleteSelection, layouts, letterCase, replaceSelection } from '../src/keyboard';
-import { vietnameseVariants } from '../src/vietnamese';
 describe('multilingual text editing', () => {
   it('covers Arabic letters, variants, diacritics, punctuation and numerals', () => {
     const layout = layouts.find(item => item.id === 'ar')!;
@@ -16,8 +15,7 @@ describe('multilingual text editing', () => {
   });
   it('covers Vietnamese vowels with every tone in both cases', () => {
     const layout = layouts.find(item => item.id === 'vi')!;
-    const available = layout.rows.join('') + [...'aeiouyd'].flatMap(vietnameseVariants).join('');
-    expect(layout.extra).toBe('');
+    const available = layout.rows.join('') + layout.extra;
     expect(layout.rows).toEqual(['qwertyuiop', 'asdfghjkl', 'zxcvbnm']);
     for (const vowel of 'aăâeêioôơuưy') {
       for (const tone of ['', '\u0301', '\u0300', '\u0309', '\u0303', '\u0323']) {

@@ -15,29 +15,7 @@
 @media(max-width:360px){.kana-grid{gap:6px}.keyboard .kana-key{min-height:64px}}
 
 .kana-mode textarea,.ar-mode textarea{min-height:112px;max-height:25dvh}
-.ar-mode .extras{max-height:138px;overflow-y:auto;padding-bottom:2px}
-
-:root{--scrim:#180E1470}
-@media(prefers-color-scheme:dark){:root{--scrim:#00000099}}
-.lingrove-root-actions{gap:8px}
-.input-help-button{display:flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border-radius:12px;background:var(--soft);color:var(--accent);font-size:22px}
-.vietnamese-key{touch-action:none}
-.vietnamese-variants{position:fixed;z-index:20;display:grid;gap:4px;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:0 4px 16px var(--scrim);touch-action:none}
-.vietnamese-variants,.vietnamese-variants *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.vietnamese-variants button{width:40px;height:44px;padding:0;border-radius:7px;background:var(--soft);color:var(--text);font-size:21px;line-height:1.4}
-.vietnamese-variants button.selected{background:var(--accent);color:var(--on-accent)}
-.input-help-sheet{position:fixed;inset:auto 0 0;margin:0 auto;width:100%;max-width:660px;max-height:85dvh;padding:0;border:1px solid var(--line);border-bottom:0;border-radius:22px 22px 0 0;background:var(--card);color:var(--text);overflow:hidden}
-.input-help-sheet[open]{display:flex;flex-direction:column}
-.input-help-sheet::backdrop{background:var(--scrim)}
-.input-help-header{display:flex;flex:none;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line)}
-.input-help-header h2{font-size:19px;line-height:1.4;margin:0;min-width:0}
-.input-help-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 20px calc(24px + env(safe-area-inset-bottom,0px));font-size:15px;line-height:1.75}
-.input-help-content h3{font-size:17px;margin:20px 0 8px}
-.input-help-content p{margin:8px 0 14px}
-.help-example{background:var(--soft);border-radius:12px;padding:12px;color:var(--text)}
-.help-examples{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
-.help-examples>span{padding:8px 10px;border:1px solid var(--line);border-radius:10px;white-space:nowrap}
-.help-examples kbd{font:inherit;color:var(--accent)}
+.vi-mode .extras,.ar-mode .extras{max-height:138px;overflow-y:auto;padding-bottom:2px}
 
 /* Apply directly to keys and kana labels as well as the WKWebView keyboard container. */
 .keyboard,.keyboard *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}

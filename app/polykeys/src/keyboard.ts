@@ -13,7 +13,7 @@ export const layouts: Layout[] = [
   { id: 'pt', locale: 'pt', name: '葡萄牙语', rows: qwerty, extra: 'áàâãçéêíóôõúü' },
   { id: 'it', locale: 'it', name: '意大利语', rows: qwerty, extra: 'àèéìíîòóùú' },
   { id: 'tr', locale: 'tr', name: '土耳其语', rows: qwerty, extra: 'çğıöşüâîû' },
-  { id: 'vi', locale: 'vi', name: '越南语', rows: qwerty, extra: '' },
+  { id: 'vi', locale: 'vi', name: '越南语', rows: qwerty, extra: 'ăâđêôơưáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ' },
   { id: 'ru', locale: 'ru', name: '俄语', rows: ['яшертыуиопэ', 'асдфгчйклжщ', 'зхцвбнмью'], extra: 'ёъ' },
   { id: 'uk', locale: 'uk', name: '乌克兰语', rows: ['йцукенгшщзхї', "фівапролджє'", 'ячсмитьбюґ'], extra: '' },
   { id: 'el', locale: 'el', name: '希腊语', rows: ['ερτυθιοπ΄', 'ασδφγηξκλ', 'ζχψωβνμ'], extra: 'ςάέήίόύώϊϋΐΰ' },

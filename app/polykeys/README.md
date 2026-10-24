@@ -11,7 +11,7 @@
 | 西班牙语 | 西班牙语 QWERTY，保留主键区的 ñ |
 | 葡萄牙语 | 用户 iPhone 截图中的 QWERTY，重音字母单独显示 |
 | 意大利语 | QWERTY |
-| 越南语 | QWERTY，默认 Telex 组合输入，也可切换长按选字；长按元音或 d 选择全部大小写变体，不常驻显示扩展区 |
+| 越南语 | QWERTY，扩展区直接提供 ă、â、đ、ê、ô、ơ、ư 及全部 60 个带声调元音，支持大小写 |
 | 土耳其语 | 系统 QWERTY，而非带额外独立按键的 Türkçe Q 或 F |
 | 俄语 | QWERTY / ЯШЕРТЫ，保留 э、ж、щ、ь、ю 的独立位置 |
 | 乌克兰语 | 用户 iPhone 截图中的 ЙЦУКЕН，三行末尾分别保留 ї、撇号、ґ |
@@ -50,10 +50,4 @@
 
 亚美尼亚语按用户提供的大小写截图校对：`էթփձջևրչճժշ`、`քոեռտըւիօպխ`、`ասդֆգհյկլծ`、`զղցվբնմ`。全部 39 个字母（含 և）保留在四排主键区，不移到扩展区；և 大写为 ԵՒ。
 
-越南语字符按 [Vietnamese Typography 字母表](https://vietnamesetypography.com/alphabet/) 核对。输入方式参考 [Apple iPhone 使用手册的越南语长按与组合输入说明](https://cdsassets.apple.com/live/6GJYWVAV/user/ma1622_iphone_ios5_user_guide.pdf)和 [Microsoft 的 Telex 规则](https://learn.microsoft.com/en-us/globalization/input/vietnamese-ime)。不复刻系统词典、预测或纠错。
-
-越南语默认使用 Telex：`aa/aw/ee/oo/ow/uw/dd` 分别输入 `â/ă/ê/ô/ơ/ư/đ`，`s/f/r/x/j` 添加五个声调，`z` 去掉声调，重复修饰键恢复字面输入（`ass → as`、`aaa → aa`）。支持在词末添加修饰键、`qu/gi` 声母和 `ươ/ưa/ưu` 等元音组合；`oa/oe/uy` 采用 `hoà/khoẻ/thuỷ` 的声调位置。组合期间删除逐个撤销按键；空格、标点、选字、切换方式或语言时提交当前词，保留文字及光标。长按选出的字符直接输入，不再次经过 Telex 转换。输入英文可切换到长按选字方式。
-
-两种方式均支持长按 `a/e/i/o/u/y/d`：保持 400ms 打开浮动选字面板，按元音形状分行、声调分列，滑动到目标后松开，最多三行、每行六字；无常驻扩展区。取消手势、丢失指针、提前滑离或外部点击不会输入。键盘导航可用 ↓ 打开面板，方向键选择、Enter 确认、Esc 取消。Shift/大写锁定同时作用于选字面板。
-
-越南语页面右上角的“输入说明”按钮打开底部 sheet，介绍长按、Telex、声调、示例及删除；关闭按钮固定在不滚动的头部，正文独立滚动，支持遮罩关闭、Escape 和原生对话框焦点恢复。使用公共关闭按钮与焦点管理，支持浅色、暗黑及底部安全区。
+越南语字符按 [Vietnamese Typography 字母表](https://vietnamesetypography.com/alphabet/) 核对。特殊字符在扩展区直接点按输入，支持 Shift 与大写锁定；扩展区独立滚动，避免长列表挤占主键盘。没有 Telex 自动组合、长按选字或帮助弹层。
