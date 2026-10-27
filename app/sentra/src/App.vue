@@ -313,9 +313,6 @@ async function removeSentence(s: Sentence) {
         <main :key="active" class="workspace">
           <section class="input-column">
             <div class="editor">
-              <div class="card-top">
-                <CopyButton :text="tab.text" :disabled="!tab.text" />
-              </div>
               <textarea
                 id="sentence"
                 ref="sentenceInput"
@@ -330,18 +327,21 @@ async function removeSentence(s: Sentence) {
                 @input="tab.result = null"
               />
               <div class="editor-footer">
-                <span>{{ tab.text.length }} / 4000</span
-                ><button
-                  class="text-button"
-                  :disabled="tab.busy"
-                  @click="
-                    tab.text = '';
-                    tab.result = null;
-                    tab.error = '';
-                  "
-                >
-                  {{ t('清空') }}
-                </button>
+                <span>{{ tab.text.length }} / 4000</span>
+                <div class="editor-actions">
+                  <CopyButton :text="tab.text" :disabled="!tab.text" />
+                  <button
+                    class="text-button"
+                    :disabled="tab.busy"
+                    @click="
+                      tab.text = '';
+                      tab.result = null;
+                      tab.error = '';
+                    "
+                  >
+                    {{ t('清空') }}
+                  </button>
+                </div>
               </div>
             </div>
             <div class="controls">
