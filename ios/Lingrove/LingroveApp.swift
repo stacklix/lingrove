@@ -80,10 +80,7 @@ struct HomeView: View {
     @State private var failedAddresses: Set<String> = []
     @State private var connectionTest: Task<Void, Never>?
     @State private var connectionTestID = UUID()
-    @State private var showingDebugHeadersPrompt = false
-    @State private var debugHeadersAddressID: String?
-    @State private var debugHeadersDraft: [DebugServerHeader] = []
-    @State private var debugHeadersMessage = ""
+    @State private var debugHeadersEditor: DebugHeadersEditorSession?
     @State private var debugCredentialsChanged = false
     @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
     private var debugEnabled: Bool { resourceMode == .debug }
@@ -341,52 +338,11 @@ struct HomeView: View {
                 .hostSettingsBackground()
                 .environment(\.editMode, $moduleEditMode)
                 #if DEBUG
-                .sheet(isPresented: $showingDebugHeadersPrompt, onDismiss: {
-                    debugHeadersDraft = []
-                    debugHeadersAddressID = nil
-                }) {
-                    NavigationStack {
-                        Form {
-                            ForEach($debugHeadersDraft) { $header in
-                                Section {
-                                    TextField("Header 名称", text: $header.name)
-                                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                                        .keyboardType(.asciiCapable)
-                                        .accessibilityIdentifier("debug-header-name-\(header.id)")
-                                    TextField("Header 值", text: $header.value)
-                                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                                        .keyboardType(.asciiCapable)
-                                        .accessibilityIdentifier("debug-header-value-\(header.id)")
-                                    Button("删除 Header", role: .destructive) {
-                                        debugHeadersDraft.removeAll { $0.id == header.id }
-                                    }
-                                }
-                                .hostSettingsRowBackground()
-                            }
-                            Section {
-                                Button("添加 Header", systemImage: "plus") {
-                                    debugHeadersDraft.append(DebugServerHeader())
-                                }
-                                .accessibilityIdentifier("debug-header-add")
-                            } footer: {
-                                Text(debugHeadersMessage)
-                            }
-                            .hostSettingsRowBackground()
-                        }
-                        .hostSettingsBackground()
-                        .navigationTitle("自定义 Header")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button("取消", role: .cancel) { cancelDebugHeaders() }
-                                    .accessibilityIdentifier("debug-headers-cancel")
-                            }
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("保存") { saveDebugHeaders() }
-                                    .accessibilityIdentifier("debug-headers-save")
-                            }
-                        }
+                .sheet(item: $debugHeadersEditor) { session in
+                    DebugHeadersEditor(session: session) { headers in
+                        try saveDebugHeaders(headers, session: session)
                     }
+                    .id(session.id)
                     .presentationBackground(Color(uiColor: LingroveTheme.background))
                     .presentationDetents([.medium, .large])
                 }
@@ -507,41 +463,27 @@ struct HomeView: View {
     private func editDebugHeaders(_ id: String) {
         guard let server = debugServers.addresses.first(where: { $0.id == id }) else { return }
         do {
-            debugHeadersDraft = try DebugServerHeaderStore.load(address: server.url)
-            if debugHeadersDraft.isEmpty { debugHeadersDraft = [DebugServerHeader()] }
-            debugHeadersAddressID = id
-            debugHeadersMessage = server.url + "\n" + AppLanguage.text("Header 按调试地址保存在本机 Keychain，仅发送至该地址的调试资源。删除所有条目可清空配置。")
-            showingDebugHeadersPrompt = true
+            let headers = try DebugServerHeaderStore.load(address: server.url)
+            debugHeadersEditor = DebugHeadersEditorSession(serverID: id, address: server.url, headers: headers)
         } catch {
             connectionMessages[id] = error.localizedDescription
             failedAddresses.insert(id)
         }
     }
-    private func saveDebugHeaders() {
-        guard let id = debugHeadersAddressID,
-              let index = debugServers.addresses.firstIndex(where: { $0.id == id }) else { return }
-        do {
-            let headers = try DebugServer.validatedHeaders(debugHeadersDraft)
-            try DebugServerHeaderStore.save(headers, address: debugServers.addresses[index].url)
-            if testingAddressID == id { clearConnectionTest() }
-            connectionMessages[id] = nil
-            failedAddresses.remove(id)
-            if debugServers.activeID == id {
-                debugCredentialsChanged = true
-                if debugEnabled { setResourceMode(.bundled) }
-            }
-            debugServers.save()
-            debugHeadersDraft = []
-            showingDebugHeadersPrompt = false
-        } catch {
-            connectionMessages[id] = error.localizedDescription
-            failedAddresses.insert(id)
-            debugHeadersMessage = error.localizedDescription
+    private func saveDebugHeaders(_ headers: [DebugServerHeader], session: DebugHeadersEditorSession) throws {
+        guard let index = debugServers.addresses.firstIndex(where: { $0.id == session.serverID }),
+              debugServers.addresses[index].url == session.address else {
+            throw ModuleError.invalid("请先填写调试服务器地址。")
         }
-    }
-    private func cancelDebugHeaders() {
-        debugHeadersDraft = []
-        showingDebugHeadersPrompt = false
+        try DebugServerHeaderStore.save(headers, address: session.address)
+        if testingAddressID == session.serverID { clearConnectionTest() }
+        connectionMessages[session.serverID] = nil
+        failedAddresses.remove(session.serverID)
+        if debugServers.activeID == session.serverID {
+            debugCredentialsChanged = true
+            if debugEnabled { setResourceMode(.bundled) }
+        }
+        debugServers.save()
     }
     private func selectDebugAddress(_ id: String) {
         guard debugServers.activeID != id else { return }
@@ -572,9 +514,7 @@ struct HomeView: View {
         debugServers = DebugServerSettings.load()
         debugSettingsExpanded = false
         debugCredentialsChanged = false
-        debugHeadersDraft = []
-        showingDebugHeadersPrompt = false
-        debugHeadersAddressID = nil
+        debugHeadersEditor = nil
         initialDebugAddress = DebugServer.activeAddress
         connectionMessages.removeAll()
         failedAddresses.removeAll()
@@ -588,9 +528,7 @@ struct HomeView: View {
     private func finishSettings() {
         #if DEBUG
         clearConnectionTest()
-        debugHeadersDraft = []
-        showingDebugHeadersPrompt = false
-        debugHeadersAddressID = nil
+        debugHeadersEditor = nil
         if DebugServer.available { debugServers.save() }
         guard DebugServer.available,
               initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress || debugCredentialsChanged else { return }

@@ -435,6 +435,8 @@ final class LingroveUITests: XCTestCase {
         addressSelection(app, field).tap()
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         let token = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-header-value-")).firstMatch
+        let names = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-header-name-"))
+        let values = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-header-value-"))
         let result = addressResult(app, field)
         XCTAssertTrue(result.waitForExistence(timeout: 10))
         XCTAssertTrue(result.label.contains("HTTP 401"))
@@ -443,6 +445,7 @@ final class LingroveUITests: XCTestCase {
         let tokenSettings = app.buttons["debug-address-headers-\(addressID(field))"]
         tokenSettings.tap()
         XCTAssertTrue(token.waitForExistence(timeout: 5))
+        XCTAssertEqual(names.count, 1, "A fresh editor starts with exactly one row")
         app.buttons["debug-headers-cancel"].tap()
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         tokenSettings.tap()
@@ -450,8 +453,11 @@ final class LingroveUITests: XCTestCase {
         let headerName = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-header-name-")).firstMatch
         headerName.tap(); headerName.typeText("X-App-Token")
         token.tap(); token.typeText("Bad123")
+        XCTAssertTrue(app.staticTexts["Header 名称"].exists, "Name label remains visible after typing")
+        XCTAssertTrue(app.staticTexts["Header 值"].exists, "Value label remains visible after typing")
         app.buttons["debug-headers-save"].tap()
         XCTAssertTrue(token.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(app.state, .runningForeground, "Saving must keep the host alive")
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         XCTAssertTrue(result.waitForExistence(timeout: 10))
@@ -460,11 +466,15 @@ final class LingroveUITests: XCTestCase {
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         tokenSettings.tap()
         XCTAssertTrue(token.waitForExistence(timeout: 5))
+        XCTAssertEqual(names.count, 1, "Reopening must not append an empty row")
+        XCTAssertEqual(headerName.value as? String, "X-App-Token")
+        XCTAssertEqual(token.value as? String, "Bad123", "Saved values are present on the first rendered form")
         token.tap()
         token.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Bad123".count))
         token.typeText("Ui12Ab")
         app.buttons["debug-headers-save"].tap()
         XCTAssertTrue(token.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(app.state, .runningForeground, "Saving must keep the host alive")
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0", "Saving settings must not enable debug mode automatically")
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
         let enabled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
@@ -472,7 +482,27 @@ final class LingroveUITests: XCTestCase {
         }, object: nil)
         wait(for: [enabled], timeout: 15)
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
+        tokenSettings.tap()
+        XCTAssertTrue(token.waitForExistence(timeout: 5))
+        XCTAssertEqual(token.value as? String, "Ui12Ab")
+        app.buttons["debug-header-add"].tap()
+        XCTAssertEqual(names.count, 2)
+        names.element(boundBy: 1).tap(); names.element(boundBy: 1).typeText("X-Environment")
+        values.element(boundBy: 1).tap(); values.element(boundBy: 1).typeText("debug")
+        let firstRowID = headerName.identifier.replacingOccurrences(of: "debug-header-name-", with: "")
+        app.buttons["debug-header-delete-\(firstRowID)"].tap()
+        XCTAssertEqual(names.count, 1)
+        app.buttons["debug-headers-save"].tap()
+        XCTAssertTrue(token.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(app.state, .runningForeground)
+        tokenSettings.tap()
+        XCTAssertTrue(token.waitForExistence(timeout: 5))
+        XCTAssertEqual(names.count, 1)
+        XCTAssertEqual(headerName.value as? String, "X-Environment")
+        XCTAssertEqual(token.value as? String, "debug")
+        app.buttons["debug-headers-cancel"].tap()
     }
+
     func testDebugConnectionFormLightMode() { checkDebugConnectionForm(appearance: "light") }
     func testDebugConnectionFormDarkMode() { checkDebugConnectionForm(appearance: "dark") }
     private func checkDebugConnectionForm(appearance: String) {

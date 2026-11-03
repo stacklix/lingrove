@@ -57,6 +57,99 @@ struct DebugAddressRow: View {
     }
 }
 
+// A fresh presentation owns its initial data and draft for its whole lifetime.
+struct DebugHeadersEditorSession: Identifiable {
+    let id = UUID().uuidString
+    let serverID: String
+    let address: String
+    let headers: [DebugServerHeader]
+}
+
+struct DebugHeadersEditor: View {
+    let session: DebugHeadersEditorSession
+    let onSave: ([DebugServerHeader]) throws -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var headers: [DebugServerHeader]
+    @State private var error: String?
+
+    init(session: DebugHeadersEditorSession, onSave: @escaping ([DebugServerHeader]) throws -> Void) {
+        self.session = session
+        self.onSave = onSave
+        _headers = State(initialValue: session.headers.isEmpty ? [DebugServerHeader()] : session.headers)
+    }
+
+    // Resolve by identity on every access; removed rows never retain array indices.
+    private func field(_ id: String, _ keyPath: WritableKeyPath<DebugServerHeader, String>) -> Binding<String> {
+        Binding(get: {
+            headers.first { $0.id == id }?[keyPath: keyPath] ?? ""
+        }, set: { value in
+            guard let index = headers.firstIndex(where: { $0.id == id }) else { return }
+            headers[index][keyPath: keyPath] = value
+        })
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                ForEach(headers) { header in
+                    Section {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Header 名称").font(.footnote).foregroundStyle(.secondary)
+                            TextField("", text: field(header.id, \.name))
+                                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                .keyboardType(.asciiCapable)
+                                .accessibilityLabel("Header 名称")
+                                .accessibilityIdentifier("debug-header-name-\(header.id)")
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Header 值").font(.footnote).foregroundStyle(.secondary)
+                            TextField("", text: field(header.id, \.value))
+                                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                .keyboardType(.asciiCapable)
+                                .accessibilityLabel("Header 值")
+                                .accessibilityIdentifier("debug-header-value-\(header.id)")
+                        }
+                        Button("删除 Header", role: .destructive) {
+                            headers.removeAll { $0.id == header.id }
+                        }
+                        .accessibilityIdentifier("debug-header-delete-\(header.id)")
+                    }
+                    .hostSettingsRowBackground()
+                }
+                Section {
+                    Button("添加 Header", systemImage: "plus") { headers.append(DebugServerHeader()) }
+                        .accessibilityIdentifier("debug-header-add")
+                } footer: {
+                    Text(session.address + "\n" + AppLanguage.text("Header 按调试地址保存在本机 Keychain，仅发送至该地址的调试资源。删除所有条目可清空配置。"))
+                }
+                .hostSettingsRowBackground()
+                if let error {
+                    Section { Text(error).foregroundStyle(.red) }
+                        .hostSettingsRowBackground()
+                }
+            }
+            .hostSettingsBackground()
+            .navigationTitle("自定义 Header")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消", role: .cancel) { dismiss() }
+                        .accessibilityIdentifier("debug-headers-cancel")
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("保存") {
+                        do {
+                            try onSave(headers)
+                            dismiss()
+                        } catch { self.error = error.localizedDescription }
+                    }
+                    .accessibilityIdentifier("debug-headers-save")
+                }
+            }
+        }
+    }
+}
+
 struct HostAppUpdateSection: View {
     @State private var release: HostAppRelease?
     @State private var checking = false
