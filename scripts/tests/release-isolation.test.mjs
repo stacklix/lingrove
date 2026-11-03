@@ -65,9 +65,8 @@ test('Release compilation excludes debug implementations while Debug retains the
     'modules.reloadHistory',
     'module-refresh',
     'isInspectable',
-    'debugToken',
-    'Stack-Pass',
-    'X-Lingrove-Debug-Auth',
+    'debugHeaders',
+    'DebugServerHeader',
     'debugResourceBase',
     'debugResourceTasks',
     'loadDebugResource',
@@ -122,7 +121,7 @@ test('Release artifact verifier rejects debug executable and debug resource conf
       { encoding: 'utf8' },
     );
   assert.equal(verify().status, 0);
-  for (const marker of ['DebugServer', 'Stack-Pass', 'X-Lingrove-Debug-Auth']) {
+  for (const marker of ['DebugServer', 'DebugServerHeader']) {
     await writeFile(path.join(directory, 'Lingrove'), `code ${marker} code`);
     assert.match(verify().stderr, /Release executable contains debug code/);
   }

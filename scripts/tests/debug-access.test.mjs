@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
-test('LAN exemptions never bypass NAS, frpc, container or forwarded request authentication', () => {
+test('debug resources accept all sources without Token authentication', () => {
   const result = spawnSync(
     process.env.PYTHON || 'python3',
     ['-B', fileURLToPath(new URL('test-debug-access.py', import.meta.url))],

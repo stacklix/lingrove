@@ -59,9 +59,9 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         debugSettings = .init(addresses: [.init(id: "empty", url: "  ")], activeID: "empty")
         debugSettings.save(defaults: debugSettingsDefaults)
         check(debugSettingsDefaults.object(forKey: DebugServer.preferenceKey) == nil, "no debug configuration is saved when every row is empty")
-        debugSettings = .init(addresses: [.init(id: "auth", url: "https://debug.example/development", requiresToken: true)], activeID: "auth")
+        debugSettings = .init(addresses: [.init(id: "auth", url: "https://debug.example/development")], activeID: "auth")
         debugSettings.save(defaults: debugSettingsDefaults)
-        check(DebugServerSettings.load(defaults: debugSettingsDefaults).activeServer?.requiresToken == true, "debug authentication status persists per address")
+        check(DebugServerSettings.load(defaults: debugSettingsDefaults).activeAddress == "https://debug.example/development", "debug address persists")
         debugSettingsDefaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         for path in ["catalog.snapshot.json", "app/verso/assets/index.js", "packages/verso.zip"] {
             check(DebugServer.configuredAddress(for: URL(string: "https://debug.example/development/snapshot/\(path)")!, defaults: debugSettingsDefaults) != nil, "debug authentication covers \(path)")
@@ -72,17 +72,17 @@ final class MockProtocol: URLProtocol, @unchecked Sendable {
         debugSettingsDefaults.set(ChildAppResourceMode.bundled.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         check(DebugServer.configuredAddress(for: URL(string: "https://debug.example/development/snapshot/catalog.snapshot.json")!, defaults: debugSettingsDefaults) == nil, "bundled mode never attaches debug credentials")
         var authenticatedRequest = URLRequest(url: URL(string: "https://debug.example/")!)
-        try DebugServer.authorize(&authenticatedRequest, token: " Ab12Cd\n")
-        check(authenticatedRequest.value(forHTTPHeaderField: "Stack-Pass") == "Ab12Cd", "debug Token is sent in Stack-Pass header")
-        check(authenticatedRequest.value(forHTTPHeaderField: "Authorization") == nil, "debug authentication does not set Authorization")
-        rejects("debug Token rejects header injection") { _ = try DebugServer.validatedToken("token\r\nX-Injected: true") }
-        for token in ["Ab12Cd", "123456", "ABCdef"] {
-            let validated = try DebugServer.validatedToken(token)
-            check(validated == token, "debug Token accepts six ASCII letters or digits: \(token)")
+        try DebugServer.authorize(&authenticatedRequest, headers: [.init(name: "X-Custom-Key", value: "any-length-secret"), .init(name: "Authorization", value: "Bearer abc")])
+        check(authenticatedRequest.value(forHTTPHeaderField: "X-Custom-Key") == "any-length-secret", "custom header name and arbitrary length value are sent")
+        check(authenticatedRequest.value(forHTTPHeaderField: "Authorization") == "Bearer abc", "multiple headers are sent")
+        for header in [DebugServerHeader(name: "X-Key", value: "a\r\nX-Injected: true"), .init(name: "Bad:Name", value: "x"), .init(name: "", value: "x")] {
+            rejects("invalid custom header rejected") { _ = try DebugServer.validatedHeaders([header]) }
         }
-        for token in ["abc12", "abcd123", "abc-12", "中文1234"] {
-            rejects("debug Token rejects invalid format: \(token)") { _ = try DebugServer.validatedToken(token) }
+        rejects("duplicate header names are case insensitive") {
+            _ = try DebugServer.validatedHeaders([.init(name: "X-Key", value: "a"), .init(name: "x-key", value: "b")])
         }
+        let emptyHeaders = try DebugServer.validatedHeaders([DebugServerHeader()])
+        check(emptyHeaders.isEmpty, "blank editor rows are ignored")
         #endif
         check(Version("1.10.0")! > Version("1.2.0")!, "semantic version ordering")
         check(Version("../1") == nil && Version("1.2") == nil, "invalid versions rejected")

@@ -720,7 +720,7 @@ struct ModuleWebView: UIViewRepresentable {
         #endif
     }
     #if DEBUG
-    // WebKit does not propagate a main-document Stack-Pass header to relative
+    // WebKit does not propagate custom main-document headers to relative
     // scripts, styles, fonts, or fetches. Serve the selected debug module through
     // the host scheme so every resource is authenticated outside JavaScript.
     private func loadDebugResource(_ schemeTask: WKURLSchemeTask, url: URL, path: String, base: URL) {

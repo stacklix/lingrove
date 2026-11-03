@@ -5,7 +5,6 @@ import Security
 struct DebugServerAddress: Codable, Equatable, Identifiable {
     var id = UUID().uuidString
     var url = ""
-    var requiresToken: Bool?
 }
 
 struct DebugServerSettings: Codable, Equatable {
@@ -39,7 +38,6 @@ struct DebugServerSettings: Codable, Equatable {
     mutating func updateAddress(id: String, url: String) {
         guard let index = addresses.firstIndex(where: { $0.id == id }), addresses[index].url != url else { return }
         addresses[index].url = url
-        addresses[index].requiresToken = nil
     }
     mutating func removeAddress(id: String) {
         if activeID == id { activeID = nil }
@@ -47,50 +45,55 @@ struct DebugServerSettings: Codable, Equatable {
     }
 }
 
-enum DebugServerTokenStore {
+struct DebugServerHeader: Codable, Equatable, Identifiable {
+    var id = UUID().uuidString
+    var name = ""
+    var value = ""
+}
+
+enum DebugServerHeaderStore {
     private static func query(_ address: String) throws -> [String: Any] {
         let normalized = try DebugServer.normalized(address)
         guard !normalized.isEmpty else { throw ModuleError.invalid("请先填写调试服务器地址。") }
         return [kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: "me.stackli.lingrove.debug-server",
+                kSecAttrService as String: "me.stackli.lingrove.debug-server-headers",
                 kSecAttrAccount as String: normalized]
     }
-    static func load(address: String) throws -> String {
+    static func load(address: String) throws -> [DebugServerHeader] {
         var request = try query(address)
         request[kSecReturnData as String] = true
         request[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
         let status = SecItemCopyMatching(request as CFDictionary, &result)
-        if status == errSecItemNotFound { return "" }
+        if status == errSecItemNotFound { return [] }
         guard status == errSecSuccess, let data = result as? Data,
-              let token = String(data: data, encoding: .utf8) else {
-            throw ModuleError.invalid("无法读取调试 Token，请解锁设备后重试。")
+              let headers = try? JSONDecoder().decode([DebugServerHeader].self, from: data) else {
+            throw ModuleError.invalid("无法读取调试 Header，请解锁设备后重试。")
         }
-        return token
+        return try DebugServer.validatedHeaders(headers)
     }
-    static func save(_ token: String, address: String) throws {
-        let token = try DebugServer.validatedToken(token)
+    static func save(_ headers: [DebugServerHeader], address: String) throws {
+        let headers = try DebugServer.validatedHeaders(headers)
         let itemQuery = try query(address)
-        if token.isEmpty {
+        if headers.isEmpty {
             let status = SecItemDelete(itemQuery as CFDictionary)
             guard status == errSecSuccess || status == errSecItemNotFound else {
-                throw ModuleError.invalid("无法删除调试 Token。")
+                throw ModuleError.invalid("无法删除调试 Header。")
             }
             return
         }
-        let attributes: [String: Any] = [kSecValueData as String: Data(token.utf8),
+        let attributes: [String: Any] = [kSecValueData as String: try JSONEncoder().encode(headers),
                                         kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly]
         var status = SecItemUpdate(itemQuery as CFDictionary, attributes as CFDictionary)
         if status == errSecItemNotFound {
             status = SecItemAdd(itemQuery.merging(attributes) { _, value in value } as CFDictionary, nil)
         }
-        guard status == errSecSuccess else { throw ModuleError.invalid("无法保存调试 Token。") }
+        guard status == errSecSuccess else { throw ModuleError.invalid("无法保存调试 Header。") }
     }
 }
 
 struct DebugServerConnection {
     let message: String
-    let requiresToken: Bool
 }
 
 // Only Debug builds can load executable child-app resources from a server.
@@ -102,12 +105,24 @@ enum DebugServer {
     }
     static var canRefresh: Bool { available && enabled }
     static let available = true
-    static func validatedToken(_ raw: String) throws -> String {
-        let token = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard token.isEmpty || token.range(of: "^[A-Za-z0-9]{6}$", options: .regularExpression) != nil else {
-            throw ModuleError.invalid("Token 必须为 6 位英文字母或数字，区分大小写。")
+    static func validatedHeaders(_ raw: [DebugServerHeader]) throws -> [DebugServerHeader] {
+        var names = Set<String>()
+        return try raw.compactMap { header in
+            var header = header
+            if header.name.isEmpty && header.value.isEmpty { return nil }
+            guard !header.name.isEmpty,
+                  header.name.utf8.allSatisfy({ byte in
+                      (65...90).contains(byte) || (97...122).contains(byte) || (48...57).contains(byte)
+                          || "!#$%&'*+-.^_`|~".utf8.contains(byte)
+                  }), header.value.utf8.allSatisfy({ $0 == 9 || (32...126).contains($0) }) else {
+                throw ModuleError.invalid("Header 名称必须为有效的 HTTP 字段名，值仅支持可打印 ASCII 字符或制表符。")
+            }
+            guard names.insert(header.name.lowercased()).inserted else {
+                throw ModuleError.invalid("Header 名称不能重复（不区分大小写）。")
+            }
+            header.value = header.value.trimmingCharacters(in: .whitespaces)
+            return header
         }
-        return token
     }
     // Match both origin and root path; never attach a debug credential to ordinary
     // update, model, TTS, or redirected requests.
@@ -120,13 +135,14 @@ enum DebugServer {
               url.standardized.path.hasPrefix(base.appendingPathComponent("snapshot").standardized.path + "/") else { return nil }
         return address
     }
-    static func authorize(_ request: inout URLRequest, token: String) throws {
-        let token = try validatedToken(token)
-        if !token.isEmpty { request.setValue(token, forHTTPHeaderField: "Stack-Pass") }
+    static func authorize(_ request: inout URLRequest, headers: [DebugServerHeader]) throws {
+        for header in try validatedHeaders(headers) {
+            request.setValue(header.value, forHTTPHeaderField: header.name)
+        }
     }
     static func authorize(_ request: inout URLRequest, defaults: UserDefaults = .standard) throws {
         guard let url = request.url, let address = configuredAddress(for: url, defaults: defaults) else { return }
-        try authorize(&request, token: DebugServerTokenStore.load(address: address))
+        try authorize(&request, headers: DebugServerHeaderStore.load(address: address))
     }
     static func catalogURL(defaults: UserDefaults = .standard) -> URL? {
         guard let address = DebugServerSettings.load(defaults: defaults).activeAddress,
@@ -167,7 +183,7 @@ enum DebugServer {
               let url = components.url else { throw ModuleError.invalid("请输入完整的 HTTP 或 HTTPS 服务器根地址，不含账号、查询参数或片段。") }
         return url.absoluteString.hasSuffix("/") ? url.absoluteString : url.absoluteString + "/"
     }
-    static func testConnection(_ raw: String, token: String = "", configuration: URLSessionConfiguration = .ephemeral) async throws -> DebugServerConnection {
+    static func testConnection(_ raw: String, headers: [DebugServerHeader] = [], configuration: URLSessionConfiguration = .ephemeral) async throws -> DebugServerConnection {
         let address = try normalized(raw)
         guard !address.isEmpty, let base = URL(string: address) else {
             throw ModuleError.invalid("请先填写调试服务器地址。")
@@ -181,7 +197,7 @@ enum DebugServer {
         // installed packages or the ordinary release catalog.
         let catalogURL = base.appendingPathComponent("snapshot/catalog.snapshot.json")
         var request = URLRequest(url: catalogURL, cachePolicy: .reloadIgnoringLocalCacheData)
-        try authorize(&request, token: token)
+        try authorize(&request, headers: headers)
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else {
             throw ModuleError.invalid("服务器未返回有效的 HTTP 响应。")
@@ -190,7 +206,6 @@ enum DebugServer {
             throw ModuleError.invalid("\(catalogURL.path) 返回 HTTP \(http.statusCode)，请确认服务已启动且已运行 npm run build。")
         }
         let catalog = try resolve(JSONDecoder().decode(Catalog.self, from: data), relativeTo: catalogURL)
-        let requiresToken = http.value(forHTTPHeaderField: "X-Lingrove-Debug-Auth")?.lowercased() == "stack-pass"
         try catalog.validate()
         let modules = catalog.modules
         let urls = modules.map {
@@ -201,7 +216,7 @@ enum DebugServer {
             try Task.checkCancellation()
             var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
             request.httpMethod = "HEAD"
-            try authorize(&request, token: token)
+            try authorize(&request, headers: headers)
             let (_, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else {
                 throw ModuleError.invalid("服务器未返回有效的 HTTP 响应。")
@@ -210,7 +225,7 @@ enum DebugServer {
                 throw ModuleError.invalid("\(url.path) 返回 HTTP \(http.statusCode)，请确认服务已启动且已运行 npm run build。")
             }
         }
-        return DebugServerConnection(message: "连接成功，\(modules.count) 个子应用入口均可访问。", requiresToken: requiresToken)
+        return DebugServerConnection(message: "连接成功，\(modules.count) 个子应用入口均可访问。")
     }
     static func entryURL(for module: Module, defaults: UserDefaults = .standard) -> URL? {
         guard HostConfiguration.resourceMode(defaults: defaults) == .debug,

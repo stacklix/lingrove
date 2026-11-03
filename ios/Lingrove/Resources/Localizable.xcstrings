@@ -5259,200 +5259,244 @@
         }
       }
     },
-    "Token 认证": {
+    "自定义 Header": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token 认证"
+            "value": "自定义 Header"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token authentication"
+            "value": "Custom Headers"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token 認証"
+            "value": "カスタム Header"
           }
         }
       }
     },
-    "设置 Token": {
+    "Header 名称": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置 Token"
+            "value": "Header 名称"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Set token"
+            "value": "Header name"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token を設定"
+            "value": "Header 名"
           }
         }
       }
     },
-    "当前地址采用 Token 认证": {
+    "Header 值": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当前地址采用 Token 认证"
+            "value": "Header 值"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The selected address uses token authentication"
+            "value": "Header value"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "選択中のアドレスは Token 認証を使用します"
+            "value": "Header 値"
           }
         }
       }
     },
-    "调试服务器 Token": {
+    "删除 Header": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "调试服务器 Token"
+            "value": "删除 Header"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Debug server token"
+            "value": "Delete Header"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "デバッグサーバーの Token"
+            "value": "Header を削除"
           }
         }
       }
     },
-    "无法读取调试 Token，请解锁设备后重试。": {
+    "添加 Header": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法读取调试 Token，请解锁设备后重试。"
+            "value": "添加 Header"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unable to read the debug token. Unlock your device and try again."
+            "value": "Add Header"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "デバッグ用 Token を読み込めません。端末のロックを解除して再試行してください。"
+            "value": "Header を追加"
           }
         }
       }
     },
-    "无法删除调试 Token。": {
+    "Header 按调试地址保存在本机 Keychain，仅发送至该地址的调试资源。删除所有条目可清空配置。": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法删除调试 Token。"
+            "value": "Header 按调试地址保存在本机 Keychain，仅发送至该地址的调试资源。删除所有条目可清空配置。"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unable to delete the debug token."
+            "value": "Headers are stored in this device’s Keychain for each debug address and sent only to its debug resources. Delete all entries to clear them."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "デバッグ用 Token を削除できません。"
+            "value": "Header はデバッグアドレスごとに端末の Keychain に保存され、そのアドレスのデバッグリソースにのみ送信されます。すべての項目を削除すると設定をクリアできます。"
           }
         }
       }
     },
-    "无法保存调试 Token。": {
+    "Header 名称必须为有效的 HTTP 字段名，值仅支持可打印 ASCII 字符或制表符。": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法保存调试 Token。"
+            "value": "Header 名称必须为有效的 HTTP 字段名，值仅支持可打印 ASCII 字符或制表符。"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unable to save the debug token."
+            "value": "Header names must be valid HTTP field names. Values support printable ASCII characters or tabs."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "デバッグ用 Token を保存できません。"
+            "value": "Header 名は有効な HTTP フィールド名にしてください。値には表示可能な ASCII 文字またはタブを使用できます。"
           }
         }
       }
     },
-    "Token 必须为 6 位英文字母或数字，区分大小写。": {
+    "Header 名称不能重复（不区分大小写）。": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token 必须为 6 位英文字母或数字，区分大小写。"
+            "value": "Header 名称不能重复（不区分大小写）。"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The token must be exactly 6 letters or digits (A–Z, a–z, 0–9). It is case-sensitive."
+            "value": "Header names must be unique (case insensitive)."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token は半角英数字6文字で入力してください。大文字と小文字は区別されます。"
+            "value": "Header 名は重複できません（大文字・小文字は区別されません）。"
           }
         }
       }
     },
-    "Token 仅保存在本机 Keychain，通过 Stack-Pass 请求头发送。": {
+    "无法读取调试 Header，请解锁设备后重试。": {
       "localizations": {
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token 仅保存在本机 Keychain，通过 Stack-Pass 请求头发送。"
+            "value": "无法读取调试 Header，请解锁设备后重试。"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The token is stored only in this device’s Keychain and sent in the Stack-Pass header."
+            "value": "Unable to read debug headers. Unlock the device and try again."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Token はこの端末の Keychain にのみ保存され、Stack-Pass ヘッダーで送信されます。"
+            "value": "デバッグ Header を読み取れません。端末のロックを解除して再試行してください。"
+          }
+        }
+      }
+    },
+    "无法删除调试 Header。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法删除调试 Header。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to delete debug headers."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグ Header を削除できません。"
+          }
+        }
+      }
+    },
+    "无法保存调试 Header。": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存调试 Header。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to save debug headers."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバッグ Header を保存できません。"
           }
         }
       }

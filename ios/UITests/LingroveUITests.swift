@@ -411,13 +411,13 @@ final class LingroveUITests: XCTestCase {
                 let request = String(data: data ?? Data(), encoding: .utf8) ?? ""
                 let authorized = request.components(separatedBy: "\r\n").contains { line in
                     let fields = line.split(separator: ":", maxSplits: 1)
-                    return fields.count == 2 && fields[0].lowercased() == "stack-pass"
+                    return fields.count == 2 && fields[0].lowercased() == "x-app-token"
                         && String(fields[1]).trimmingCharacters(in: .whitespaces) == "Ui12Ab"
                 }
                 let catalog = #"{"modules":[{"id":"sentra","name":"Sentra","entry":"index.html","version":"20261023","minHostVersion":"1.3.0","bridgeVersion":1,"stateSchemaVersion":1,"allowedOrigins":[]}]}"#
                 let body = authorized && !request.hasPrefix("HEAD ") ? catalog : ""
                 let status = authorized ? "200 OK" : "401 Unauthorized"
-                let response = "HTTP/1.1 \(status)\r\nContent-Type: application/json\r\nWWW-Authenticate: Stack-Pass realm=\"Lingrove Debug\"\r\nX-Lingrove-Debug-Auth: Stack-Pass\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
+                let response = "HTTP/1.1 \(status)\r\nContent-Type: application/json\r\nWWW-Authenticate: X-App-Token realm=\"Lingrove Debug\"\r\nX-Lingrove-Debug-Auth: X-App-Token\r\nContent-Length: \(body.utf8.count)\r\nConnection: close\r\n\r\n\(body)"
                 connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
             }
         }
@@ -434,21 +434,23 @@ final class LingroveUITests: XCTestCase {
         replaceDebugAddress(field, url)
         addressSelection(app, field).tap()
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
-        let token = app.textFields["debug-token-input"]
+        let token = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-header-value-")).firstMatch
         let result = addressResult(app, field)
         XCTAssertTrue(result.waitForExistence(timeout: 10))
         XCTAssertTrue(result.label.contains("HTTP 401"))
         XCTAssertFalse(token.exists, "HTTP errors must not open Token settings")
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
-        let tokenSettings = app.buttons["debug-address-token-\(addressID(field))"]
+        let tokenSettings = app.buttons["debug-address-headers-\(addressID(field))"]
         tokenSettings.tap()
         XCTAssertTrue(token.waitForExistence(timeout: 5))
-        app.buttons["debug-token-cancel"].tap()
+        app.buttons["debug-headers-cancel"].tap()
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         tokenSettings.tap()
         XCTAssertTrue(token.waitForExistence(timeout: 5))
+        let headerName = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "debug-header-name-")).firstMatch
+        headerName.tap(); headerName.typeText("X-App-Token")
         token.tap(); token.typeText("Bad123")
-        app.buttons["debug-token-save"].tap()
+        app.buttons["debug-headers-save"].tap()
         XCTAssertTrue(token.waitForNonExistence(timeout: 5))
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0")
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
@@ -461,7 +463,7 @@ final class LingroveUITests: XCTestCase {
         token.tap()
         token.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "Bad123".count))
         token.typeText("Ui12Ab")
-        app.buttons["debug-token-save"].tap()
+        app.buttons["debug-headers-save"].tap()
         XCTAssertTrue(token.waitForNonExistence(timeout: 5))
         XCTAssertEqual(app.switches["debug-mode-toggle"].firstMatch.value as? String, "0", "Saving settings must not enable debug mode automatically")
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
@@ -469,7 +471,6 @@ final class LingroveUITests: XCTestCase {
             app.switches["debug-mode-toggle"].firstMatch.value as? String == "1"
         }, object: nil)
         wait(for: [enabled], timeout: 15)
-        XCTAssertTrue(app.otherElements["debug-active-token-auth"].exists || app.staticTexts["当前地址采用 Token 认证"].exists)
         tapSwitch(app.switches["debug-mode-toggle"].firstMatch)
     }
     func testDebugConnectionFormLightMode() { checkDebugConnectionForm(appearance: "light") }

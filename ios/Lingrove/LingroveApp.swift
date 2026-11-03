@@ -80,10 +80,10 @@ struct HomeView: View {
     @State private var failedAddresses: Set<String> = []
     @State private var connectionTest: Task<Void, Never>?
     @State private var connectionTestID = UUID()
-    @State private var showingDebugTokenPrompt = false
-    @State private var debugTokenAddressID: String?
-    @State private var debugTokenDraft = ""
-    @State private var debugTokenMessage = ""
+    @State private var showingDebugHeadersPrompt = false
+    @State private var debugHeadersAddressID: String?
+    @State private var debugHeadersDraft: [DebugServerHeader] = []
+    @State private var debugHeadersMessage = ""
     @State private var debugCredentialsChanged = false
     @AppStorage(HostConfiguration.resourceModePreferenceKey) private var resourceMode = ChildAppResourceMode.bundled
     private var debugEnabled: Bool { resourceMode == .debug }
@@ -240,8 +240,7 @@ struct HomeView: View {
                                         testing: testingAddressID == server.id,
                                         message: connectionMessages[server.id],
                                         failed: failedAddresses.contains(server.id),
-                                        requiresToken: server.requiresToken == true,
-                                        onToken: { editDebugToken(server.id) },
+                                        onHeaders: { editDebugHeaders(server.id) },
                                         onSelect: { selectDebugAddress(server.id) },
                                         onDelete: { removeDebugAddress(server.id) }
                                     )
@@ -252,11 +251,6 @@ struct HomeView: View {
                                 .accessibilityIdentifier("debug-add-address")
                                 Text("选择地址后开启调试模式，连接成功才会启用。关闭设置时保存非空地址。")
                                     .font(.footnote).foregroundStyle(.secondary)
-                            }
-                            if let server = debugServers.activeServer, server.requiresToken == true {
-                                Label("当前地址采用 Token 认证", systemImage: "lock.fill")
-                                    .font(.footnote).foregroundStyle(.secondary)
-                                    .accessibilityIdentifier("debug-active-token-auth")
                             }
                             if !store.notice.isEmpty {
                                 Text(store.notice).font(.footnote).foregroundStyle(.secondary)
@@ -347,33 +341,49 @@ struct HomeView: View {
                 .hostSettingsBackground()
                 .environment(\.editMode, $moduleEditMode)
                 #if DEBUG
-                .sheet(isPresented: $showingDebugTokenPrompt, onDismiss: {
-                    debugTokenDraft = ""
-                    debugTokenAddressID = nil
+                .sheet(isPresented: $showingDebugHeadersPrompt, onDismiss: {
+                    debugHeadersDraft = []
+                    debugHeadersAddressID = nil
                 }) {
                     NavigationStack {
                         Form {
+                            ForEach($debugHeadersDraft) { $header in
+                                Section {
+                                    TextField("Header 名称", text: $header.name)
+                                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                        .keyboardType(.asciiCapable)
+                                        .accessibilityIdentifier("debug-header-name-\(header.id)")
+                                    TextField("Header 值", text: $header.value)
+                                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                        .keyboardType(.asciiCapable)
+                                        .accessibilityIdentifier("debug-header-value-\(header.id)")
+                                    Button("删除 Header", role: .destructive) {
+                                        debugHeadersDraft.removeAll { $0.id == header.id }
+                                    }
+                                }
+                                .hostSettingsRowBackground()
+                            }
                             Section {
-                                TextField("Token", text: $debugTokenDraft)
-                                    .textInputAutocapitalization(.never).autocorrectionDisabled()
-                                    .keyboardType(.asciiCapable)
-                                    .accessibilityIdentifier("debug-token-input")
+                                Button("添加 Header", systemImage: "plus") {
+                                    debugHeadersDraft.append(DebugServerHeader())
+                                }
+                                .accessibilityIdentifier("debug-header-add")
                             } footer: {
-                                Text(debugTokenMessage)
+                                Text(debugHeadersMessage)
                             }
                             .hostSettingsRowBackground()
                         }
                         .hostSettingsBackground()
-                        .navigationTitle("调试服务器 Token")
+                        .navigationTitle("自定义 Header")
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .cancellationAction) {
-                                Button("取消", role: .cancel) { cancelDebugToken() }
-                                    .accessibilityIdentifier("debug-token-cancel")
+                                Button("取消", role: .cancel) { cancelDebugHeaders() }
+                                    .accessibilityIdentifier("debug-headers-cancel")
                             }
                             ToolbarItem(placement: .confirmationAction) {
-                                Button("保存") { saveDebugToken() }
-                                    .accessibilityIdentifier("debug-token-save")
+                                Button("保存") { saveDebugHeaders() }
+                                    .accessibilityIdentifier("debug-headers-save")
                             }
                         }
                     }
@@ -477,12 +487,9 @@ struct HomeView: View {
         let testID = connectionTestID
         connectionTest = Task { @MainActor in
             do {
-                let token = try DebugServerTokenStore.load(address: server.url)
-                let result = try await DebugServer.testConnection(server.url, token: token)
+                let headers = try DebugServerHeaderStore.load(address: server.url)
+                let result = try await DebugServer.testConnection(server.url, headers: headers)
                 guard !Task.isCancelled, connectionTestID == testID, showingSettings else { return }
-                if let index = debugServers.addresses.firstIndex(where: { $0.id == addressID }) {
-                    debugServers.addresses[index].requiresToken = result.requiresToken
-                }
                 // Publish the verified address before enabling server resource loading.
                 debugServers.save()
                 setResourceMode(.debug)
@@ -497,25 +504,25 @@ struct HomeView: View {
             testingAddressID = nil
         }
     }
-    private func editDebugToken(_ id: String) {
+    private func editDebugHeaders(_ id: String) {
         guard let server = debugServers.addresses.first(where: { $0.id == id }) else { return }
         do {
-            debugTokenDraft = try DebugServerTokenStore.load(address: server.url)
-            debugTokenAddressID = id
-            debugTokenMessage = server.url + "\n" + AppLanguage.text("Token 必须为 6 位英文字母或数字，区分大小写。")
-                + "\n" + AppLanguage.text("Token 仅保存在本机 Keychain，通过 Stack-Pass 请求头发送。")
-            showingDebugTokenPrompt = true
+            debugHeadersDraft = try DebugServerHeaderStore.load(address: server.url)
+            if debugHeadersDraft.isEmpty { debugHeadersDraft = [DebugServerHeader()] }
+            debugHeadersAddressID = id
+            debugHeadersMessage = server.url + "\n" + AppLanguage.text("Header 按调试地址保存在本机 Keychain，仅发送至该地址的调试资源。删除所有条目可清空配置。")
+            showingDebugHeadersPrompt = true
         } catch {
             connectionMessages[id] = error.localizedDescription
             failedAddresses.insert(id)
         }
     }
-    private func saveDebugToken() {
-        guard let id = debugTokenAddressID,
+    private func saveDebugHeaders() {
+        guard let id = debugHeadersAddressID,
               let index = debugServers.addresses.firstIndex(where: { $0.id == id }) else { return }
         do {
-            let token = try DebugServer.validatedToken(debugTokenDraft)
-            try DebugServerTokenStore.save(token, address: debugServers.addresses[index].url)
+            let headers = try DebugServer.validatedHeaders(debugHeadersDraft)
+            try DebugServerHeaderStore.save(headers, address: debugServers.addresses[index].url)
             if testingAddressID == id { clearConnectionTest() }
             connectionMessages[id] = nil
             failedAddresses.remove(id)
@@ -524,17 +531,17 @@ struct HomeView: View {
                 if debugEnabled { setResourceMode(.bundled) }
             }
             debugServers.save()
-            debugTokenDraft = ""
-            showingDebugTokenPrompt = false
+            debugHeadersDraft = []
+            showingDebugHeadersPrompt = false
         } catch {
             connectionMessages[id] = error.localizedDescription
             failedAddresses.insert(id)
-            debugTokenMessage = error.localizedDescription
+            debugHeadersMessage = error.localizedDescription
         }
     }
-    private func cancelDebugToken() {
-        debugTokenDraft = ""
-        showingDebugTokenPrompt = false
+    private func cancelDebugHeaders() {
+        debugHeadersDraft = []
+        showingDebugHeadersPrompt = false
     }
     private func selectDebugAddress(_ id: String) {
         guard debugServers.activeID != id else { return }
@@ -565,9 +572,9 @@ struct HomeView: View {
         debugServers = DebugServerSettings.load()
         debugSettingsExpanded = false
         debugCredentialsChanged = false
-        debugTokenDraft = ""
-        showingDebugTokenPrompt = false
-        debugTokenAddressID = nil
+        debugHeadersDraft = []
+        showingDebugHeadersPrompt = false
+        debugHeadersAddressID = nil
         initialDebugAddress = DebugServer.activeAddress
         connectionMessages.removeAll()
         failedAddresses.removeAll()
@@ -581,9 +588,9 @@ struct HomeView: View {
     private func finishSettings() {
         #if DEBUG
         clearConnectionTest()
-        debugTokenDraft = ""
-        showingDebugTokenPrompt = false
-        debugTokenAddressID = nil
+        debugHeadersDraft = []
+        showingDebugHeadersPrompt = false
+        debugHeadersAddressID = nil
         if DebugServer.available { debugServers.save() }
         guard DebugServer.available,
               initialResourceMode != resourceMode || initialDebugAddress != DebugServer.activeAddress || debugCredentialsChanged else { return }

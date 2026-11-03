@@ -66,9 +66,9 @@ final class DebugCatalogNetwork: URLProtocol, @unchecked Sendable {
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
         let url = request.url!
-        if url.host == "authenticated.example", request.value(forHTTPHeaderField: "Stack-Pass") != "Ab12Cd" {
+        if url.host == "authenticated.example", request.value(forHTTPHeaderField: "X-App-Token") != "Ab12Cd" {
             let response = HTTPURLResponse(url: url, statusCode: 401, httpVersion: nil,
-                                           headerFields: ["WWW-Authenticate": "Stack-Pass realm=\"Lingrove Debug\""])!
+                                           headerFields: ["WWW-Authenticate": "X-App-Token realm=\"Lingrove Debug\""])!
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             client?.urlProtocolDidFinishLoading(self)
             return
@@ -92,7 +92,7 @@ final class DebugCatalogNetwork: URLProtocol, @unchecked Sendable {
             body = Data()
             status = 404
         }
-        let headers = url.host == "authenticated.example" ? ["X-Lingrove-Debug-Auth": "Stack-Pass"]
+        let headers = url.host == "authenticated.example" ? ["X-Lingrove-Debug-Auth": "X-App-Token"]
             : (url.host == "lan.example" ? ["X-Lingrove-Debug-Auth": "none"] : [:])
         let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: headers)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
@@ -108,7 +108,8 @@ final class AuthenticatedDebugResourcesNetwork: URLProtocol, @unchecked Sendable
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
         let url = request.url!
-        XCTAssertEqual(request.value(forHTTPHeaderField: "Stack-Pass"), "Rs12Ab")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "X-App-Token"), "Rs12Ab")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "X-Environment"), "custom-debug")
         XCTAssertNil(request.value(forHTTPHeaderField: "Authorization"))
         XCTAssertTrue(url.path.hasPrefix("/development/snapshot/app/auth-test/"))
         let mime: String
@@ -147,9 +148,9 @@ final class ModuleCatalogNetwork: URLProtocol, @unchecked Sendable {
         let url = request.url!
         XCTAssertTrue(["/catalog.json", "/snapshot/catalog.snapshot.json"].contains(url.path))
         if url.path == "/snapshot/catalog.snapshot.json" {
-            XCTAssertEqual(request.value(forHTTPHeaderField: "Stack-Pass"), "Ct12Ab")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "X-App-Token"), "Ct12Ab")
         } else {
-            XCTAssertNil(request.value(forHTTPHeaderField: "Stack-Pass"))
+            XCTAssertNil(request.value(forHTTPHeaderField: "X-App-Token"))
         }
         // A forced refresh simulates a catalog disappearing after a successful check.
         let status = url.query == nil ? 200 : 404
@@ -181,12 +182,12 @@ final class RuntimeTests: XCTestCase {
         let address = "http://\(UUID().uuidString.lowercased()).example:8000"
         defer {
             defaults.removePersistentDomain(forName: suite)
-            try? DebugServerTokenStore.save("", address: address)
+            try? DebugServerHeaderStore.save([], address: address)
             try? FileManager.default.removeItem(at: root)
         }
         defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
         DebugServerSettings(addresses: [.init(id: "debug", url: address)], activeID: "debug").save(defaults: defaults)
-        try DebugServerTokenStore.save("Ct12Ab", address: address)
+        try DebugServerHeaderStore.save([.init(name: "X-App-Token", value: "Ct12Ab")], address: address)
         let module = Module(id: "verso", name: "Verso", version: "20261023", entry: "index.html",
                             minHostVersion: "1.3.0", bridgeVersion: 1, stateSchemaVersion: 1, allowedOrigins: [])
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -276,26 +277,18 @@ final class RuntimeTests: XCTestCase {
         configuration.protocolClasses = [DebugCatalogNetwork.self]
         let message = try await DebugServer.testConnection("https://debug.example/development", configuration: configuration)
         XCTAssertEqual(message.message, "连接成功，1 个子应用入口均可访问。")
-        XCTAssertFalse(message.requiresToken)
-        let lan = try await DebugServer.testConnection("https://lan.example/development", token: "Ab12Cd", configuration: configuration)
-        XCTAssertFalse(lan.requiresToken, "A saved Token does not make an exempt LAN address authenticated")
+        _ = try await DebugServer.testConnection("https://lan.example/development", headers: [.init(name: "X-App-Token", value: "Ab12Cd")], configuration: configuration)
         for token in ["", "Bad123"] {
             do {
-                _ = try await DebugServer.testConnection("https://authenticated.example/development", token: token, configuration: configuration)
+                _ = try await DebugServer.testConnection("https://authenticated.example/development", headers: [.init(name: "X-App-Token", value: token)], configuration: configuration)
                 XCTFail("Missing or incorrect Token must fail like any other HTTP error")
             } catch {
                 XCTAssertTrue(error is ModuleError)
                 XCTAssertTrue(error.localizedDescription.contains("/snapshot/catalog.snapshot.json 返回 HTTP 401"))
             }
         }
-        for token in ["abc12", "abcdef7", "abc-12"] {
-            XCTAssertThrowsError(try DebugServer.validatedToken(token)) { error in
-                XCTAssertTrue(error is ModuleError)
-                XCTAssertTrue(error.localizedDescription.contains("6 位"))
-            }
-        }
-        let authenticated = try await DebugServer.testConnection("https://authenticated.example/development", token: "Ab12Cd", configuration: configuration)
-        XCTAssertTrue(authenticated.requiresToken)
+        let authenticated = try await DebugServer.testConnection("https://authenticated.example/development", headers: [.init(name: "X-App-Token", value: "Ab12Cd")], configuration: configuration)
+        XCTAssertEqual(authenticated.message, "连接成功，1 个子应用入口均可访问。")
         for host in ["missing-catalog.example", "invalid.example", "missing-entry.example"] {
             do {
                 _ = try await DebugServer.testConnection("https://\(host)/development", configuration: configuration)
@@ -313,10 +306,10 @@ final class RuntimeTests: XCTestCase {
         let suite = "debug-resources-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         let address = "https://\(UUID().uuidString.lowercased()).example/development"
-        defer { defaults.removePersistentDomain(forName: suite); try? DebugServerTokenStore.save("", address: address) }
-        DebugServerSettings(addresses: [.init(id: "auth", url: address, requiresToken: true)], activeID: "auth").save(defaults: defaults)
+        defer { defaults.removePersistentDomain(forName: suite); try? DebugServerHeaderStore.save([], address: address) }
+        DebugServerSettings(addresses: [.init(id: "auth", url: address)], activeID: "auth").save(defaults: defaults)
         defaults.set(ChildAppResourceMode.debug.rawValue, forKey: HostConfiguration.resourceModePreferenceKey)
-        try DebugServerTokenStore.save("Rs12Ab", address: address)
+        try DebugServerHeaderStore.save([.init(name: "X-App-Token", value: "Rs12Ab"), .init(name: "X-Environment", value: "custom-debug")], address: address)
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [AuthenticatedDebugResourcesNetwork.self]
         let session = URLSession(configuration: configuration)
@@ -339,7 +332,7 @@ final class RuntimeTests: XCTestCase {
         XCTAssertFalse((defaults.string(forKey: DebugServer.preferenceKey) ?? "").contains("Rs12Ab"))
         var publicRequest = URLRequest(url: URL(string: "https://updates.example/catalog.json")!)
         try DebugServer.authorize(&publicRequest, defaults: defaults)
-        XCTAssertNil(publicRequest.value(forHTTPHeaderField: "Stack-Pass"))
+        XCTAssertNil(publicRequest.value(forHTTPHeaderField: "X-App-Token"))
         XCTAssertNil(publicRequest.value(forHTTPHeaderField: "Authorization"))
     }
     #endif
