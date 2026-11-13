@@ -383,6 +383,7 @@ async function removeSentence(s: Sentence) {
               v-if="preview && Object.keys(preview).length"
               :action="active"
               :data="preview"
+              :playback-enabled="!tab.busy && panel === 'learn'"
             />
             <div v-else class="empty">
               <div class="empty-art">Aa<span>あ</span></div>

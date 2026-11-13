@@ -31,7 +31,7 @@ export interface Sentence {
   results: Result[];
   learningVersion: number;
 }
-const languageCode = (s: string) =>
+export const languageCode = (s: string) =>
   ({
     英语: 'en',
     english: 'en',

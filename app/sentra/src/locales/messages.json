@@ -415,6 +415,34 @@
     "en": "Sentence",
     "ja": "文"
   },
+  "播放译文": {
+    "en": "Play translation",
+    "ja": "訳文を再生"
+  },
+  "取消播放": {
+    "en": "Cancel playback",
+    "ja": "再生をキャンセル"
+  },
+  "停止播放": {
+    "en": "Stop playback",
+    "ja": "再生を停止"
+  },
+  "重试播放": {
+    "en": "Retry playback",
+    "ja": "再生を再試行"
+  },
+  "播放失败，请点击重试。": {
+    "en": "Playback failed. Tap to retry.",
+    "ja": "再生できませんでした。タップして再試行してください。"
+  },
+  "请在 Lingrove 中播放译文。": {
+    "en": "Open Lingrove to play translations.",
+    "ja": "訳文を再生するには Lingrove で開いてください。"
+  },
+  "请先前往「应用设置 → 语音合成」完成设置。": {
+    "en": "Complete setup in App settings → Speech synthesis first.",
+    "ja": "先に「アプリ設定 → 音声合成」で設定を完了してください。"
+  },
   "已复制": {
     "en": "Copied",
     "ja": "コピーしました"
