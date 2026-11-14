@@ -9,7 +9,7 @@
 | Alphi | 字母 A，右下笔画化为书写笔尖 | `#A95524` | `#F0B283` | [logo.svg](../app/alphi/public/logo.svg) |
 | Lexis | 语法树，从词类分支到不同词形 | `#7652A6` | `#C6A5ED` | [logo.svg](../app/lexis/public/logo.svg) |
 | Verso | 展开的书，负形文字与中缝 | `#18776F` | `#87D1C4` | [logo.svg](../app/verso/public/logo.svg) |
-| Polykeys | 多语言输入键盘与空格键 | `#AC4969` | `#F0A4BF` | [logo.svg](../app/polykeys/public/logo.svg) |
+| Polykeys | 多语言输入键盘与空格键 | `#526275` | `#B8C6D7` | [logo.svg](../app/polykeys/public/logo.svg) |
 
 ![图标总览](branding.svg)
 

@@ -109,7 +109,7 @@ function clear() { commit(); text.value = ''; start = end = 0; status.value = ''
         <textarea ref="editor" v-model="text" inputmode="none" :lang="language" :dir="language === 'ar' ? 'rtl' : 'auto'" :aria-label="t('输入内容')" :placeholder="t('点击键位开始输入')" spellcheck="false" @select="capture" @click="capture" @keyup="capture" @input="externalInput" />
         <div class="editor-footer">
           <span class="editor-status" aria-live="polite" role="status">{{ t(status) }}</span>
-          <div class="editor-actions"><button :disabled="!text" class="quiet" @click="clear">{{ t('清空') }}</button><button class="copy" :disabled="!text" @click="copy">{{ t('复制') }}</button></div>
+          <div class="editor-actions"><button type="button" class="copy" :disabled="!text" @click="copy">{{ t('复制') }}</button><button type="button" :disabled="!text" class="quiet" @click="clear">{{ t('清空') }}</button></div>
         </div>
       </div>
       <label v-if="language === 'ja'" class="input-method">{{ t('日语输入方式') }}<select v-model="japaneseMode" class="lingrove-language-select" @change="commit"><option value="romaji">{{ t('罗马字') }}</option><option value="kana">{{ t('九宫格假名') }}</option></select></label>
